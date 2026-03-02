@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # -----------------------------------------------------------
+  # 1. BASE DE DATOS (PostgreSQL)
+  # -----------------------------------------------------------
+  postgres:
+    image: postgres:14.22-alpine3.22
+    container_name: incas_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./docker-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # -----------------------------------------------------------
+  # 2. BACKEND Y CMS (Strapi)
+  # -----------------------------------------------------------
+  backend:
+    image: node:24
+    container_name: incas_backend
+    restart: unless-stopped
+    working_dir: /srv/app
+    volumes:
+      - ./backend:/srv/app
+    ports:
+      - "1337:1337"
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DB_NAME}
+      DATABASE_USERNAME: ${DB_USER}
+      DATABASE_PASSWORD: ${DB_PASSWORD}
+      NODE_ENV: ${NODE_ENV}
+    # Auto-instalador con vacuna para Mac (.DS_Store)
+    command: >
+      sh -c "
+      rm -f .DS_Store;
+      if [ ! -f package.json ]; then
+        npx create-strapi-app@latest . --dbclient=postgres --dbhost=postgres --dbport=5432 --dbname=${DB_NAME} --dbusername=${DB_USER} --dbpassword=${DB_PASSWORD} --no-run --skip-cloud;
+      fi;
+      npm install && npm run develop
+      "
+
+  # -----------------------------------------------------------
+  # 3. FRONTEND (Astro)
+  # -----------------------------------------------------------
+  frontend:
+    image: node:24
+    container_name: incas_frontend
+    restart: unless-stopped
+    working_dir: /srv/app
+    volumes:
+      - ./frontend:/srv/app
+    ports:
+      - "4321:4321"
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: ${NODE_ENV}
+    # Auto-instalador de Astro si la carpeta está vacía
+    command: >
+      sh -c "
+      if [ ! -f package.json ]; then
+        npx create-astro@latest . --template minimal --install --no-git --yes;
+      fi;
+      npm install && npm run dev -- --host 0.0.0.0
+      "

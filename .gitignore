@@ -1,24 +1,21 @@
-# build output
-dist/
+# Ignorar dependencias de Node
+node_modules/
+npm-debug.log
+yarn-error.log
 
-# generated types
+# Ignorar variables de entorno (contraseñas)
+.env
+.env.local
+
+# Ignorar la base de datos física de Docker
+docker-data/
+
+# Ignorar archivos generados por Astro (Frontend)
+dist/
 .astro/
 
-# dependencies
-node_modules/
-
-# logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# environment variables
-.env
-.env.production
-
-# macOS-specific files
-.DS_Store
-
-# jetbrains setting folder
-.idea/
+# Ignorar archivos generados por Strapi (Backend)
+build/
+.cache/
+.tmp/
+public/uploads/
