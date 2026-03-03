@@ -1,0 +1,110 @@
+{
+  "nav": {
+    "destinations": "Destinos",
+    "tripStyles": "Estilos de Viaje",
+    "whyUs": "Por Qué Elegirnos",
+    "journal": "Blog",
+    "sustainability": "Sostenibilidad",
+    "contactUs": "Contacto"
+  },
+  "hero": {
+    "yearsLabel": "20 AÑOS",
+    "mainTitle": "Aventuras personalizadas.",
+    "subtitle": "En Inca's Paradise, creemos que viajar es sinónimo de aventura. Sabemos que cada viajero tiene su propia idea de qué significa eso. Por eso nuestros viajes son completamente personalizados para encajar perfectamente contigo, respetando culturas locales y el medio ambiente.",
+    "cta": "Comienza Tu Próxima Aventura"
+  },
+  "features": {
+    "title": "Viajes inmersivos culturalmente respetuosos y ambientalmente sensibles.",
+    "description": "Muchos de nosotros en Inca's Paradise vivimos entre dos mundos y casi todos hemos vivido o trabajado en los lugares notables que incluimos en nuestros itinerarios. Nuestro conocimiento local y conexiones nos permiten crear itinerarios inmersivos que respeten las culturas locales y el medio ambiente, enfocándose en tus intereses, gustos, tiempo y presupuesto.",
+    "responsibleTravel": "Viajes Responsables",
+    "fiveStarReviews": "Reseñas 5 Estrellas",
+    "exceptionalProperties": "Propiedades Boutique Excepcionales"
+  },
+  "styles": {
+    "title": "Nuestros Estilos de Viaje",
+    "images": {
+      "adventure": "photo-1506905925346-21bda4d32df4",
+      "gastronomy": "photo-1571115764595-644a262f8dba",
+      "nature": "photo-1506905925346-21bda4d32df4",
+      "lifestyle": "photo-1507003211169-0a1dd7228f2d",
+      "biodiversity": "photo-1466921783906-260fc53bfc26"
+    },
+    "adventure": {
+      "name": "AVENTURA",
+      "description": "Expediciones emocionantes y actividades de adrenalina"
+    },
+    "gastronomy": {
+      "name": "GASTRONOMÍA",
+      "description": "Experiencias culinarias auténticas y sabores locales"
+    },
+    "nature": {
+      "name": "NATURALEZA",
+      "description": "Conexión profunda con ecosistemas y paisajes únicos"
+    },
+    "lifestyle": {
+      "name": "ESTILO DE VIDA",
+      "description": "Inmersión en la cultura y tradiciones locales"
+    },
+    "biodiversity": {
+      "name": "BIODIVERSIDAD",
+      "description": "Observación de vida silvestre y naturaleza prístina"
+    }
+  },
+  "destinations": {
+    "chachapoyas": {
+      "name": "CHACHAPOYAS",
+      "description": "Descubre ruinas y paisajes mágicos en la nube."
+    },
+    "iquitos": {
+      "name": "IQUITOS",
+      "description": "Aventura en el corazón de la Amazonía."
+    },
+    "tarapoto": {
+      "name": "TARAPOTO",
+      "description": "Selva verde y aguas cristalinas."
+    },
+    "tambopata": {
+      "name": "TAMBOPATA",
+      "description": "Biodiversidad única en la Amazonía."
+    },
+    "limaIcaNazca": {
+      "name": "LIMA - ICA - NAZCA",
+      "description": "Cultura ancestral y misterio."
+    },
+    "arequipa": {
+      "name": "AREQUIPA",
+      "description": "Arquitectura colonial y volcanes."
+    },
+    "puno": {
+      "name": "PUNO",
+      "description": "Lago Titicaca y tradiciones vivas."
+    },
+    "cusco": {
+      "name": "CUSCO",
+      "description": "Machu Picchu y el corazón del imperio."
+    },
+    "copacabana": {
+      "name": "COPACABANA - ISLA DEL SOL",
+      "description": "Isla del Sol y espiritualidad."
+    },
+    "laPaz": {
+      "name": "LA PAZ",
+      "description": "Capital en las alturas."
+    },
+    "uyuni": {
+      "name": "UYUNI",
+      "description": "El salar más grande del mundo."
+    },
+    "sucre": {
+      "name": "SUCRE",
+      "description": "Ciudad blanca y capital cultural."
+    }
+  },
+  "commitment": {
+    "text": "En Inca's Paradise nos comprometemos a acompañarte en cada viaje con dedicación, transparencia y calidez humana. Cuidamos cada detalle, desde la planificación hasta el regreso a casa, para que vivas una experiencia auténtica, segura y profundamente significativa. No solo guiamos viajeros: creamos momentos que inspiran, conectan y permanecen en el alma.",
+    "author": "Inca's Paradise"
+  },
+  "buttons": {
+    "explore": "Explorar"
+  }
+}

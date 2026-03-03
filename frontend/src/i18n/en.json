@@ -1,0 +1,110 @@
+{
+  "nav": {
+    "destinations": "Destinations",
+    "tripStyles": "Trip Styles",
+    "whyUs": "Small Trips",
+    "journal": "Transport",
+    "sustainability": "Sustainability",
+    "contactUs": "Blog"
+  },
+  "hero": {
+    "yearsLabel": "20 YEARS",
+    "mainTitle": "Tailor-made adventures.",
+    "subtitle": "At Inca's Paradise, we think that travel is synonymous with adventure. And yet, we know that every traveler has their own unique take on what that term means. That's where tailor-made comes into play. Whatever your idea of adventure, all of our trips are tailor-made to fit you perfectly, respecting local cultures and the environment.",
+    "cta": "Start Your Next Adventure Today"
+  },
+  "features": {
+    "title": "Immersive travel that is culturally respectful and environmentally sensitive.",
+    "description": "Many of us at Inca's Paradise live between two worlds and nearly all have lived or worked in the remarkable places we include in our trip planning. Our local knowledge and connections allow us to create immersive itineraries that are respectful of local cultures and the environment while focusing on your interests, tastes, timing and budget.",
+    "responsibleTravel": "Responsible Travel",
+    "fiveStarReviews": "5 - Star Reviews",
+    "exceptionalProperties": "Exceptional Boutique Properties"
+  },
+  "styles": {
+    "title": "Our Trip Styles",
+    "images": {
+      "adventure": "photo-1506905925346-21bda4d32df4",
+      "gastronomy": "photo-1571115764595-644a262f8dba",
+      "nature": "photo-1506905925346-21bda4d32df4",
+      "lifestyle": "photo-1507003211169-0a1dd7228f2d",
+      "biodiversity": "photo-1466921783906-260fc53bfc26"
+    },
+    "adventure": {
+      "name": "ADVENTURE",
+      "description": "Exciting expeditions and adrenaline-pumping activities"
+    },
+    "gastronomy": {
+      "name": "GASTRONOMY",
+      "description": "Authentic culinary experiences and local flavors"
+    },
+    "nature": {
+      "name": "NATURE",
+      "description": "Deep connection with ecosystems and unique landscapes"
+    },
+    "lifestyle": {
+      "name": "LIFESTYLE",
+      "description": "Immersion in local culture and traditions"
+    },
+    "biodiversity": {
+      "name": "BIODIVERSITY",
+      "description": "Wildlife observation and pristine nature"
+    }
+  },
+  "destinations": {
+    "chachapoyas": {
+      "name": "CHACHAPOYAS",
+      "description": "Discover ancient ruins and magical cloud forest landscapes."
+    },
+    "iquitos": {
+      "name": "IQUITOS",
+      "description": "Adventure in the heart of the Amazon."
+    },
+    "tarapoto": {
+      "name": "TARAPOTO",
+      "description": "Green jungle and crystal-clear waters."
+    },
+    "tambopata": {
+      "name": "TAMBOPATA",
+      "description": "Unique biodiversity in the Amazon."
+    },
+    "limaIcaNazca": {
+      "name": "LIMA - ICA - NAZCA",
+      "description": "Ancestral culture and mystery."
+    },
+    "arequipa": {
+      "name": "AREQUIPA",
+      "description": "Colonial architecture and volcanoes."
+    },
+    "puno": {
+      "name": "PUNO",
+      "description": "Lake Titicaca and living traditions."
+    },
+    "cusco": {
+      "name": "CUSCO",
+      "description": "Machu Picchu and the heart of the empire."
+    },
+    "copacabana": {
+      "name": "COPACABANA - ISLAND OF THE SUN",
+      "description": "Island of the Sun and spirituality."
+    },
+    "laPaz": {
+      "name": "LA PAZ",
+      "description": "Capital in the heights."
+    },
+    "uyuni": {
+      "name": "UYUNI",
+      "description": "The world's largest salt flat."
+    },
+    "sucre": {
+      "name": "SUCRE",
+      "description": "White city and cultural capital."
+    }
+  },
+  "commitment": {
+    "text": "At Inca's Paradise, we are committed to accompanying you on every trip with dedication, transparency, and human warmth. We care for every detail, from planning to your return home, so you live an authentic, safe, and deeply meaningful experience. We don't just guide travelers: we create moments that inspire, connect, and remain in the soul.",
+    "author": "Inca's Paradise"
+  },
+  "buttons": {
+    "explore": "Explore"
+  }
+}

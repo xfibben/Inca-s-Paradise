@@ -1,0 +1,110 @@
+{
+  "nav": {
+    "destinations": "Destinos",
+    "tripStyles": "Estilos de Viagem",
+    "whyUs": "Viagens Curtas",
+    "journal": "Transporte",
+    "sustainability": "Sustentabilidade",
+    "contactUs": "Blog"
+  },
+  "hero": {
+    "yearsLabel": "20 ANOS",
+    "mainTitle": "Aventuras personalizadas.",
+    "subtitle": "Na Inca's Paradise, acreditamos que viajar é sinônimo de aventura. Mas sabemos que cada viajante tem sua própria ideia do que isso significa. É aí que entra o conceito de personalizado. Qualquer que seja sua ideia de aventura, todas as nossas viagens são feitas sob medida para se ajustarem perfeitamente a você, respeitando culturas locais e o meio ambiente.",
+    "cta": "Comece Sua Próxima Aventura Hoje"
+  },
+  "features": {
+    "title": "Viagens imersivas que são culturalmente respeitosas e ambientalmente sensíveis.",
+    "description": "Muitos de nós na Inca's Paradise vivemos entre dois mundos e quase todos vivemos ou trabalhamos nos lugares notáveis que incluímos no planejamento de nossas viagens. Nosso conhecimento local e conexões nos permitem criar itinerários imersivos que respeitem as culturas locais e o meio ambiente, focando em seus interesses, gostos, tempo e orçamento.",
+    "responsibleTravel": "Viagens Responsáveis",
+    "fiveStarReviews": "Avaliações de 5 Estrelas",
+    "exceptionalProperties": "Propriedades Boutique Excepcionais"
+  },
+  "styles": {
+    "title": "Nossos Estilos de Viagem",
+    "images": {
+      "adventure": "photo-1506905925346-21bda4d32df4",
+      "gastronomy": "photo-1571115764595-644a262f8dba",
+      "nature": "photo-1506905925346-21bda4d32df4",
+      "lifestyle": "photo-1507003211169-0a1dd7228f2d",
+      "biodiversity": "photo-1466921783906-260fc53bfc26"
+    },
+    "adventure": {
+      "name": "AVENTURA",
+      "description": "Expedições emocionantes e atividades cheias de adrenalina"
+    },
+    "gastronomy": {
+      "name": "GASTRONOMIA",
+      "description": "Experiências culinárias autênticas e sabores locais"
+    },
+    "nature": {
+      "name": "NATUREZA",
+      "description": "Conexão profunda com ecossistemas e paisagens únicas"
+    },
+    "lifestyle": {
+      "name": "ESTILO DE VIDA",
+      "description": "Imersão na cultura e tradições locais"
+    },
+    "biodiversity": {
+      "name": "BIODIVERSIDADE",
+      "description": "Observação de vida selvagem e natureza pristina"
+    }
+  },
+  "destinations": {
+    "chachapoyas": {
+      "name": "CHACHAPOYAS",
+      "description": "Descubra ruínas antigas e paisagens mágicas da floresta nublada."
+    },
+    "iquitos": {
+      "name": "IQUITOS",
+      "description": "Aventura no coração da Amazônia."
+    },
+    "tarapoto": {
+      "name": "TARAPOTO",
+      "description": "Selva verde e águas cristalinas."
+    },
+    "tambopata": {
+      "name": "TAMBOPATA",
+      "description": "Biodiversidade única na Amazônia."
+    },
+    "limaIcaNazca": {
+      "name": "LIMA - ICA - NAZCA",
+      "description": "Cultura ancestral e mistério."
+    },
+    "arequipa": {
+      "name": "AREQUIPA",
+      "description": "Arquitetura colonial e vulcões."
+    },
+    "puno": {
+      "name": "PUNO",
+      "description": "Lago Titicaca e tradições vivas."
+    },
+    "cusco": {
+      "name": "CUSCO",
+      "description": "Machu Picchu e o coração do império."
+    },
+    "copacabana": {
+      "name": "COPACABANA - ILHA DO SOL",
+      "description": "Ilha do Sol e espiritualidade."
+    },
+    "laPaz": {
+      "name": "LA PAZ",
+      "description": "Capital nas alturas."
+    },
+    "uyuni": {
+      "name": "UYUNI",
+      "description": "O maior salar do mundo."
+    },
+    "sucre": {
+      "name": "SUCRE",
+      "description": "Cidade branca e capital cultural."
+    }
+  },
+  "commitment": {
+    "text": "Na Inca's Paradise, nos comprometemos a acompanhá-lo em cada viagem com dedicação, transparência e calor humano. Cuidamos de cada detalhe, desde o planejamento até o retorno para casa, para que você viva uma experiência autêntica, segura e profundamente significativa. Não apenas guiamos viajantes: criamos momentos que inspiram, conectam e permanecem na alma.",
+    "author": "Inca's Paradise"
+  },
+  "buttons": {
+    "explore": "Explorar"
+  }
+}

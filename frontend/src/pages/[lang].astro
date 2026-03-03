@@ -1,0 +1,402 @@
+---
+import { getTranslation, languages, defaultLanguage, type Language } from '../i18n';
+import LanguageSwitcher from '../components/LanguageSwitcher.astro';
+import '../styles/global.css';
+
+// Función requerida para rutas dinámicas en Astro
+export function getStaticPaths() {
+  return Object.keys(languages).map((lang) => ({
+    params: { lang }
+  }));
+}
+
+// Parámetro dinámico de la ruta
+const { lang } = Astro.params;
+
+// Validar que el idioma sea válido, si no redirigir al idioma por defecto
+const validLang = Object.keys(languages).includes(lang as string) 
+  ? (lang as Language)
+  : defaultLanguage;
+
+// Si el idioma no es válido, redirigir
+if (!Object.keys(languages).includes(lang as string)) {
+  return Astro.redirect(`/${validLang}/`);
+}
+
+const t = getTranslation(validLang);
+const currentLang = validLang;
+
+// Mapeo de idiomas a títulos
+const titles: Record<Language, string> = {
+  es: "Inca's Paradise - Aventuras Personalizadas",
+  en: "Inca's Paradise - Tailor-made Adventures",
+  pt: "Inca's Paradise - Aventuras Personalizadas"
+};
+
+const langNames: Record<Language, string> = {
+  es: "es",
+  en: "en",
+  pt: "pt"
+};
+---
+
+<html lang={langNames[currentLang]}>
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{titles[currentLang]}</title>
+		<style>
+			#styles-carousel {
+				scroll-behavior: smooth;
+				scrollbar-width: thin;
+				scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+			}
+
+			#styles-carousel::-webkit-scrollbar {
+				height: 6px;
+			}
+
+			#styles-carousel::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			#styles-carousel::-webkit-scrollbar-thumb {
+				background: rgba(255, 255, 255, 0.3);
+				border-radius: 3px;
+			}
+
+			#styles-carousel::-webkit-scrollbar-thumb:hover {
+				background: rgba(255, 255, 255, 0.5);
+			}
+
+			.style-card {
+				transition: width 0.3s ease;
+			}
+		</style>
+	</head>
+	<body>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
+    
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed top-0 w-full bg-transparent transition-all duration-300 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-24">
+          <!-- Logo -->
+          <div class="flex-shrink-0">
+            <a href={`/${currentLang}/`}>
+              <img src="/incasparadiselogo.png" alt="Inca's Paradise Logo" class="h-20 w-auto" />
+            </a>
+          </div>
+
+          <!-- Desktop Menu -->
+          <div class="hidden md:flex items-center space-x-8">
+            <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.destinations}</a>
+            <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.tripStyles}</a>
+            <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.whyUs}</a>
+            <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.journal}</a>
+            <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.sustainability}</a>
+          </div>
+
+          <!-- Language Switcher + Contact Button -->
+          <div class="hidden md:flex items-center space-x-4">
+            <LanguageSwitcher currentLang={currentLang} />
+            <button class="px-6 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition text-sm">
+              {t.nav.contactUs}
+            </button>
+          </div>
+
+          <!-- Mobile Menu Button -->
+          <div class="md:hidden">
+            <button id="mobile-menu-btn" class="text-white">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden pb-4 space-y-3 backdrop-blur-md rounded-lg">
+          <a href="#" class="block text-white text-sm hover:text-gray-300 transition">{t.nav.destinations}</a>
+          <a href="#" class="block text-white text-sm hover:text-gray-300 transition">{t.nav.tripStyles}</a>
+          <a href="#" class="block text-white text-sm hover:text-gray-300 transition">{t.nav.whyUs}</a>
+          <a href="#" class="block text-white text-sm hover:text-gray-300 transition">{t.nav.journal}</a>
+          <a href="#" class="block text-white text-sm hover:text-gray-300 transition">{t.nav.sustainability}</a>
+          <div class="py-2">
+            <LanguageSwitcher currentLang={currentLang} />
+          </div>
+          <button class="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition text-sm">
+            {t.nav.contactUs}
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Mobile Menu Backdrop -->
+    <div id="mobile-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onclick="document.getElementById('mobile-menu-btn').click()"></div>
+
+    <!-- Hero Section with Video Background -->
+    <section class="relative w-full h-screen overflow-hidden">
+      <!-- Video Background -->
+      <video autoplay muted loop playsinline class="absolute top-0 left-0 w-full h-full object-cover">
+        <source src="https://videos.pexels.com/video-files/18092718/18092718-hd_1920_1080_30fps.mp4" type="video/mp4">
+      </video>
+
+      <!-- Overlay -->
+      <div class="absolute top-0 left-0 w-full h-full bg-black/40"></div>
+
+      <!-- Content -->
+      <div class="relative h-full flex flex-col justify-center items-center text-center px-4">
+
+        <!-- Main Heading -->
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-italic text-white leading-tight mb-6 md:mb-8 max-w-4xl">
+          {t.hero.mainTitle}
+        </h1>
+
+        <!-- Subheading -->
+        <p class="text-base md:text-lg lg:text-xl text-white/90 leading-relaxed max-w-3xl mb-8 md:mb-12">
+          {t.hero.subtitle}
+        </p>
+
+        <!-- CTA Button -->
+        <a href="#" class="px-8 md:px-10 py-3 md:py-4 border-2 border-white text-white font-semibold text-base md:text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
+          {t.hero.cta}
+        </a>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-12 md:py-16 lg:py-20 bg-gray-100 px-4">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16">
+          <!-- Left Column: Title and Description -->
+          <div>
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-italic text-gray-900 leading-tight mb-6">
+              {t.features.title}
+            </h2>
+            
+            <p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed">
+              {t.features.description}
+            </p>
+          </div>
+
+          <!-- Right Column: Three Features -->
+          <div class="flex flex-col justify-center space-y-8 md:space-y-10">
+            <!-- Feature 1: Responsible Travel -->
+            <div class="flex flex-col items-center text-center">
+              <svg class="w-16 h-16 md:w-20 md:h-20 text-gray-900 mb-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+              <h3 class="text-base md:text-lg font-semibold text-gray-800">
+                {t.features.responsibleTravel}
+              </h3>
+            </div>
+
+            <!-- Feature 2: 5-Star Reviews -->
+            <div class="flex flex-col items-center text-center">
+              <div class="mb-4">
+                <svg class="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="100" height="100" fill="#003B5C" rx="4"/>
+                  <text x="50" y="35" font-size="24" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial">★★★★★</text>
+                  <text x="50" y="70" font-size="10" fill="white" text-anchor="middle" font-family="Arial">TRUSTPILOT</text>
+                </svg>
+              </div>
+              <h3 class="text-base md:text-lg font-semibold text-gray-800">
+                {t.features.fiveStarReviews}
+              </h3>
+            </div>
+
+            <!-- Feature 3: Exceptional Boutique Properties -->
+            <div class="flex flex-col items-center text-center">
+              <svg class="w-16 h-16 md:w-20 md:h-20 text-gray-900 mb-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+              </svg>
+              <h3 class="text-base md:text-lg font-semibold text-gray-800">
+                {t.features.exceptionalProperties}
+              </h3>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trip Styles Carousel Section -->
+    
+
+    <!-- Destinations Gallery Section -->
+    <section class="py-16 md:py-20 lg:py-24 bg-white px-4">
+      <div class="max-w-7xl mx-auto">
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6">
+          
+          {Object.entries(t.destinations).map(([key, dest]) => (
+            <div class="group relative h-48 sm:h-64 md:h-80 lg:h-96 overflow-hidden rounded-lg cursor-pointer">
+              <img 
+                src="https://images.unsplash.com/photo-1587595431973-160550652147?w=600&h=600&fit=crop" 
+                alt={dest.name} 
+                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              />
+              <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
+              <div class="absolute inset-0 flex flex-col justify-between p-3 sm:p-4 md:p-6 text-white">
+                <h3 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-italic">{dest.name}</h3>
+                <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col space-y-2 md:space-y-4">
+                  <p class="text-xs sm:text-sm md:text-base leading-relaxed hidden sm:block">
+                    {dest.description}
+                  </p>
+                  <button class="w-full px-3 py-1.5 sm:px-4 sm:py-2 border border-white text-white text-xs sm:text-sm font-semibold hover:bg-white hover:text-gray-900 transition">
+                    {t.buttons.explore}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Commitment Section -->
+    <section class="py-24 md:py-32 lg:py-40 bg-gradient-to-b from-slate-900 to-slate-800 px-4">
+      <div class="max-w-4xl mx-auto text-center">
+        <!-- Testimonial Text -->
+        <blockquote class="mb-8 md:mb-12">
+          <p class="text-2xl md:text-3xl lg:text-4xl font-italic text-white leading-relaxed mb-8">
+            "{t.commitment.text}"
+          </p>
+        </blockquote>
+
+        <!-- Author -->
+        <div class="text-lg md:text-xl text-gray-300">
+          {t.commitment.author}
+        </div>
+      </div>
+    </section>
+
+    <section class="py-16 md:py-20 lg:py-24 bg-[#0FB7B7] px-4">
+      <div class="max-w-7xl mx-auto">
+        <!-- Section Title -->
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-italic text-white text-center mb-12 md:mb-16">
+          {t.styles.title}
+        </h2>
+
+        <!-- Carousel Wrapper -->
+        <div class="relative">
+          <!-- Left Arrow -->
+          <button id="carousel-prev" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 md:-translate-x-16 z-30 h-12 w-12 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white text-2xl">
+            ‹
+          </button>
+
+          <!-- Carousel Container -->
+          <div class="flex gap-4 overflow-x-auto pb-4 scroll-smooth" id="styles-carousel">
+            {Object.entries(t.styles).map(([key, value]) => {
+              // Skip the title and images fields
+              if (key === 'title' || key === 'images' || typeof value === 'string') return null;
+              const style = value as { name: string; description: string };
+              const imageId = (t.styles as any).images[key] || 'photo-1506905925346-21bda4d32df4';
+              
+              return (
+                <div class="style-card group flex flex-col cursor-pointer transition-all duration-300 w-36 md:w-40 lg:w-48 hover:w-48 md:hover:w-56 lg:hover:w-80">
+                  <!-- Image Container -->
+                  <div class="relative flex-shrink-0 w-full h-64 md:h-72 lg:h-80 overflow-hidden rounded-lg">
+                    <!-- Background Image -->
+                    <img 
+                      src={`https://images.unsplash.com/${imageId}?w=500&h=600&fit=crop`}
+                      alt={style.name}
+                      class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+
+                    <!-- Overlay -->
+                    <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
+
+                    <!-- Description (appears on hover) -->
+                    <div class="absolute inset-0 flex flex-col justify-end p-4 md:p-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <p class="text-xs md:text-sm leading-relaxed mb-3">
+                        {style.description}
+                      </p>
+                      <button class="w-full px-3 py-1.5 border border-white text-white text-xs font-semibold rounded hover:bg-white hover:text-gray-900 transition-colors duration-300">
+                        {t.buttons.explore}
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Title Below Image -->
+                  <div class="mt-2 md:mt-3">
+                    <h3 class="text-sm md:text-base lg:text-lg font-bold text-white">
+                      {style.name}
+                    </h3>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <!-- Right Arrow -->
+          <button id="carousel-next" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 md:translate-x-16 z-30 h-12 w-12 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white text-2xl">
+            ›
+          </button>
+        </div>
+      </div>
+
+      <script>
+        const carousel = document.getElementById('styles-carousel');
+        const prevBtn = document.getElementById('carousel-prev');
+        const nextBtn = document.getElementById('carousel-next');
+
+        if (carousel && prevBtn && nextBtn) {
+          // Calculate scroll distance (card width + gap)
+          const scrollDistance = 400; // Approximate width including gap
+
+          prevBtn.addEventListener('click', () => {
+            carousel.scrollBy({ left: -scrollDistance, behavior: 'smooth' });
+          });
+
+          nextBtn.addEventListener('click', () => {
+            carousel.scrollBy({ left: scrollDistance, behavior: 'smooth' });
+          });
+
+          // Show/hide arrows based on scroll position
+          function updateArrows() {
+            prevBtn.style.opacity = carousel.scrollLeft > 0 ? '1' : '0.5';
+            prevBtn.style.pointerEvents = carousel.scrollLeft > 0 ? 'auto' : 'auto';
+            
+            const maxScroll = carousel.scrollWidth - carousel.clientWidth;
+            nextBtn.style.opacity = carousel.scrollLeft < maxScroll - 10 ? '1' : '0.5';
+          }
+
+          carousel.addEventListener('scroll', updateArrows);
+          updateArrows();
+        }
+      </script>
+    </section>
+
+    <script>
+      // Navbar scroll effect
+      const navbar = document.getElementById('navbar');
+      const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+      const mobileMenu = document.getElementById('mobile-menu');
+      const mobileBackdrop = document.getElementById('mobile-backdrop');
+
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+          navbar.classList.add('bg-black/50', 'backdrop-blur-sm');
+        } else {
+          navbar.classList.remove('bg-black/50', 'backdrop-blur-sm');
+        }
+      });
+
+      // Mobile menu toggle with backdrop
+      mobileMenuBtn?.addEventListener('click', () => {
+        mobileMenu?.classList.toggle('hidden');
+        mobileBackdrop?.classList.toggle('hidden');
+      });
+
+      // Close menu when clicking on backdrop
+      mobileBackdrop?.addEventListener('click', () => {
+        mobileMenu?.classList.add('hidden');
+        mobileBackdrop?.classList.add('hidden');
+      });
+    </script>
+	</body>
+</html>
