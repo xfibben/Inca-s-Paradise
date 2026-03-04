@@ -2,10 +2,10 @@
   "nav": {
     "destinations": "Destinations",
     "tripStyles": "Trip Styles",
-    "whyUs": "Small Trips",
-    "journal": "Transport",
+    "transport": "Transport",
     "sustainability": "Sustainability",
-    "contactUs": "Blog"
+    "blog": "Blog",
+    "contactUs": "Contact Us"
   },
   "hero": {
     "yearsLabel": "20 YEARS",
@@ -103,6 +103,130 @@
   "commitment": {
     "text": "At Inca's Paradise, we are committed to accompanying you on every trip with dedication, transparency, and human warmth. We care for every detail, from planning to your return home, so you live an authentic, safe, and deeply meaningful experience. We don't just guide travelers: we create moments that inspire, connect, and remain in the soul.",
     "author": "Inca's Paradise"
+  },
+  "megamenu": {
+    "destinos": [
+      {
+        "key": "chachapoyas",
+        "name": "CHACHAPOYAS",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          { "name": "Gata Malla", "days": 3 },
+          { "name": "Marañón Canyon", "days": 4 },
+          { "name": "Lake of Pomacochas", "days": 2 }
+        ]
+      },
+      {
+        "key": "iquitos",
+        "name": "IQUITOS",
+        "image": "photo-1469854523086-cc02fe5d8800",
+        "tours": [
+          { "name": "Deep Amazon", "days": 5 },
+          { "name": "Napo River", "days": 3 },
+          { "name": "Allpahuayo Reserve", "days": 2 }
+        ]
+      },
+      {
+        "key": "tarapoto",
+        "name": "TARAPOTO",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          { "name": "Ahuashiyacú Waterfalls", "days": 2 },
+          { "name": "Blue Lagoon", "days": 3 },
+          { "name": "Shilcayo River", "days": 2 }
+        ]
+      },
+      {
+        "key": "tambopata",
+        "name": "TAMBOPATA",
+        "image": "photo-1441974231531-c6227db76b6e",
+        "tours": [
+          { "name": "Macaw Collpa", "days": 3 },
+          { "name": "Sandoval Lake", "days": 4 },
+          { "name": "Virgin Forest", "days": 2 }
+        ]
+      },
+      {
+        "key": "limaIcaNazca",
+        "name": "LIMA - ICA - NAZCA",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          { "name": "Nazca Lines Flight", "days": 1 },
+          { "name": "Huacachina Oasis", "days": 2 },
+          { "name": "Archaeological Circuit", "days": 3 }
+        ]
+      },
+      {
+        "key": "arequipa",
+        "name": "AREQUIPA",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          { "name": "Misti Volcano", "days": 2 },
+          { "name": "Colca Canyon", "days": 3 },
+          { "name": "White City", "days": 1 }
+        ]
+      },
+      {
+        "key": "puno",
+        "name": "PUNO",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          { "name": "Uros Islands", "days": 1 },
+          { "name": "Taquile and Amantaní", "days": 2 },
+          { "name": "Lake Titicaca", "days": 3 }
+        ]
+      },
+      {
+        "key": "cusco",
+        "name": "CUSCO",
+        "image": "photo-1587595431973-160550652147",
+        "tours": [
+          { "name": "Machu Picchu Classic", "days": 2 },
+          { "name": "Inca Trail", "days": 4 },
+          { "name": "Sacred Valley", "days": 2 }
+        ]
+      },
+      {
+        "key": "copacabana",
+        "name": "COPACABANA - ISLAND OF THE SUN",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          { "name": "Island of the Sun", "days": 1 },
+          { "name": "Copacabana Sanctuary", "days": 1 },
+          { "name": "Lake Titicaca Bolivia", "days": 2 }
+        ]
+      },
+      {
+        "key": "laPaz",
+        "name": "LA PAZ",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          { "name": "La Paz Teleférico", "days": 1 },
+          { "name": "Valley of the Moon", "days": 1 },
+          { "name": "Magic City", "days": 2 }
+        ]
+      },
+      {
+        "key": "uyuni",
+        "name": "UYUNI",
+        "image": "photo-1433838552652-f9a46b332c40",
+        "tours": [
+          { "name": "Salar de Uyuni Classic", "days": 3 },
+          { "name": "Sunset Salt Flats", "days": 2 },
+          { "name": "Colored Lagoons", "days": 4 }
+        ]
+      },
+      {
+        "key": "sucre",
+        "name": "SUCRE",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          { "name": "White City Bolivia", "days": 1 },
+          { "name": "Cal Orck'o Dinosaurs", "days": 1 },
+          { "name": "Archaeology and Culture", "days": 2 }
+        ]
+      }
+    ]
   },
   "buttons": {
     "explore": "Explore"

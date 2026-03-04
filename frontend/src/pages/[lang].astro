@@ -93,11 +93,140 @@ const langNames: Record<Language, string> = {
 
           <!-- Desktop Menu -->
           <div class="hidden md:flex items-center space-x-8">
-            <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.destinations}</a>
-            <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.tripStyles}</a>
-            <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.whyUs}</a>
-            <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.journal}</a>
+            <!-- Destinations with Megamenu -->
+            <div class="relative" id="megamenu-container">
+              <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.destinations}</a>
+              
+              <!-- Megamenu -->
+              <div id="megamenu-dropdown" class="fixed left-0 right-0 top-24 pt-2 hidden z-50 w-full">
+                <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
+                  <!-- Megamenu Container -->
+                  <div class="flex h-full">
+                    <!-- Column 1: Destinations List with Vertical Slider -->
+                    <div class="w-1/3 bg-gray-50 border-r border-gray-200 flex flex-col relative">
+                      <!-- Scroll Up Button -->
+                      <button id="scroll-up" class="bg-white/90 hover:bg-white p-2 border-b border-gray-200 transition">
+                        <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                        </svg>
+                      </button>
+                      
+                      <!-- Destinations scroll container -->
+                      <div id="destinations-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
+                          {t.megamenu.destinos.map((dest) => (
+                            <button
+                            class="destination-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 whitespace-normal"
+                            data-dest={dest.key}
+                            data-name={dest.name}
+                            data-image={dest.image}
+                          >
+                            {dest.name}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <!-- Scroll Down Button -->
+                      <button id="scroll-down" class="bg-white/90 hover:bg-white p-2 border-t border-gray-200 transition">
+                        <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </div>
+
+                    <!-- Column 2: Tours -->
+                    <div class="w-1/3 bg-white p-6 border-r border-gray-200 overflow-y-auto">
+                      <div id="megamenu-tours" class="space-y-3">
+                        <!-- Tours will be inserted here via JavaScript -->
+                      </div>
+                    </div>
+
+                    <!-- Column 3: Image and Destination Name -->
+                    <div class="w-1/3 bg-gray-100 overflow-hidden relative">
+                      <img
+                        id="megamenu-image"
+                        src="https://images.unsplash.com/photo-1587595431973-160550652147?w=400&h=400&fit=crop"
+                        alt="Destination"
+                        class="w-full h-full object-cover"
+                      />
+                      <div class="absolute inset-0 bg-black/30"></div>
+                      <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                        <p id="megamenu-dest-name" class="text-white font-bold text-lg">CHACHAPOYAS</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Trip Styles with Megamenu -->
+            <div class="relative" id="styles-container">
+              <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.tripStyles}</a>
+              
+              <!-- Styles Megamenu -->
+              <div id="styles-dropdown" class="fixed left-0 right-0 top-24 pt-2 hidden z-50 w-full">
+                <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
+                  <!-- Megamenu Container -->
+                  <div class="flex h-full">
+                    <!-- Column 1: Styles List with Vertical Slider -->
+                    <div class="w-1/3 bg-gray-50 border-r border-gray-200 flex flex-col relative">
+                      <!-- Scroll Up Button -->
+                      <button id="scroll-up-styles" class="bg-white/90 hover:bg-white p-2 border-b border-gray-200 transition">
+                        <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                        </svg>
+                      </button>
+                      
+                      <!-- Styles scroll container -->
+                      <div id="styles-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
+                        {Object.entries(t.styles).filter(([key]) => !['title', 'images'].includes(key)).map(([key, style]) => {
+                          const styleObj = style as { name: string; description: string };
+                          return (
+                          <button
+                            class="style-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 whitespace-normal"
+                            data-style={key}
+                            data-name={styleObj.name}
+                            data-image={(t.styles as any).images[key]}
+                            data-description={styleObj.description}
+                          >
+                            {styleObj.name}
+                          </button>
+                          );
+                        })}
+                      </div>
+                      
+                      <!-- Scroll Down Button -->
+                      <button id="scroll-down-styles" class="bg-white/90 hover:bg-white p-2 border-t border-gray-200 transition">
+                        <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                        </svg>
+                      </button>
+                    </div>
+
+                    <!-- Column 2: Description -->
+                    <div class="w-1/3 bg-white p-6 border-r border-gray-200 overflow-y-auto">
+                      <div id="style-description">
+                        <p class="text-sm text-gray-600"></p>
+                      </div>
+                    </div>
+
+                    <!-- Column 3: Image -->
+                    <div class="w-1/3 bg-gray-100 overflow-hidden relative">
+                      <img
+                        id="style-image"
+                        src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop"
+                        alt="Style"
+                        class="w-full h-full object-cover"
+                      />
+                      <div class="absolute inset-0 bg-black/30"></div>
+                      <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                        <p id="style-name" class="text-white font-bold text-lg">AVENTURA</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.transport}</a>
             <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.sustainability}</a>
+            <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.blog}</a>
           </div>
 
           <!-- Language Switcher + Contact Button -->
@@ -122,9 +251,9 @@ const langNames: Record<Language, string> = {
         <div id="mobile-menu" class="hidden md:hidden pb-4 space-y-3 backdrop-blur-md rounded-lg">
           <a href="#" class="block text-white text-sm hover:text-gray-300 transition">{t.nav.destinations}</a>
           <a href="#" class="block text-white text-sm hover:text-gray-300 transition">{t.nav.tripStyles}</a>
-          <a href="#" class="block text-white text-sm hover:text-gray-300 transition">{t.nav.whyUs}</a>
-          <a href="#" class="block text-white text-sm hover:text-gray-300 transition">{t.nav.journal}</a>
+          <a href="#" class="block text-white text-sm hover:text-gray-300 transition">{t.nav.transport}</a>
           <a href="#" class="block text-white text-sm hover:text-gray-300 transition">{t.nav.sustainability}</a>
+          <a href="#" class="block text-white text-sm hover:text-gray-300 transition">{t.nav.blog}</a>
           <div class="py-2">
             <LanguageSwitcher currentLang={currentLang} />
           </div>
@@ -138,15 +267,39 @@ const langNames: Record<Language, string> = {
     <!-- Mobile Menu Backdrop -->
     <div id="mobile-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onclick="document.getElementById('mobile-menu-btn').click()"></div>
 
-    <!-- Hero Section with Video Background -->
+    <!-- Hero Section with Image Carousel Background -->
     <section class="relative w-full h-screen overflow-hidden">
-      <!-- Video Background -->
-      <video autoplay muted loop playsinline class="absolute top-0 left-0 w-full h-full object-cover">
-        <source src="https://videos.pexels.com/video-files/18092718/18092718-hd_1920_1080_30fps.mp4" type="video/mp4">
-      </video>
+      <!-- Image Carousel Background -->
+      <div id="hero-carousel" class="absolute top-0 left-0 w-full h-full">
+        <img 
+          src="/Imagen2.png" 
+          alt="Hero Background" 
+          class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-2500 opacity-100"
+          data-index="0"
+        />
+        <img 
+          src="/Imagen3.png" 
+          alt="Hero Background" 
+          class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-2500 opacity-0"
+          data-index="1"
+        />
+        <img 
+          src="/ubicacion-choquequirao-full.jpg" 
+          alt="Hero Background" 
+          class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-2500 opacity-0"
+          data-index="2"
+        />
+      </div>
 
       <!-- Overlay -->
       <div class="absolute top-0 left-0 w-full h-full bg-black/40"></div>
+
+      <!-- Carousel Indicators -->
+      <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3">
+        <button class="hero-dot h-3 w-3 rounded-full bg-white/70 hover:bg-white transition-all duration-300" data-index="0"></button>
+        <button class="hero-dot h-3 w-3 rounded-full bg-white/40 hover:bg-white/70 transition-all duration-300" data-index="1"></button>
+        <button class="hero-dot h-3 w-3 rounded-full bg-white/40 hover:bg-white/70 transition-all duration-300" data-index="2"></button>
+      </div>
 
       <!-- Content -->
       <div class="relative h-full flex flex-col justify-center items-center text-center px-4">
@@ -169,8 +322,8 @@ const langNames: Record<Language, string> = {
     </section>
 
     <!-- Features Section -->
-    <section class="py-12 md:py-16 lg:py-20 bg-gray-100 px-4">
-      <div class="max-w-7xl mx-auto">
+    <section class="bg-gray-100 px-4 flex items-center" style="height: calc(100vh - 6rem);">
+      <div class="max-w-7xl mx-auto w-full">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16">
           <!-- Left Column: Title and Description -->
           <div>
@@ -227,12 +380,12 @@ const langNames: Record<Language, string> = {
     
 
     <!-- Destinations Gallery Section -->
-    <section class="py-16 md:py-20 lg:py-24 bg-white px-4">
-      <div class="max-w-7xl mx-auto">
-        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 lg:gap-6">
+    <section class="bg-white px-0 py-0 flex flex-col" style="height: calc(100vh - 6rem);">
+      <div class="w-full h-full flex flex-col">
+        <div class="w-full grid gap-0" style="grid-template-columns: repeat(auto-fit, minmax(calc(100% / 6), 1fr)); height: 100%; grid-auto-rows: 1fr;">
           
           {Object.entries(t.destinations).map(([key, dest]) => (
-            <div class="group relative h-48 sm:h-64 md:h-80 lg:h-96 overflow-hidden rounded-lg cursor-pointer">
+            <div class="group relative overflow-hidden cursor-pointer">
               <img 
                 src="https://images.unsplash.com/photo-1587595431973-160550652147?w=600&h=600&fit=crop" 
                 alt={dest.name} 
@@ -245,7 +398,7 @@ const langNames: Record<Language, string> = {
                   <p class="text-xs sm:text-sm md:text-base leading-relaxed hidden sm:block">
                     {dest.description}
                   </p>
-                  <button class="w-full px-3 py-1.5 sm:px-4 sm:py-2 border border-white text-white text-xs sm:text-sm font-semibold hover:bg-white hover:text-gray-900 transition">
+                  <button class="w-full px-3 py-1.5 sm:px-4 sm:py-2 border border-white text-white text-xs sm:text-sm font-semibold hover:bg-orange-500 hover:border-orange-500 hover:text-white transition">
                     {t.buttons.explore}
                   </button>
                 </div>
@@ -257,39 +410,22 @@ const langNames: Record<Language, string> = {
       </div>
     </section>
 
-    <!-- Commitment Section -->
-    <section class="py-24 md:py-32 lg:py-40 bg-gradient-to-b from-slate-900 to-slate-800 px-4">
-      <div class="max-w-4xl mx-auto text-center">
-        <!-- Testimonial Text -->
-        <blockquote class="mb-8 md:mb-12">
-          <p class="text-2xl md:text-3xl lg:text-4xl font-italic text-white leading-relaxed mb-8">
-            "{t.commitment.text}"
-          </p>
-        </blockquote>
-
-        <!-- Author -->
-        <div class="text-lg md:text-xl text-gray-300">
-          {t.commitment.author}
-        </div>
-      </div>
-    </section>
-
-    <section class="py-16 md:py-20 lg:py-24 bg-[#0FB7B7] px-4">
-      <div class="max-w-7xl mx-auto">
+    <section class="bg-white px-0 py-0 flex flex-col overflow-hidden" style="height: calc(100vh - 6rem);">
+      <div class="w-full flex flex-col h-full justify-center">
         <!-- Section Title -->
-        <h2 class="text-3xl md:text-4xl lg:text-5xl font-italic text-white text-center mb-12 md:mb-16">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-italic text-gray-900 text-center pt-8 md:pt-12 pb-4 md:pb-6 px-4">
           {t.styles.title}
         </h2>
 
         <!-- Carousel Wrapper -->
-        <div class="relative">
+        <div class="relative px-4 flex-1 flex flex-col justify-center">
           <!-- Left Arrow -->
-          <button id="carousel-prev" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 md:-translate-x-16 z-30 h-12 w-12 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white text-2xl">
+          <button id="carousel-prev" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 md:-translate-x-16 z-30 h-12 w-12 flex items-center justify-center rounded-full bg-gray-300/30 hover:bg-gray-400/30 transition-colors text-gray-700 text-2xl">
             ‹
           </button>
 
           <!-- Carousel Container -->
-          <div class="flex gap-4 overflow-x-auto pb-4 scroll-smooth" id="styles-carousel">
+          <div class="flex gap-4 overflow-x-auto overflow-y-hidden pb-4 scroll-smooth" id="styles-carousel" style="max-height: 65vh;">
             {Object.entries(t.styles).map(([key, value]) => {
               // Skip the title and images fields
               if (key === 'title' || key === 'images' || typeof value === 'string') return null;
@@ -297,9 +433,9 @@ const langNames: Record<Language, string> = {
               const imageId = (t.styles as any).images[key] || 'photo-1506905925346-21bda4d32df4';
               
               return (
-                <div class="style-card group flex flex-col cursor-pointer transition-all duration-300 w-36 md:w-40 lg:w-48 hover:w-48 md:hover:w-56 lg:hover:w-80">
+                <div class="style-card group flex flex-col cursor-pointer transition-all duration-300 w-72 md:w-80 lg:w-96 hover:w-80 md:hover:w-96 lg:hover:w-[28rem]">
                   <!-- Image Container -->
-                  <div class="relative flex-shrink-0 w-full h-64 md:h-72 lg:h-80 overflow-hidden rounded-lg">
+                  <div class="relative flex-shrink-0 w-full h-80 md:h-96 lg:h-[28rem] overflow-hidden rounded-lg">
                     <!-- Background Image -->
                     <img 
                       src={`https://images.unsplash.com/${imageId}?w=500&h=600&fit=crop`}
@@ -323,7 +459,7 @@ const langNames: Record<Language, string> = {
 
                   <!-- Title Below Image -->
                   <div class="mt-2 md:mt-3">
-                    <h3 class="text-sm md:text-base lg:text-lg font-bold text-white">
+                    <h3 class="text-sm md:text-base lg:text-lg font-bold text-gray-900">
                       {style.name}
                     </h3>
                   </div>
@@ -333,69 +469,417 @@ const langNames: Record<Language, string> = {
           </div>
 
           <!-- Right Arrow -->
-          <button id="carousel-next" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 md:translate-x-16 z-30 h-12 w-12 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors text-white text-2xl">
+          <button id="carousel-next" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 md:translate-x-16 z-30 h-12 w-12 flex items-center justify-center rounded-full bg-gray-300/30 hover:bg-gray-400/30 transition-colors text-gray-700 text-2xl">
             ›
           </button>
         </div>
       </div>
-
-      <script>
-        const carousel = document.getElementById('styles-carousel');
-        const prevBtn = document.getElementById('carousel-prev');
-        const nextBtn = document.getElementById('carousel-next');
-
-        if (carousel && prevBtn && nextBtn) {
-          // Calculate scroll distance (card width + gap)
-          const scrollDistance = 400; // Approximate width including gap
-
-          prevBtn.addEventListener('click', () => {
-            carousel.scrollBy({ left: -scrollDistance, behavior: 'smooth' });
-          });
-
-          nextBtn.addEventListener('click', () => {
-            carousel.scrollBy({ left: scrollDistance, behavior: 'smooth' });
-          });
-
-          // Show/hide arrows based on scroll position
-          function updateArrows() {
-            prevBtn.style.opacity = carousel.scrollLeft > 0 ? '1' : '0.5';
-            prevBtn.style.pointerEvents = carousel.scrollLeft > 0 ? 'auto' : 'auto';
-            
-            const maxScroll = carousel.scrollWidth - carousel.clientWidth;
-            nextBtn.style.opacity = carousel.scrollLeft < maxScroll - 10 ? '1' : '0.5';
-          }
-
-          carousel.addEventListener('scroll', updateArrows);
-          updateArrows();
-        }
-      </script>
     </section>
 
     <script>
+      const carousel = document.getElementById('styles-carousel');
+      const prevBtn = document.getElementById('carousel-prev');
+      const nextBtn = document.getElementById('carousel-next');
+
+      if (carousel) {
+        // Convert wheel scroll on carousel to horizontal scroll
+        carousel.addEventListener('wheel', (e) => {
+          // Only prevent default if scrolling horizontally (high deltaX) or if vertical scroll would be prevented
+          if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+            e.preventDefault();
+            carousel.scrollLeft += e.deltaX > 0 ? 50 : -50;
+          } else {
+            // Allow normal vertical scroll by not preventing default
+            carousel.scrollLeft += e.deltaY > 0 ? 50 : -50;
+          }
+        }, { passive: false });
+      }
+
+      if (carousel && prevBtn && nextBtn) {
+        // Calculate scroll distance (card width + gap)
+        const scrollDistance = 400; // Approximate width including gap
+
+        prevBtn.addEventListener('click', () => {
+          carousel.scrollBy({ left: -scrollDistance, behavior: 'smooth' });
+        });
+
+        nextBtn.addEventListener('click', () => {
+          carousel.scrollBy({ left: scrollDistance, behavior: 'smooth' });
+        });
+
+        // Show/hide arrows based on scroll position
+        function updateArrows() {
+          prevBtn.style.opacity = carousel.scrollLeft > 0 ? '1' : '0.5';
+          nextBtn.style.opacity = carousel.scrollLeft < carousel.scrollWidth - carousel.clientWidth - 10 ? '1' : '0.5';
+        }
+
+        carousel.addEventListener('scroll', updateArrows);
+        updateArrows();
+      }
+    </script>
+
+    <!-- Commitment Section -->
+    <section class="bg-gradient-to-b from-slate-900 to-slate-800 px-4 flex items-center justify-center" style="height: calc(100vh - 6rem);">
+      <div class="max-w-4xl mx-auto text-center">
+        <!-- Testimonial Text -->
+        <blockquote class="mb-8 md:mb-12">
+          <p class="text-2xl md:text-3xl lg:text-4xl font-italic text-white leading-relaxed mb-8">
+            "{t.commitment.text}"
+          </p>
+        </blockquote>
+
+        <!-- Author -->
+        <div class="text-lg md:text-xl text-gray-300">
+          {t.commitment.author}
+        </div>
+      </div>
+    </section>
+
+    <script is:inline define:vars={{ translations: t }}>
+      // Make translations available to JavaScript
+      const t = translations;
+
+      // Hero Image Carousel
+      let currentImageIndex = 0;
+      const totalImages = 3;
+      const carouselInterval = 2500; // 2.5 seconds
+      let imageCarouselTimer;
+
+      function showHeroImage(index) {
+        const images = document.querySelectorAll('.hero-image');
+        const dots = document.querySelectorAll('.hero-dot');
+        
+        images.forEach((img, i) => {
+          if (i === index) {
+            img.classList.remove('opacity-0');
+            img.classList.add('opacity-100');
+          } else {
+            img.classList.remove('opacity-100');
+            img.classList.add('opacity-0');
+          }
+        });
+
+        dots.forEach((dot, i) => {
+          if (i === index) {
+            dot.classList.add('bg-white');
+            dot.classList.remove('bg-white/40');
+          } else {
+            dot.classList.remove('bg-white');
+            dot.classList.add('bg-white/40');
+          }
+        });
+      }
+
+      function nextHeroImage() {
+        currentImageIndex = (currentImageIndex + 1) % totalImages;
+        showHeroImage(currentImageIndex);
+      }
+
+      function startImageCarousel() {
+        imageCarouselTimer = setInterval(nextHeroImage, carouselInterval);
+      }
+
+      function stopImageCarousel() {
+        clearInterval(imageCarouselTimer);
+      }
+
+      // Start carousel on load
+      startImageCarousel();
+
+      // Add click handlers to dots
+      document.querySelectorAll('.hero-dot').forEach(dot => {
+        dot.addEventListener('click', () => {
+          currentImageIndex = parseInt(dot.getAttribute('data-index'));
+          showHeroImage(currentImageIndex);
+          // Reset timer when user clicks
+          stopImageCarousel();
+          startImageCarousel();
+        });
+      });
+
+      // Pause carousel on hover and resume on leave
+      const heroCarousel = document.getElementById('hero-carousel');
+      if (heroCarousel) {
+        heroCarousel.addEventListener('mouseenter', stopImageCarousel);
+        heroCarousel.addEventListener('mouseleave', startImageCarousel);
+      }
+
       // Navbar scroll effect
       const navbar = document.getElementById('navbar');
       const mobileMenuBtn = document.getElementById('mobile-menu-btn');
       const mobileMenu = document.getElementById('mobile-menu');
       const mobileBackdrop = document.getElementById('mobile-backdrop');
 
-      window.addEventListener('scroll', () => {
+      function updateNavbarStyle() {
         if (window.scrollY > 50) {
-          navbar.classList.add('bg-black/50', 'backdrop-blur-sm');
+          navbar.classList.remove('bg-transparent');
+          navbar.classList.add('bg-white', 'shadow-md');
+          // Change text to dark
+          document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+            el.classList.remove('text-white', 'hover:text-gray-300');
+            el.classList.add('text-gray-900', 'hover:text-gray-600');
+          });
         } else {
-          navbar.classList.remove('bg-black/50', 'backdrop-blur-sm');
+          navbar.classList.remove('bg-white', 'shadow-md');
+          navbar.classList.add('bg-transparent');
+          // Change text back to white
+          document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+            el.classList.remove('text-gray-900', 'hover:text-gray-600');
+            el.classList.add('text-white', 'hover:text-gray-300');
+          });
         }
-      });
+      }
+      
+      window.addEventListener('scroll', updateNavbarStyle);
 
       // Mobile menu toggle with backdrop
       mobileMenuBtn?.addEventListener('click', () => {
         mobileMenu?.classList.toggle('hidden');
         mobileBackdrop?.classList.toggle('hidden');
+        if (!mobileMenu?.classList.contains('hidden')) {
+          navbar.classList.add('bg-white', 'shadow-md');
+          navbar.classList.remove('bg-transparent');
+          // Change text to dark
+          document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+            el.classList.remove('text-white', 'hover:text-gray-300');
+            el.classList.add('text-gray-900', 'hover:text-gray-600');
+          });
+        } else if (window.scrollY <= 50) {
+          navbar.classList.remove('bg-white', 'shadow-md');
+          navbar.classList.add('bg-transparent');
+          // Change text back to white
+          document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+            el.classList.remove('text-gray-900', 'hover:text-gray-600');
+            el.classList.add('text-white', 'hover:text-gray-300');
+          });
+        }
       });
 
       // Close menu when clicking on backdrop
       mobileBackdrop?.addEventListener('click', () => {
         mobileMenu?.classList.add('hidden');
         mobileBackdrop?.classList.add('hidden');
+      });
+
+      // Megamenu functionality - Control visibility with mouse events
+      const megamenuContainer = document.getElementById('megamenu-container');
+      const megamenuDropdown = document.getElementById('megamenu-dropdown');
+      let megamenuTimeout;
+
+      megamenuContainer?.addEventListener('mouseenter', () => {
+        clearTimeout(megamenuTimeout);
+        megamenuDropdown?.classList.remove('hidden');
+        navbar.classList.add('bg-white', 'shadow-md');
+        navbar.classList.remove('bg-transparent');
+        // Change text to dark
+        document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          el.classList.remove('text-white', 'hover:text-gray-300');
+          el.classList.add('text-gray-900', 'hover:text-gray-600');
+        });
+      });
+
+      megamenuContainer?.addEventListener('mouseleave', () => {
+        megamenuTimeout = setTimeout(() => {
+          megamenuDropdown?.classList.add('hidden');
+          if (window.scrollY <= 50) {
+            navbar.classList.remove('bg-white', 'shadow-md');
+            navbar.classList.add('bg-transparent');
+            // Change text back to white
+            document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+              el.classList.remove('text-gray-900', 'hover:text-gray-600');
+              el.classList.add('text-white', 'hover:text-gray-300');
+            });
+          }
+        }, 200);
+      });
+
+      megamenuDropdown?.addEventListener('mouseenter', () => {
+        clearTimeout(megamenuTimeout);
+        megamenuDropdown?.classList.remove('hidden');
+        navbar.classList.add('bg-white', 'shadow-md');
+        navbar.classList.remove('bg-transparent');
+        // Change text to dark
+        document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          el.classList.remove('text-white', 'hover:text-gray-300');
+          el.classList.add('text-gray-900', 'hover:text-gray-600');
+        });
+      });
+
+      megamenuDropdown?.addEventListener('mouseleave', () => {
+        megamenuTimeout = setTimeout(() => {
+          megamenuDropdown?.classList.add('hidden');
+          if (window.scrollY <= 50) {
+            navbar.classList.remove('bg-white', 'shadow-md');
+            navbar.classList.add('bg-transparent');
+            // Change text back to white
+            document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+              el.classList.remove('text-gray-900', 'hover:text-gray-600');
+              el.classList.add('text-white', 'hover:text-gray-300');
+            });
+          }
+        }, 200);
+      });
+
+      // Vertical slider for destinations
+      const scrollUpBtn = document.getElementById('scroll-up');
+      const scrollDownBtn = document.getElementById('scroll-down');
+      const destinationsScroll = document.getElementById('destinations-scroll');
+      const scrollAmount = 100;
+
+      scrollUpBtn?.addEventListener('click', () => {
+        destinationsScroll?.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+      });
+
+      scrollDownBtn?.addEventListener('click', () => {
+        destinationsScroll?.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+      });
+
+      // Vertical slider for styles
+      const scrollUpStylesBtn = document.getElementById('scroll-up-styles');
+      const scrollDownStylesBtn = document.getElementById('scroll-down-styles');
+      const stylesScroll = document.getElementById('styles-scroll');
+
+      scrollUpStylesBtn?.addEventListener('click', () => {
+        stylesScroll?.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+      });
+
+      scrollDownStylesBtn?.addEventListener('click', () => {
+        stylesScroll?.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+      });
+
+      // Destinations megamenu functionality using JSON data
+      function updateMegamenu(destKey) {
+        const destination = t.megamenu.destinos.find(d => d.key === destKey);
+        if (!destination) return;
+
+        // Update tours
+        const toursContainer = document.getElementById('megamenu-tours');
+        toursContainer.innerHTML = destination.tours.map(tour => `
+          <div class="pb-3 border-b border-gray-100 last:border-0">
+            <p class="font-semibold text-gray-800 text-sm">${tour.name}</p>
+            <p class="text-xs text-gray-500">${tour.days} días</p>
+          </div>
+        `).join('');
+
+        // Update image and name
+        const image = document.getElementById('megamenu-image');
+        image.src = `https://images.unsplash.com/${destination.image}?w=400&h=400&fit=crop`;
+        document.getElementById('megamenu-dest-name').textContent = destination.name;
+      }
+
+      // Initialize destinations menu with first item
+      updateMegamenu('chachapoyas');
+      const firstDestItem = document.querySelector('[data-dest="chachapoyas"]');
+      if (firstDestItem) {
+        firstDestItem.classList.add('bg-blue-50', 'text-blue-600');
+      }
+
+      // Add mouseenter handlers to destination items
+      document.querySelectorAll('.destination-item').forEach(item => {
+        item.addEventListener('mouseenter', (e) => {
+          const destKey = item.dataset.dest;
+          updateMegamenu(destKey);
+          
+          // Highlight selected item
+          document.querySelectorAll('.destination-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-600'));
+          item.classList.add('bg-blue-50', 'text-blue-600');
+        });
+      });
+
+      // Styles megamenu functionality using JSON data
+      function updateStylesMenu(styleKey) {
+        const style = t.styles[styleKey];
+        if (!style) return;
+
+        // Update description
+        const descContainer = document.getElementById('style-description');
+        descContainer.innerHTML = `<p class="text-sm text-gray-600">${style.description}</p>`;
+
+        // Update image and name
+        const image = document.getElementById('style-image');
+        image.src = `https://images.unsplash.com/${t.styles.images[styleKey]}?w=400&h=400&fit=crop`;
+        document.getElementById('style-name').textContent = style.name;
+      }
+
+      // Initialize styles menu with first item
+      const firstStyleKey = Object.keys(t.styles).find(key => !['title', 'images'].includes(key));
+      if (firstStyleKey) {
+        updateStylesMenu(firstStyleKey);
+        const firstStyleItem = document.querySelector(`[data-style="${firstStyleKey}"]`);
+        if (firstStyleItem) {
+          firstStyleItem.classList.add('bg-blue-50', 'text-blue-600');
+        }
+      }
+
+      // Add mouseenter handlers to style items
+      document.querySelectorAll('.style-item').forEach(item => {
+        item.addEventListener('mouseenter', (e) => {
+          const styleKey = item.dataset.style;
+          updateStylesMenu(styleKey);
+          
+          // Highlight selected item
+          document.querySelectorAll('.style-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-600'));
+          item.classList.add('bg-blue-50', 'text-blue-600');
+        });
+      });
+
+      // Styles container hover effect
+      const stylesContainer = document.getElementById('styles-container');
+      const stylesDropdown = document.getElementById('styles-dropdown');
+      let stylesTimeout;
+
+      stylesContainer?.addEventListener('mouseenter', () => {
+        clearTimeout(stylesTimeout);
+        stylesDropdown?.classList.remove('hidden');
+        navbar.classList.add('bg-white', 'shadow-md');
+        navbar.classList.remove('bg-transparent');
+        // Change text to dark
+        document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          el.classList.remove('text-white', 'hover:text-gray-300');
+          el.classList.add('text-gray-900', 'hover:text-gray-600');
+        });
+      });
+
+      stylesContainer?.addEventListener('mouseleave', () => {
+        stylesTimeout = setTimeout(() => {
+          stylesDropdown?.classList.add('hidden');
+          if (window.scrollY <= 50) {
+            navbar.classList.remove('bg-white', 'shadow-md');
+            navbar.classList.add('bg-transparent');
+            // Change text back to white
+            document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+              el.classList.remove('text-gray-900', 'hover:text-gray-600');
+              el.classList.add('text-white', 'hover:text-gray-300');
+            });
+          }
+        }, 200);
+      });
+
+      stylesDropdown?.addEventListener('mouseenter', () => {
+        clearTimeout(stylesTimeout);
+        stylesDropdown?.classList.remove('hidden');
+        navbar.classList.add('bg-white', 'shadow-md');
+        navbar.classList.remove('bg-transparent');
+        // Change text to dark
+        document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          el.classList.remove('text-white', 'hover:text-gray-300');
+          el.classList.add('text-gray-900', 'hover:text-gray-600');
+        });
+      });
+
+      stylesDropdown?.addEventListener('mouseleave', () => {
+        stylesTimeout = setTimeout(() => {
+          stylesDropdown?.classList.add('hidden');
+          if (window.scrollY <= 50) {
+            navbar.classList.remove('bg-white', 'shadow-md');
+            navbar.classList.add('bg-transparent');
+            // Change text back to white
+            document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+              el.classList.remove('text-gray-900', 'hover:text-gray-600');
+              el.classList.add('text-white', 'hover:text-gray-300');
+            });
+          }
+        }, 200);
       });
     </script>
 	</body>

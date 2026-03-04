@@ -2,10 +2,10 @@
   "nav": {
     "destinations": "Destinos",
     "tripStyles": "Estilos de Viagem",
-    "whyUs": "Viagens Curtas",
-    "journal": "Transporte",
+    "transport": "Transporte",
     "sustainability": "Sustentabilidade",
-    "contactUs": "Blog"
+    "blog": "Blog",
+    "contactUs": "Contate-nos"
   },
   "hero": {
     "yearsLabel": "20 ANOS",
@@ -103,6 +103,238 @@
   "commitment": {
     "text": "Na Inca's Paradise, nos comprometemos a acompanhá-lo em cada viagem com dedicação, transparência e calor humano. Cuidamos de cada detalhe, desde o planejamento até o retorno para casa, para que você viva uma experiência autêntica, segura e profundamente significativa. Não apenas guiamos viajantes: criamos momentos que inspiram, conectam e permanecem na alma.",
     "author": "Inca's Paradise"
+  },
+  "megamenu": {
+    "destinos": [
+      {
+        "key": "chachapoyas",
+        "name": "CHACHAPOYAS",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          {
+            "name": "Gata Malla",
+            "days": 3
+          },
+          {
+            "name": "Cânion do Marañón",
+            "days": 4
+          },
+          {
+            "name": "Lagoa de Pomacochas",
+            "days": 2
+          }
+        ]
+      },
+      {
+        "key": "iquitos",
+        "name": "IQUITOS",
+        "image": "photo-1469854523086-cc02fe5d8800",
+        "tours": [
+          {
+            "name": "Amazônia Profunda",
+            "days": 5
+          },
+          {
+            "name": "Rio Napo",
+            "days": 3
+          },
+          {
+            "name": "Reserva Allpahuayo",
+            "days": 2
+          }
+        ]
+      },
+      {
+        "key": "tarapoto",
+        "name": "TARAPOTO",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          {
+            "name": "Cachoeiras de Ahuashiyacú",
+            "days": 2
+          },
+          {
+            "name": "Lagoa Azul",
+            "days": 3
+          },
+          {
+            "name": "Rio Shilcayo",
+            "days": 2
+          }
+        ]
+      },
+      {
+        "key": "tambopata",
+        "name": "TAMBOPATA",
+        "image": "photo-1441974231531-c6227db76b6e",
+        "tours": [
+          {
+            "name": "Collpa de Araras",
+            "days": 3
+          },
+          {
+            "name": "Lago Sandoval",
+            "days": 4
+          },
+          {
+            "name": "Floresta Virgem",
+            "days": 2
+          }
+        ]
+      },
+      {
+        "key": "limaIcaNazca",
+        "name": "LIMA - ICA - NAZCA",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          {
+            "name": "Voo das Linhas de Nazca",
+            "days": 1
+          },
+          {
+            "name": "Oásis de Huacachina",
+            "days": 2
+          },
+          {
+            "name": "Circuito Arqueológico",
+            "days": 3
+          }
+        ]
+      },
+      {
+        "key": "arequipa",
+        "name": "AREQUIPA",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          {
+            "name": "Vulcão Misti",
+            "days": 2
+          },
+          {
+            "name": "Cânion do Colca",
+            "days": 3
+          },
+          {
+            "name": "Cidade Branca",
+            "days": 1
+          }
+        ]
+      },
+      {
+        "key": "puno",
+        "name": "PUNO",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          {
+            "name": "Ilhas dos Uros",
+            "days": 1
+          },
+          {
+            "name": "Taquile e Amantaní",
+            "days": 2
+          },
+          {
+            "name": "Lago Titicaca",
+            "days": 3
+          }
+        ]
+      },
+      {
+        "key": "cusco",
+        "name": "CUSCO",
+        "image": "photo-1587595431973-160550652147",
+        "tours": [
+          {
+            "name": "Machu Picchu Clássico",
+            "days": 2
+          },
+          {
+            "name": "Trilha Inca",
+            "days": 4
+          },
+          {
+            "name": "Vale Sagrado",
+            "days": 2
+          }
+        ]
+      },
+      {
+        "key": "copacabana",
+        "name": "COPACABANA - ILHA DO SOL",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          {
+            "name": "Ilha do Sol",
+            "days": 1
+          },
+          {
+            "name": "Santuário de Copacabana",
+            "days": 1
+          },
+          {
+            "name": "Lago Titicaca Bolívia",
+            "days": 2
+          }
+        ]
+      },
+      {
+        "key": "laPaz",
+        "name": "LA PAZ",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          {
+            "name": "Teleférico de La Paz",
+            "days": 1
+          },
+          {
+            "name": "Vale da Lua",
+            "days": 1
+          },
+          {
+            "name": "Cidade Mágica",
+            "days": 2
+          }
+        ]
+      },
+      {
+        "key": "uyuni",
+        "name": "UYUNI",
+        "image": "photo-1433838552652-f9a46b332c40",
+        "tours": [
+          {
+            "name": "Salar de Uyuni Clássico",
+            "days": 3
+          },
+          {
+            "name": "Pôr do Sol no Salar",
+            "days": 2
+          },
+          {
+            "name": "Lagoas Coloridas",
+            "days": 4
+          }
+        ]
+      },
+      {
+        "key": "sucre",
+        "name": "SUCRE",
+        "image": "photo-1506905925346-21bda4d32df4",
+        "tours": [
+          {
+            "name": "Cidade Branca Bolívia",
+            "days": 1
+          },
+          {
+            "name": "Cal Orck'o Dinossauros",
+            "days": 1
+          },
+          {
+            "name": "Arqueologia e Cultura",
+            "days": 2
+          }
+        ]
+      }
+    ]
   },
   "buttons": {
     "explore": "Explorar"
