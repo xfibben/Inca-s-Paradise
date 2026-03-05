@@ -5,7 +5,8 @@
     "transport": "Transport",
     "sustainability": "Sustainability",
     "blog": "Blog",
-    "contactUs": "Contact Us"
+    "contactUs": "Contact Us",
+    "comingSoon": "Coming Soon"
   },
   "hero": {
     "yearsLabel": "20 YEARS",
@@ -30,24 +31,60 @@
       "biodiversity": "landing page images/estilos/5. Viajes a medida.webp"
     },
     "adventure": {
-      "name": "ADVENTURE",
-      "description": "Exciting expeditions and adrenaline-pumping activities"
+      "name": "ADVENTURE AND TREKKING"
     },
     "gastronomy": {
-      "name": "GASTRONOMY",
-      "description": "Authentic culinary experiences and local flavors"
+      "name": "FOODIE"
     },
     "nature": {
-      "name": "NATURE",
-      "description": "Deep connection with ecosystems and unique landscapes"
+      "name": "WELLNESS & NATURE"
     },
     "lifestyle": {
-      "name": "LIFESTYLE",
-      "description": "Immersion in local culture and traditions"
+      "name": "LIFESTYLE & CULTURE"
     },
     "biodiversity": {
-      "name": "BIODIVERSITY",
-      "description": "Wildlife observation and pristine nature"
+      "name": "TAILOR MADE"
+    }
+  },
+  "stylesMenu": {
+    "travelStyles": {
+      "name": "Travel Styles",
+      "description": "Explore our 5 unique travel styles designed for every type of adventurer.",
+      "image": "landing page images/estilos/4. Naturaleza.jpg",
+      "subitems": {
+        "adventure": {
+          "name": "ADVENTURE AND TREKKING",
+          "image": "landing page images/estilos/1. Aventura y trekking.jpg"
+        },
+        "gastronomy": {
+          "name": "FOODIE",
+          "image": "landing page images/estilos/2. Gastronomico.jpg"
+        },
+        "lifestyle": {
+          "name": "LIFESTYLE & CULTURE",
+          "image": "landing page images/estilos/3. Estilo de vida y cultura.jpeg"
+        },
+        "nature": {
+          "name": "WELLNESS & NATURE",
+          "image": "landing page images/estilos/4. Naturaleza.jpg"
+        },
+        "biodiversity": {
+          "name": "TAILOR MADE",
+          "image": "landing page images/estilos/5. Viajes a medida.webp"
+        }
+      }
+    },
+    "smallTrips": {
+      "name": "Small Trips",
+      "description": "Coming Soon - Short and exciting experiences for your next trip.",
+      "image": "",
+      "subitems": {}
+    },
+    "packages": {
+      "name": "Packages",
+      "description": "Coming Soon - Special packages with the best of Peru.",
+      "image": "",
+      "subitems": {}
     }
   },
   "destinations": {
@@ -189,7 +226,7 @@
       {
         "key": "copacabana",
         "name": "COPACABANA - ISLAND OF THE SUN",
-        "image": "landing page images/destinos/5 Lima - Ica - Nazca.jpg",
+        "image": "landing page images/destinos/9. Isla del Sol - Copacabana.webp",
         "tours": [
           { "name": "Island of the Sun", "days": 1 },
           { "name": "Copacabana Sanctuary", "days": 1 },
@@ -322,5 +359,27 @@
         "image": "review2024"
       }
     ]
-  }
+  },
+  "certifications": [
+    {
+      "number": 1,
+      "title": "Travelers' Choice Awards – TripAdvisor",
+      "description": "Continuous recognition of the quality of our service and the satisfaction of our travelers on the TripAdvisor platform, positioning us as one of the best tour operators in the region."
+    },
+    {
+      "number": 2,
+      "title": "Innovation Award 2024 – Peruvian Association of Entrepreneurs (ASPEM)",
+      "description": "Awarded in recognition of our trajectory, sustained success, and constant commitment to innovation in tourism services, acknowledging our contribution to the development of tourism in Peru."
+    },
+    {
+      "number": 3,
+      "title": "Quality and Commitment Seal – MINCETUR and CALTUR",
+      "description": "Award certifying our rigorous application of international quality standards and our permanent commitment to excellence in customer service."
+    },
+    {
+      "number": 4,
+      "title": "Tourism Commitment Recognition Diploma – PROMPERÚ",
+      "description": "Official recognition for successfully completing PROMPERÚ's commercial promotion programs, demonstrating our commitment to promoting the image of Peruvian tourism worldwide."
+    }
+  ]
 }

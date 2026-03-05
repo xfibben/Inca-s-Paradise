@@ -41,15 +41,15 @@ const { t } = Astro.props;
   </div>
 
   <!-- Content -->
-  <div class="relative h-full flex flex-col justify-center items-center text-center px-4">
+  <div class="relative h-full flex flex-col justify-start items-center text-center px-4 pt-20 md:pt-30">
 
     <!-- Main Heading -->
-    <h1 class="text-4xl md:text-5xl lg:text-6xl text-white leading-tight mb-6 md:mb-8 max-w-4xl">
+    <h1 class="text-4xl md:text-5xl lg:text-6xl text-white leading-tight mb-12 md:mb-16 max-w-4xl font-serif" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
       {t.hero.mainTitle}
     </h1>
 
     <!-- Subheading -->
-    <p class="text-base md:text-lg lg:text-xl text-white/90 leading-relaxed max-w-3xl mb-8 md:mb-12">
+    <p class="text-base md:text-lg lg:text-xl text-white/90 leading-relaxed max-w-3xl mb-12 md:mb-16 md:pt- -20">
       {t.hero.subtitle}
     </p>
 

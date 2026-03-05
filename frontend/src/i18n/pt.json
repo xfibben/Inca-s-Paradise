@@ -5,7 +5,8 @@
     "transport": "Transporte",
     "sustainability": "Sustentabilidade",
     "blog": "Blog",
-    "contactUs": "Contate-nos"
+    "contactUs": "Fale Conosco",
+    "comingSoon": "Em Breve"
   },
   "hero": {
     "yearsLabel": "20 ANOS",
@@ -30,27 +31,61 @@
       "biodiversity": "landing page images/estilos/5. Viajes a medida.webp"
     },
     "adventure": {
-      "name": "AVENTURA",
-      "description": "Expedições emocionantes e atividades cheias de adrenalina"
+      "name": "AVENTURA & CAMINHADAS"
     },
     "gastronomy": {
-      "name": "GASTRONOMIA",
-      "description": "Experiências culinárias autênticas e sabores locais"
+      "name": "GASTRONOMIA"
     },
     "nature": {
-      "name": "NATUREZA",
-      "description": "Conexão profunda com ecossistemas e paisagens únicas"
+      "name": "NATUREZA"
     },
     "lifestyle": {
-      "name": "ESTILO DE VIDA",
-      "description": "Imersão na cultura e tradições locais"
+      "name": "ESTILO DE VIDA & CULTURA"
     },
     "biodiversity": {
-      "name": "BIODIVERSIDADE",
-      "description": "Observação de vida selvagem e natureza pristina"
+      "name": "VIAGENS SOB MEDIDA"
     }
-  },
-  "destinations": {
+  },  "stylesMenu": {
+    "travelStyles": {
+      "name": "Estilos de Viagem",
+      "description": "Explore nossos 5 estilos de viagem únicos projetados para cada tipo de aventureiro.",
+      "image": "landing page images/estilos/4. Naturaleza.jpg",
+      "subitems": {
+        "adventure": {
+          "name": "AVENTURA & CAMINHADAS",
+          "image": "landing page images/estilos/1. Aventura y trekking.jpg"
+        },
+        "gastronomy": {
+          "name": "GASTRONOMIA",
+          "image": "landing page images/estilos/2. Gastronomico.jpg"
+        },
+        "lifestyle": {
+          "name": "ESTILO DE VIDA & CULTURA",
+          "image": "landing page images/estilos/3. Estilo de vida y cultura.jpeg"
+        },
+        "nature": {
+          "name": "NATUREZA",
+          "image": "landing page images/estilos/4. Naturaleza.jpg"
+        },
+        "biodiversity": {
+          "name": "VIAGENS SOB MEDIDA",
+          "image": "landing page images/estilos/5. Viajes a medida.webp"
+        }
+      }
+    },
+    "smallTrips": {
+      "name": "Pequenas Viagens",
+      "description": "Em Breve - Experiências curtas e emocionantes para sua próxima viagem.",
+      "image": "",
+      "subitems": {}
+    },
+    "packages": {
+      "name": "Pacotes",
+      "description": "Em Breve - Pacotes especiais com o melhor do Peru.",
+      "image": "",
+      "subitems": {}
+    }
+  },  "destinations": {
     "chachapoyas": {
       "name": "CHACHAPOYAS",
       "description": "Descubra ruínas antigas e paisagens mágicas da floresta nublada."
@@ -261,7 +296,7 @@
       {
         "key": "copacabana",
         "name": "COPACABANA - ILHA DO SOL",
-        "image": "landing page images/destinos/5 Lima - Ica - Nazca.jpg",
+        "image": "landing page images/destinos/9. Isla del Sol - Copacabana.webp",
         "tours": [
           {
             "name": "Ilha do Sol",
@@ -430,5 +465,27 @@
         "image": "review2024"
       }
     ]
-  }
+  },
+  "certifications": [
+    {
+      "number": 1,
+      "title": "Prêmio Travelers' Choice – TripAdvisor",
+      "description": "Reconhecimento contínuo da qualidade de nosso serviço e da satisfação de nossos viajantes na plataforma TripAdvisor, nos posicionando como um dos melhores operadores turísticos da região."
+    },
+    {
+      "number": 2,
+      "title": "Prêmio de Inovação 2024 – Associação Peruana de Empresários (ASPEM)",
+      "description": "Concedido em reconhecimento da nossa trajetória, sucesso sustentado e compromisso constante com a inovação em serviços turísticos, reconhecendo nossa contribuição ao desenvolvimento do turismo no Peru."
+    },
+    {
+      "number": 3,
+      "title": "Selo de Qualidade e Compromisso – MINCETUR e CALTUR",
+      "description": "Prêmio que certifica nossa aplicação rigorosa de padrões internacionais de qualidade e nosso compromisso permanente com a excelência no atendimento ao cliente."
+    },
+    {
+      "number": 4,
+      "title": "Diploma de Reconhecimento ao Compromisso com o Turismo – PROMPERÚ",
+      "description": "Reconhecimento oficial por completar com sucesso os programas de promoção comercial da PROMPERÚ, demonstrando nosso compromisso em promover a imagem do turismo peruano no mundo."
+    }
+  ]
 }

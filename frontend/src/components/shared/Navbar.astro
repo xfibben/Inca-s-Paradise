@@ -9,6 +9,57 @@ interface Props {
 const { t, currentLang } = Astro.props;
 ---
 
+<style>
+  /* Force black text in all dropdowns by default */
+  #megamenu-dropdown,
+  #styles-dropdown,
+  #sustainability-dropdown {
+    color: #000 !important;
+  }
+
+  /* Avoid overriding white text elements */
+  #megamenu-dropdown *:not(#megamenu-dest-name):not(.style-item-grid h3),
+  #styles-dropdown *:not(.style-item-grid h3),
+  #sustainability-dropdown * {
+    color: inherit !important;
+  }
+
+  /* Ensure specific elements remain dark/readable */
+  #megamenu-dropdown a,
+  #styles-dropdown a,
+  #sustainability-dropdown a {
+    color: #1f2937 !important;
+  }
+
+  #megamenu-dropdown h3,
+  #sustainability-dropdown h3 {
+    color: #111827 !important;
+  }
+
+  /* White text for style items inside images */
+  #styles-dropdown .style-item-grid h3 {
+    color: #ffffff !important;
+  }
+
+  #megamenu-dropdown p,
+  #styles-dropdown p:not(#styles-menu-footer),
+  #sustainability-dropdown p {
+    color: #374151 !important;
+  }
+
+  /* White text for destination name in megamenu - HIGHEST PRIORITY */
+  #megamenu-dropdown #megamenu-dest-name,
+  p#megamenu-dest-name {
+    color: #ffffff !important;
+    font-weight: bold !important;
+  }
+
+  /* White text for styles menu footer - OVERRIDE ALL */
+  #styles-menu-footer {
+    color: #ffffff !important;
+  }
+</style>
+
 <!-- Navbar -->
 <nav id="navbar" class="fixed top-0 w-full bg-transparent transition-all duration-300 z-50">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,13 +72,13 @@ const { t, currentLang } = Astro.props;
       </div>
 
       <!-- Desktop Menu -->
-      <div class="hidden md:flex items-center space-x-8">
+      <div class="hidden md:flex items-center space-x-8 h-24">
         <!-- Destinations with Megamenu -->
-        <div class="relative" id="megamenu-container">
-          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.destinations}</a>
+        <div class="relative h-full flex items-center" id="megamenu-container">
+          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.destinations}</a>
           
           <!-- Megamenu -->
-          <div id="megamenu-dropdown" class="fixed left-0 right-0 top-24 pt-2 hidden z-50 w-full">
+          <div id="megamenu-dropdown" class="fixed left-0 right-0 top-24 pt-0 hidden z-50 w-full">
             <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
               <!-- Megamenu Container -->
               <div class="flex h-full">
@@ -88,67 +139,81 @@ const { t, currentLang } = Astro.props;
         </div>
 
         <!-- Trip Styles with Megamenu -->
-        <div class="relative" id="styles-container">
-          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.tripStyles}</a>
+        <div class="relative h-full flex items-center" id="styles-container">
+          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.tripStyles}</a>
           
-          <!-- Styles Megamenu -->
-          <div id="styles-dropdown" class="fixed left-0 right-0 top-24 pt-2 hidden z-50 w-full">
-            <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
-              <!-- Megamenu Container -->
+          <!-- Styles Megamenu - Sidebar + Grid Layout -->
+          <div id="styles-dropdown" class="fixed left-0 right-0 top-24 pt-0 hidden z-50 w-full">
+            <div class="bg-white shadow-2xl overflow-hidden" style="height: 58vh;">
+              <!-- Container for sidebar + grid -->
               <div class="flex h-full">
-                <!-- Column 1: Styles List with Vertical Slider -->
-                <div class="w-1/3 bg-gray-50 border-r border-gray-200 flex flex-col relative">
-                  <!-- Scroll Up Button -->
-                  <button id="scroll-up-styles" class="bg-white/90 hover:bg-white p-2 border-b border-gray-200 transition">
-                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-                    </svg>
+                <!-- Sidebar - 1/6 width -->
+                <div class="w-1/6 bg-gray-50 border-r border-gray-200 flex flex-col">
+                  <button class="styles-menu-btn w-full px-4 py-4 text-left text-sm font-medium text-blue-600 hover:bg-blue-50 transition border-b-2 border-blue-600" data-menu="travelStyles">
+                    {t.stylesMenu.travelStyles.name}
                   </button>
-                  
-                  <!-- Styles scroll container -->
-                  <div id="styles-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
-                    {Object.entries(t.styles).filter(([key]: [string, any]) => !['title', 'images'].includes(key)).map(([key, style]: [string, any]) => {
-                      const styleObj = style as { name: string; description: string };
-                      return (
-                        <button
-                          class="style-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 whitespace-normal"
-                          data-style={key}
-                          data-name={styleObj.name}
-                          data-image={(t.styles as any).images[key]}
-                          data-description={styleObj.description}
-                        >
-                          {styleObj.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  
-                  <!-- Scroll Down Button -->
-                  <button id="scroll-down-styles" class="bg-white/90 hover:bg-white p-2 border-t border-gray-200 transition">
-                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                    </svg>
+                  <button class="styles-menu-btn w-full px-4 py-4 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 transition border-b-2 border-transparent" data-menu="smallTrips">
+                    {t.stylesMenu.smallTrips.name}
                   </button>
-                </div>
+                  <button class="styles-menu-btn w-full px-4 py-4 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 transition border-b-2 border-transparent" data-menu="packages">
+                    {t.stylesMenu.packages.name}
+                  </button>
 
-                <!-- Column 2: Description -->
-                <div class="w-1/3 bg-white p-6 border-r border-gray-200 overflow-y-auto">
-                  <div id="style-description">
-                    <p class="text-sm text-gray-600"></p>
+                  <!-- Menu Footer with Image and Description -->
+                  <div class="mt-auto ml-auto mr-auto mb-2 bg-white relative w-52 h-44 overflow-hidden">
+                    <img id="styles-footer-image" src="" alt="Menu" class="w-full h-full object-cover" />
+                    <div class="absolute inset-0 bg-black/10"></div>
+                    <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-3">
+                      <p id="styles-menu-footer" class="text-xs leading-tight" style="color: white !important;">
+                        <!-- Will be populated by JavaScript -->
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <!-- Column 3: Image -->
-                <div class="w-1/3 bg-gray-100 overflow-hidden relative">
-                  <img
-                    id="style-image"
-                    src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop"
-                    alt="Style"
-                    class="w-full h-full object-cover"
-                  />
-                  <div class="absolute inset-0 bg-black/30"></div>
-                  <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
-                    <p id="style-name" class="text-white font-bold text-lg">AVENTURA</p>
+                <!-- Content Area - 5/6 width -->
+                <div class="w-5/6 bg-white overflow-hidden h-full">
+                  <!-- Travel Styles Grid (default) -->
+                  <div class="styles-menu-content h-full" id="content-travelStyles">
+                    <div class="grid grid-cols-5 gap-2 h-full w-full px-2 py-2">
+                      {Object.entries(t.stylesMenu.travelStyles.subitems).map(([key, style]: [string, any]) => {
+                        const styleObj = style as { name: string; image: string };
+                        return (
+                          <div class="style-item-grid group relative overflow-hidden cursor-pointer transition-all duration-300 hover:z-20" data-style={key}>
+                            <!-- Image -->
+                            <img 
+                              src={styleObj.image.startsWith('landing page images') ? `/${styleObj.image}` : `https://images.unsplash.com/${styleObj.image}?w=500&h=600&fit=crop`}
+                              alt={styleObj.name}
+                              class="w-full h-full object-cover"
+                            />
+                            
+                            <!-- Overlay -->
+                            <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
+                            
+                            <!-- Content with white line on hover -->
+                            <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white border-b-2 border-transparent group-hover:border-white">
+                              <h3 class="text-xs lg:text-sm font-bold transition-colors duration-300" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
+                                {styleObj.name}
+                              </h3>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <!-- Small Trips (empty) -->
+                  <div class="styles-menu-content hidden" id="content-smallTrips">
+                    <div class="h-full flex items-center justify-center text-gray-400">
+                      <p class="text-lg">{t.stylesMenu.smallTrips.name} - {t.nav.comingSoon}</p>
+                    </div>
+                  </div>
+
+                  <!-- Packages (empty) -->
+                  <div class="styles-menu-content hidden" id="content-packages">
+                    <div class="h-full flex items-center justify-center text-gray-400">
+                      <p class="text-lg">{t.stylesMenu.packages.name} - {t.nav.comingSoon}</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -157,11 +222,11 @@ const { t, currentLang } = Astro.props;
         </div>
 
         <!-- Sustainability with Megamenu -->
-        <div class="relative" id="sustainability-container">
-          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.sustainability}</a>
+        <div class="relative h-full flex items-center" id="sustainability-container">
+          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.sustainability}</a>
           
           <!-- Sustainability Megamenu -->
-          <div id="sustainability-dropdown" class="fixed left-0 right-0 top-24 pt-2 hidden z-50 w-full">
+          <div id="sustainability-dropdown" class="fixed left-0 right-0 top-24 pt-0 hidden z-50 w-full">
             <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
               <!-- Megamenu Container -->
               <div class="flex h-full">
@@ -225,8 +290,8 @@ const { t, currentLang } = Astro.props;
           </div>
         </div>
 
-        <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.transport}</a>
-        <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.blog}</a>
+        <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.transport}</a>
+        <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.blog}</a>
       </div>
 
       <!-- Language Switcher + Contact Button -->
@@ -254,15 +319,34 @@ const { t, currentLang } = Astro.props;
         <button id="mobile-destinations-btn" class="block w-full text-left px-4 py-2 text-white text-sm hover:text-gray-300 transition bg-white/10 rounded">
           {t.nav.destinations} ▼
         </button>
-        <div id="mobile-destinations-menu" class="hidden bg-gray-100 rounded mt-1 max-h-60 overflow-y-auto">
+        <div id="mobile-destinations-menu" class="hidden rounded mt-1 max-h-96 overflow-y-auto">
           <div id="mobile-destinations-list" class="flex flex-col">
-            {t.megamenu.destinos.map((dest: any) => (
-              <button class="mobile-destination-item w-full text-left px-4 py-2 text-gray-700 text-sm hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-200" data-dest={dest.key} data-name={dest.name}>
-                {dest.name}
-              </button>
-            ))}
+            <div class="flex flex-col gap-1 p-1">
+              {t.megamenu.destinos.slice(0, 6).map((dest: any) => (
+                <button class="mobile-destination-item relative h-16 overflow-hidden rounded" data-dest={dest.key} data-name={dest.name}>
+                  <img src={dest.image.startsWith('landing page images') ? `/${dest.image}` : dest.image} alt={dest.name} class="w-full h-full object-cover" />
+                  <div class="absolute inset-0 bg-black/50"></div>
+                  <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.name}</span>
+                </button>
+              ))}
+            </div>
+            <!-- Hidden remaining destinations -->
+            <div id="mobile-destinations-extra" class="hidden flex flex-col gap-1 px-1 pb-1">
+              {t.megamenu.destinos.slice(6).map((dest: any) => (
+                <button class="mobile-destination-item relative h-16 overflow-hidden rounded" data-dest={dest.key} data-name={dest.name}>
+                  <img src={dest.image.startsWith('landing page images') ? `/${dest.image}` : dest.image} alt={dest.name} class="w-full h-full object-cover" />
+                  <div class="absolute inset-0 bg-black/50"></div>
+                  <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.name}</span>
+                </button>
+              ))}
+            </div>
+            <!-- Show all button -->
+            <button id="mobile-destinations-show-all" class="mx-1 mb-1 py-2 text-xs text-blue-600 font-medium bg-blue-50 hover:bg-blue-100 rounded transition text-center">
+              Ver todos los destinos ▼
+            </button>
           </div>
           <div id="mobile-destinations-details" class="hidden border-t border-gray-200 p-4">
+            <button id="mobile-dest-back" class="text-blue-600 text-sm hover:text-blue-800 mb-2 font-medium">← Atrás</button>
             <h3 id="mobile-dest-name" class="font-bold text-gray-800 mb-3 text-sm"></h3>
             <div id="mobile-dest-tours" class="space-y-2">
               <!-- Tours will be inserted here -->
@@ -276,20 +360,33 @@ const { t, currentLang } = Astro.props;
         <button id="mobile-styles-btn" class="block w-full text-left px-4 py-2 text-white text-sm hover:text-gray-300 transition bg-white/10 rounded">
           {t.nav.tripStyles} ▼
         </button>
-        <div id="mobile-styles-menu" class="hidden bg-gray-100 rounded mt-1 max-h-60 overflow-y-auto">
-          <div id="mobile-styles-list" class="flex flex-col">
-            {Object.entries(t.styles).filter(([key]: [string, any]) => !['title', 'images'].includes(key)).map(([key, style]: [string, any]) => {
-              const styleObj = style as { name: string; description: string };
+        <div id="mobile-styles-menu" class="hidden rounded mt-1 max-h-72 overflow-y-auto">
+          <!-- Main Menu Options -->
+          <div id="mobile-styles-list" class="flex flex-col gap-1 p-1">
+            {Object.entries(t.stylesMenu).map(([key, item]: [string, any]) => {
+              const itemObj = item as { name: string; image: string };
               return (
-                <button class="mobile-style-item w-full text-left px-4 py-2 text-gray-700 text-sm hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-200" data-style={key} data-name={styleObj.name} data-description={styleObj.description}>
-                  {styleObj.name}
+                <button class="mobile-styles-option relative h-16 overflow-hidden rounded" data-option={key} data-name={itemObj.name}>
+                  {itemObj.image ? (
+                    <img src={itemObj.image.startsWith('landing page images') ? `/${itemObj.image}` : itemObj.image} alt={itemObj.name} class="w-full h-full object-cover" />
+                  ) : (
+                    <div class="w-full h-full bg-gray-400"></div>
+                  )}
+                  <div class="absolute inset-0 bg-black/50"></div>
+                  <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{itemObj.name}</span>
                 </button>
               );
             })}
           </div>
-          <div id="mobile-styles-details" class="hidden border-t border-gray-200 p-4">
-            <h3 id="mobile-style-name" class="font-bold text-gray-800 mb-3 text-sm"></h3>
-            <p id="mobile-style-description" class="text-gray-700 text-sm"></p>
+          <!-- Subitems Details -->
+          <div id="mobile-styles-details" class="hidden border-t border-gray-200 p-1">
+            <div class="flex items-center gap-2 p-2">
+              <button id="mobile-styles-back" class="text-blue-600 text-sm hover:text-blue-800 font-medium">← Atrás</button>
+              <h3 id="mobile-style-name" class="font-bold text-gray-800 text-sm"></h3>
+            </div>
+            <div id="mobile-style-subitems" class="p-0">
+              <!-- Subitems will be inserted here -->
+            </div>
           </div>
         </div>
       </div>
@@ -463,19 +560,6 @@ const { t, currentLang } = Astro.props;
     destinationsScroll?.scrollBy({ top: scrollAmount, behavior: 'smooth' });
   });
 
-  // Vertical slider for styles
-  const scrollUpStylesBtn = document.getElementById('scroll-up-styles');
-  const scrollDownStylesBtn = document.getElementById('scroll-down-styles');
-  const stylesScroll = document.getElementById('styles-scroll');
-
-  scrollUpStylesBtn?.addEventListener('click', () => {
-    stylesScroll?.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
-  });
-
-  scrollDownStylesBtn?.addEventListener('click', () => {
-    stylesScroll?.scrollBy({ top: scrollAmount, behavior: 'smooth' });
-  });
-
   // Destinations megamenu functionality
   function updateMegamenu(destKey) {
     const destination = t.megamenu.destinos.find(d => d.key === destKey);
@@ -508,41 +592,6 @@ const { t, currentLang } = Astro.props;
       updateMegamenu(destKey);
       
       document.querySelectorAll('.destination-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-600'));
-      item.classList.add('bg-blue-50', 'text-blue-600');
-    });
-  });
-
-  // Styles megamenu functionality
-  function updateStylesMenu(styleKey) {
-    const style = t.styles[styleKey];
-    if (!style) return;
-
-    const descContainer = document.getElementById('style-description');
-    descContainer.innerHTML = `<p class="text-sm text-gray-600">${style.description}</p>`;
-
-    const image = document.getElementById('style-image');
-    const styleImage = t.styles.images[styleKey];
-    image.src = styleImage.startsWith('landing page images')
-      ? `/${styleImage}`
-      : `https://images.unsplash.com/${styleImage}?w=400&h=400&fit=crop`;
-    document.getElementById('style-name').textContent = style.name;
-  }
-
-  const firstStyleKey = Object.keys(t.styles).find(key => !['title', 'images'].includes(key));
-  if (firstStyleKey) {
-    updateStylesMenu(firstStyleKey);
-    const firstStyleItem = document.querySelector(`[data-style="${firstStyleKey}"]`);
-    if (firstStyleItem) {
-      firstStyleItem.classList.add('bg-blue-50', 'text-blue-600');
-    }
-  }
-
-  document.querySelectorAll('.style-item').forEach(item => {
-    item.addEventListener('mouseenter', (e) => {
-      const styleKey = item.dataset.style;
-      updateStylesMenu(styleKey);
-      
-      document.querySelectorAll('.style-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-600'));
       item.classList.add('bg-blue-50', 'text-blue-600');
     });
   });
@@ -598,6 +647,54 @@ const { t, currentLang } = Astro.props;
       }
     }, 200);
   });
+
+  // Styles Menu Tabs functionality
+  function updateStylesMenuFooter(menu) {
+    const footerText = document.getElementById('styles-menu-footer');
+    const footerImage = document.getElementById('styles-footer-image');
+    
+    const menuItem = t.stylesMenu[menu];
+    if (!menuItem) return;
+    
+    // Update text
+    footerText.textContent = menuItem.description || '';
+    
+    // Update image
+    if (menuItem.image) {
+      footerImage.src = menuItem.image.startsWith('landing page images') ? '/' + menuItem.image : menuItem.image;
+    } else {
+      footerImage.src = '';
+    }
+  }
+
+  document.querySelectorAll('.styles-menu-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const menu = btn.dataset.menu;
+      
+      // Update active button with border-bottom and blue text
+      document.querySelectorAll('.styles-menu-btn').forEach(b => {
+        b.classList.remove('border-blue-600', 'text-blue-600');
+        b.classList.add('border-transparent', 'text-gray-700');
+      });
+      btn.classList.remove('border-transparent', 'text-gray-700');
+      btn.classList.add('border-blue-600', 'text-blue-600');
+      
+      // Update content
+      document.querySelectorAll('.styles-menu-content').forEach(content => {
+        content.classList.add('hidden');
+      });
+      const activeContent = document.getElementById(`content-${menu}`);
+      if (activeContent) {
+        activeContent.classList.remove('hidden');
+      }
+      
+      // Update footer
+      updateStylesMenuFooter(menu);
+    });
+  });
+
+  // Initialize first menu
+  updateStylesMenuFooter('travelStyles');
 
   // Vertical slider for sustainability
   const scrollUpSustBtn = document.getElementById('scroll-up-sustainability');
@@ -734,6 +831,16 @@ const { t, currentLang } = Astro.props;
     mobileStylesMenu?.classList.add('hidden');
   });
 
+  // Show all destinations toggle
+  document.getElementById('mobile-destinations-show-all')?.addEventListener('click', () => {
+    const extra = document.getElementById('mobile-destinations-extra');
+    const btn = document.getElementById('mobile-destinations-show-all');
+    if (extra && btn) {
+      extra.classList.toggle('hidden');
+      btn.textContent = extra.classList.contains('hidden') ? 'Ver todos los destinos ▼' : 'Ver menos ▲';
+    }
+  });
+
   // Mobile Destinations Selection
   document.querySelectorAll('.mobile-destination-item').forEach(item => {
     item.addEventListener('click', () => {
@@ -758,50 +865,64 @@ const { t, currentLang } = Astro.props;
           </div>
         `).join('');
       }
-
-      const backBtn = document.createElement('button');
-      backBtn.className = 'w-full text-left px-0 py-2 text-blue-600 text-sm hover:text-blue-800 transition mt-3 border-t border-gray-300 pt-3';
-      backBtn.textContent = '← Volver';
-      backBtn.addEventListener('click', () => {
-        mobileDestinationsList?.classList.remove('hidden');
-        mobileDestinationsDetails?.classList.add('hidden');
-      });
-      
-      if (toursContainer && !toursContainer.nextElementSibling?.classList.contains('back-btn')) {
-        backBtn.className += ' back-btn';
-        toursContainer.parentElement?.appendChild(backBtn);
-      }
     });
   });
 
-  // Mobile Styles Selection
-  document.querySelectorAll('.mobile-style-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const styleKey = item.getAttribute('data-style');
-      const styleName = item.getAttribute('data-name');
-      const styleDescription = item.getAttribute('data-description');
+  // Back button for destinations
+  document.getElementById('mobile-dest-back')?.addEventListener('click', () => {
+    mobileDestinationsList?.classList.remove('hidden');
+    mobileDestinationsDetails?.classList.add('hidden');
+  });
+
+  // Mobile Styles Selection - Options (travelStyles, smallTrips, packages)
+  document.querySelectorAll('.mobile-styles-option').forEach(option => {
+    option.addEventListener('click', () => {
+      const optionKey = option.getAttribute('data-option');
+      const optionName = option.getAttribute('data-name');
+      
+      const menuItem = t.stylesMenu[optionKey];
+      if (!menuItem) return;
 
       mobileStylesList?.classList.add('hidden');
       mobileStylesDetails?.classList.remove('hidden');
 
       const styleNameEl = document.getElementById('mobile-style-name');
-      const styleDescEl = document.getElementById('mobile-style-description');
-      if (styleNameEl) styleNameEl.textContent = styleName;
-      if (styleDescEl) styleDescEl.textContent = styleDescription;
+      if (styleNameEl) styleNameEl.textContent = optionName;
 
-      const backBtn = document.createElement('button');
-      backBtn.className = 'w-full text-left px-0 py-2 text-blue-600 text-sm hover:text-blue-800 transition mt-4 border-t border-gray-300 pt-3 back-btn';
-      backBtn.textContent = '← Volver';
-      backBtn.addEventListener('click', () => {
-        mobileStylesList?.classList.remove('hidden');
-        mobileStylesDetails?.classList.add('hidden');
-        backBtn.remove();
-      });
-      
-      if (styleDescEl && !styleDescEl.parentElement?.querySelector('.back-btn')) {
-        styleDescEl.parentElement?.appendChild(backBtn);
+      const subitemsContainer = document.getElementById('mobile-style-subitems');
+      if (subitemsContainer) {
+        const subitems = menuItem.subitems || {};
+        if (Object.keys(subitems).length === 0) {
+          subitemsContainer.innerHTML = `<p class="text-gray-600 text-sm italic">${menuItem.description || 'Coming Soon...'}</p>`;
+        } else {
+          subitemsContainer.innerHTML = `<div class="flex flex-col gap-1">${Object.entries(subitems).map(([key, subitem]) => {
+            const imgSrc = subitem.image ? (subitem.image.startsWith('landing page images') ? '/' + subitem.image : subitem.image) : '';
+            return `
+              <button class="relative h-16 overflow-hidden rounded" data-subitem="${key}" data-name="${subitem.name}">
+                ${imgSrc ? `<img src="${imgSrc}" alt="${subitem.name}" class="w-full h-full object-cover" />` : `<div class="w-full h-full bg-gray-400"></div>`}
+                <div class="absolute inset-0 bg-black/50"></div>
+                <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">${subitem.name}</span>
+              </button>
+            `;
+          }).join('')}</div>`;
+          
+          // Add handlers for subitems
+          subitemsContainer?.querySelectorAll('button').forEach(subitemBtn => {
+            subitemBtn.addEventListener('click', () => {
+              const subitemName = subitemBtn.getAttribute('data-name');
+              if (styleNameEl) styleNameEl.textContent = subitemName;
+            });
+          });
+        }
       }
     });
+  });
+
+  // Back button for styles menu
+  const mobileStylesBackBtn = document.getElementById('mobile-styles-back');
+  mobileStylesBackBtn?.addEventListener('click', () => {
+    mobileStylesList?.classList.remove('hidden');
+    mobileStylesDetails?.classList.add('hidden');
   });
 
   // Mobile Sustainability Selection

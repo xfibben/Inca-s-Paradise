@@ -4,13 +4,31 @@ interface Props {
 }
 
 const { t } = Astro.props;
+
+// Configuración de tamaños para las imágenes trip.webp por año
+// Modifica los valores según el tamaño real de cada imagen
+const tripImageSizes: Record<number, { mobile: string; tablet: string; desktop: string }> = {
+  2017: { mobile: 'h-48', tablet: 'md:h-72', desktop: 'lg:h-96' },
+  2018: { mobile: 'h-48', tablet: 'md:h-72', desktop: 'lg:h-96' },
+  2019: { mobile: 'h-48', tablet: 'md:h-72', desktop: 'lg:h-96' },
+  2020: { mobile: 'h-80', tablet: 'md:h-[28rem]', desktop: 'lg:h-[36rem]' },
+  2023: { mobile: 'h-48', tablet: 'md:h-72', desktop: 'lg:h-96' },
+  2024: { mobile: 'h-80', tablet: 'md:h-[28rem]', desktop: 'lg:h-[36rem]' },
+};
+
+function getImageSizeClass(year: number): string {
+  const sizes = tripImageSizes[year];
+  return sizes 
+    ? `${sizes.mobile} ${sizes.tablet} ${sizes.desktop}` 
+    : 'h-56 md:h-80 lg:h-96';
+}
 ---
 
 <!-- Reviews Carousel -->
-<section class="w-full h-screen relative overflow-hidden">
+<section class="w-full relative overflow-hidden" style="height: 600px;">
   {t.reviews.reviews.map((review: any, index: number) => (
     <div
-      class={`review-slide absolute inset-0 w-full h-full transition-opacity duration-1000 ${
+      class={`review-slide absolute inset-0 w-full h-full transition-opacity duration-2000 ${
         index === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'
       }`}
       data-index={index}
@@ -27,22 +45,35 @@ const { t } = Astro.props;
 
       <!-- Content Container - Divided Layout -->
       <div class="absolute inset-0 w-full h-full flex">
-        <!-- Left Side - Logo -->
-        <div class="w-1/2 h-full flex items-center justify-center pl-6 md:pl-12 lg:pl-20">
+        <!-- Left Side - Logo (50%) -->
+        <div class="w-1/2 h-full flex items-center justify-center">
           <img 
-            src="/landing%20page%20images/reviews/tripadvisor.svg" 
-            alt="TripAdvisor" 
-            class="h-40 md:h-56 lg:h-72 w-auto brightness-0 invert"
+            src={`/landing%20page%20images/reviews/${review.year}trip.webp`}
+            alt="Trip Logo" 
+            class={`w-auto brightness-0 invert ${getImageSizeClass(review.year)}`}
           />
         </div>
 
-        <!-- Right Side - Content -->
+        <!-- Right Side - Content (50%) -->
         <div class="w-1/2 h-full flex items-center justify-start pr-6 md:pr-12 lg:pr-20">
           <div class="w-full text-white">
             <!-- Review Title -->
-            <h3 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-8 leading-tight">
+            <h3 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
               {review.title}
             </h3>
+
+            <!-- Green Dots with Rating -->
+            <div class="flex items-center gap-4 mb-8">
+              <span class="text-lg md:text-base ">4.9</span>
+              <div class="flex gap-2">
+                <div class="w-5 h-5 rounded-full bg-[#00852f]"></div>
+                <div class="w-5 h-5 rounded-full bg-[#00852f]"></div>
+                <div class="w-5 h-5 rounded-full bg-[#00852f]"></div>
+                <div class="w-5 h-5 rounded-full bg-[#00852f]"></div>
+                <div class="w-5 h-5 rounded-full bg-[#00852f]"></div>
+              </div>
+              <span class="text-sm md:text-base text-gray-300">(151 opiniones)</span>
+            </div>
 
             <!-- Review Opinion -->
             <div class="max-h-56 md:max-h-72 overflow-y-auto pr-4 mb-8">
@@ -60,7 +91,7 @@ const { t } = Astro.props;
                 href={review.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="px-6 py-2 bg-[#00AF87] hover:bg-[#009970] text-white font-bold rounded transition duration-300"
+                class="px-6 py-2 bg-[#00852f] hover:bg-[#006b27] text-white font-bold rounded transition duration-3000"
               >
                 {t.buttons.goToComment}
               </a>
