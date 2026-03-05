@@ -23,11 +23,11 @@
   "styles": {
     "title": "Nossos Estilos de Viagem",
     "images": {
-      "adventure": "photo-1506905925346-21bda4d32df4",
-      "gastronomy": "photo-1571115764595-644a262f8dba",
-      "nature": "photo-1506905925346-21bda4d32df4",
-      "lifestyle": "photo-1507003211169-0a1dd7228f2d",
-      "biodiversity": "photo-1466921783906-260fc53bfc26"
+      "adventure": "landing page images/estilos/1. Aventura y trekking.jpg",
+      "gastronomy": "landing page images/estilos/2. Gastronomico.jpg",
+      "nature": "landing page images/estilos/4. Naturaleza.jpg",
+      "lifestyle": "landing page images/estilos/3. Estilo de vida y cultura.jpeg",
+      "biodiversity": "landing page images/estilos/5. Viajes a medida.webp"
     },
     "adventure": {
       "name": "AVENTURA",
@@ -109,7 +109,7 @@
       {
         "key": "chachapoyas",
         "name": "CHACHAPOYAS",
-        "image": "photo-1506905925346-21bda4d32df4",
+        "image": "landing page images/destinos/1. Amazonas - Kuelap.jpg",
         "tours": [
           {
             "name": "Gata Malla",
@@ -128,7 +128,7 @@
       {
         "key": "iquitos",
         "name": "IQUITOS",
-        "image": "photo-1469854523086-cc02fe5d8800",
+        "image": "landing page images/destinos/2 Loreto - Iquitos.jpg",
         "tours": [
           {
             "name": "Amazônia Profunda",
@@ -147,7 +147,7 @@
       {
         "key": "tarapoto",
         "name": "TARAPOTO",
-        "image": "photo-1506905925346-21bda4d32df4",
+        "image": "landing page images/destinos/3 San Martin-Tarapoto.jpg",
         "tours": [
           {
             "name": "Cachoeiras de Ahuashiyacú",
@@ -166,7 +166,7 @@
       {
         "key": "tambopata",
         "name": "TAMBOPATA",
-        "image": "photo-1441974231531-c6227db76b6e",
+        "image": "landing page images/destinos/4. Tambopata.webp",
         "tours": [
           {
             "name": "Collpa de Araras",
@@ -185,7 +185,7 @@
       {
         "key": "limaIcaNazca",
         "name": "LIMA - ICA - NAZCA",
-        "image": "photo-1506905925346-21bda4d32df4",
+        "image": "landing page images/destinos/5 Lima - Ica - Nazca.jpg",
         "tours": [
           {
             "name": "Voo das Linhas de Nazca",
@@ -204,7 +204,7 @@
       {
         "key": "arequipa",
         "name": "AREQUIPA",
-        "image": "photo-1506905925346-21bda4d32df4",
+        "image": "landing page images/destinos/6 Arequipa.jpg",
         "tours": [
           {
             "name": "Vulcão Misti",
@@ -223,7 +223,7 @@
       {
         "key": "puno",
         "name": "PUNO",
-        "image": "photo-1506905925346-21bda4d32df4",
+        "image": "landing page images/destinos/7. Puno tinajani.webp",
         "tours": [
           {
             "name": "Ilhas dos Uros",
@@ -242,7 +242,7 @@
       {
         "key": "cusco",
         "name": "CUSCO",
-        "image": "photo-1587595431973-160550652147",
+        "image": "landing page images/destinos/8. Cusco Machu Picchu.jpg",
         "tours": [
           {
             "name": "Machu Picchu Clássico",
@@ -261,7 +261,7 @@
       {
         "key": "copacabana",
         "name": "COPACABANA - ILHA DO SOL",
-        "image": "photo-1506905925346-21bda4d32df4",
+        "image": "landing page images/destinos/5 Lima - Ica - Nazca.jpg",
         "tours": [
           {
             "name": "Ilha do Sol",
@@ -280,7 +280,7 @@
       {
         "key": "laPaz",
         "name": "LA PAZ",
-        "image": "photo-1506905925346-21bda4d32df4",
+        "image": "landing page images/destinos/10. Valle de las Animas - La Paz.jpg",
         "tours": [
           {
             "name": "Teleférico de La Paz",
@@ -299,7 +299,7 @@
       {
         "key": "uyuni",
         "name": "UYUNI",
-        "image": "photo-1433838552652-f9a46b332c40",
+        "image": "landing page images/destinos/12. Salar de Uyuni.jpg",
         "tours": [
           {
             "name": "Salar de Uyuni Clássico",
@@ -318,7 +318,7 @@
       {
         "key": "sucre",
         "name": "SUCRE",
-        "image": "photo-1506905925346-21bda4d32df4",
+        "image": "landing page images/destinos/11. Sucre.jpg",
         "tours": [
           {
             "name": "Cidade Branca Bolívia",
@@ -336,7 +336,99 @@
       }
     ]
   },
+  "sustainability": {
+    "title": "Sustainability: Inca's Paradise",
+    "images": {
+      "fairTourism": "landing page images/sostenibilidad/Turismo justo.jpg",
+      "sustainability": "landing page images/sostenibilidad/Sostenibilidad.jpg",
+      "socialProjects": "landing page images/sostenibilidad/Proyecto social.jpg"
+    },
+    "fairTourism": {
+      "name": "O TURISMO JUSTO",
+      "description": "O turismo justo é viajar com consciência e respeito, criando conexões genuínas com as pessoas e culturas que dão vida a cada destino. Cada experiência busca gerar um impacto positivo e deixar uma marca que transforma tanto o viajante quanto o lugar visitado."
+    },
+    "sustainability": {
+      "name": "SUSTENTABILIDADE",
+      "description": "Entendemos a sustentabilidade como um compromisso de longo prazo com os destinos que visitamos. Criamos experiências responsáveis que minimizam o impacto ambiental, apoiam as economias locais e protegem os ecossistemas e a identidade cultural, garantindo o bem-estar das comunidades hoje e no futuro."
+    },
+    "socialProjects": {
+      "name": "PROJETOS SOCIAIS",
+      "description": "Nossos projetos sociais buscam gerar um impacto positivo nas comunidades locais, apoiando iniciativas que fortalecem a economia local, preservam a cultura e promovem o desenvolvimento sustentável. Por meio do turismo responsável, contribuímos para criar oportunidades reais para as pessoas e os territórios que nos recebem."
+    }
+  },
+  "values": {
+    "title": "Nossos Valores",
+    "sustainabilityAuthenticity": {
+      "name": "Sustentabilidade / Autenticidade",
+      "description": "Promovemos o turismo responsável e autêntico no Peru e na Bolívia, em parceria com comunidades locais, cuidando do meio ambiente e incentivando experiências genuínas que conectam os viajantes à cultura viva de cada destino."
+    },
+    "reliability": {
+      "name": "Confiabilidade",
+      "description": "Uma experiência respaldada por anos de atuação, guias locais especializados e processos claros que garantem segurança, confiança e tranquilidade — desde o primeiro contato até o seu retorno para casa."
+    },
+    "humanityWarmth": {
+      "name": "Humanidade / Acolhimento",
+      "description": "Criamos experiências baseadas na proximidade, no respeito e na empatia, conectando viajantes com pessoas reais e culturas vivas. Por meio de guias locais, histórias compartilhadas e tradições autênticas, cada viagem se transforma em um encontro humano que vai além dos destinos."
+    },
+    "adventureSafety": {
+      "name": "Aventura e Segurança",
+      "description": "Exploramos rotas alternativas e experiências ativas para diferentes perfis de viajantes, unindo o espírito de aventura a guias certificados e protocolos que garantem segurança, confiança e tranquilidade em cada experiência."
+    },
+    "innovation": {
+      "name": "Inovação",
+      "description": "Integramos tecnologia e design digital para oferecer processos ágeis, uma experiência moderna e uma melhoria contínua baseada em feedback, inovação e novas formas de viajar."
+    }
+  },
   "buttons": {
-    "explore": "Explorar"
+    "explore": "Explorar",
+    "findOutMore": "Saiba Mais",
+    "goToComment": "Ir para Comentário"
+  },
+  "reviews": {
+    "title": "Experiências de Nossos Viajantes",
+    "reviews": [
+      {
+        "year": "2017",
+        "title": "Tour Puno-Bolivia",
+        "opinion": "Hice el viaje con Incas Paradise, y fue una excelente elección, atención personalizada, me hicieron un programa a la medida, cumpliendo con el programa y lo ofrecido en cada viaje. Los operadores escogidos en Bolivia excelentes. Los hoteles que nos dieron con todo lo necesario. Visitamos Sillustany, Islas de los Uros, Amantaní, Taquile. Luego Chucuito y la Puerta Interdimensional, lugar increíble. Una de las cosas impresionantes fue Tiahuanaco. El Salar de Uyuni con sus paisajes impresionantes y fotos alucinantes. Terminamos en Copacabana y la visita a las Islas del Sol y la Luna. Gracias Gumercinda, Willy, Juan Carlos, Luis y los diferentes guías que nos llevaron por el Altiplano.",
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r537539026-Inca_s_Paradise-Puno_Puno_Region.html",
+        "image": "review2017"
+      },
+      {
+        "year": "2018",
+        "title": "excelentes! profesionalismo y don de gente",
+        "opinion": "Conocimos la empresa por recomendación de una amiga y nos organizaron un viaje a medida que cumplió todas nuestras expectativas. Sentimos su acompañamiento desde el momento que pisamos suelo peruano en Arequipa (allí nos fue a recibir Gumer) hasta el último día que nos despidió Yaque en Juliaca. Estuvieron pendientes de todos los detalles y muy atentas a las sugerencias y evaluación que les hicimos. La recomendamos sin duda!!",
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r616420223-Inca_s_Paradise-Puno_Puno_Region.html",
+        "image": "review2018"
+      },
+      {
+        "year": "2019",
+        "title": "Agencia de viajes recomendada con gran servicio",
+        "opinion": "Reservé dos tours a Valle Sagrado y la montaña Rainbow y un boleto de autobús a La Paz con Incas Paradise. Recibí un servicio atento y servicial a un precio competitivo. Definitivamente es una buena agencia de viajes en la que puedes confiar. ¡Recomendado!",
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r673294842-Inca_s_Paradise-Puno_Puno_Region.html",
+        "image": "review2019"
+      },
+      {
+        "year": "2020",
+        "title": "Profissionais e Atenciosos",
+        "opinion": "Fizemos, com a Inca's Paradise, os passeios do Vale del Colca saindo de Arequipa, o transfer até Puno e o passeio às ilhas Uros e Taquile no lago Titicaca. Tudo como combinado e, apesar da comunicação um pouco \"truncada\", a partir do momento que começamos a falar via WhatsApp, eles sempre responderam muito rápido e foram muito atenciosos. Além disso, nos disponibilizaram guias que deixaram os passeios ainda mais especiais! Recomendo!!",
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r722384916-Inca_s_Paradise-Puno_Puno_Region.html",
+        "image": "review2020"
+      },
+      {
+        "year": "2023",
+        "title": "Best in Puno!!",
+        "opinion": "Excelente servicio!! Muy agradable desde el momento que te recogen, super pacientes y considerados. Iniciamos el tour y se adaptó a nuestro paso ya que veníamos de un cambio de altura, durante el tour nos explicaron y absolvieron todas las preguntas. Además de eso, nuestra guía muy amable, muy instruida y con una vibra muy bonita que definitivamente amenizó la experiencia. Nos llevaron exactamente a donde queríamos ir. El servicio de movilidad excelente también. Definitivamente lo recomendaría, está por encima de otros servicios de tours. Highly recommended",
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r898348355-Inca_s_Paradise-Puno_Puno_Region.html",
+        "image": "review2023"
+      },
+      {
+        "year": "2024",
+        "title": "Gran Experiencia en Puno y Bolivia",
+        "opinion": "Inca's Paradise fue definitivamente mi mejor opción en este viaje en solitario, fueron increíbles con el itinerario. Adriana fue la chica encargada y cuidó cada detalle para que mi experiencia fuera maravillosa. Lo más destacado: comunicación, puntualidad, respetaron mis preferencias, estuvieron por encima y sin duda recomiendo su agencia de viajes.",
+        "url": "https://www.tripadvisor.com.pe/Profile/yoselynd188?fid=59505cf2-06b2-4e08-840d-7f95fac023ad",
+        "image": "review2024"
+      }
+    ]
   }
 }

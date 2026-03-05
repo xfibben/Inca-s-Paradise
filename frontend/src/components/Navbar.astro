@@ -1,0 +1,850 @@
+---
+import LanguageSwitcher from './LanguageSwitcher.astro';
+
+interface Props {
+  t: any;
+  currentLang: string;
+}
+
+const { t, currentLang } = Astro.props;
+---
+
+<!-- Navbar -->
+<nav id="navbar" class="fixed top-0 w-full bg-transparent transition-all duration-300 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-24">
+      <!-- Logo -->
+      <div class="flex-shrink-0">
+        <a href={`/${currentLang}/`}>
+          <img src="/landing page images/incasparadiselogo.png" alt="Inca's Paradise Logo" class="h-20 w-auto" />
+        </a>
+      </div>
+
+      <!-- Desktop Menu -->
+      <div class="hidden md:flex items-center space-x-8">
+        <!-- Destinations with Megamenu -->
+        <div class="relative" id="megamenu-container">
+          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.destinations}</a>
+          
+          <!-- Megamenu -->
+          <div id="megamenu-dropdown" class="fixed left-0 right-0 top-24 pt-2 hidden z-50 w-full">
+            <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
+              <!-- Megamenu Container -->
+              <div class="flex h-full">
+                <!-- Column 1: Destinations List with Vertical Slider -->
+                <div class="w-1/3 bg-gray-50 border-r border-gray-200 flex flex-col relative">
+                  <!-- Scroll Up Button -->
+                  <button id="scroll-up" class="bg-white/90 hover:bg-white p-2 border-b border-gray-200 transition">
+                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                    </svg>
+                  </button>
+                  
+                  <!-- Destinations scroll container -->
+                  <div id="destinations-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
+                    {t.megamenu.destinos.map((dest: any) => (
+                      <button
+                        class="destination-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 whitespace-normal"
+                        data-dest={dest.key}
+                        data-name={dest.name}
+                        data-image={dest.image}
+                      >
+                        {dest.name}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <!-- Scroll Down Button -->
+                  <button id="scroll-down" class="bg-white/90 hover:bg-white p-2 border-t border-gray-200 transition">
+                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Column 2: Tours -->
+                <div class="w-1/3 bg-white p-6 border-r border-gray-200 overflow-y-auto">
+                  <div id="megamenu-tours" class="space-y-3">
+                    <!-- Tours will be inserted here via JavaScript -->
+                  </div>
+                </div>
+
+                <!-- Column 3: Image and Destination Name -->
+                <div class="w-1/3 bg-gray-100 overflow-hidden relative">
+                  <img
+                    id="megamenu-image"
+                    src="https://images.unsplash.com/photo-1587595431973-160550652147?w=400&h=400&fit=crop"
+                    alt="Destination"
+                    class="w-full h-full object-cover"
+                  />
+                  <div class="absolute inset-0 bg-black/30"></div>
+                  <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                    <p id="megamenu-dest-name" class="text-white font-bold text-lg">CHACHAPOYAS</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip Styles with Megamenu -->
+        <div class="relative" id="styles-container">
+          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.tripStyles}</a>
+          
+          <!-- Styles Megamenu -->
+          <div id="styles-dropdown" class="fixed left-0 right-0 top-24 pt-2 hidden z-50 w-full">
+            <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
+              <!-- Megamenu Container -->
+              <div class="flex h-full">
+                <!-- Column 1: Styles List with Vertical Slider -->
+                <div class="w-1/3 bg-gray-50 border-r border-gray-200 flex flex-col relative">
+                  <!-- Scroll Up Button -->
+                  <button id="scroll-up-styles" class="bg-white/90 hover:bg-white p-2 border-b border-gray-200 transition">
+                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                    </svg>
+                  </button>
+                  
+                  <!-- Styles scroll container -->
+                  <div id="styles-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
+                    {Object.entries(t.styles).filter(([key]: [string, any]) => !['title', 'images'].includes(key)).map(([key, style]: [string, any]) => {
+                      const styleObj = style as { name: string; description: string };
+                      return (
+                        <button
+                          class="style-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 whitespace-normal"
+                          data-style={key}
+                          data-name={styleObj.name}
+                          data-image={(t.styles as any).images[key]}
+                          data-description={styleObj.description}
+                        >
+                          {styleObj.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <!-- Scroll Down Button -->
+                  <button id="scroll-down-styles" class="bg-white/90 hover:bg-white p-2 border-t border-gray-200 transition">
+                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Column 2: Description -->
+                <div class="w-1/3 bg-white p-6 border-r border-gray-200 overflow-y-auto">
+                  <div id="style-description">
+                    <p class="text-sm text-gray-600"></p>
+                  </div>
+                </div>
+
+                <!-- Column 3: Image -->
+                <div class="w-1/3 bg-gray-100 overflow-hidden relative">
+                  <img
+                    id="style-image"
+                    src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop"
+                    alt="Style"
+                    class="w-full h-full object-cover"
+                  />
+                  <div class="absolute inset-0 bg-black/30"></div>
+                  <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                    <p id="style-name" class="text-white font-bold text-lg">AVENTURA</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sustainability with Megamenu -->
+        <div class="relative" id="sustainability-container">
+          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.sustainability}</a>
+          
+          <!-- Sustainability Megamenu -->
+          <div id="sustainability-dropdown" class="fixed left-0 right-0 top-24 pt-2 hidden z-50 w-full">
+            <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
+              <!-- Megamenu Container -->
+              <div class="flex h-full">
+                <!-- Column 1: Sustainability Items List with Vertical Slider -->
+                <div class="w-1/3 bg-gray-50 border-r border-gray-200 flex flex-col relative">
+                  <!-- Scroll Up Button -->
+                  <button id="scroll-up-sustainability" class="bg-white/90 hover:bg-white p-2 border-b border-gray-200 transition">
+                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                    </svg>
+                  </button>
+                  
+                  <!-- Sustainability scroll container -->
+                  <div id="sustainability-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
+                    {Object.entries(t.sustainability).filter(([key]: [string, any]) => !['title', 'images'].includes(key)).map(([key, item]: [string, any]) => {
+                      const itemObj = item as { name: string; description: string };
+                      return (
+                        <button
+                          class="sustainability-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 whitespace-normal"
+                          data-sustainability={key}
+                          data-name={itemObj.name}
+                          data-image={(t.sustainability as any).images[key]}
+                          data-description={itemObj.description}
+                        >
+                          {itemObj.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <!-- Scroll Down Button -->
+                  <button id="scroll-down-sustainability" class="bg-white/90 hover:bg-white p-2 border-t border-gray-200 transition">
+                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Column 2: Description -->
+                <div class="w-1/3 bg-white p-6 border-r border-gray-200 overflow-y-auto">
+                  <div id="sustainability-description">
+                    <p class="text-sm text-gray-600"></p>
+                  </div>
+                </div>
+
+                <!-- Column 3: Image -->
+                <div class="w-1/3 bg-gray-100 overflow-hidden relative">
+                  <img
+                    id="sustainability-image"
+                    src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop"
+                    alt="Sustainability"
+                    class="w-full h-full object-cover"
+                  />
+                  <div class="absolute inset-0 bg-black/30"></div>
+                  <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                    <p id="sustainability-name" class="text-white font-bold text-lg">SOSTENIBILIDAD</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.transport}</a>
+        <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition">{t.nav.blog}</a>
+      </div>
+
+      <!-- Language Switcher + Contact Button -->
+      <div class="hidden md:flex items-center space-x-4">
+        <LanguageSwitcher currentLang={currentLang} />
+        <button class="px-6 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition text-sm">
+          {t.nav.contactUs}
+        </button>
+      </div>
+
+      <!-- Mobile Menu Button -->
+      <div class="md:hidden">
+        <button id="mobile-menu-btn" class="text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden pb-4 space-y-3 backdrop-blur-md rounded-lg">
+      <!-- Destinations Mobile -->
+      <div class="relative">
+        <button id="mobile-destinations-btn" class="block w-full text-left px-4 py-2 text-white text-sm hover:text-gray-300 transition bg-white/10 rounded">
+          {t.nav.destinations} ▼
+        </button>
+        <div id="mobile-destinations-menu" class="hidden bg-gray-100 rounded mt-1 max-h-60 overflow-y-auto">
+          <div id="mobile-destinations-list" class="flex flex-col">
+            {t.megamenu.destinos.map((dest: any) => (
+              <button class="mobile-destination-item w-full text-left px-4 py-2 text-gray-700 text-sm hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-200" data-dest={dest.key} data-name={dest.name}>
+                {dest.name}
+              </button>
+            ))}
+          </div>
+          <div id="mobile-destinations-details" class="hidden border-t border-gray-200 p-4">
+            <h3 id="mobile-dest-name" class="font-bold text-gray-800 mb-3 text-sm"></h3>
+            <div id="mobile-dest-tours" class="space-y-2">
+              <!-- Tours will be inserted here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trip Styles Mobile -->
+      <div class="relative">
+        <button id="mobile-styles-btn" class="block w-full text-left px-4 py-2 text-white text-sm hover:text-gray-300 transition bg-white/10 rounded">
+          {t.nav.tripStyles} ▼
+        </button>
+        <div id="mobile-styles-menu" class="hidden bg-gray-100 rounded mt-1 max-h-60 overflow-y-auto">
+          <div id="mobile-styles-list" class="flex flex-col">
+            {Object.entries(t.styles).filter(([key]: [string, any]) => !['title', 'images'].includes(key)).map(([key, style]: [string, any]) => {
+              const styleObj = style as { name: string; description: string };
+              return (
+                <button class="mobile-style-item w-full text-left px-4 py-2 text-gray-700 text-sm hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-200" data-style={key} data-name={styleObj.name} data-description={styleObj.description}>
+                  {styleObj.name}
+                </button>
+              );
+            })}
+          </div>
+          <div id="mobile-styles-details" class="hidden border-t border-gray-200 p-4">
+            <h3 id="mobile-style-name" class="font-bold text-gray-800 mb-3 text-sm"></h3>
+            <p id="mobile-style-description" class="text-gray-700 text-sm"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Other Links -->
+      <a href="#" class="block text-white text-sm hover:text-gray-300 transition px-4 py-2">{t.nav.transport}</a>
+      
+      <!-- Sustainability Mobile -->
+      <div class="relative">
+        <button id="mobile-sustainability-btn" class="block w-full text-left px-4 py-2 text-white text-sm hover:text-gray-300 transition bg-white/10 rounded">
+          {t.nav.sustainability} ▼
+        </button>
+        <div id="mobile-sustainability-menu" class="hidden bg-gray-100 rounded mt-1 max-h-60 overflow-y-auto">
+          <div id="mobile-sustainability-list" class="flex flex-col">
+            {Object.entries(t.sustainability).filter(([key]: [string, any]) => !['title', 'images'].includes(key)).map(([key, item]: [string, any]) => {
+              const itemObj = item as { name: string; description: string };
+              return (
+                <button class="mobile-sustainability-item w-full text-left px-4 py-2 text-gray-700 text-sm hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-200" data-sustainability={key} data-name={itemObj.name} data-description={itemObj.description}>
+                  {itemObj.name}
+                </button>
+              );
+            })}
+          </div>
+          <div id="mobile-sustainability-details" class="hidden border-t border-gray-200 p-4">
+            <h3 id="mobile-sustainability-name" class="font-bold text-gray-800 mb-3 text-sm"></h3>
+            <p id="mobile-sustainability-description" class="text-gray-700 text-sm"></p>
+          </div>
+        </div>
+      </div>
+      
+      <a href="#" class="block text-white text-sm hover:text-gray-300 transition px-4 py-2">{t.nav.blog}</a>
+      
+      <div class="py-2 px-4">
+        <LanguageSwitcher currentLang={currentLang} />
+      </div>
+      <button class="w-full mx-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition text-sm">
+        {t.nav.contactUs}
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Menu Backdrop -->
+<div id="mobile-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onclick="document.getElementById('mobile-menu-btn').click()"></div>
+
+<script is:inline define:vars={{ translations: t }}>
+  document.addEventListener('DOMContentLoaded', function() {
+    const t = translations;
+    const navbar = document.getElementById('navbar');
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const mobileBackdrop = document.getElementById('mobile-backdrop');
+
+    if (!navbar) {
+      console.error('Navbar element not found');
+      return;
+    }
+
+    function updateNavbarStyle() {
+      if (!navbar) return;
+      
+      if (window.scrollY > 50) {
+        navbar.classList.remove('bg-transparent');
+        navbar.classList.add('bg-white', 'shadow-md');
+        document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          el.classList.remove('text-white', 'hover:text-gray-300');
+          el.classList.add('text-gray-900', 'hover:text-gray-600');
+        });
+      } else {
+        navbar.classList.remove('bg-white', 'shadow-md');
+        navbar.classList.add('bg-transparent');
+        document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          el.classList.remove('text-gray-900', 'hover:text-gray-600');
+          el.classList.add('text-white', 'hover:text-gray-300');
+        });
+      }
+    }
+    
+    window.addEventListener('scroll', updateNavbarStyle);
+
+  // Mobile menu toggle with backdrop
+  mobileMenuBtn?.addEventListener('click', () => {
+    mobileMenu?.classList.toggle('hidden');
+    mobileBackdrop?.classList.toggle('hidden');
+    if (!mobileMenu?.classList.contains('hidden')) {
+      navbar?.classList.add('bg-white', 'shadow-md');
+      navbar?.classList.remove('bg-transparent');
+      document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+        el.classList.remove('text-white', 'hover:text-gray-300');
+        el.classList.add('text-gray-900', 'hover:text-gray-600');
+      });
+    } else if (window.scrollY <= 50) {
+      navbar?.classList.remove('bg-white', 'shadow-md');
+      navbar?.classList.add('bg-transparent');
+      document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+        el.classList.remove('text-gray-900', 'hover:text-gray-600');
+        el.classList.add('text-white', 'hover:text-gray-300');
+      });
+    }
+  });
+
+  // Close menu when clicking on backdrop
+  mobileBackdrop?.addEventListener('click', () => {
+    mobileMenu?.classList.add('hidden');
+    mobileBackdrop?.classList.add('hidden');
+  });
+
+  // Megamenu functionality
+  const megamenuContainer = document.getElementById('megamenu-container');
+  const megamenuDropdown = document.getElementById('megamenu-dropdown');
+  let megamenuTimeout;
+
+  megamenuContainer?.addEventListener('mouseenter', () => {
+    if (!navbar) return;
+    clearTimeout(megamenuTimeout);
+    megamenuDropdown?.classList.remove('hidden');
+    navbar.classList.add('bg-white', 'shadow-md');
+    navbar.classList.remove('bg-transparent');
+    document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+      el.classList.remove('text-white', 'hover:text-gray-300');
+      el.classList.add('text-gray-900', 'hover:text-gray-600');
+    });
+  });
+
+  megamenuContainer?.addEventListener('mouseleave', () => {
+    if (!navbar) return;
+    megamenuTimeout = setTimeout(() => {
+      megamenuDropdown?.classList.add('hidden');
+      if (window.scrollY <= 50) {
+        navbar.classList.remove('bg-white', 'shadow-md');
+        navbar.classList.add('bg-transparent');
+        document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          el.classList.remove('text-gray-900', 'hover:text-gray-600');
+          el.classList.add('text-white', 'hover:text-gray-300');
+        });
+      }
+    }, 200);
+  });
+
+  megamenuDropdown?.addEventListener('mouseenter', () => {
+    clearTimeout(megamenuTimeout);
+    megamenuDropdown?.classList.remove('hidden');
+  });
+
+  megamenuDropdown?.addEventListener('mouseleave', () => {
+    if (!navbar) return;
+    megamenuTimeout = setTimeout(() => {
+      megamenuDropdown?.classList.add('hidden');
+      if (window.scrollY <= 50) {
+        navbar.classList.remove('bg-white', 'shadow-md');
+        navbar.classList.add('bg-transparent');
+        document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          el.classList.remove('text-gray-900', 'hover:text-gray-600');
+          el.classList.add('text-white', 'hover:text-gray-300');
+        });
+      }
+    }, 200);
+  });
+
+  // Vertical slider for destinations
+  const scrollUpBtn = document.getElementById('scroll-up');
+  const scrollDownBtn = document.getElementById('scroll-down');
+  const destinationsScroll = document.getElementById('destinations-scroll');
+  const scrollAmount = 100;
+
+  scrollUpBtn?.addEventListener('click', () => {
+    destinationsScroll?.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+  });
+
+  scrollDownBtn?.addEventListener('click', () => {
+    destinationsScroll?.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+  });
+
+  // Vertical slider for styles
+  const scrollUpStylesBtn = document.getElementById('scroll-up-styles');
+  const scrollDownStylesBtn = document.getElementById('scroll-down-styles');
+  const stylesScroll = document.getElementById('styles-scroll');
+
+  scrollUpStylesBtn?.addEventListener('click', () => {
+    stylesScroll?.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+  });
+
+  scrollDownStylesBtn?.addEventListener('click', () => {
+    stylesScroll?.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+  });
+
+  // Destinations megamenu functionality
+  function updateMegamenu(destKey) {
+    const destination = t.megamenu.destinos.find(d => d.key === destKey);
+    if (!destination) return;
+
+    const toursContainer = document.getElementById('megamenu-tours');
+    toursContainer.innerHTML = destination.tours.map(tour => `
+      <div class="pb-3 border-b border-gray-100 last:border-0">
+        <p class="font-semibold text-gray-800 text-sm">${tour.name}</p>
+        <p class="text-xs text-gray-500">${tour.days} días</p>
+      </div>
+    `).join('');
+
+    const image = document.getElementById('megamenu-image');
+    image.src = destination.image.startsWith('landing page images') 
+      ? `/${destination.image}` 
+      : `https://images.unsplash.com/${destination.image}?w=400&h=400&fit=crop`;
+    document.getElementById('megamenu-dest-name').textContent = destination.name;
+  }
+
+  updateMegamenu('chachapoyas');
+  const firstDestItem = document.querySelector('[data-dest="chachapoyas"]');
+  if (firstDestItem) {
+    firstDestItem.classList.add('bg-blue-50', 'text-blue-600');
+  }
+
+  document.querySelectorAll('.destination-item').forEach(item => {
+    item.addEventListener('mouseenter', (e) => {
+      const destKey = item.dataset.dest;
+      updateMegamenu(destKey);
+      
+      document.querySelectorAll('.destination-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-600'));
+      item.classList.add('bg-blue-50', 'text-blue-600');
+    });
+  });
+
+  // Styles megamenu functionality
+  function updateStylesMenu(styleKey) {
+    const style = t.styles[styleKey];
+    if (!style) return;
+
+    const descContainer = document.getElementById('style-description');
+    descContainer.innerHTML = `<p class="text-sm text-gray-600">${style.description}</p>`;
+
+    const image = document.getElementById('style-image');
+    const styleImage = t.styles.images[styleKey];
+    image.src = styleImage.startsWith('landing page images')
+      ? `/${styleImage}`
+      : `https://images.unsplash.com/${styleImage}?w=400&h=400&fit=crop`;
+    document.getElementById('style-name').textContent = style.name;
+  }
+
+  const firstStyleKey = Object.keys(t.styles).find(key => !['title', 'images'].includes(key));
+  if (firstStyleKey) {
+    updateStylesMenu(firstStyleKey);
+    const firstStyleItem = document.querySelector(`[data-style="${firstStyleKey}"]`);
+    if (firstStyleItem) {
+      firstStyleItem.classList.add('bg-blue-50', 'text-blue-600');
+    }
+  }
+
+  document.querySelectorAll('.style-item').forEach(item => {
+    item.addEventListener('mouseenter', (e) => {
+      const styleKey = item.dataset.style;
+      updateStylesMenu(styleKey);
+      
+      document.querySelectorAll('.style-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-600'));
+      item.classList.add('bg-blue-50', 'text-blue-600');
+    });
+  });
+
+  // Styles container hover effect
+  const stylesContainer = document.getElementById('styles-container');
+  const stylesDropdown = document.getElementById('styles-dropdown');
+  let stylesTimeout;
+
+  stylesContainer?.addEventListener('mouseenter', () => {
+    if (!navbar) return;
+    clearTimeout(stylesTimeout);
+    stylesDropdown?.classList.remove('hidden');
+    navbar.classList.add('bg-white', 'shadow-md');
+    navbar.classList.remove('bg-transparent');
+    document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+      el.classList.remove('text-white', 'hover:text-gray-300');
+      el.classList.add('text-gray-900', 'hover:text-gray-600');
+    });
+  });
+
+  stylesContainer?.addEventListener('mouseleave', () => {
+    if (!navbar) return;
+    stylesTimeout = setTimeout(() => {
+      stylesDropdown?.classList.add('hidden');
+      if (window.scrollY <= 50) {
+        navbar.classList.remove('bg-white', 'shadow-md');
+        navbar.classList.add('bg-transparent');
+        document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          el.classList.remove('text-gray-900', 'hover:text-gray-600');
+          el.classList.add('text-white', 'hover:text-gray-300');
+        });
+      }
+    }, 200);
+  });
+
+  stylesDropdown?.addEventListener('mouseenter', () => {
+    clearTimeout(stylesTimeout);
+    stylesDropdown?.classList.remove('hidden');
+  });
+
+  stylesDropdown?.addEventListener('mouseleave', () => {
+    if (!navbar) return;
+    stylesTimeout = setTimeout(() => {
+      stylesDropdown?.classList.add('hidden');
+      if (window.scrollY <= 50) {
+        navbar.classList.remove('bg-white', 'shadow-md');
+        navbar.classList.add('bg-transparent');
+        document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          el.classList.remove('text-gray-900', 'hover:text-gray-600');
+          el.classList.add('text-white', 'hover:text-gray-300');
+        });
+      }
+    }, 200);
+  });
+
+  // Vertical slider for sustainability
+  const scrollUpSustBtn = document.getElementById('scroll-up-sustainability');
+  const scrollDownSustBtn = document.getElementById('scroll-down-sustainability');
+  const sustainabilityScroll = document.getElementById('sustainability-scroll');
+
+  scrollUpSustBtn?.addEventListener('click', () => {
+    sustainabilityScroll?.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+  });
+
+  scrollDownSustBtn?.addEventListener('click', () => {
+    sustainabilityScroll?.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+  });
+
+  // Sustainability megamenu functionality
+  function updateSustainabilityMenu(sustKey) {
+    const item = Object.entries(t.sustainability).find(([key]) => key === sustKey);
+    if (!item) return;
+
+    const [key, sustItem] = item;
+
+    const descContainer = document.getElementById('sustainability-description');
+    descContainer.innerHTML = `<p class="text-sm text-gray-600">${sustItem.description}</p>`;
+
+    const image = document.getElementById('sustainability-image');
+    const sustImage = t.sustainability.images[sustKey];
+    image.src = sustImage.startsWith('landing page images')
+      ? `/${sustImage}`
+      : `https://images.unsplash.com/${sustImage}?w=400&h=400&fit=crop`;
+    document.getElementById('sustainability-name').textContent = sustItem.name;
+  }
+
+  // Initialize sustainability menu with first item
+  const firstSustKey = Object.keys(t.sustainability).find(key => !['title', 'images'].includes(key));
+  if (firstSustKey) {
+    updateSustainabilityMenu(firstSustKey);
+    const firstSustItem = document.querySelector(`[data-sustainability="${firstSustKey}"]`);
+    if (firstSustItem) {
+      firstSustItem.classList.add('bg-blue-50', 'text-blue-600');
+    }
+  }
+
+  document.querySelectorAll('.sustainability-item').forEach(item => {
+    item.addEventListener('mouseenter', (e) => {
+      const sustKey = item.dataset.sustainability;
+      updateSustainabilityMenu(sustKey);
+      
+      document.querySelectorAll('.sustainability-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-600'));
+      item.classList.add('bg-blue-50', 'text-blue-600');
+    });
+  });
+
+  // Sustainability container hover effect
+  const sustainabilityContainer = document.getElementById('sustainability-container');
+  const sustainabilityDropdown = document.getElementById('sustainability-dropdown');
+  let sustainabilityTimeout;
+
+  sustainabilityContainer?.addEventListener('mouseenter', () => {
+    if (!navbar) return;
+    clearTimeout(sustainabilityTimeout);
+    sustainabilityDropdown?.classList.remove('hidden');
+    navbar.classList.add('bg-white', 'shadow-md');
+    navbar.classList.remove('bg-transparent');
+    document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+      el.classList.remove('text-white', 'hover:text-gray-300');
+      el.classList.add('text-gray-900', 'hover:text-gray-600');
+    });
+  });
+
+  sustainabilityContainer?.addEventListener('mouseleave', () => {
+    if (!navbar) return;
+    sustainabilityTimeout = setTimeout(() => {
+      sustainabilityDropdown?.classList.add('hidden');
+      if (window.scrollY <= 50) {
+        navbar.classList.remove('bg-white', 'shadow-md');
+        navbar.classList.add('bg-transparent');
+        document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          el.classList.remove('text-gray-900', 'hover:text-gray-600');
+          el.classList.add('text-white', 'hover:text-gray-300');
+        });
+      }
+    }, 200);
+  });
+
+  sustainabilityDropdown?.addEventListener('mouseenter', () => {
+    clearTimeout(sustainabilityTimeout);
+    sustainabilityDropdown?.classList.remove('hidden');
+  });
+
+  sustainabilityDropdown?.addEventListener('mouseleave', () => {
+    if (!navbar) return;
+    sustainabilityTimeout = setTimeout(() => {
+      sustainabilityDropdown?.classList.add('hidden');
+      if (window.scrollY <= 50) {
+        navbar.classList.remove('bg-white', 'shadow-md');
+        navbar.classList.add('bg-transparent');
+        document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          el.classList.remove('text-gray-900', 'hover:text-gray-600');
+          el.classList.add('text-white', 'hover:text-gray-300');
+        });
+      }
+    }, 200);
+  });
+
+  // Mobile Menu Dropdowns
+  const mobileDestinationsBtn = document.getElementById('mobile-destinations-btn');
+  const mobileDestinationsMenu = document.getElementById('mobile-destinations-menu');
+  const mobileDestinationsList = document.getElementById('mobile-destinations-list');
+  const mobileDestinationsDetails = document.getElementById('mobile-destinations-details');
+  const mobileStylesBtn = document.getElementById('mobile-styles-btn');
+  const mobileStylesMenu = document.getElementById('mobile-styles-menu');
+  const mobileStylesList = document.getElementById('mobile-styles-list');
+  const mobileStylesDetails = document.getElementById('mobile-styles-details');
+  const mobileSustainabilityBtn = document.getElementById('mobile-sustainability-btn');
+  const mobileSustainabilityMenu = document.getElementById('mobile-sustainability-menu');
+  const mobileSustainabilityList = document.getElementById('mobile-sustainability-list');
+  const mobileSustainabilityDetails = document.getElementById('mobile-sustainability-details');
+
+  mobileDestinationsBtn?.addEventListener('click', () => {
+    mobileDestinationsMenu?.classList.toggle('hidden');
+    mobileStylesMenu?.classList.add('hidden');
+    mobileSustainabilityMenu?.classList.add('hidden');
+  });
+
+  mobileStylesBtn?.addEventListener('click', () => {
+    mobileStylesMenu?.classList.toggle('hidden');
+    mobileDestinationsMenu?.classList.add('hidden');
+    mobileSustainabilityMenu?.classList.add('hidden');
+  });
+
+  mobileSustainabilityBtn?.addEventListener('click', () => {
+    mobileSustainabilityMenu?.classList.toggle('hidden');
+    mobileDestinationsMenu?.classList.add('hidden');
+    mobileStylesMenu?.classList.add('hidden');
+  });
+
+  // Mobile Destinations Selection
+  document.querySelectorAll('.mobile-destination-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const destKey = item.getAttribute('data-dest');
+      const destName = item.getAttribute('data-name');
+      
+      const destination = t.megamenu.destinos.find(d => d.key === destKey);
+      if (!destination) return;
+
+      mobileDestinationsList?.classList.add('hidden');
+      mobileDestinationsDetails?.classList.remove('hidden');
+
+      const destNameEl = document.getElementById('mobile-dest-name');
+      if (destNameEl) destNameEl.textContent = destName;
+
+      const toursContainer = document.getElementById('mobile-dest-tours');
+      if (toursContainer) {
+        toursContainer.innerHTML = destination.tours.map(tour => `
+          <div class="pb-2 border-b border-gray-300 last:border-0">
+            <p class="font-semibold text-gray-800 text-sm">${tour.name}</p>
+            <p class="text-xs text-gray-500">${tour.days} días</p>
+          </div>
+        `).join('');
+      }
+
+      const backBtn = document.createElement('button');
+      backBtn.className = 'w-full text-left px-0 py-2 text-blue-600 text-sm hover:text-blue-800 transition mt-3 border-t border-gray-300 pt-3';
+      backBtn.textContent = '← Volver';
+      backBtn.addEventListener('click', () => {
+        mobileDestinationsList?.classList.remove('hidden');
+        mobileDestinationsDetails?.classList.add('hidden');
+      });
+      
+      if (toursContainer && !toursContainer.nextElementSibling?.classList.contains('back-btn')) {
+        backBtn.className += ' back-btn';
+        toursContainer.parentElement?.appendChild(backBtn);
+      }
+    });
+  });
+
+  // Mobile Styles Selection
+  document.querySelectorAll('.mobile-style-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const styleKey = item.getAttribute('data-style');
+      const styleName = item.getAttribute('data-name');
+      const styleDescription = item.getAttribute('data-description');
+
+      mobileStylesList?.classList.add('hidden');
+      mobileStylesDetails?.classList.remove('hidden');
+
+      const styleNameEl = document.getElementById('mobile-style-name');
+      const styleDescEl = document.getElementById('mobile-style-description');
+      if (styleNameEl) styleNameEl.textContent = styleName;
+      if (styleDescEl) styleDescEl.textContent = styleDescription;
+
+      const backBtn = document.createElement('button');
+      backBtn.className = 'w-full text-left px-0 py-2 text-blue-600 text-sm hover:text-blue-800 transition mt-4 border-t border-gray-300 pt-3 back-btn';
+      backBtn.textContent = '← Volver';
+      backBtn.addEventListener('click', () => {
+        mobileStylesList?.classList.remove('hidden');
+        mobileStylesDetails?.classList.add('hidden');
+        backBtn.remove();
+      });
+      
+      if (styleDescEl && !styleDescEl.parentElement?.querySelector('.back-btn')) {
+        styleDescEl.parentElement?.appendChild(backBtn);
+      }
+    });
+  });
+
+  // Mobile Sustainability Selection
+  document.querySelectorAll('.mobile-sustainability-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const sustKey = item.getAttribute('data-sustainability');
+      const sustName = item.getAttribute('data-name');
+      const sustDescription = item.getAttribute('data-description');
+
+      mobileSustainabilityList?.classList.add('hidden');
+      mobileSustainabilityDetails?.classList.remove('hidden');
+
+      const sustNameEl = document.getElementById('mobile-sustainability-name');
+      const sustDescEl = document.getElementById('mobile-sustainability-description');
+      if (sustNameEl) sustNameEl.textContent = sustName;
+      if (sustDescEl) sustDescEl.textContent = sustDescription;
+
+      const backBtn = document.createElement('button');
+      backBtn.className = 'w-full text-left px-0 py-2 text-blue-600 text-sm hover:text-blue-800 transition mt-4 border-t border-gray-300 pt-3 back-btn';
+      backBtn.textContent = '← Volver';
+      backBtn.addEventListener('click', () => {
+        mobileSustainabilityList?.classList.remove('hidden');
+        mobileSustainabilityDetails?.classList.add('hidden');
+        backBtn.remove();
+      });
+      
+      if (sustDescEl && !sustDescEl.parentElement?.querySelector('.back-btn')) {
+        sustDescEl.parentElement?.appendChild(backBtn);
+      }
+    });
+  });
+
+  // Close mobile menus when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target?.closest('#mobile-destinations-btn') && !e.target?.closest('#mobile-destinations-menu')) {
+      mobileDestinationsMenu?.classList.add('hidden');
+    }
+    if (!e.target?.closest('#mobile-styles-btn') && !e.target?.closest('#mobile-styles-menu')) {
+      mobileStylesMenu?.classList.add('hidden');
+    }
+    if (!e.target?.closest('#mobile-sustainability-btn') && !e.target?.closest('#mobile-sustainability-menu')) {
+      mobileSustainabilityMenu?.classList.add('hidden');
+    }
+  });
+  });
+</script>

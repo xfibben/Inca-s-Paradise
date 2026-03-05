@@ -1,0 +1,19 @@
+---
+interface Props {
+  t: any;
+}
+
+const { t } = Astro.props;
+---
+
+<!-- Commitment Section -->
+<section class="bg-gradient-to-b from-slate-900 to-slate-800 flex items-center justify-center" style="min-height: calc(100vh - 6rem);">
+  <div class="w-full text-center px-4 md:px-8">
+    <!-- Testimonial Text -->
+    <blockquote class="mb-8 md:mb-12">
+      <p class="text-2xl md:text-3xl lg:text-4xl font-italic text-white leading-relaxed mb-8" style="font-family: 'Playfair Display', serif; font-weight: 500;">
+        "{t.commitment.text}"
+      </p>
+    </blockquote>
+  </div>
+</section>

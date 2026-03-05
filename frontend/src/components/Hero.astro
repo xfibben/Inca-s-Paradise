@@ -1,0 +1,128 @@
+---
+interface Props {
+  t: any;
+}
+
+const { t } = Astro.props;
+---
+
+<!-- Hero Section with Image Carousel Background -->
+<section class="relative w-full h-screen overflow-hidden">
+  <!-- Image Carousel Background -->
+  <div id="hero-carousel" class="absolute top-0 left-0 w-full h-full">
+    <img 
+      src="/landing page images/Imagen2.png" 
+      alt="Hero Background" 
+      class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-2500 opacity-100"
+      data-index="0"
+    />
+    <img 
+      src="/landing page images/Imagen3.png" 
+      alt="Hero Background" 
+      class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-2500 opacity-0"
+      data-index="1"
+    />
+    <img 
+      src="/landing page images/ubicacion-choquequirao-full.jpg" 
+      alt="Hero Background" 
+      class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-2500 opacity-0"
+      data-index="2"
+    />
+  </div>
+
+  <!-- Overlay -->
+  <div class="absolute top-0 left-0 w-full h-full bg-black/40"></div>
+
+  <!-- Carousel Indicators -->
+  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3">
+    <button class="hero-dot h-3 w-3 rounded-full bg-white/70 hover:bg-white transition-all duration-300" data-index="0"></button>
+    <button class="hero-dot h-3 w-3 rounded-full bg-white/40 hover:bg-white/70 transition-all duration-300" data-index="1"></button>
+    <button class="hero-dot h-3 w-3 rounded-full bg-white/40 hover:bg-white/70 transition-all duration-300" data-index="2"></button>
+  </div>
+
+  <!-- Content -->
+  <div class="relative h-full flex flex-col justify-center items-center text-center px-4">
+
+    <!-- Main Heading -->
+    <h1 class="text-4xl md:text-5xl lg:text-6xl text-white leading-tight mb-6 md:mb-8 max-w-4xl">
+      {t.hero.mainTitle}
+    </h1>
+
+    <!-- Subheading -->
+    <p class="text-base md:text-lg lg:text-xl text-white/90 leading-relaxed max-w-3xl mb-8 md:mb-12">
+      {t.hero.subtitle}
+    </p>
+
+    <!-- CTA Button -->
+    <a href="#" class="px-8 md:px-10 py-3 md:py-4 border-2 border-white text-white font-semibold text-base md:text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
+      {t.hero.cta}
+    </a>
+  </div>
+</section>
+
+<script is:inline>
+  // Hero Image Carousel
+  let currentImageIndex = 0;
+  const totalImages = 3;
+  const carouselInterval = 2500; // 2.5 seconds
+  let imageCarouselTimer;
+
+  function showHeroImage(index) {
+    const images = document.querySelectorAll('.hero-image');
+    const dots = document.querySelectorAll('.hero-dot');
+    
+    images.forEach((img, i) => {
+      if (i === index) {
+        img.classList.remove('opacity-0');
+        img.classList.add('opacity-100');
+      } else {
+        img.classList.remove('opacity-100');
+        img.classList.add('opacity-0');
+      }
+    });
+
+    dots.forEach((dot, i) => {
+      if (i === index) {
+        dot.classList.add('bg-white');
+        dot.classList.remove('bg-white/40');
+      } else {
+        dot.classList.remove('bg-white');
+        dot.classList.add('bg-white/40');
+      }
+    });
+  }
+
+  function nextHeroImage() {
+    currentImageIndex = (currentImageIndex + 1) % totalImages;
+    showHeroImage(currentImageIndex);
+  }
+
+  function startImageCarousel() {
+    imageCarouselTimer = setInterval(nextHeroImage, carouselInterval);
+  }
+
+  function stopImageCarousel() {
+    clearInterval(imageCarouselTimer);
+  }
+
+  // Start carousel on load
+  startImageCarousel();
+
+  // Add click handlers to dots
+  document.querySelectorAll('.hero-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      currentImageIndex = parseInt(dot.getAttribute('data-index'));
+      showHeroImage(currentImageIndex);
+      // Reset timer when user clicks
+      stopImageCarousel();
+      startImageCarousel();
+    });
+  });
+
+  // Pause carousel on hover and resume on leave
+  const heroCarousel = document.getElementById('hero-carousel');
+  if (heroCarousel) {
+    heroCarousel.addEventListener('mouseenter', stopImageCarousel);
+    heroCarousel.addEventListener('mouseleave', startImageCarousel);
+  }
+</script>

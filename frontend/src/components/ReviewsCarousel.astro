@@ -1,0 +1,108 @@
+---
+interface Props {
+  t: any;
+}
+
+const { t } = Astro.props;
+---
+
+<!-- Reviews Carousel -->
+<section class="w-full h-screen relative overflow-hidden">
+  {t.reviews.reviews.map((review: any, index: number) => (
+    <div
+      class={`review-slide absolute inset-0 w-full h-full transition-opacity duration-1000 ${
+        index === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0'
+      }`}
+      data-index={index}
+    >
+      <!-- Background Image - Full Screen -->
+      <div
+        class="absolute inset-0 w-full h-full bg-cover bg-center"
+        style={{
+          backgroundImage: `url(/landing%20page%20images/reviews/${review.year}.jpg)`
+        }}
+      >
+        <div class="absolute inset-0 bg-black/60"></div>
+      </div>
+
+      <!-- Content Container - Divided Layout -->
+      <div class="absolute inset-0 w-full h-full flex">
+        <!-- Left Side - Logo -->
+        <div class="w-1/2 h-full flex items-center justify-center pl-6 md:pl-12 lg:pl-20">
+          <img 
+            src="/landing%20page%20images/reviews/tripadvisor.svg" 
+            alt="TripAdvisor" 
+            class="h-40 md:h-56 lg:h-72 w-auto brightness-0 invert"
+          />
+        </div>
+
+        <!-- Right Side - Content -->
+        <div class="w-1/2 h-full flex items-center justify-start pr-6 md:pr-12 lg:pr-20">
+          <div class="w-full text-white">
+            <!-- Review Title -->
+            <h3 class="text-3xl md:text-4xl lg:text-5xl font-bold mb-8 leading-tight">
+              {review.title}
+            </h3>
+
+            <!-- Review Opinion -->
+            <div class="max-h-56 md:max-h-72 overflow-y-auto pr-4 mb-8">
+              <p class="text-base md:text-lg lg:text-xl text-gray-100 leading-relaxed text-justify">
+                {review.opinion}
+              </p>
+            </div>
+
+            <!-- Year + Button -->
+            <div class="flex items-center gap-4">
+              <span class="text-sm font-semibold bg-white/20 px-4 py-2 rounded-full border border-white/30">
+                {review.year}
+              </span>
+              <a
+                href={review.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="px-6 py-2 bg-[#00AF87] hover:bg-[#009970] text-white font-bold rounded transition duration-300"
+              >
+                {t.buttons.goToComment}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  ))}
+</section>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', function() {
+    const slides = document.querySelectorAll('.review-slide');
+    let currentIndex = 0;
+    const slideInterval = 3000; // 3 seconds
+
+    function showSlide(index) {
+      slides.forEach((slide, i) => {
+        if (i === index) {
+          slide.classList.remove('opacity-0');
+          slide.classList.remove('z-0');
+          slide.classList.add('opacity-100');
+          slide.classList.add('z-10');
+        } else {
+          slide.classList.add('opacity-0');
+          slide.classList.add('z-0');
+          slide.classList.remove('opacity-100');
+          slide.classList.remove('z-10');
+        }
+      });
+    }
+
+    function nextSlide() {
+      currentIndex = (currentIndex + 1) % slides.length;
+      showSlide(currentIndex);
+    }
+
+    // Initialize
+    if (slides.length > 0) {
+      showSlide(currentIndex);
+      setInterval(nextSlide, slideInterval);
+    }
+  });
+</script>

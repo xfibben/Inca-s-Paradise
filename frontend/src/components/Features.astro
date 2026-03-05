@@ -1,0 +1,62 @@
+---
+interface Props {
+  t: any;
+}
+
+const { t } = Astro.props;
+---
+
+<!-- Features Section -->
+<section class="bg-gray-100 px-4 flex items-center" style="min-height: calc(100vh - 6rem);">
+  <div class="max-w-7xl mx-auto w-full">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16">
+      <!-- Left Column: Title and Description -->
+      <div>
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-italic text-gray-900 leading-tight mb-6">
+          {t.features.title}
+        </h2>
+        
+        <p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed">
+          {t.features.description}
+        </p>
+      </div>
+
+      <!-- Right Column: Three Features -->
+      <div class="flex flex-col justify-center space-y-8 md:space-y-10">
+        <!-- Feature 1: Responsible Travel -->
+        <div class="flex flex-col items-center text-center">
+          <svg class="w-16 h-16 md:w-20 md:h-20 text-gray-900 mb-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          </svg>
+          <h3 class="text-base md:text-lg font-semibold text-gray-800">
+            {t.features.responsibleTravel}
+          </h3>
+        </div>
+
+        <!-- Feature 2: 5-Star Reviews -->
+        <div class="flex flex-col items-center text-center">
+          <div class="mb-4">
+            <svg class="w-16 h-16 md:w-20 md:h-20" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="100" height="100" fill="#003B5C" rx="4"/>
+              <text x="50" y="35" font-size="24" font-weight="bold" fill="white" text-anchor="middle" font-family="Arial">★★★★★</text>
+              <text x="50" y="70" font-size="10" fill="white" text-anchor="middle" font-family="Arial">TRUSTPILOT</text>
+            </svg>
+          </div>
+          <h3 class="text-base md:text-lg font-semibold text-gray-800">
+            {t.features.fiveStarReviews}
+          </h3>
+        </div>
+
+        <!-- Feature 3: Exceptional Boutique Properties -->
+        <div class="flex flex-col items-center text-center">
+          <svg class="w-16 h-16 md:w-20 md:h-20 text-gray-900 mb-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+          <h3 class="text-base md:text-lg font-semibold text-gray-800">
+            {t.features.exceptionalProperties}
+          </h3>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
