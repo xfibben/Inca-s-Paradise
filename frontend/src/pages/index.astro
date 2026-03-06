@@ -1,0 +1,27 @@
+---
+// Detectar idioma del navegador y redirigir a la ruta correspondiente
+const acceptLanguage = Astro.request.headers.get('accept-language') || '';
+
+// Idiomas soportados
+const supportedLanguages = ['es', 'en', 'pt'];
+const defaultLanguage = 'es';
+
+// Obtener el idioma preferido del navegador
+const browserLanguages = acceptLanguage
+  .split(',')
+  .map(lang => lang.split(';')[0].trim().split('-')[0].toLowerCase())
+  .filter(lang => lang.length > 0);
+
+// Encontrar el primer idioma soportado que coincida
+let targetLanguage = defaultLanguage;
+for (const lang of browserLanguages) {
+  if (supportedLanguages.includes(lang)) {
+    targetLanguage = lang;
+    break;
+  }
+}
+
+// Redirigir al idioma detectado
+return Astro.redirect(`/${targetLanguage}/`);
+---
+

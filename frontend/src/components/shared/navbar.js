@@ -1,0 +1,349 @@
+// navbar.js — Toda la lógica interactiva del Navbar
+// Las traducciones se inyectan desde Navbar.astro via window.__navbarT
+
+document.addEventListener('DOMContentLoaded', function () {
+  const t = window.__navbarT;
+  if (!t) return;
+
+  const navbar = document.getElementById('navbar');
+  const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+  const mobileBackdrop = document.getElementById('mobile-backdrop');
+
+  if (!navbar) return;
+
+  // ── Scroll: cambiar fondo del navbar ──────────────────────────────────────
+  function updateNavbarStyle() {
+    if (!navbar) return;
+    if (window.scrollY > 50) {
+      navbar.classList.remove('bg-transparent');
+      navbar.classList.add('bg-white', 'shadow-md');
+      document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+        el.classList.remove('text-white', 'hover:text-gray-300');
+        el.classList.add('text-gray-900', 'hover:text-gray-600');
+      });
+    } else {
+      navbar.classList.remove('bg-white', 'shadow-md');
+      navbar.classList.add('bg-transparent');
+      document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+        el.classList.remove('text-gray-900', 'hover:text-gray-600');
+        el.classList.add('text-white', 'hover:text-gray-300');
+      });
+    }
+  }
+
+  window.addEventListener('scroll', updateNavbarStyle);
+
+  // ── Mobile menu toggle ────────────────────────────────────────────────────
+  mobileMenuBtn?.addEventListener('click', () => {
+    mobileMenu?.classList.toggle('hidden');
+    mobileBackdrop?.classList.toggle('hidden');
+    if (!mobileMenu?.classList.contains('hidden')) {
+      navbar?.classList.add('bg-white', 'shadow-md');
+      navbar?.classList.remove('bg-transparent');
+      document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+        el.classList.remove('text-white', 'hover:text-gray-300');
+        el.classList.add('text-gray-900', 'hover:text-gray-600');
+      });
+    } else if (window.scrollY <= 50) {
+      navbar?.classList.remove('bg-white', 'shadow-md');
+      navbar?.classList.add('bg-transparent');
+      document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+        el.classList.remove('text-gray-900', 'hover:text-gray-600');
+        el.classList.add('text-white', 'hover:text-gray-300');
+      });
+    }
+  });
+
+  mobileBackdrop?.addEventListener('click', () => {
+    mobileMenu?.classList.add('hidden');
+    mobileBackdrop?.classList.add('hidden');
+  });
+
+  // ── Helper: hover dropdown con timeout ───────────────────────────────────
+  function makeDropdown(containerId, dropdownId) {
+    const container = document.getElementById(containerId);
+    const dropdown = document.getElementById(dropdownId);
+    if (!container || !dropdown) return;
+
+    let timeout;
+
+    const open = () => {
+      clearTimeout(timeout);
+      dropdown.classList.remove('hidden');
+      navbar.classList.add('bg-white', 'shadow-md');
+      navbar.classList.remove('bg-transparent');
+      document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+        el.classList.remove('text-white', 'hover:text-gray-300');
+        el.classList.add('text-gray-900', 'hover:text-gray-600');
+      });
+    };
+
+    const close = () => {
+      timeout = setTimeout(() => {
+        dropdown.classList.add('hidden');
+        if (window.scrollY <= 50) {
+          navbar.classList.remove('bg-white', 'shadow-md');
+          navbar.classList.add('bg-transparent');
+          document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+            el.classList.remove('text-gray-900', 'hover:text-gray-600');
+            el.classList.add('text-white', 'hover:text-gray-300');
+          });
+        }
+      }, 200);
+    };
+
+    container.addEventListener('mouseenter', open);
+    container.addEventListener('mouseleave', close);
+    dropdown.addEventListener('mouseenter', () => clearTimeout(timeout));
+    dropdown.addEventListener('mouseleave', close);
+  }
+
+  makeDropdown('megamenu-container', 'megamenu-dropdown');
+  makeDropdown('styles-container', 'styles-dropdown');
+  makeDropdown('sustainability-container', 'sustainability-dropdown');
+
+  // ── Destinations megamenu ─────────────────────────────────────────────────
+  const scrollAmount = 100;
+
+  document.getElementById('scroll-up')?.addEventListener('click', () => {
+    document.getElementById('destinations-scroll')?.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+  });
+  document.getElementById('scroll-down')?.addEventListener('click', () => {
+    document.getElementById('destinations-scroll')?.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+  });
+
+  function updateMegamenu(destKey) {
+    const destination = t.megamenu.destinos.find(d => d.key === destKey);
+    if (!destination) return;
+
+    document.getElementById('megamenu-tours').innerHTML = destination.tours.map(tour => `
+      <div class="pb-3 border-b border-gray-100 last:border-0">
+        <p class="font-semibold text-gray-800 text-sm">${tour.name}</p>
+        <p class="text-xs text-gray-500">${tour.days} días</p>
+      </div>
+    `).join('');
+
+    const img = document.getElementById('megamenu-image');
+    img.src = destination.image.startsWith('landing page images')
+      ? `/${destination.image}`
+      : `https://images.unsplash.com/${destination.image}?w=400&h=400&fit=crop`;
+    document.getElementById('megamenu-dest-name').textContent = destination.name;
+  }
+
+  updateMegamenu('chachapoyas');
+  document.querySelector('[data-dest="chachapoyas"]')?.classList.add('bg-blue-50', 'text-blue-600');
+
+  document.querySelectorAll('.destination-item').forEach(item => {
+    item.addEventListener('mouseenter', () => {
+      updateMegamenu(item.dataset.dest);
+      document.querySelectorAll('.destination-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-600'));
+      item.classList.add('bg-blue-50', 'text-blue-600');
+    });
+  });
+
+  // ── Styles megamenu ───────────────────────────────────────────────────────
+  function updateStylesMenuFooter(menu) {
+    const menuItem = t.stylesMenu[menu];
+    if (!menuItem) return;
+    document.getElementById('styles-menu-footer').textContent = menuItem.description || '';
+    const img = document.getElementById('styles-footer-image');
+    img.src = menuItem.image
+      ? (menuItem.image.startsWith('landing page images') ? '/' + menuItem.image : menuItem.image)
+      : '';
+  }
+
+  document.querySelectorAll('.styles-menu-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const menu = btn.dataset.menu;
+      document.querySelectorAll('.styles-menu-btn').forEach(b => {
+        b.classList.remove('border-blue-600', 'text-blue-600');
+        b.classList.add('border-transparent', 'text-gray-700');
+      });
+      btn.classList.remove('border-transparent', 'text-gray-700');
+      btn.classList.add('border-blue-600', 'text-blue-600');
+
+      document.querySelectorAll('.styles-menu-content').forEach(c => c.classList.add('hidden'));
+      document.getElementById(`content-${menu}`)?.classList.remove('hidden');
+      updateStylesMenuFooter(menu);
+    });
+  });
+
+  updateStylesMenuFooter('travelStyles');
+
+  // ── Sustainability megamenu ───────────────────────────────────────────────
+  document.getElementById('scroll-up-sustainability')?.addEventListener('click', () => {
+    document.getElementById('sustainability-scroll')?.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+  });
+  document.getElementById('scroll-down-sustainability')?.addEventListener('click', () => {
+    document.getElementById('sustainability-scroll')?.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+  });
+
+  function updateSustainabilityMenu(sustKey) {
+    const entry = Object.entries(t.sustainability).find(([key]) => key === sustKey);
+    if (!entry) return;
+    const [, sustItem] = entry;
+
+    document.getElementById('sustainability-description').innerHTML =
+      `<p class="text-sm text-gray-600">${sustItem.description}</p>`;
+
+    const sustImage = t.sustainability.images[sustKey];
+    const img = document.getElementById('sustainability-image');
+    img.src = sustImage.startsWith('landing page images')
+      ? `/${sustImage}`
+      : `https://images.unsplash.com/${sustImage}?w=400&h=400&fit=crop`;
+    document.getElementById('sustainability-name').textContent = sustItem.name;
+  }
+
+  const firstSustKey = Object.keys(t.sustainability).find(k => !['title', 'images'].includes(k));
+  if (firstSustKey) {
+    updateSustainabilityMenu(firstSustKey);
+    document.querySelector(`[data-sustainability="${firstSustKey}"]`)?.classList.add('bg-blue-50', 'text-blue-600');
+  }
+
+  document.querySelectorAll('.sustainability-item').forEach(item => {
+    item.addEventListener('mouseenter', () => {
+      updateSustainabilityMenu(item.dataset.sustainability);
+      document.querySelectorAll('.sustainability-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-600'));
+      item.classList.add('bg-blue-50', 'text-blue-600');
+    });
+  });
+
+  // ── Mobile dropdowns ──────────────────────────────────────────────────────
+  const mobileDestinationsMenu = document.getElementById('mobile-destinations-menu');
+  const mobileDestinationsList = document.getElementById('mobile-destinations-list');
+  const mobileDestinationsDetails = document.getElementById('mobile-destinations-details');
+  const mobileStylesMenu = document.getElementById('mobile-styles-menu');
+  const mobileStylesList = document.getElementById('mobile-styles-list');
+  const mobileStylesDetails = document.getElementById('mobile-styles-details');
+  const mobileSustainabilityMenu = document.getElementById('mobile-sustainability-menu');
+  const mobileSustainabilityList = document.getElementById('mobile-sustainability-list');
+  const mobileSustainabilityDetails = document.getElementById('mobile-sustainability-details');
+
+  document.getElementById('mobile-destinations-btn')?.addEventListener('click', () => {
+    mobileDestinationsMenu?.classList.toggle('hidden');
+    mobileStylesMenu?.classList.add('hidden');
+    mobileSustainabilityMenu?.classList.add('hidden');
+  });
+
+  document.getElementById('mobile-styles-btn')?.addEventListener('click', () => {
+    mobileStylesMenu?.classList.toggle('hidden');
+    mobileDestinationsMenu?.classList.add('hidden');
+    mobileSustainabilityMenu?.classList.add('hidden');
+  });
+
+  document.getElementById('mobile-sustainability-btn')?.addEventListener('click', () => {
+    mobileSustainabilityMenu?.classList.toggle('hidden');
+    mobileDestinationsMenu?.classList.add('hidden');
+    mobileStylesMenu?.classList.add('hidden');
+  });
+
+  // Ver todos destinos
+  document.getElementById('mobile-destinations-show-all')?.addEventListener('click', () => {
+    const extra = document.getElementById('mobile-destinations-extra');
+    const btn = document.getElementById('mobile-destinations-show-all');
+    if (extra && btn) {
+      extra.classList.toggle('hidden');
+      btn.textContent = extra.classList.contains('hidden') ? 'Ver todos los destinos ▼' : 'Ver menos ▲';
+    }
+  });
+
+  // Detalle destino mobile
+  document.querySelectorAll('.mobile-destination-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const destination = t.megamenu.destinos.find(d => d.key === item.getAttribute('data-dest'));
+      if (!destination) return;
+
+      mobileDestinationsList?.classList.add('hidden');
+      mobileDestinationsDetails?.classList.remove('hidden');
+      document.getElementById('mobile-dest-name').textContent = destination.name;
+      document.getElementById('mobile-dest-tours').innerHTML = destination.tours.map(tour => `
+        <div class="pb-2 border-b border-gray-300 last:border-0">
+          <p class="font-semibold text-gray-800 text-sm">${tour.name}</p>
+          <p class="text-xs text-gray-500">${tour.days} días</p>
+        </div>
+      `).join('');
+    });
+  });
+
+  document.getElementById('mobile-dest-back')?.addEventListener('click', () => {
+    mobileDestinationsList?.classList.remove('hidden');
+    mobileDestinationsDetails?.classList.add('hidden');
+  });
+
+  // Detalle estilos mobile
+  document.querySelectorAll('.mobile-styles-option').forEach(option => {
+    option.addEventListener('click', () => {
+      const optionKey = option.getAttribute('data-option');
+      const menuItem = t.stylesMenu[optionKey];
+      if (!menuItem) return;
+
+      mobileStylesList?.classList.add('hidden');
+      mobileStylesDetails?.classList.remove('hidden');
+
+      const styleNameEl = document.getElementById('mobile-style-name');
+      if (styleNameEl) styleNameEl.textContent = option.getAttribute('data-name');
+
+      const subitemsContainer = document.getElementById('mobile-style-subitems');
+      if (!subitemsContainer) return;
+
+      const subitems = menuItem.subitems || {};
+      if (Object.keys(subitems).length === 0) {
+        subitemsContainer.innerHTML = `<p class="text-gray-600 text-sm italic">${menuItem.description || 'Coming Soon...'}</p>`;
+      } else {
+        subitemsContainer.innerHTML = `<div class="flex flex-col gap-1">${Object.entries(subitems).map(([key, sub]) => {
+          const imgSrc = sub.image
+            ? (sub.image.startsWith('landing page images') ? '/' + sub.image : sub.image)
+            : '';
+          return `
+            <button class="relative h-16 overflow-hidden rounded" data-subitem="${key}">
+              ${imgSrc ? `<img src="${imgSrc}" alt="${sub.name}" class="w-full h-full object-cover" />` : `<div class="w-full h-full bg-gray-400"></div>`}
+              <div class="absolute inset-0 bg-black/50"></div>
+              <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1"
+                style="font-family: 'Playfair Display', serif; font-style: italic;">${sub.name}</span>
+            </button>
+          `;
+        }).join('')}</div>`;
+      }
+    });
+  });
+
+  document.getElementById('mobile-styles-back')?.addEventListener('click', () => {
+    mobileStylesList?.classList.remove('hidden');
+    mobileStylesDetails?.classList.add('hidden');
+  });
+
+  // Detalle sostenibilidad mobile
+  document.querySelectorAll('.mobile-sustainability-item').forEach(item => {
+    item.addEventListener('click', () => {
+      mobileSustainabilityList?.classList.add('hidden');
+      mobileSustainabilityDetails?.classList.remove('hidden');
+
+      document.getElementById('mobile-sustainability-name').textContent = item.getAttribute('data-name');
+      document.getElementById('mobile-sustainability-description').textContent = item.getAttribute('data-description');
+
+      const sustDescEl = document.getElementById('mobile-sustainability-description');
+      if (sustDescEl && !sustDescEl.parentElement?.querySelector('.back-btn')) {
+        const backBtn = document.createElement('button');
+        backBtn.className = 'w-full text-left px-0 py-2 text-blue-600 text-sm hover:text-blue-800 transition mt-4 border-t border-gray-300 pt-3 back-btn';
+        backBtn.textContent = '← Volver';
+        backBtn.addEventListener('click', () => {
+          mobileSustainabilityList?.classList.remove('hidden');
+          mobileSustainabilityDetails?.classList.add('hidden');
+          backBtn.remove();
+        });
+        sustDescEl.parentElement?.appendChild(backBtn);
+      }
+    });
+  });
+
+  // Cerrar mobile menus al hacer click afuera
+  document.addEventListener('click', e => {
+    if (!e.target?.closest('#mobile-destinations-btn') && !e.target?.closest('#mobile-destinations-menu'))
+      mobileDestinationsMenu?.classList.add('hidden');
+    if (!e.target?.closest('#mobile-styles-btn') && !e.target?.closest('#mobile-styles-menu'))
+      mobileStylesMenu?.classList.add('hidden');
+    if (!e.target?.closest('#mobile-sustainability-btn') && !e.target?.closest('#mobile-sustainability-menu'))
+      mobileSustainabilityMenu?.classList.add('hidden');
+  });
+});

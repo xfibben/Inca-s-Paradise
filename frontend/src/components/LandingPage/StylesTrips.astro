@@ -1,0 +1,57 @@
+---
+interface Props {
+  t: any;
+}
+
+const { t } = Astro.props;
+---
+
+<style>
+  @media (max-width: 1024px) {
+    .styles-grid > :nth-child(4) {
+      grid-column: 2 / 3;
+    }
+    .styles-grid > :nth-child(5) {
+      grid-column: 3 / 4;
+    }
+  }
+</style>
+
+<section class="bg-white px-2 py-0 w-full flex items-center justify-center" style="height: calc(100vh - 6rem);">
+  <div class="w-full h-full">
+    <!-- Grid Layout: 3 cols mobile (with 2 centered below), 5 cols desktop -->
+    <div class="styles-grid grid grid-cols-3 lg:grid-cols-5 gap-1 w-full h-full" style="grid-auto-rows: 1fr;">
+      {Object.entries(t.styles).map(([key, value]: [string, any]) => {
+        // Skip the title and images fields
+        if (key === 'title' || key === 'images' || typeof value === 'string') return null;
+        const style = value as { name: string; description: string };
+        const imageId = (t.styles as any).images[key] || 'photo-1506905925346-21bda4d32df4';
+        
+        return (
+          <div class="group relative overflow-hidden cursor-pointer transition-transform duration-300 group-hover:scale-x-125 group-hover:z-20">
+            <!-- Image -->
+            <img 
+              src={imageId.startsWith('landing page images') ? `/${imageId}` : `https://images.unsplash.com/${imageId}?w=500&h=600&fit=crop`}
+              alt={style.name}
+              class="w-full h-full object-cover"
+            />
+
+            <!-- Overlay -->
+            <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
+
+            <!-- Content -->
+            <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white">
+              <a href="/#" class="text-sm md:text-base lg:text-lg font-bold transition-transform duration-300 group-hover:-translate-y-3 hover:opacity-80" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
+                {style.name}
+              </a>
+              
+
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+
