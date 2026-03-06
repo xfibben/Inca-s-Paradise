@@ -1,0 +1,114 @@
+---
+import { getTranslation, languages, defaultLanguage, type Language } from '../i18n';
+import '../styles/global.css';
+import Navbar from '../components/shared/Navbar.astro';
+import Hero from '../components/LandingPage/Hero.astro';
+import Features from '../components/LandingPage/Features.astro';
+import DestinationsGallery from '../components/LandingPage/DestinationsGallery.astro';
+import StylesTrips from '../components/LandingPage/StylesTrips.astro';
+import SustainabilitySection from '../components/LandingPage/SustainabilitySection.astro';
+import ValuesSection from '../components/LandingPage/ValuesSection.astro';
+import ReviewsCarousel from '../components/LandingPage/ReviewsCarousel.astro';
+import CertificationsCarousel from '../components/LandingPage/CertificationsCarousel.astro';
+import CertificationsDetail from '../components/LandingPage/CertificationsDetail.astro';
+import Commitment from '../components/LandingPage/Commitment.astro';
+
+// Función requerida para rutas dinámicas en Astro
+export function getStaticPaths() {
+  return Object.keys(languages).map((lang) => ({
+    params: { lang }
+  }));
+}
+
+// Parámetro dinámico de la ruta
+const { lang } = Astro.params;
+
+// Validar que el idioma sea válido, si no redirigir al idioma por defecto
+const validLang = Object.keys(languages).includes(lang as string) 
+  ? (lang as Language)
+  : defaultLanguage;
+
+// Si el idioma no es válido, redirigir
+if (!Object.keys(languages).includes(lang as string)) {
+  return Astro.redirect(`/${validLang}/`);
+}
+
+const t = getTranslation(validLang);
+const currentLang = validLang;
+
+// Mapeo de idiomas a títulos
+const titles: Record<Language, string> = {
+  es: "Inca's Paradise - Aventuras Personalizadas",
+  en: "Inca's Paradise - Tailor-made Adventures",
+  pt: "Inca's Paradise - Aventuras Personalizadas"
+};
+
+const langNames: Record<Language, string> = {
+  es: "es",
+  en: "en",
+  pt: "pt"
+};
+---
+
+<html lang={langNames[currentLang]}>
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
+		<title>{titles[currentLang]}</title>
+		<style>
+			h1, h2 {
+				font-family: 'Playfair Display', serif;
+				font-weight: 500;
+				font-style: italic;
+			}
+
+			#styles-carousel {
+				scroll-behavior: smooth;
+				scrollbar-width: thin;
+				scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+			}
+
+			#styles-carousel::-webkit-scrollbar {
+				height: 6px;
+			}
+
+			#styles-carousel::-webkit-scrollbar-track {
+				background: transparent;
+			}
+
+			#styles-carousel::-webkit-scrollbar-thumb {
+				background: rgba(255, 255, 255, 0.3);
+				border-radius: 3px;
+			}
+
+			#styles-carousel::-webkit-scrollbar-thumb:hover {
+				background: rgba(255, 255, 255, 0.5);
+			}
+
+			.style-card {
+				transition: width 0.3s ease;
+			}
+		</style>
+	</head>
+	<body>
+		<script is:inline src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
+		
+		<Navbar {t} {currentLang} />
+		<Hero {t} />
+		<Features {t} />
+    <Commitment {t} />
+		<DestinationsGallery {t} />
+    <CertificationsDetail lang={currentLang} />
+		<StylesTrips {t} />
+		<SustainabilitySection {t} />
+		<ValuesSection {t} />
+		<ReviewsCarousel {t} />
+    <CertificationsCarousel />
+	</body>
+</html>
