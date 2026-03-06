@@ -297,9 +297,16 @@ const { t, currentLang } = Astro.props;
       <!-- Language Switcher + Contact Button -->
       <div class="hidden md:flex items-center space-x-4">
         <LanguageSwitcher currentLang={currentLang} />
-        <button class="px-6 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition text-sm">
+        <a
+          id="contact-btn"
+          href="https://wa.me/51953556680?text=Hola%20Inca's%20Paradise!%20Estoy%20interesado%20en%20saber%20más%20sobre%20sus%20tours."
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-white text-sm font-semibold border border-white/30"
+        >
+          <img src="/landing page images/footer/whatsapp logo.svg" alt="WhatsApp" class="w-5 h-5" />
           {t.nav.contactUs}
-        </button>
+        </a>
       </div>
 
       <!-- Mobile Menu Button -->
@@ -422,9 +429,15 @@ const { t, currentLang } = Astro.props;
       <div class="py-2 px-4">
         <LanguageSwitcher currentLang={currentLang} />
       </div>
-      <button class="w-full mx-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition text-sm">
+      <a
+        href="https://wa.me/51984434547"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex items-center justify-center gap-2 w-full mx-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition text-sm"
+      >
+        <img src="/landing page images/footer/whatsapp logo.svg" alt="WhatsApp" class="w-5 h-5" />
         {t.nav.contactUs}
-      </button>
+      </a>
     </div>
   </div>
 </nav>

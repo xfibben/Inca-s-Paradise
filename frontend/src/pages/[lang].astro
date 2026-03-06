@@ -12,6 +12,7 @@ import ReviewsCarousel from '../components/LandingPage/ReviewsCarousel.astro';
 import CertificationsCarousel from '../components/LandingPage/CertificationsCarousel.astro';
 import CertificationsDetail from '../components/LandingPage/CertificationsDetail.astro';
 import Commitment from '../components/LandingPage/Commitment.astro';
+import Footer from '../components/shared/Footer.astro';
 
 // Función requerida para rutas dinámicas en Astro
 export function getStaticPaths() {
@@ -110,5 +111,6 @@ const langNames: Record<Language, string> = {
 		<ValuesSection {t} />
 		<ReviewsCarousel {t} />
     <CertificationsCarousel />
+    <Footer {currentLang} {t} />
 	</body>
 </html>

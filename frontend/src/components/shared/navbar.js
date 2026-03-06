@@ -13,6 +13,19 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!navbar) return;
 
   // ── Scroll: cambiar fondo del navbar ──────────────────────────────────────
+  const contactBtn = document.getElementById('contact-btn');
+
+  function setContactBtn(scrolled) {
+    if (!contactBtn) return;
+    if (scrolled) {
+      contactBtn.classList.remove('bg-white/10', 'hover:bg-white/20', 'border', 'border-white/30', 'text-white');
+      contactBtn.classList.add('bg-white', 'hover:bg-gray-100', 'text-gray-900');
+    } else {
+      contactBtn.classList.remove('bg-white', 'hover:bg-gray-100', 'text-gray-900');
+      contactBtn.classList.add('bg-white/10', 'hover:bg-white/20', 'border', 'border-white/30', 'text-white');
+    }
+  }
+
   function updateNavbarStyle() {
     if (!navbar) return;
     if (window.scrollY > 50) {
@@ -22,6 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
         el.classList.remove('text-white', 'hover:text-gray-300');
         el.classList.add('text-gray-900', 'hover:text-gray-600');
       });
+      setContactBtn(true);
     } else {
       navbar.classList.remove('bg-white', 'shadow-md');
       navbar.classList.add('bg-transparent');
@@ -29,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
         el.classList.remove('text-gray-900', 'hover:text-gray-600');
         el.classList.add('text-white', 'hover:text-gray-300');
       });
+      setContactBtn(false);
     }
   }
 
@@ -45,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
         el.classList.remove('text-white', 'hover:text-gray-300');
         el.classList.add('text-gray-900', 'hover:text-gray-600');
       });
+      setContactBtn(true);
     } else if (window.scrollY <= 50) {
       navbar?.classList.remove('bg-white', 'shadow-md');
       navbar?.classList.add('bg-transparent');
@@ -52,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
         el.classList.remove('text-gray-900', 'hover:text-gray-600');
         el.classList.add('text-white', 'hover:text-gray-300');
       });
+      setContactBtn(false);
     }
   });
 

@@ -1,0 +1,468 @@
+---
+import { getTranslation, languages, defaultLanguage, type Language } from '../../i18n';
+import '../../styles/global.css';
+import Navbar from '../../components/shared/Navbar.astro';
+import Footer from '../../components/shared/Footer.astro';
+import departamentosData from '../../i18n/ubigeo_departamento.json';
+import provinciasData from '../../i18n/ubigeo_provincia.json';
+import distritosData from '../../i18n/ubigeo_distrito.json';
+
+export function getStaticPaths() {
+  return Object.keys(languages).map((lang) => ({
+    params: { lang }
+  }));
+}
+
+const { lang } = Astro.params;
+
+const validLang = Object.keys(languages).includes(lang as string)
+  ? (lang as Language)
+  : defaultLanguage;
+
+if (!Object.keys(languages).includes(lang as string)) {
+  return Astro.redirect(`/reclamaciones/${validLang}`);
+}
+
+const t = getTranslation(validLang);
+const currentLang = validLang;
+
+const titles: Record<Language, string> = {
+  es: "Reclamaciones — Inca's Paradise",
+  en: "Complaints — Inca's Paradise",
+  pt: "Reclamações — Inca's Paradise",
+};
+
+type Labels = Record<string, string>;
+const labels: Record<Language, Labels> = {
+  es: {
+    title: "Libro de Reclamaciones",
+    subtitle: "¿Qué es un reclamo?",
+    description: "Es la manifestación de disconformidad relacionada con los bienes adquiridos o servicios contratados por el consumidor. El proveedor deberá dar respuesta en un plazo no mayor de 30 días calendario.",
+    legal: "Ley N.° 29571 — Código de Protección y Defensa del Consumidor",
+    representative: "¿Es usted representante del titular del reclamo?",
+    section_titular: "Datos del titular del reclamo",
+    doc_type: "Tipo de documento",
+    doc_number: "Número de documento",
+    nombres: "Nombres",
+    apellido_paterno: "Apellido paterno",
+    apellido_materno: "Apellido materno",
+    section_contact: "Datos de contacto",
+    address: "Dirección",
+    departamento: "Departamento",
+    provincia: "Provincia",
+    distrito: "Distrito",
+    email: "Correo electrónico",
+    phone: "Teléfono / Celular",
+    section_product: "Bien contratado",
+    is_product: "Producto",
+    is_service: "Servicio",
+    product_desc: "Descripción del bien adquirido",
+    product_amount: "Monto reclamado (S/)",
+    section_complaint: "Detalle de la reclamación",
+    is_queja: "Queja (no relacionada a un bien contratado)",
+    is_reclamo: "Reclamo (relacionado a un bien contratado)",
+    complaint_detail: "Detalle de la reclamación",
+    complaint_request: "Pedido del consumidor",
+    submit: "Enviar reclamación",
+    required: "* Campos obligatorios",
+    select_dept: "-- Seleccione Departamento --",
+    select_prov: "-- Seleccione Provincia --",
+    select_dist: "-- Seleccione Distrito --",
+    dni: "DNI",
+    ce: "Carné de Extranjería",
+    pasaporte: "Pasaporte",
+    ruc: "RUC",
+    success_msg: "Tu reclamación fue enviada. Recibirás una respuesta en un máximo de 30 días calendario.",
+    error_msg: "Ocurrió un error al enviar. Por favor, intenta nuevamente.",
+  },
+  en: {
+    title: "Complaints Book",
+    subtitle: "What is a complaint?",
+    description: "It is the expression of dissatisfaction related to goods purchased or services contracted. The provider must respond within 30 calendar days.",
+    legal: "Law N.° 29571 — Consumer Protection and Defense Code",
+    representative: "Are you a representative of the complaint holder?",
+    section_titular: "Claimant's details",
+    doc_type: "Document type",
+    doc_number: "Document number",
+    nombres: "First name(s)",
+    apellido_paterno: "Last name",
+    apellido_materno: "Second last name",
+    section_contact: "Contact information",
+    address: "Address",
+    departamento: "Department",
+    provincia: "Province",
+    distrito: "District",
+    email: "Email",
+    phone: "Phone / Mobile",
+    section_product: "Contracted good",
+    is_product: "Product",
+    is_service: "Service",
+    product_desc: "Description of acquired good",
+    product_amount: "Claimed amount (S/)",
+    section_complaint: "Complaint details",
+    is_queja: "Complaint (not related to a contracted good)",
+    is_reclamo: "Claim (related to a contracted good)",
+    complaint_detail: "Complaint description",
+    complaint_request: "Consumer's request",
+    submit: "Submit complaint",
+    required: "* Required fields",
+    select_dept: "-- Select Department --",
+    select_prov: "-- Select Province --",
+    select_dist: "-- Select District --",
+    dni: "National ID (DNI)",
+    ce: "Foreign ID Card",
+    pasaporte: "Passport",
+    ruc: "Tax ID (RUC)",
+    success_msg: "Your complaint was submitted. You will receive a response within 30 calendar days.",
+    error_msg: "An error occurred. Please try again.",
+  },
+  pt: {
+    title: "Livro de Reclamações",
+    subtitle: "O que é uma reclamação?",
+    description: "É a manifestação de inconformidade relacionada com os bens adquiridos ou serviços contratados. O fornecedor deverá responder em no máximo 30 dias corridos.",
+    legal: "Lei N.° 29571 — Código de Proteção e Defesa do Consumidor",
+    representative: "Você é representante do titular da reclamação?",
+    section_titular: "Dados do titular da reclamação",
+    doc_type: "Tipo de documento",
+    doc_number: "Número do documento",
+    nombres: "Nome(s)",
+    apellido_paterno: "Sobrenome paterno",
+    apellido_materno: "Sobrenome materno",
+    section_contact: "Dados de contato",
+    address: "Endereço",
+    departamento: "Departamento",
+    provincia: "Província",
+    distrito: "Distrito",
+    email: "E-mail",
+    phone: "Telefone / Celular",
+    section_product: "Bem contratado",
+    is_product: "Produto",
+    is_service: "Serviço",
+    product_desc: "Descrição do bem adquirido",
+    product_amount: "Valor reclamado (S/)",
+    section_complaint: "Detalhes da reclamação",
+    is_queja: "Queixa (não relacionada a um bem contratado)",
+    is_reclamo: "Reclamação (relacionada a um bem contratado)",
+    complaint_detail: "Descrição da reclamação",
+    complaint_request: "Pedido do consumidor",
+    submit: "Enviar reclamação",
+    required: "* Campos obrigatórios",
+    select_dept: "-- Selecione Departamento --",
+    select_prov: "-- Selecione Província --",
+    select_dist: "-- Selecione Distrito --",
+    dni: "DNI",
+    ce: "Carteira de Estrangeiro",
+    pasaporte: "Passaporte",
+    ruc: "RUC",
+    success_msg: "Sua reclamação foi enviada. Você receberá resposta em até 30 dias corridos.",
+    error_msg: "Ocorreu um erro ao enviar. Tente novamente.",
+  },
+};
+
+const L = labels[currentLang];
+---
+
+<html lang={currentLang}>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
+    <title>{titles[currentLang]}</title>
+  </head>
+  <body>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
+
+    <Navbar {t} {currentLang} />
+
+    <!-- Contenido -->
+    <main class="min-h-screen bg-gray-100 pt-24 pb-16 px-4">
+      <div class="max-w-5xl mx-auto">
+
+        <!-- Cabecera roja -->
+        <div class="bg-red-700 rounded-t-2xl px-8 py-6 flex items-center gap-6">
+          <img src="/landing page images/incasparadiselogo.png" alt="Inca's Paradise" class="h-14 object-contain drop-shadow-lg" />
+          <div>
+            <h1 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">{L.title}</h1>
+            <p class="text-red-200 text-sm mt-0.5">Inca's Paradise S.A.C. &nbsp;|&nbsp; RUC: 20601022207</p>
+          </div>
+          <!-- Escudo libro de reclamaciones -->
+          <div class="ml-auto hidden md:flex flex-col items-center text-white opacity-80">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            </svg>
+            <span class="text-xs mt-1 font-semibold uppercase tracking-wide">Libro de<br/>Reclamaciones</span>
+          </div>
+        </div>
+
+        <!-- Cuerpo principal -->
+        <div class="bg-white rounded-b-2xl shadow-xl">
+          <div class="grid md:grid-cols-3">
+
+            <!-- Panel izquierdo informativo -->
+            <aside class="md:col-span-1 bg-red-50 rounded-bl-2xl p-7 border-r border-red-100 flex flex-col gap-5">
+              <div>
+                <h2 class="font-bold text-red-700 text-base mb-1">{L.subtitle}</h2>
+                <p class="text-gray-600 text-sm leading-relaxed">{L.description}</p>
+              </div>
+              <div class="mt-auto border-t border-red-100 pt-5">
+                <p class="text-gray-500 text-xs font-semibold mb-1">Inca's Paradise</p>
+                <p class="text-gray-400 text-xs">Jr. Grau 460 - Puno</p>
+                <p class="text-gray-400 text-xs mt-1">booking@incasparadise.com</p>
+                <p class="text-gray-400 text-xs mt-1">+51 953 556 680</p>
+              </div>
+            </aside>
+
+            <!-- Formulario -->
+            <div class="md:col-span-2 p-7">
+              <form id="reclamaciones-form" novalidate class="space-y-7">
+
+                <!-- ¿Es representante? -->
+                <label class="flex items-start gap-3 cursor-pointer select-none">
+                  <input type="checkbox" id="is-representative" name="is_representative" class="mt-0.5 w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500" />
+                  <span class="text-sm text-gray-700">{L.representative}</span>
+                </label>
+
+                <!-- Sección 1: Datos del titular -->
+                <section>
+                  <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">{L.section_titular}</h3>
+                  <div class="grid sm:grid-cols-2 gap-4">
+                    <!-- Tipo de documento -->
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.doc_type} <span class="text-red-500">*</span></label>
+                      <select name="doc_type" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 bg-white">
+                        <option value="DNI">{L.dni}</option>
+                        <option value="CE">{L.ce}</option>
+                        <option value="PASAPORTE">{L.pasaporte}</option>
+                        <option value="RUC">{L.ruc}</option>
+                      </select>
+                    </div>
+                    <!-- Número de documento -->
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.doc_number} <span class="text-red-500">*</span></label>
+                      <input type="text" name="doc_number" required maxlength="20" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400" />
+                    </div>
+                    <!-- Nombres -->
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.nombres} <span class="text-red-500">*</span></label>
+                      <input type="text" name="nombres" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400" />
+                    </div>
+                    <!-- Apellido paterno -->
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.apellido_paterno} <span class="text-red-500">*</span></label>
+                      <input type="text" name="apellido_paterno" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400" />
+                    </div>
+                    <!-- Apellido materno -->
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.apellido_materno}</label>
+                      <input type="text" name="apellido_materno" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400" />
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Sección 2: Datos de contacto -->
+                <section>
+                  <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">{L.section_contact}</h3>
+                  <div class="grid sm:grid-cols-2 gap-4">
+                    <!-- Dirección -->
+                    <div class="sm:col-span-2">
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.address} <span class="text-red-500">*</span></label>
+                      <input type="text" name="address" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400" />
+                    </div>
+                    <!-- Departamento -->
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.departamento} <span class="text-red-500">*</span></label>
+                      <select id="select-departamento" name="departamento" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 bg-white">
+                        <option value="">{L.select_dept}</option>
+                      </select>
+                    </div>
+                    <!-- Provincia -->
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.provincia} <span class="text-red-500">*</span></label>
+                      <select id="select-provincia" name="provincia" required disabled class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 bg-white disabled:opacity-50">
+                        <option value="">{L.select_prov}</option>
+                      </select>
+                    </div>
+                    <!-- Distrito -->
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.distrito} <span class="text-red-500">*</span></label>
+                      <select id="select-distrito" name="distrito" required disabled class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 bg-white disabled:opacity-50">
+                        <option value="">{L.select_dist}</option>
+                      </select>
+                    </div>
+                    <!-- Email -->
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.email} <span class="text-red-500">*</span></label>
+                      <input type="email" name="email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400" />
+                    </div>
+                    <!-- Teléfono -->
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.phone}</label>
+                      <input type="tel" name="phone" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400" />
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Sección 3: Bien contratado -->
+                <section>
+                  <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">{L.section_product}</h3>
+                  <div class="flex gap-6 mb-4">
+                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                      <input type="radio" name="product_type" value="producto" class="text-red-600 focus:ring-red-500" checked />
+                      {L.is_product}
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-700">
+                      <input type="radio" name="product_type" value="servicio" class="text-red-600 focus:ring-red-500" />
+                      {L.is_service}
+                    </label>
+                  </div>
+                  <div class="grid sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.product_desc} <span class="text-red-500">*</span></label>
+                      <input type="text" name="product_desc" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.product_amount}</label>
+                      <input type="number" name="product_amount" min="0" step="0.01" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400" placeholder="0.00" />
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Sección 4: Detalle de la reclamación -->
+                <section>
+                  <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">{L.section_complaint}</h3>
+                  <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <label class="flex items-start gap-2 cursor-pointer text-sm text-gray-700">
+                      <input type="radio" name="complaint_type" value="reclamo" class="mt-0.5 text-red-600 focus:ring-red-500" checked />
+                      <span>{L.is_reclamo}</span>
+                    </label>
+                    <label class="flex items-start gap-2 cursor-pointer text-sm text-gray-700">
+                      <input type="radio" name="complaint_type" value="queja" class="mt-0.5 text-red-600 focus:ring-red-500" />
+                      <span>{L.is_queja}</span>
+                    </label>
+                  </div>
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.complaint_detail} <span class="text-red-500">*</span></label>
+                      <textarea name="complaint_detail" required rows="4" maxlength="1000" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 resize-none"></textarea>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-600 mb-1">{L.complaint_request} <span class="text-red-500">*</span></label>
+                      <textarea name="complaint_request" required rows="3" maxlength="500" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 resize-none"></textarea>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- Footer del form -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2 border-t border-gray-100">
+                  <p class="text-xs text-gray-400">{L.required}</p>
+                  <button type="submit" class="bg-red-700 hover:bg-red-800 text-white font-semibold px-8 py-3 rounded-xl text-sm transition-colors shadow-md">
+                    {L.submit}
+                  </button>
+                </div>
+
+                <!-- Mensaje de resultado -->
+                <div id="form-success" class="hidden bg-green-50 border border-green-200 text-green-800 rounded-lg px-4 py-3 text-sm">{L.success_msg}</div>
+                <div id="form-error" class="hidden bg-red-50 border border-red-200 text-red-800 rounded-lg px-4 py-3 text-sm">{L.error_msg}</div>
+
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <Footer {currentLang} {t} />
+
+    <script define:vars={{ departamentosData, provinciasData, distritosData, L }}>
+      const depts = departamentosData;
+      const provs = provinciasData;
+      const dists = distritosData;
+
+      const selDept  = document.getElementById('select-departamento');
+      const selProv  = document.getElementById('select-provincia');
+      const selDist  = document.getElementById('select-distrito');
+
+      // Populate departamentos
+      depts.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.name;
+        selDept.appendChild(opt);
+      });
+
+      // Departamento → Provincia
+      selDept.addEventListener('change', () => {
+        const deptId = selDept.value;
+
+        // Reset provincia
+        selProv.innerHTML = `<option value="">${L.select_prov}</option>`;
+        selProv.disabled = !deptId;
+        // Reset distrito
+        selDist.innerHTML = `<option value="">${L.select_dist}</option>`;
+        selDist.disabled = true;
+
+        if (!deptId) return;
+        provs.filter(p => p.department_id === deptId).forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name.trim();
+          selProv.appendChild(opt);
+        });
+      });
+
+      // Provincia → Distrito
+      selProv.addEventListener('change', () => {
+        const provId = selProv.value;
+
+        selDist.innerHTML = `<option value="">${L.select_dist}</option>`;
+        selDist.disabled = !provId;
+
+        if (!provId) return;
+        dists.filter(d => d.province_id === provId).forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.id;
+          opt.textContent = d.name.trim();
+          selDist.appendChild(opt);
+        });
+      });
+
+      // Form submit (demo – replace with real API call)
+      const form = document.getElementById('reclamaciones-form');
+      const successEl = document.getElementById('form-success');
+      const errorEl   = document.getElementById('form-error');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        successEl.classList.add('hidden');
+        errorEl.classList.add('hidden');
+
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        const data = Object.fromEntries(new FormData(form));
+
+        try {
+          // TODO: replace URL with real endpoint
+          // await fetch('/api/reclamaciones', { method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' } });
+          console.log('Reclamación enviada:', data);
+          successEl.classList.remove('hidden');
+          form.reset();
+          selProv.disabled = true;
+          selDist.disabled = true;
+          selProv.innerHTML = `<option value="">${L.select_prov}</option>`;
+          selDist.innerHTML = `<option value="">${L.select_dist}</option>`;
+          successEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch {
+          errorEl.classList.remove('hidden');
+        }
+      });
+    </script>
+  </body>
+</html>
