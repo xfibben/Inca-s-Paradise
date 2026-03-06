@@ -1,0 +1,24 @@
+---
+interface Props {
+    image: string;
+    alt: string;
+    days: string;
+    location: string;
+    title: string;
+    description: string;
+}
+
+const { image, alt, days, location, title, description } = Astro.props;
+---
+
+<div class="carousel-card">
+    <img src={image} alt={alt} />
+    <div class="carousel-card-overlay">
+        <div class="carousel-card-days">{days}</div>
+        <div class="carousel-card-content">
+            <div class="carousel-card-location">{location}</div>
+            <div class="carousel-card-title">{title}</div>
+            <div class="carousel-card-description">{description}</div>
+        </div>
+    </div>
+</div>
