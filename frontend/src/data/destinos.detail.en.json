@@ -1,0 +1,156 @@
+{
+  "destinations": [
+    {
+      "slug": "puno",
+      "meta": {
+        "title": "Puno",
+        "description": "Puno, altiplano and living culture on the shores of Lake Titicaca."
+      },
+      "hero": {
+        "slides": [
+          {
+            "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2000&q=80",
+            "title": "Puno",
+            "description": "Altiplano of Lake Titicaca, living culture and open landscapes."
+          },
+          {
+            "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=2000&q=80",
+            "title": "Titicaca Islands",
+            "description": "Uros, Taquile and Amantani: tradition, textiles and lake life."
+          },
+          {
+            "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2000&q=80",
+            "title": "Andean Rhythm",
+            "description": "Festivals, music and panoramic views of the highlands."
+          }
+        ]
+      },
+      "intro": {
+        "title": "Explore Puno, tailored to you",
+        "paragraphs": [
+          "Our specialists know Puno first-hand and craft itineraries that blend living culture, close guidance and Lake Titicaca landscapes.",
+          "Discover the Uros, Taquile, Amantani and viewpoints like Sillustani. We adjust each route to your pace, dates and interests."
+        ],
+        "highlights": [
+          [
+            "Lake Titicaca"
+          ],
+          [
+            "Uros",
+            "Taquile",
+            "Amantani",
+            "Sillustani"
+          ]
+        ],
+        "iconLabels": [
+          "Local gastronomy",
+          "5-star reviews",
+          "Responsible travel",
+          "Boutique stays",
+          "Verified reviews",
+          "Local expert guides"
+        ]
+      },
+      "ribbons": {
+        "primary": "Best-selling tours in Puno",
+        "secondary": "Destination of Puno"
+      },
+      "packages": [
+        {
+          "type": "card",
+          "title": "Iconic Puno",
+          "meta": "Days: 6 | From: $320 per person",
+          "description": "Lake Titicaca, Uros and Sillustani with flexible timing and open views.",
+          "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Titicaca Essentials",
+          "meta": "Days: 5 | From: $280 per person",
+          "description": "Short route with Taquile and Amantani, ideal for lake life.",
+          "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "quote",
+          "quote": "Everything was perfect. The team understood what I wanted and every detail felt tailored to me.",
+          "author": "Susana B."
+        },
+        {
+          "type": "card",
+          "title": "Private Altiplano",
+          "meta": "Days: 7 | From: $460 per person",
+          "description": "Premium experience with local guides and boutique stays.",
+          "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Sillustani and Lampa",
+          "meta": "Days: 4 | From: $240 per person",
+          "description": "Archaeology, viewpoints and towns that keep their essence.",
+          "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Kayak Adventures",
+          "meta": "Days: 5 | From: $350 per person",
+          "description": "Active routes on the lake with free afternoons to explore.",
+          "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Titicaca Flavors",
+          "meta": "Days: 6 | From: $330 per person",
+          "description": "Local gastronomy, markets and classes with Andean chefs.",
+          "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Photo Route",
+          "meta": "Days: 6 | From: $390 per person",
+          "description": "Golden light, open landscapes and sessions with expert guides.",
+          "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Sacred Trails",
+          "meta": "Days: 5 | From: $310 per person",
+          "description": "Journeys with Andean landscapes and living communities.",
+          "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Taquile Sunrise",
+          "meta": "Days: 4 | From: $230 per person",
+          "description": "Slow rhythms, textiles and lake viewpoints.",
+          "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Cultural Route",
+          "meta": "Days: 6 | From: $360 per person",
+          "description": "Local museums, festivals and regional flavors.",
+          "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Lake and Mountains",
+          "meta": "Days: 7 | From: $410 per person",
+          "description": "Viewpoints, gentle hikes and boutique stays.",
+          "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80"
+        }
+      ],
+      "seeMore": {
+        "label": "See More",
+        "collapseLabel": "See Less"
+      },
+      "placeholder": {
+        "label": "Space for component"
+      },
+      "blogCta": {
+        "title": "Why travel with Incas Paradise",
+        "button": "10 reasons to travel with Incas Paradise"
+      },
+      "initialVisibleCount": 8
+    }
+  ]
+}

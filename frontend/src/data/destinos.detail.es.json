@@ -1,0 +1,157 @@
+{
+  "destinations": [
+    {
+      "slug": "puno",
+      "meta": {
+        "title": "Puno",
+        "description": "Puno, altiplano y cultura viva a orillas del Lago Titicaca."
+      },
+      "hero": {
+        "slides": [
+          {
+            "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2000&q=80",
+            "title": "Puno",
+            "description": "Altiplano del Lago Titicaca, cultura viva y paisajes abiertos."
+          },
+          {
+            "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=2000&q=80",
+            "title": "Islas del Titicaca",
+            "description": "Uros, Taquile y Amantani: tradicion, tejido y vida lacustre."
+          },
+          {
+            "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2000&q=80",
+            "title": "Ritmo Andino",
+            "description": "Festividades, musica y panoramas que conectan con la sierra."
+          }
+        ]
+      },
+      "intro": {
+        "title": "Explora Puno, hecho a tu medida",
+        "paragraphs": [
+          "Nuestros especialistas conocen Puno de primera mano y crean itinerarios personalizados que combinan cultura viva, acompanamiento cercano y paisajes del Lago Titicaca.",
+          "Descubre los Uros, Taquile, Amantani y miradores como Sillustani. Ajustamos cada ruta a tu ritmo, fechas e intereses."
+        ],
+        "highlights": [
+          [
+            "Lago Titicaca"
+          ],
+          [
+            "los Uros",
+            "Taquile",
+            "Amantani",
+            "Sillustani"
+          ]
+        ],
+        "iconLabels": [
+          "Gastronomia local",
+          "5 estrellas",
+          "Viajes responsables",
+          "Alojamientos boutique",
+          "Resenas verificadas",
+          "Guias locales expertos"
+        ]
+      },
+      "ribbons": {
+        "primary": "Mejores ventas en tours de Puno",
+        "secondary": "Destino de Puno"
+      },
+      "packages": [
+        {
+          "type": "card",
+          "tourSlug": "puno-iconico",
+          "title": "Puno Iconico",
+          "meta": "Dias: 6 | Desde: $320 por persona",
+          "description": "Lago Titicaca, Uros y Sillustani con tiempos flexibles y vistas abiertas.",
+          "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Titicaca Esencial",
+          "meta": "Dias: 5 | Desde: $280 por persona",
+          "description": "Ruta corta con Taquile y Amantani, ideal para la vida lacustre.",
+          "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "quote",
+          "quote": "Todo salio perfecto. El equipo entendio lo que buscaba y cada detalle se sintio pensado para mi.",
+          "author": "Susana B."
+        },
+        {
+          "type": "card",
+          "title": "Altiplano Privado",
+          "meta": "Dias: 7 | Desde: $460 por persona",
+          "description": "Experiencia premium con guias locales y alojamientos boutique.",
+          "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Sillustani y Lampa",
+          "meta": "Dias: 4 | Desde: $240 por persona",
+          "description": "Arqueologia, miradores y pueblos que conservan su esencia.",
+          "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Aventuras en Kayak",
+          "meta": "Dias: 5 | Desde: $350 por persona",
+          "description": "Rutas activas por el lago con tardes libres para explorar.",
+          "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Sabores del Titicaca",
+          "meta": "Dias: 6 | Desde: $330 por persona",
+          "description": "Gastronomia local, mercados y clases con chefs andinos.",
+          "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Ruta Fotografia",
+          "meta": "Dias: 6 | Desde: $390 por persona",
+          "description": "Luz dorada, paisajes abiertos y sesiones con guias expertos.",
+          "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Caminos Sagrados",
+          "meta": "Dias: 5 | Desde: $310 por persona",
+          "description": "Travesias con paisajes andinos y comunidades vivas.",
+          "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Amanecer en Taquile",
+          "meta": "Dias: 4 | Desde: $230 por persona",
+          "description": "Ritmos tranquilos, textiles y miradores del lago.",
+          "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Ruta Cultural",
+          "meta": "Dias: 6 | Desde: $360 por persona",
+          "description": "Museos locales, festividades y sabores regionales.",
+          "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Lago y Montanas",
+          "meta": "Dias: 7 | Desde: $410 por persona",
+          "description": "Miradores, caminatas suaves y estancias boutique.",
+          "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80"
+        }
+      ],
+      "seeMore": {
+        "label": "See More",
+        "collapseLabel": "See Less"
+      },
+      "placeholder": {
+        "label": "Espacio para componente"
+      },
+      "blogCta": {
+        "title": "Por que viajar con Incas Paradise",
+        "button": "10 razones para viajar con Incas Paradise"
+      },
+      "initialVisibleCount": 8
+    }
+  ]
+}
