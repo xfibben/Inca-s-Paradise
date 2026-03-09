@@ -1,6 +1,14 @@
 ---
 // Aventura y Caminatas - Inca's Paradise
-import CarouselCard from '../../../components/CarouselCard.astro';
+import CarouselCard from '../../../components/stylestrips/StylesCarouselCard.astro';
+import Navbar from '../../../components/shared/Navbar.astro';
+import Footer from '../../../components/shared/Footer.astro';
+import { getTranslation, defaultLanguage } from '../../../i18n';
+import '../../../styles/global.css';
+import './aventura-caminatas.css';
+
+const currentLang = defaultLanguage;
+const t = getTranslation(currentLang);
 ---
 
 <!DOCTYPE html>
@@ -9,13 +17,16 @@ import CarouselCard from '../../../components/CarouselCard.astro';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aventura y Caminatas - Inca's Paradise</title>
-    <link rel="stylesheet" href="/src/styles/aventura-caminatas.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
 </head>
 <body>
+    <Navbar {t} {currentLang} />
     <!-- Hero Section: pantalla completa -->
     <div class="hero">
         <img
-            src="/fondo-camino-inca-trekking.jpg"
+            src="/TripsStyles/fondo-camino-inca-trekking.jpg"
             alt="Aventura y Caminatas en los Andes"
             class="hero-image"
         />
@@ -28,14 +39,9 @@ import CarouselCard from '../../../components/CarouselCard.astro';
         <div class="intro-band-content">
             <div class="intro-band-text">
                 <p class="intro-quote">
-                    Perú y Bolivia son territorios hechos para la aventura. Desde las aguas infinitas del Lago Titicaca hasta los paisajes ancestrales de Machu Picchu, cada destino invita a explorar, descubrir y conectar con la naturaleza y la historia. En Inca's Paradise, diseñamos experiencias que te llevan más allá de lo esperado, recorriendo algunos de los escenarios más impresionantes de los Andes.
+                    Perú y Bolivia son territorios donde la naturaleza se vive en estado puro: desde las aguas sagradas del Lago Titicaca hasta los senderos ancestrales que conducen a Machu Picchu. En Inca’s Paradise diseñamos expediciones para viajeros que buscan aventura auténtica: kayak en el Titicaca, trekking en las montañas de Cusco, exploración del majestuoso Cañón del Colca en Arequipa y ciclismo de altura en Puno y en los paisajes extremos de Bolivia. Cada experiencia combina paisajes extraordinarios, aventura y encuentros genuinos con comunidades locales, creando momentos inolvidables que conectan al viajero con la cultura viva y el espíritu profundo de los Andes.
                 </p>
-                <p>
-                    Nuestros tours de aventura te llevan a remar en kayak en el Lago Titicaca en Puno, caminar entre los paisajes andinos de Cusco rumbo a Machu Picchu, explorar la inmensidad del Cañón del Colca en Arequipa, sobrevolar los misteriosos geoglifos de Líneas de Nazca, descubrir la energía cultural y gastronómica de Lima o vivir experiencias únicas como ciclismo de altura en Bolivia.
-                </p>
-                <p>
-                    Cada ruta está pensada para viajeros que buscan paisajes extraordinarios, cultura viva y momentos inolvidables, acompañados por expertos locales que conocen cada destino como su hogar.
-                </p>
+               
             </div>
             <img 
                 src="https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=800&h=1200&fit=crop" 
@@ -159,5 +165,6 @@ import CarouselCard from '../../../components/CarouselCard.astro';
             </div>
         </div>
     </section>
+    <Footer {currentLang} {t} />
 </body>
 </html>

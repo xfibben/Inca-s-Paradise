@@ -381,5 +381,13 @@
       "title": "Tourism Commitment Recognition Diploma – PROMPERÚ",
       "description": "Official recognition for successfully completing PROMPERÚ's commercial promotion programs, demonstrating our commitment to promoting the image of Peruvian tourism worldwide."
     }
-  ]
+  ],
+  "footer": {
+    "terms": "Terms & Conditions",
+    "offers": "Offers",
+    "about": "About Us",
+    "policies": "Policies",
+    "cancellations": "Cancellations",
+    "faq": "FAQ"
+  }
 }

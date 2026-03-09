@@ -381,5 +381,13 @@
       "title": "Diploma de Reconocimiento al Compromiso Turístico – PROMPERÚ",
       "description": "Distinción oficial por culminar con éxito los programas de promoción comercial de PROMPERÚ, demostrando nuestro compromiso en impulsar la imagen del turismo peruano a nivel mundial."
     }
-  ]
+  ],
+  "footer": {
+    "terms": "Términos y condiciones",
+    "offers": "Ofertas",
+    "about": "Nosotros",
+    "policies": "Políticas",
+    "cancellations": "Cancelaciones",
+    "faq": "Preguntas frecuentes"
+  }
 }
