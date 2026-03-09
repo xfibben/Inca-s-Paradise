@@ -430,6 +430,54 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiDestinoDetalleDestinoDetalle
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'destino_detalles';
+  info: {
+    description: 'Contenido editable de la vista detalle de destinos';
+    displayName: 'Destino Detalle';
+    pluralName: 'destino-detalles';
+    singularName: 'destino-detalle';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    'content-api': {
+      enabled: true;
+    };
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    blogButton: Schema.Attribute.String;
+    blogTitle: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    heroSlides: Schema.Attribute.JSON;
+    iconLabels: Schema.Attribute.JSON;
+    introHighlights: Schema.Attribute.JSON;
+    introParagraphs: Schema.Attribute.JSON;
+    introTitle: Schema.Attribute.String;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::destino-detalle.destino-detalle'
+    >;
+    primaryRibbon: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    secondaryRibbon: Schema.Attribute.String;
+    slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiDestinoDestino extends Struct.SingleTypeSchema {
   collectionName: 'destinos';
   info: {
@@ -463,6 +511,94 @@ export interface ApiDestinoDestino extends Struct.SingleTypeSchema {
     ribbonText: Schema.Attribute.String;
     slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
     title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
+  collectionName: 'tour_detalles';
+  info: {
+    displayName: 'Tour Detalle';
+    pluralName: 'tour-detalles';
+    singularName: 'tour-detalle';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    atGlance: Schema.Attribute.JSON &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    destinationSlug: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    hero: Schema.Attribute.JSON &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    itineraryRibbon: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::tour-detalle.tour-detalle'
+    >;
+    metatitle: Schema.Attribute.JSON &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    reviwesBand: Schema.Attribute.JSON &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    slug: Schema.Attribute.UID<'title'> &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summary: Schema.Attribute.JSON &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -980,7 +1116,9 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::destino-detalle.destino-detalle': ApiDestinoDetalleDestinoDetalle;
       'api::destino.destino': ApiDestinoDestino;
+      'api::tour-detalle.tour-detalle': ApiTourDetalleTourDetalle;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

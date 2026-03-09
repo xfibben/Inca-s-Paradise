@@ -1,0 +1,98 @@
+---
+import { getTranslation } from "../../../i18n";
+import "../../../styles/global.css";
+import DestinationsGallery from "../../../components/LandingPage/DestinationsGallery.astro";
+import fallbackEs from "../../../data/destinos.json";
+
+const STRAPI_URLS = Array.from(
+  new Set([
+    import.meta.env.PUBLIC_STRAPI_URL,
+    import.meta.env.STRAPI_INTERNAL_URL,
+    "http://backend:1337",
+    "http://localhost:1337"
+  ].filter(Boolean))
+);
+
+const STRAPI_LOCALES = ["es-PE", "es", null] as const;
+const t = getTranslation("es");
+
+let title = fallbackEs.data?.attributes?.title ?? "Destinos";
+let description = fallbackEs.data?.attributes?.description ?? "";
+let ribbonText = fallbackEs.data?.attributes?.ribbonText ?? "";
+
+for (const baseUrl of STRAPI_URLS) {
+  let loadedFromStrapi = false;
+
+  for (const locale of STRAPI_LOCALES) {
+    const localePart = locale
+      ? `locale=${encodeURIComponent(locale)}&`
+      : "";
+
+    try {
+      const res = await fetch(
+        `${baseUrl}/api/destino?${localePart}fields[0]=title&fields[1]=description&fields[2]=ribbonText`
+      );
+
+      if (!res.ok) continue;
+
+      const json = await res.json();
+      const raw = json?.data ?? null;
+      const attrs = raw?.attributes ?? raw ?? {};
+      if (!attrs || typeof attrs !== "object") continue;
+
+      title = attrs.title ?? title;
+      description = attrs.description ?? description;
+      ribbonText = attrs.ribbonText ?? ribbonText;
+      loadedFromStrapi = true;
+      break;
+    } catch {
+      // Try next locale / URL.
+    }
+  }
+
+  if (loadedFromStrapi) {
+    break;
+  }
+}
+
+const canonical = `${Astro.url.origin}/es/destinos`;
+---
+
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={canonical} />
+	</head>
+	<body class="min-h-screen bg-white text-gray-900">
+		<main>
+			<section class="bg-[#f5f0e9]">
+				<div class="mx-auto w-full max-w-5xl px-6 py-16 md:py-24 lg:py-28">
+					<h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic">
+						{title}
+					</h1>
+					<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed mb-3 md:mb-4 lg:mb-6">
+						{description}
+					</p>
+				</div>
+			</section>
+			<section class="bg-white">
+				<div class="mx-auto w-full max-w-5xl px-6 py-10 md:py-12">
+					<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed flex items-center gap-2">
+						<span class="inline-block h-2 w-2 rounded-sm bg-orange-500"></span>
+						<span>{ribbonText}</span>
+					</p>
+				</div>
+			</section>
+			<DestinationsGallery t={t} />
+		</main>
+	</body>
+</html>

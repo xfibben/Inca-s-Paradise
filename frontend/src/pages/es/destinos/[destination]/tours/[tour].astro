@@ -1,0 +1,514 @@
+---
+import "../../../../../styles/global.css";
+import fallbackToursData from "../../../../../data/tours.detail.es.json";
+
+const STRAPI_BASE_URLS = Array.from(
+  new Set([
+    import.meta.env.PUBLIC_STRAPI_URL,
+    import.meta.env.STRAPI_INTERNAL_URL,
+    "http://backend:1337",
+    "http://localhost:1337",
+  ].filter(Boolean)),
+);
+const STRAPI_LOCALES = ["es-PE", "es", null] as const;
+const STRAPI_TOUR_ENDPOINT = "/api/tour-detalles";
+
+function localePrefix(locale: (typeof STRAPI_LOCALES)[number]) {
+  return locale ? `locale=${encodeURIComponent(locale)}&` : "";
+}
+
+function normalizeRow(row: any) {
+  return row?.attributes ?? row ?? null;
+}
+
+export async function getStaticPaths() {
+  const strapiBaseUrls = Array.from(
+    new Set([
+      import.meta.env.PUBLIC_STRAPI_URL,
+      import.meta.env.STRAPI_INTERNAL_URL,
+      "http://backend:1337",
+      "http://localhost:1337",
+    ].filter(Boolean)),
+  );
+  const strapiLocales = ["es-PE", "es", null] as const;
+  const strapiEndpoint = "/api/tour-detalles";
+
+  const fallbackPaths = fallbackToursData.tours.map((item) => ({
+    params: {
+      destination: String(item.destinationSlug).toLowerCase(),
+      tour: String(item.slug).toLowerCase(),
+    },
+  }));
+
+  const strapiPaths: Array<{ params: { destination: string; tour: string } }> = [];
+  const strapiSeen = new Set<string>();
+
+  for (const baseUrl of strapiBaseUrls) {
+    for (const locale of strapiLocales) {
+      const localePart = locale ? `locale=${encodeURIComponent(locale)}&` : "";
+      const url =
+        `${baseUrl}${strapiEndpoint}?${localePart}` +
+        "fields[0]=slug&fields[1]=destinationSlug&pagination[pageSize]=200";
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) continue;
+
+        const json = await res.json();
+        const rows = Array.isArray(json?.data) ? json.data : [];
+        rows.forEach((row: any) => {
+          const attrs = row?.attributes ?? row;
+          const destination = String(attrs?.destinationSlug ?? "").toLowerCase();
+          const tour = String(attrs?.slug ?? "").toLowerCase();
+          if (!destination || !tour) return;
+
+          const key = `${destination}::${tour}`;
+          if (strapiSeen.has(key)) return;
+          strapiSeen.add(key);
+          strapiPaths.push({ params: { destination, tour } });
+        });
+
+        if (strapiPaths.length > 0) break;
+      } catch {
+        // Try next locale / URL.
+      }
+    }
+
+    if (strapiPaths.length > 0) break;
+  }
+
+  const merged: Array<{ params: { destination: string; tour: string } }> = [];
+  const mergedSeen = new Set<string>();
+  [...fallbackPaths, ...strapiPaths].forEach((entry) => {
+    const key = `${entry.params.destination}::${entry.params.tour}`;
+    if (mergedSeen.has(key)) return;
+    mergedSeen.add(key);
+    merged.push(entry);
+  });
+
+  return merged;
+}
+
+const { destination, tour } = Astro.params;
+const destinationSlug = String(destination ?? "").toLowerCase();
+const tourSlug = String(tour ?? "").toLowerCase();
+
+const fallbackTour = fallbackToursData.tours.find(
+  (item) =>
+    String(item.destinationSlug).toLowerCase() === destinationSlug &&
+    String(item.slug).toLowerCase() === tourSlug,
+);
+
+let strapiTourRaw: Record<string, any> | null = null;
+for (const baseUrl of STRAPI_BASE_URLS) {
+  for (const locale of STRAPI_LOCALES) {
+    const localePart = localePrefix(locale);
+    const url =
+      `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
+      `filters[slug][$eq]=${encodeURIComponent(tourSlug)}&` +
+      `filters[destinationSlug][$eq]=${encodeURIComponent(destinationSlug)}&` +
+      "pagination[pageSize]=1";
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+
+      const json = await res.json();
+      const rows = Array.isArray(json?.data) ? json.data : [];
+      const first = rows[0];
+      const attrs = normalizeRow(first);
+      if (attrs) {
+        strapiTourRaw = attrs;
+        break;
+      }
+    } catch {
+      // Try next locale / URL.
+    }
+  }
+
+  if (strapiTourRaw) break;
+}
+
+if (!fallbackTour && !strapiTourRaw) {
+  return Astro.redirect("/es/destinos");
+}
+
+const sourceTour = strapiTourRaw ?? fallbackTour ?? {};
+const tourMeta = sourceTour.meta ?? sourceTour.metatitle ?? fallbackTour?.meta ?? {};
+const tourHero = sourceTour.hero ?? fallbackTour?.hero ?? {};
+const tourSummary = sourceTour.summary ?? fallbackTour?.summary ?? {};
+const tourAtGlance = sourceTour.atGlance ?? fallbackTour?.atGlance ?? {};
+const tourReviewsBand =
+  sourceTour.reviewsBand ??
+  sourceTour.reviwesBand ??
+  fallbackTour?.reviewsBand ??
+  {};
+const itineraryRibbon =
+  sourceTour.itineraryRibbon ?? fallbackTour?.itineraryRibbon ?? "Sample Itinerary";
+
+const tourData = {
+  ...sourceTour,
+  meta: tourMeta,
+  hero: tourHero,
+  summary: tourSummary,
+  atGlance: tourAtGlance,
+  reviewsBand: tourReviewsBand,
+  itineraryRibbon,
+};
+
+const pageTitle = tourData.meta?.title ?? tourData.title ?? "Detalle de tour";
+const pageDescription =
+  tourData.meta?.description ??
+  tourData.description ??
+  "Detalle del tour en construccion.";
+const heroTitle = tourData.meta?.title ?? tourData.hero?.title ?? pageTitle;
+const canonical = `${Astro.url.origin}/es/destinos/${destinationSlug}/tours/${tourSlug}`;
+const heroSlides = Array.isArray(tourData.hero?.slides) ? tourData.hero.slides : [];
+const summaryBullets = Array.isArray(tourData.summary?.bullets)
+  ? tourData.summary.bullets
+  : [];
+const glanceItems = Array.isArray(tourData.atGlance?.items)
+  ? tourData.atGlance.items
+  : [];
+const reviewBrands = Array.isArray(tourData.reviewsBand?.brands)
+  ? tourData.reviewsBand.brands
+  : ["Trustpilot", "Google Reviews", "Yelp"];
+---
+
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap"
+      rel="stylesheet"
+    />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonical} />
+  </head>
+  <body class="min-h-screen bg-white text-gray-900">
+    <main>
+      <section class="relative w-full bg-black overflow-hidden min-h-[70vh]">
+        <div id="tour-carousel" class="relative h-[70vh] min-h-[520px] w-full">
+          <div class="relative h-full w-full overflow-hidden">
+            {
+              heroSlides.map((slide, index) => (
+                <div
+                  class={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                    index === 0
+                      ? "opacity-100"
+                      : "opacity-0 pointer-events-none"
+                  }`}
+                  data-tour-slide
+                >
+                  <img
+                    src={slide.image}
+                    alt={heroTitle}
+                    class="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div class="absolute inset-0 bg-black/45" />
+                  <div class="relative z-10 flex h-full items-center justify-center px-6 text-center text-white">
+                    <div class="max-w-3xl">
+                      <h1
+                        class="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight mb-4 md:mb-6 lg:mb-8 italic"
+                        style="font-family: 'Playfair Display', serif;"
+                      >
+                        {heroTitle}
+                      </h1>
+                      <p class="text-sm md:text-base lg:text-lg text-white leading-relaxed">
+                        {tourData.hero?.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+
+          <button
+            type="button"
+            class="absolute left-0 top-1/2 z-20 -translate-y-1/2 px-4 py-2 text-white/90 hover:text-white transition"
+            data-tour-prev
+            aria-label="Anterior"
+          >
+            <svg
+              class="h-8 w-8"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M15 19 8 12l7-7"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="absolute right-0 top-1/2 z-20 -translate-y-1/2 px-4 py-2 text-white/90 hover:text-white transition"
+            data-tour-next
+            aria-label="Siguiente"
+          >
+            <svg
+              class="h-8 w-8"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="m9 5 7 7-7 7"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <section class="bg-[#f5f0e9]">
+        <div
+          class="mx-auto grid w-full max-w-7xl gap-10 px-6 py-14 md:grid-cols-[1.55fr_1fr] lg:py-20"
+        >
+          <div>
+            <h2
+              class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic"
+              style="font-family: 'Playfair Display', serif;"
+            >
+              {tourData.summary?.title}
+            </h2>
+            <p class="text-lg md:text-xl text-gray-900 mb-8">
+              {tourData.summary?.metaLine}
+            </p>
+
+            <div class="space-y-5">
+              {
+                summaryBullets.map((item) => (
+                  <div class="flex items-start gap-3">
+                    <span class="mt-1 inline-block h-2 w-2 rounded-sm bg-orange-500" />
+                    <p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed">
+                      {item}
+                    </p>
+                  </div>
+                ))
+              }
+            </div>
+
+            <p
+              class="mt-10 text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed max-w-4xl"
+            >
+              {tourData.summary?.paragraph}
+            </p>
+
+            <button
+              type="button"
+              class="mt-8 inline-flex items-center justify-center bg-orange-600 px-6 py-3 text-xs md:text-sm uppercase tracking-wide text-white transition hover:bg-orange-700"
+            >
+              {tourData.summary?.ctaLabel}
+            </button>
+          </div>
+
+          <aside class="overflow-hidden bg-white shadow-sm">
+            <div class="relative min-h-[260px] bg-[#846799] text-white">
+              <img
+                src="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=900&q=80"
+                alt="Especialista de viajes"
+                class="absolute inset-0 h-full w-full object-cover mix-blend-multiply opacity-80"
+              />
+              <div class="relative z-10 p-8">
+                <h3
+                  class="text-lg md:text-xl lg:text-2xl font-semibold text-white leading-snug italic"
+                  style="font-family: 'Playfair Display', serif;"
+                >
+                  {tourData.summary?.contactCard?.title}
+                </h3>
+                <p
+                  class="mt-5 text-sm md:text-base text-white leading-relaxed max-w-xs"
+                >
+                  {tourData.summary?.contactCard?.description}
+                </p>
+              </div>
+            </div>
+            <div
+              class="flex items-center justify-between gap-4 bg-[#032b43] px-8 py-5"
+            >
+              <p class="text-sm md:text-base font-semibold text-white">
+                {tourData.summary?.contactCard?.phone}
+              </p>
+              <button
+                type="button"
+                class="inline-flex items-center justify-center bg-orange-600 px-5 py-2 text-xs md:text-sm uppercase tracking-wide text-white transition hover:bg-orange-700"
+              >
+                {tourData.summary?.contactCard?.buttonLabel}
+              </button>
+            </div>
+            <div
+              class="grid gap-4 px-8 py-8 sm:grid-cols-[1fr_auto] sm:items-center"
+            >
+              <div>
+                <h4
+                  class="text-lg md:text-xl font-semibold text-gray-900 leading-snug"
+                >
+                  {tourData.summary?.contactCard?.reviewsTitle}
+                </h4>
+                <p
+                  class="mt-2 text-sm md:text-base text-gray-700 leading-relaxed"
+                >
+                  {tourData.summary?.contactCard?.reviewsDescription}
+                </p>
+              </div>
+              <div class="text-2xl text-[#032b43]">*****</div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="bg-[#032b43] text-white min-h-[78vh] flex items-center">
+        <div
+          class="mx-auto grid w-full max-w-7xl gap-12 px-6 py-16 md:grid-cols-[1.2fr_1fr] lg:py-20"
+        >
+          <div>
+            <p
+              class="mb-10 flex items-center gap-3 text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight italic"
+              style="font-family: 'Playfair Display', serif;"
+            >
+              <span class="inline-block h-2 w-2 rounded-sm bg-orange-500"
+              ></span>
+              <span>{tourData.atGlance?.title}</span>
+            </p>
+
+            <div class="space-y-8">
+              {
+                glanceItems.map((item) => (
+                  <article>
+                    <h3 class="text-lg md:text-xl lg:text-2xl font-semibold text-white leading-snug">
+                      {item.location}
+                    </h3>
+                    <p class="text-sm md:text-base lg:text-lg text-white leading-relaxed">
+                      {item.nights
+                        ? `${item.nights}: ${item.summary ?? item.detail ?? ""}`
+                        : (item.summary ?? item.detail)}
+                    </p>
+                  </article>
+                ))
+              }
+            </div>
+
+            <p
+              class="mt-12 text-sm md:text-base lg:text-lg text-white leading-relaxed max-w-3xl"
+            >
+              {tourData.atGlance?.footnote}
+            </p>
+          </div>
+
+          <div class="flex items-center justify-center">
+            <div class="w-full max-w-xl overflow-hidden bg-white/10 p-3">
+              <img
+                src={tourData.atGlance?.mapImage}
+                alt="Mapa de ruta del tour"
+                class="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-[#f5f0e9]">
+        <div
+          class="mx-auto grid w-full max-w-7xl gap-10 px-6 py-14 md:grid-cols-[1.2fr_1fr] lg:py-16"
+        >
+          <div>
+            <h2
+              class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic"
+              style="font-family: 'Playfair Display', serif;"
+            >
+              {tourData.reviewsBand?.title ?? "5-Star Reviews"}
+            </h2>
+            <p
+              class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed max-w-2xl"
+            >
+              {
+                tourData.reviewsBand?.description ??
+                  "Conoce por que nuestros viajeros nos califican consistentemente con 5 estrellas."
+              }
+            </p>
+          </div>
+          <div
+            class="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-center sm:justify-items-center"
+          >
+            {
+              reviewBrands.map((brand) => (
+                <div class="text-center text-[#032b43]">
+                  <p class="text-lg md:text-xl font-semibold leading-snug">
+                    {brand}
+                  </p>
+                  <p class="text-sm md:text-base font-semibold tracking-wide">
+                    *****
+                  </p>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-[#032b43]">
+        <div class="mx-auto w-full max-w-7xl px-6 py-12">
+          <p
+            class="flex items-center gap-3 text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight italic"
+            style="font-family: 'Playfair Display', serif;"
+          >
+            <span class="inline-block h-2 w-2 rounded-sm bg-orange-500"></span>
+            <span>{itineraryRibbon}</span>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <script is:inline>
+      (() => {
+        const slides = Array.from(
+          document.querySelectorAll("[data-tour-slide]"),
+        );
+        const prev = document.querySelector("[data-tour-prev]");
+        const next = document.querySelector("[data-tour-next]");
+        if (!slides.length) return;
+
+        let current = 0;
+        const show = (index) => {
+          current = (index + slides.length) % slides.length;
+          slides.forEach((slide, i) => {
+            const active = i === current;
+            slide.classList.toggle("opacity-100", active);
+            slide.classList.toggle("opacity-0", !active);
+            slide.classList.toggle("pointer-events-none", !active);
+          });
+        };
+
+        let interval = setInterval(() => show(current + 1), 3000);
+        const reset = () => {
+          clearInterval(interval);
+          interval = setInterval(() => show(current + 1), 3000);
+        };
+
+        prev?.addEventListener("click", () => {
+          show(current - 1);
+          reset();
+        });
+
+        next?.addEventListener("click", () => {
+          show(current + 1);
+          reset();
+        });
+      })();
+    </script>
+  </body>
+</html>
