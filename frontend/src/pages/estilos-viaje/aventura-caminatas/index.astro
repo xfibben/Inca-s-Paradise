@@ -1,0 +1,170 @@
+---
+// Aventura y Caminatas - Inca's Paradise
+import CarouselCard from '../../../components/stylestrips/StylesCarouselCard.astro';
+import Navbar from '../../../components/shared/Navbar.astro';
+import Footer from '../../../components/shared/Footer.astro';
+import { getTranslation, defaultLanguage } from '../../../i18n';
+import '../../../styles/global.css';
+import './aventura-caminatas.css';
+
+const currentLang = defaultLanguage;
+const t = getTranslation(currentLang);
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aventura y Caminatas - Inca's Paradise</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
+</head>
+<body>
+    <Navbar {t} {currentLang} />
+    <!-- Hero Section: pantalla completa -->
+    <div class="hero">
+        <img
+            src="/TripsStyles/fondo-camino-inca-trekking.jpg"
+            alt="Aventura y Caminatas en los Andes"
+            class="hero-image"
+        />
+        <div class="hero-overlay">
+            <h1>Aventura y Caminatas</h1>
+        </div>
+    </div>
+
+    <div class="intro-band">
+        <div class="intro-band-content">
+            <div class="intro-band-text">
+                <p class="intro-quote">
+                    Perú y Bolivia son territorios donde la naturaleza se vive en estado puro: desde las aguas sagradas del Lago Titicaca hasta los senderos ancestrales que conducen a Machu Picchu. En Inca’s Paradise diseñamos expediciones para viajeros que buscan aventura auténtica: kayak en el Titicaca, trekking en las montañas de Cusco, exploración del majestuoso Cañón del Colca en Arequipa y ciclismo de altura en Puno y en los paisajes extremos de Bolivia. Cada experiencia combina paisajes extraordinarios, aventura y encuentros genuinos con comunidades locales, creando momentos inolvidables que conectan al viajero con la cultura viva y el espíritu profundo de los Andes.
+                </p>
+               
+            </div>
+            <img 
+                src="https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=800&h=1200&fit=crop" 
+                alt="Aventura en los Andes" 
+                class="intro-band-image"
+            />
+        </div>
+    </div>
+
+    <!-- Section Title -->
+    <h2 class="section-title">Small Trips</h2>
+
+    <!-- Gallery Collage -->
+    <div class="gallery-collage">
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=800&h=600&fit=crop" alt="Trekking en Perú" />
+            <div class="gallery-overlay">
+                <div class="gallery-category">Travel Journal</div>
+                <div class="gallery-title">PATHS THROUGH TIME:<br>IMMERSIVE ONE-DAY<br>TREKS IN PERU</div>
+            </div>
+        </div>
+
+        <div class="gallery-item">
+            <img src="https://cdn.aracari.com/wp-content/uploads/2025/12/raimond-klavins-xAqrT-279UA-unsplash-1920x1280.jpg" alt="Destinos en Sudamérica" />
+            <div class="gallery-overlay">
+                <div class="gallery-category">Travel Journal</div>
+                <div class="gallery-title">WHERE TO GO<br>IN SOUTH<br>AMERICA IN<br>2025: OUR<br>ANNUAL<br>HOTLIST</div>
+            </div>
+        </div>
+
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=1000&fit=crop" alt="Espíritu de Sudamérica" />
+            <div class="gallery-overlay">
+                <div class="gallery-title">The Spirit of South America</div>
+                <div style="font-size: 0.85rem; margin-top: 4px; opacity: 0.9;">A VIBRANT TWO-WEEK LUXURY SOUTH AMERICA TRIP</div>
+            </div>
+        </div>
+
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop" alt="Viaje de lujo en Perú" />
+            <div class="gallery-overlay">
+                <div class="gallery-title" style="font-size: 1.6rem;">Classic luxury trip Peru</div>
+                <div style="font-size: 0.85rem; margin-top: 4px; opacity: 0.9;">INTIMATE HISTORY - RICHNESS IN CULTURE</div>
+            </div>
+        </div>
+
+        <div class="gallery-item">
+            <img src="https://images.unsplash.com/photo-1502933691298-84fc14542831?w=600&h=600&fit=crop" alt="Galería Aracari" />
+            <div class="gallery-overlay">
+                <div class="gallery-title" style="font-size: 1.6rem;">Aracari Gallery</div>
+                <div style="font-size: 0.85rem; margin-top: 4px; opacity: 0.9;">EXPERIENCE PERU WITH US TODAY</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mixed Travel Section -->
+    <section class="mixed-travel-section">
+        <div class="mixed-travel-header">
+            <h2>Our Adventure & Mixed Travel</h2>
+            <p>
+                Pensada para viajeros que buscan combinar aventura, cultura y paisajes extraordinarios en un solo viaje. Nuestros programas mezclan experiencias activas con destinos icónicos de Perú y Bolivia, creando rutas dinámicas donde cada día ofrece una forma distinta de explorar, descubrir y vivir el turismo.
+            </p>
+            <button class="planning-btn" onclick="alert('Próximamente: formulario de planificación')">Start Planning your Travel</button>
+        </div>
+
+        <div class="carousel-container">
+            <div class="carousel-track">
+                <CarouselCard 
+                    image="https://images.unsplash.com/photo-1483683804023-6ccdb62f86ef?w=600&h=400&fit=crop"
+                    alt="Peru - Brazil"
+                    days="15 DAYS / 14 NIGHTS"
+                    location="PERÚ – BRAZIL"
+                    title="A TALE OF TWO HALVES: FROM PERU TO BRAZIL"
+                    description="A 14-night luxury South America vacation."
+                />
+
+                <CarouselCard 
+                    image="https://images.unsplash.com/photo-1526392060635-9d6019884377?w=600&h=400&fit=crop"
+                    alt="Connecting with Peru"
+                    days="14 DAYS / 13 NIGHTS"
+                    location="PERÚ"
+                    title="CONNECTING WITH PERU"
+                    description="A 14-day luxury private tour to Peru."
+                />
+
+                <CarouselCard 
+                    image="https://images.unsplash.com/photo-1473625247510-8ceb1760943f?w=600&h=400&fit=crop"
+                    alt="Golden Age of Travel"
+                    days="11 DAYS / 10 NIGHTS"
+                    location="PERÚ"
+                    title="THE GOLDEN AGE OF TRAVEL: LUXURY PERU BY RAIL"
+                    description="Visit Peru's top destinations by train."
+                />
+
+                <CarouselCard 
+                    image="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&h=400&fit=crop"
+                    alt="Highlights of Bolivia"
+                    days="7 DAYS / 6 NIGHTS"
+                    location="BOLIVIA"
+                    title="HIGHLIGHTS OF BOLIVIA"
+                    description="Bolivia's most incredible sights."
+                />
+
+                <CarouselCard 
+                    image="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop"
+                    alt="Peru - Bolivia"
+                    days="14 DAYS / 13 NIGHTS"
+                    location="PERÚ – BOLIVIA"
+                    title="EXTRAORDINARY PERU & BOLIVIA"
+                    description="Travel to an extraordinary spectrum of landscapes."
+                />
+
+                <CarouselCard 
+                    image="https://images.unsplash.com/photo-1483683804023-6ccdb62f86ef?w=600&h=400&fit=crop"
+                    alt="Peru - Brazil"
+                    days="15 DAYS / 14 NIGHTS"
+                    location="PERÚ – BRAZIL"
+                    title="A TALE OF TWO HALVES: FROM PERU TO BRAZIL"
+                    description="A 14-night luxury South America vacation."
+                />
+            </div>
+        </div>
+    </section>
+    <Footer {currentLang} {t} />
+</body>
+</html>

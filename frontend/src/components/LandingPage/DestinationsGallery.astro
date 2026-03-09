@@ -20,7 +20,7 @@ const { t } = Astro.props;
           />
           <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
           <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white">
-            <h3 class="text-lg sm:text-xl md:text-2xl lg:text-3xl transition-transform duration-300 group-hover:-translate-y-3" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">{dest.name}</h3>
+            <h3 class="text-base transition-transform duration-300 group-hover:-translate-y-3 font-s['Roboto' ,sans-serif] ">{dest.name}</h3>
             <div class="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col space-y-2 md:space-y-3 items-center w-full bottom-0 left-0 right-0 p-4">
               <p class="text-xs sm:text-sm md:text-base leading-relaxed hidden sm:block max-w-xs">
                 {t.destinations[dest.key].description}
