@@ -533,6 +533,67 @@ export interface ApiDestinoDestino extends Struct.SingleTypeSchema {
   };
 }
 
+export interface ApiStyleTripStyleTrip extends Struct.CollectionTypeSchema {
+  collectionName: 'style_trips';
+  info: {
+    displayName: 'Style Trip';
+    pluralName: 'style-trips';
+    singularName: 'style-trip';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    image: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::style-trip.style-trip'
+    >;
+    middle_description: Schema.Attribute.JSON &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    name: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    wallpaper: Schema.Attribute.Media<'images' | 'files'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+  };
+}
+
 export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
   collectionName: 'tour_detalles';
   info: {
@@ -1134,6 +1195,7 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::destino-detalle.destino-detalle': ApiDestinoDetalleDestinoDetalle;
       'api::destino.destino': ApiDestinoDestino;
+      'api::style-trip.style-trip': ApiStyleTripStyleTrip;
       'api::tour-detalle.tour-detalle': ApiTourDetalleTourDetalle;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

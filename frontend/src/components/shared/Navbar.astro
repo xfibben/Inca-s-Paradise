@@ -7,6 +7,23 @@ interface Props {
 }
 
 const { t, currentLang } = Astro.props;
+
+const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
+const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+
+function toSlug(name: string): string {
+  return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
+}
+
+let navStyleTrips: any[] = [];
+try {
+  const res = await fetch(`${STRAPI_URL}/api/style-trips?populate=image&locale=${strapiLocale}&status=published`);
+  if (res.ok) {
+    const json = await res.json();
+    navStyleTrips = json.data ?? [];
+  }
+} catch (e) {}
 ---
 
 <style>
@@ -176,27 +193,28 @@ const { t, currentLang } = Astro.props;
                   <!-- Travel Styles Grid (default) -->
                   <div class="styles-menu-content h-full" id="content-travelStyles">
                     <div class="grid grid-cols-5 gap-2 h-full w-full px-2 py-2">
-                      {Object.entries(t.stylesMenu.travelStyles.subitems).map(([key, style]: [string, any]) => {
-                        const styleObj = style as { name: string; image: string };
+                      {navStyleTrips.map((item: any) => {
+                        const navImg = Array.isArray(item.image) ? item.image[0] : item.image;
+                        const imgUrl = navImg?.formats?.medium?.url
+                          ? `${STRAPI_PUBLIC_URL}${navImg.formats.medium.url}`
+                          : navImg?.url
+                          ? `${STRAPI_PUBLIC_URL}${navImg.url}`
+                          : null;
                         return (
-                          <div class="style-item-grid group relative overflow-hidden cursor-pointer transition-all duration-300 hover:z-20" data-style={key}>
-                            <!-- Image -->
-                            <img 
-                              src={styleObj.image.startsWith('landing page images') ? `/${styleObj.image}` : `https://images.unsplash.com/${styleObj.image}?w=500&h=600&fit=crop`}
-                              alt={styleObj.name}
-                              class="w-full h-full object-cover"
-                            />
-                            
-                            <!-- Overlay -->
+                          <a
+                            href={`/${currentLang}/style-trips/${toSlug(item.name)}`}
+                            class="style-item-grid group relative overflow-hidden cursor-pointer transition-all duration-300 hover:z-20"
+                          >
+                            {imgUrl && (
+                              <img src={imgUrl} alt={item.name} class="w-full h-full object-cover" />
+                            )}
                             <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
-                            
-                            <!-- Content with white line on hover -->
                             <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white border-b-2 border-transparent group-hover:border-white">
                               <h3 class="text-xs lg:text-sm font-bold transition-colors duration-300" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
-                                {styleObj.name}
+                                {item.name}
                               </h3>
                             </div>
-                          </div>
+                          </a>
                         );
                       })}
                     </div>
@@ -446,7 +464,12 @@ const { t, currentLang } = Astro.props;
 <div id="mobile-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onclick="document.getElementById('mobile-menu-btn').click()"></div>
 
 <!-- Exponer traducciones al script externo -->
-<script is:inline define:vars={{ translations: t }}>window.__navbarT = translations;</script>
+<script is:inline define:vars={{ translations: t, navStyleTrips, STRAPI_PUBLIC_URL, currentLang }}>
+  window.__navbarT = translations;
+  window.__navbarStyleTrips = navStyleTrips;
+  window.__strapiPublicUrl = STRAPI_PUBLIC_URL;
+  window.__currentLang = currentLang;
+</script>
 
 <!-- Lógica del navbar en archivo separado -->
 <script src="./navbar.js"></script>
