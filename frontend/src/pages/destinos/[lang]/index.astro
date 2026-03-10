@@ -1,9 +1,0 @@
----
-export function getStaticPaths() {
-  return [{ params: { lang: "es" } }, { params: { lang: "en" } }];
-}
-
-const { lang } = Astro.params;
-const targetLang = (lang ?? "es").toLowerCase();
-return Astro.redirect(`/${targetLang}/destinos`);
----

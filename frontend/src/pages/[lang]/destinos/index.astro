@@ -3,6 +3,24 @@ import { getTranslation } from "../../../i18n";
 import "../../../styles/global.css";
 import DestinationsGallery from "../../../components/LandingPage/DestinationsGallery.astro";
 import fallbackEs from "../../../data/destinos.json";
+import fallbackEn from "../../../data/destinos.en.json";
+
+type SupportedLang = "es" | "en";
+
+export function getStaticPaths() {
+  return [{ params: { lang: "es" } }, { params: { lang: "en" } }];
+}
+
+const rawLang = (Astro.params.lang ?? "es").toLowerCase();
+const lang: SupportedLang = rawLang === "en" ? "en" : "es";
+const isEnglish = lang === "en";
+
+if (rawLang !== lang) {
+  return Astro.redirect(`/${lang}/destinos`);
+}
+
+const t = getTranslation(lang);
+const fallback = isEnglish ? fallbackEn : fallbackEs;
 
 const STRAPI_URLS = Array.from(
   new Set([
@@ -13,20 +31,20 @@ const STRAPI_URLS = Array.from(
   ].filter(Boolean))
 );
 
-const STRAPI_LOCALES = ["es-PE", "es", null] as const;
-const t = getTranslation("es");
+const STRAPI_LOCALES = isEnglish
+  ? (["en", "en-US", null] as const)
+  : (["es-PE", "es", null] as const);
 
-let title = fallbackEs.data?.attributes?.title ?? "Destinos";
-let description = fallbackEs.data?.attributes?.description ?? "";
-let ribbonText = fallbackEs.data?.attributes?.ribbonText ?? "";
+let title =
+  fallback.data?.attributes?.title ?? (isEnglish ? "Destinations" : "Destinos");
+let description = fallback.data?.attributes?.description ?? "";
+let ribbonText = fallback.data?.attributes?.ribbonText ?? "";
 
 for (const baseUrl of STRAPI_URLS) {
   let loadedFromStrapi = false;
 
   for (const locale of STRAPI_LOCALES) {
-    const localePart = locale
-      ? `locale=${encodeURIComponent(locale)}&`
-      : "";
+    const localePart = locale ? `locale=${encodeURIComponent(locale)}&` : "";
 
     try {
       const res = await fetch(
@@ -55,10 +73,10 @@ for (const baseUrl of STRAPI_URLS) {
   }
 }
 
-const canonical = `${Astro.url.origin}/es/destinos`;
+const canonical = `${Astro.url.origin}/${lang}/destinos`;
 ---
 
-<html lang="es">
+<html lang={lang}>
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />

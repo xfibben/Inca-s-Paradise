@@ -40,8 +40,27 @@
         "i18n": {
           "localized": true
         }
-      },
-      "required": true
+      }
+    },
+    "destinos": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::destino-detalle.destino-detalle",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "styleTrips": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::style-trip.style-trip",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "metatitle": {
       "type": "json",
