@@ -620,7 +620,15 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     destinationSlug: Schema.Attribute.String &
-      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    destinos: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::destino-detalle.destino-detalle'
+    > &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -658,6 +666,15 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
       }>;
     slug: Schema.Attribute.UID<'title'> &
       Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    styleTrips: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::style-trip.style-trip'
+    > &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
