@@ -64,6 +64,51 @@ const heroImageUrl = heroImage?.formats?.large?.url
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
     <title>{trip.name} — Inca's Paradise</title>
+    <style>
+      @media (max-width: 767px) {
+        /* Gallery collage: stack vertically */
+        #gallery-collage {
+          display: flex !important;
+          flex-direction: column !important;
+          height: auto !important;
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
+        }
+        #gallery-collage a {
+          height: 220px;
+        }
+        /* More trips: text-only list on mobile */
+        #more-trips:not(.hidden) {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 0 !important;
+          padding: 0 1rem !important;
+        }
+        #more-trips > div {
+          aspect-ratio: unset !important;
+          height: auto !important;
+          border-radius: 0 !important;
+          overflow: visible !important;
+          position: static !important;
+          background: none !important;
+          border-bottom: 1px solid #e5e7eb;
+          padding: 0.875rem 0;
+        }
+        #more-trips > div img,
+        #more-trips > div > div:first-of-type {
+          display: none !important;
+        }
+        #more-trips > div > div:last-of-type {
+          position: static !important;
+          padding: 0 !important;
+          inset: unset !important;
+        }
+        #more-trips > div > div:last-of-type p {
+          color: #374151 !important;
+          font-size: 1rem !important;
+        }
+      }
+    </style>
   </head>
   <body>
     <Navbar {t} {currentLang} />
@@ -88,15 +133,12 @@ const heroImageUrl = heroImage?.formats?.large?.url
       </div>
     </header>
 
-    <main class="bg-white pb-16 px-4">
-      <div class="max-w-4xl mx-auto pt-12">
+    <main class="bg-white pb-16 px-4 md:px-32">
+      <div class="pt-12">
         {trip.description && (
-          <div class="flex gap-6">
-            <div class="w-0.5 bg-yellow-600 self-stretch flex-shrink-0"></div>
-            <p class="text-lg text-gray-700 leading-relaxed">
-              {trip.description}
-            </p>
-          </div>
+          <p class="text-xl text-gray-700 leading-relaxed text-center">
+            {trip.description}
+          </p>
         )}
       </div>
     </main>
@@ -104,59 +146,54 @@ const heroImageUrl = heroImage?.formats?.large?.url
     
 
     <!-- Gallery Title -->
-    <div class="bg-white px-4 pt-16 pb-8 text-center">
+    <div class="bg-white px-4 pt-2 pb-8 text-center">
       <h2 class="text-3xl md:text-4xl font-bold text-gray-800" style="font-family: 'Playfair Display', serif; font-style: italic;">
         Small Trips
       </h2>
     </div>
 
     <!-- Gallery Collage -->
-    <section class="w-full h-screen grid grid-cols-6 grid-rows-2">
+    <section id="gallery-collage" class="w-full h-[75vh] px-20" style="display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(2, 1fr);">
 
-      <!-- Item 1: cols 1-2, row 1 -->
-      <div class="col-start-1 col-end-3 row-start-1 row-end-2 relative overflow-hidden cursor-pointer group">
-        <img src="https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=800&h=600&fit=crop" alt="Trekking en Perú" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-        <div class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/50 flex flex-col justify-end p-6 text-white">
-          <p class="text-xs font-semibold uppercase tracking-widest mb-2 opacity-90">Travel Journal</p>
-          <p class="text-lg font-bold leading-tight">PATHS THROUGH TIME:<br/>IMMERSIVE ONE-DAY<br/>TREKS IN PERU</p>
-        </div>
-      </div>
+      <!-- Item 1: cols 1-4, rows 1-2 (tall left) -->
+      <a href="#" class="relative overflow-hidden cursor-pointer group" style="grid-column: 1 / 5; grid-row: 1 / 3;">
+        <span class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style="background-image: url('https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=800&h=600&fit=crop');"></span>
+        <span class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60 flex flex-col justify-end p-6 text-white">
+          <div class="text-2xl font-bold leading-tight" style="font-family: 'Playfair Display', serif; font-style: italic;">Paths Through Time: Immersive One-Day Treks in Peru</div>
+        </span>
+      </a>
 
-      <!-- Item 2: cols 3-4, row 1 -->
-      <div class="col-start-3 col-end-5 row-start-1 row-end-2 relative overflow-hidden cursor-pointer group">
-        <img src="https://cdn.aracari.com/wp-content/uploads/2025/12/raimond-klavins-xAqrT-279UA-unsplash-1920x1280.jpg" alt="Destinos en Sudamérica" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-        <div class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/50 flex flex-col justify-end p-6 text-white">
-          <p class="text-xs font-semibold uppercase tracking-widest mb-2 opacity-90">Travel Journal</p>
-          <p class="text-lg font-bold leading-tight">WHERE TO GO<br/>IN SOUTH<br/>AMERICA IN<br/>2025: OUR<br/>ANNUAL<br/>HOTLIST</p>
-        </div>
-      </div>
+      <!-- Item 2: cols 5-6, row 1 -->
+      <a href="#" class="relative overflow-hidden cursor-pointer group" style="grid-column: 5 / 7; grid-row: 1 / 2;">
+        <span class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style="background-image: url('https://cdn.aracari.com/wp-content/uploads/2025/12/raimond-klavins-xAqrT-279UA-unsplash-1920x1280.jpg');"></span>
+        <span class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60 flex flex-col justify-end p-6 text-white">
+          <div class="text-2xl font-bold leading-tight" style="font-family: 'Playfair Display', serif; font-style: italic;">Where to Go in South America in 2025: Our Annual Hotlist</div>
+        </span>
+      </a>
 
-      <!-- Item 3: cols 5-6, rows 1-2 (tall) -->
-      <div class="col-start-5 col-end-7 row-start-1 row-end-3 relative overflow-hidden cursor-pointer group">
-        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=1000&fit=crop" alt="Espíritu de Sudamérica" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-        <div class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/50 flex flex-col justify-end p-6 text-white">
-          <p class="text-xl font-bold leading-tight">The Spirit of South America</p>
-          <p class="text-sm mt-1 opacity-90">A VIBRANT TWO-WEEK LUXURY SOUTH AMERICA TRIP</p>
-        </div>
-      </div>
+      <!-- Item 3: cols 7-12, row 1 -->
+      <a href="#" class="relative overflow-hidden cursor-pointer group" style="grid-column: 7 / 13; grid-row: 1 / 2;">
+        <span class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=1000&fit=crop');"></span>
+        <span class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60 flex flex-col justify-end p-6 text-white">
+          <div class="text-2xl font-bold leading-tight mb-1" style="font-family: 'Playfair Display', serif; font-style: italic;">The Spirit of South America</div>
+        </span>
+      </a>
 
-      <!-- Item 4: cols 1-3, row 2 -->
-      <div class="col-start-1 col-end-4 row-start-2 row-end-3 relative overflow-hidden cursor-pointer group">
-        <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop" alt="Viaje de lujo en Perú" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-        <div class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/50 flex flex-col justify-end p-6 text-white">
-          <p class="text-2xl font-bold leading-tight">Classic luxury trip Peru</p>
-          <p class="text-sm mt-1 opacity-90">INTIMATE HISTORY - RICHNESS IN CULTURE</p>
-        </div>
-      </div>
+      <!-- Item 4: cols 5-9, row 2 (wide) -->
+      <a href="#" class="relative overflow-hidden cursor-pointer group" style="grid-column: 5 / 10; grid-row: 2 / 3;">
+        <span class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style="background-image: url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop');"></span>
+        <span class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60 flex flex-col justify-end p-6 text-white">
+          <div class="text-2xl font-bold leading-tight mb-1" style="font-family: 'Playfair Display', serif; font-style: italic;">Classic Luxury Trip Peru</div>
+        </span>
+      </a>
 
-      <!-- Item 5: col 4, row 2 -->
-      <div class="col-start-4 col-end-5 row-start-2 row-end-3 relative overflow-hidden cursor-pointer group">
-        <img src="https://images.unsplash.com/photo-1502933691298-84fc14542831?w=600&h=600&fit=crop" alt="Galería" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-        <div class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/50 flex flex-col justify-end p-6 text-white">
-          <p class="text-2xl font-bold leading-tight">Aracari Gallery</p>
-          <p class="text-sm mt-1 opacity-90">EXPERIENCE PERU WITH US TODAY</p>
-        </div>
-      </div>
+      <!-- Item 5: cols 10-12, row 2 (narrow) -->
+      <a href="#" class="relative overflow-hidden cursor-pointer group" style="grid-column: 10 / 13; grid-row: 2 / 3;">
+        <span class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style="background-image: url('https://images.unsplash.com/photo-1502933691298-84fc14542831?w=600&h=600&fit=crop');"></span>
+        <span class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60 flex flex-col justify-end p-6 text-white">
+          <div class="text-2xl font-bold leading-tight mb-1" style="font-family: 'Playfair Display', serif; font-style: italic;">Aracari Gallery</div>
+        </span>
+      </a>
 
     </section>
 
@@ -182,12 +219,11 @@ const heroImageUrl = heroImage?.formats?.large?.url
           { img: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=600&h=400&fit=crop", title: "Immersive Day Treks", subtitle: "1 día · Aventura" },
           { img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop", title: "South America 2025", subtitle: "3 semanas · Completo" },
         ].map(item => (
-          <div class="group relative overflow-hidden rounded-lg aspect-video cursor-pointer">
+          <div class="group relative overflow-hidden aspect-video cursor-pointer">
             <img src={item.img} alt={item.title} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
             <div class="absolute inset-0 bg-black/40 group-hover:bg-black/55 transition-colors duration-300"></div>
             <div class="absolute inset-0 flex flex-col justify-end p-4 text-white">
               <p class="font-bold text-sm leading-tight" style="font-family: 'Playfair Display', serif; font-style: italic;">{item.title}</p>
-              <p class="text-xs opacity-80 mt-1">{item.subtitle}</p>
             </div>
           </div>
         ))}
@@ -196,16 +232,16 @@ const heroImageUrl = heroImage?.formats?.large?.url
 
     <!-- Middle Description Section -->
     {trip.middle_description && (
-      <section class="bg-gray-50 py-20 px-4">
+      <section class="bg-gray-50 py-12 md:py-20 px-4 md:px-16">
         <div class="max-w-4xl mx-auto text-center">
           <h2
-            class="text-3xl md:text-5xl font-bold text-gray-800 mb-8"
+            class="text-2xl md:text-5xl font-bold text-gray-800 mb-6 md:mb-8"
             style="font-family: 'Playfair Display', serif; font-style: italic;"
           >
             {trip.middle_description.title}
           </h2>
-          <div class="w-12 h-0.5 bg-yellow-600 mx-auto mb-8"></div>
-          <p class="text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto">
+          <div class="w-12 h-0.5 bg-yellow-600 mx-auto mb-6 md:mb-8"></div>
+          <p class="text-base md:text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto">
             {trip.middle_description.description}
           </p>
         </div>
@@ -228,7 +264,7 @@ const heroImageUrl = heroImage?.formats?.large?.url
     </script>
 
     <!-- Carousel Section -->
-    <section class="bg-white py-16 px-4">
+    <section class="bg-white py-8 md:py-16 px-0 md:px-4">
       <div
         class="flex gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4"
         style="scrollbar-width: none;"
