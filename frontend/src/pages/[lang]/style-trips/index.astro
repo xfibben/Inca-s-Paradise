@@ -1,0 +1,109 @@
+---
+import Navbar from '../../../components/shared/Navbar.astro';
+import Footer from '../../../components/shared/Footer.astro';
+import { getTranslation, languages } from '../../../i18n';
+import '../../../styles/global.css';
+
+const { lang } = Astro.params;
+const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
+const t = getTranslation(currentLang);
+
+const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
+const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+
+function toSlug(name: string): string {
+  return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
+}
+
+let styleTrips: any[] = [];
+try {
+  const res = await fetch(`${STRAPI_URL}/api/style-trips?populate=image&locale=${strapiLocale}&status=published`);
+  if (res.ok) {
+    const json = await res.json();
+    styleTrips = json.data ?? [];
+  }
+} catch (e) {}
+
+const firstImg = (() => { const img = Array.isArray(styleTrips[0]?.image) ? styleTrips[0].image[0] : styleTrips[0]?.image; return img; })();
+const heroImageUrl = firstImg?.formats?.large?.url
+  ? `${STRAPI_PUBLIC_URL}${firstImg.formats.large.url}`
+  : firstImg?.url
+  ? `${STRAPI_PUBLIC_URL}${firstImg.url}`
+  : null;
+---
+
+<!DOCTYPE html>
+<html lang={currentLang}>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
+    <title>Estilos de Viaje — Inca's Paradise</title>
+  </head>
+  <body>
+    <Navbar {t} {currentLang} />
+
+    <!-- Hero Section: 3/4 of viewport height -->
+    <header class="relative w-full overflow-hidden" style="height: 75vh;">
+      {heroImageUrl && (
+        <img
+          src={heroImageUrl}
+          alt="Estilos de Viaje"
+          class="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative z-10 flex flex-col items-center justify-center h-full text-white text-center px-4">
+        <h1
+          class="text-4xl md:text-6xl font-bold mb-4"
+          style="font-family: 'Playfair Display', serif; font-style: italic;"
+        >
+          Estilos de Viaje
+        </h1>
+        <p class="text-lg md:text-xl max-w-2xl opacity-90">
+          Descubre la experiencia que se adapta a ti
+        </p>
+      </div>
+    </header>
+
+    <main class="min-h-screen bg-gray-100 pb-16 px-4">
+      <div class="max-w-6xl mx-auto pt-12">
+        <!-- Cards grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {styleTrips.map((item: any) => {
+            const img = Array.isArray(item.image) ? item.image[0] : item.image;
+            const imgUrl = img?.formats?.medium?.url
+              ? `${STRAPI_PUBLIC_URL}${img.formats.medium.url}`
+              : img?.url
+              ? `${STRAPI_PUBLIC_URL}${img.url}`
+              : null;
+            return (
+              <a
+                href={`/${currentLang}/style-trips/${toSlug(item.name)}`}
+                class="group relative overflow-hidden rounded-lg shadow-md aspect-[3/4] block"
+              >
+                {imgUrl && (
+                  <img src={imgUrl} alt={item.name} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                )}
+                <div class="absolute inset-0 bg-black/40 group-hover:bg-black/55 transition-colors duration-300"></div>
+                <div class="absolute inset-0 flex items-end p-6 text-white">
+                  <h2 class="text-xl font-bold" style="font-family: 'Playfair Display', serif; font-style: italic;">
+                    {item.name}
+                  </h2>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    </main>
+
+    <Footer {currentLang} {t} />
+  </body>
+</html>

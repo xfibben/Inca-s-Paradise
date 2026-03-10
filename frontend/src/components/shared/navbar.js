@@ -1,6 +1,10 @@
 // navbar.js — Toda la lógica interactiva del Navbar
 // Las traducciones se inyectan desde Navbar.astro via window.__navbarT
 
+function toSlug(name) {
+  return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   const t = window.__navbarT;
   if (!t) return;
@@ -292,8 +296,6 @@ document.addEventListener('DOMContentLoaded', function () {
   document.querySelectorAll('.mobile-styles-option').forEach(option => {
     option.addEventListener('click', () => {
       const optionKey = option.getAttribute('data-option');
-      const menuItem = t.stylesMenu[optionKey];
-      if (!menuItem) return;
 
       mobileStylesList?.classList.add('hidden');
       mobileStylesDetails?.classList.remove('hidden');
@@ -303,6 +305,33 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const subitemsContainer = document.getElementById('mobile-style-subitems');
       if (!subitemsContainer) return;
+
+      // travelStyles: usar datos de Strapi
+      if (optionKey === 'travelStyles' && window.__navbarStyleTrips?.length) {
+        const lang = window.__currentLang || 'es';
+        const pubUrl = window.__strapiPublicUrl || 'http://localhost:1337';
+        subitemsContainer.innerHTML = `<div class="flex flex-col gap-1">${window.__navbarStyleTrips.map(item => {
+          const imgObj = Array.isArray(item.image) ? item.image[0] : item.image;
+          const imgSrc = imgObj?.formats?.medium?.url
+            ? pubUrl + imgObj.formats.medium.url
+            : imgObj?.url
+            ? pubUrl + imgObj.url
+            : '';
+          const slug = toSlug(item.name);
+          return `
+            <a href="/${lang}/style-trips/${slug}" class="relative h-16 overflow-hidden rounded block">
+              ${imgSrc ? `<img src="${imgSrc}" alt="${item.name}" class="w-full h-full object-cover" />` : `<div class="w-full h-full bg-gray-400"></div>`}
+              <div class="absolute inset-0 bg-black/50"></div>
+              <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1"
+                style="font-family: 'Playfair Display', serif; font-style: italic;">${item.name}</span>
+            </a>
+          `;
+        }).join('')}</div>`;
+        return;
+      }
+
+      const menuItem = t.stylesMenu[optionKey];
+      if (!menuItem) return;
 
       const subitems = menuItem.subitems || {};
       if (Object.keys(subitems).length === 0) {

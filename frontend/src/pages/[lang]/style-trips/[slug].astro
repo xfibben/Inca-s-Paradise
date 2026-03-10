@@ -1,0 +1,289 @@
+---
+import Navbar from '../../../components/shared/Navbar.astro';
+import Footer from '../../../components/shared/Footer.astro';
+import CarouselCard from '../../../components/stylestrips/StylesCarouselCard.astro';
+import { getTranslation, languages } from '../../../i18n';
+import '../../../styles/global.css';
+
+const { lang, slug } = Astro.params;
+const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
+const t = getTranslation(currentLang);
+
+const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
+const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+let trip: any = null;
+try {
+  const res = await fetch(
+    `${STRAPI_URL}/api/style-trips?populate[0]=wallpaper&populate[1]=image&locale=${strapiLocale}&status=published`
+  );
+  if (res.ok) {
+    const json = await res.json();
+    trip = (json.data ?? []).find((item: any) => toSlug(item.name) === slug) ?? null;
+  }
+} catch (e) {}
+
+// 404 if not found
+if (!trip) {
+  return Astro.redirect(`/${currentLang}/style-trips`);
+}
+
+// Usar wallpaper si existe, sino fallback a image
+const heroImage = (() => {
+  const wp = Array.isArray(trip.wallpaper) ? trip.wallpaper[0] : trip.wallpaper;
+  if (wp) return wp;
+  return Array.isArray(trip.image) ? trip.image[0] : trip.image;
+})();
+const heroImageUrl = heroImage?.formats?.large?.url
+  ? `${STRAPI_PUBLIC_URL}${heroImage.formats.large.url}`
+  : heroImage?.url
+  ? `${STRAPI_PUBLIC_URL}${heroImage.url}`
+  : null;
+---
+
+<!DOCTYPE html>
+<html lang={currentLang}>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
+    <title>{trip.name} — Inca's Paradise</title>
+  </head>
+  <body>
+    <Navbar {t} {currentLang} />
+
+    <!-- Hero Section: 3/4 viewport height -->
+    <header class="relative w-full overflow-hidden" style="height: 75vh;">
+      {heroImageUrl && (
+        <img
+          src={heroImageUrl}
+          alt={trip.name}
+          class="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative z-10 flex flex-col items-center justify-center h-full text-white text-center px-4">
+        <h1
+          class="text-4xl md:text-6xl font-bold mb-4"
+          style="font-family: 'Playfair Display', serif; font-style: italic;"
+        >
+          {trip.name}
+        </h1>
+      </div>
+    </header>
+
+    <main class="bg-white pb-16 px-4">
+      <div class="max-w-4xl mx-auto pt-12">
+        {trip.description && (
+          <div class="flex gap-6">
+            <div class="w-0.5 bg-yellow-600 self-stretch flex-shrink-0"></div>
+            <p class="text-lg text-gray-700 leading-relaxed">
+              {trip.description}
+            </p>
+          </div>
+        )}
+      </div>
+    </main>
+
+    
+
+    <!-- Gallery Title -->
+    <div class="bg-white px-4 pt-16 pb-8 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-gray-800" style="font-family: 'Playfair Display', serif; font-style: italic;">
+        Small Trips
+      </h2>
+    </div>
+
+    <!-- Gallery Collage -->
+    <section class="w-full h-screen grid grid-cols-6 grid-rows-2">
+
+      <!-- Item 1: cols 1-2, row 1 -->
+      <div class="col-start-1 col-end-3 row-start-1 row-end-2 relative overflow-hidden cursor-pointer group">
+        <img src="https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=800&h=600&fit=crop" alt="Trekking en Perú" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <div class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/50 flex flex-col justify-end p-6 text-white">
+          <p class="text-xs font-semibold uppercase tracking-widest mb-2 opacity-90">Travel Journal</p>
+          <p class="text-lg font-bold leading-tight">PATHS THROUGH TIME:<br/>IMMERSIVE ONE-DAY<br/>TREKS IN PERU</p>
+        </div>
+      </div>
+
+      <!-- Item 2: cols 3-4, row 1 -->
+      <div class="col-start-3 col-end-5 row-start-1 row-end-2 relative overflow-hidden cursor-pointer group">
+        <img src="https://cdn.aracari.com/wp-content/uploads/2025/12/raimond-klavins-xAqrT-279UA-unsplash-1920x1280.jpg" alt="Destinos en Sudamérica" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <div class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/50 flex flex-col justify-end p-6 text-white">
+          <p class="text-xs font-semibold uppercase tracking-widest mb-2 opacity-90">Travel Journal</p>
+          <p class="text-lg font-bold leading-tight">WHERE TO GO<br/>IN SOUTH<br/>AMERICA IN<br/>2025: OUR<br/>ANNUAL<br/>HOTLIST</p>
+        </div>
+      </div>
+
+      <!-- Item 3: cols 5-6, rows 1-2 (tall) -->
+      <div class="col-start-5 col-end-7 row-start-1 row-end-3 relative overflow-hidden cursor-pointer group">
+        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=1000&fit=crop" alt="Espíritu de Sudamérica" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <div class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/50 flex flex-col justify-end p-6 text-white">
+          <p class="text-xl font-bold leading-tight">The Spirit of South America</p>
+          <p class="text-sm mt-1 opacity-90">A VIBRANT TWO-WEEK LUXURY SOUTH AMERICA TRIP</p>
+        </div>
+      </div>
+
+      <!-- Item 4: cols 1-3, row 2 -->
+      <div class="col-start-1 col-end-4 row-start-2 row-end-3 relative overflow-hidden cursor-pointer group">
+        <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1200&h=600&fit=crop" alt="Viaje de lujo en Perú" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <div class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/50 flex flex-col justify-end p-6 text-white">
+          <p class="text-2xl font-bold leading-tight">Classic luxury trip Peru</p>
+          <p class="text-sm mt-1 opacity-90">INTIMATE HISTORY - RICHNESS IN CULTURE</p>
+        </div>
+      </div>
+
+      <!-- Item 5: col 4, row 2 -->
+      <div class="col-start-4 col-end-5 row-start-2 row-end-3 relative overflow-hidden cursor-pointer group">
+        <img src="https://images.unsplash.com/photo-1502933691298-84fc14542831?w=600&h=600&fit=crop" alt="Galería" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        <div class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/50 flex flex-col justify-end p-6 text-white">
+          <p class="text-2xl font-bold leading-tight">Aracari Gallery</p>
+          <p class="text-sm mt-1 opacity-90">EXPERIENCE PERU WITH US TODAY</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Mostrar más -->
+    <div class="bg-white py-8 flex flex-col items-center gap-6">
+      <button
+        id="show-more-btn"
+        class="text-sm text-gray-400 hover:text-gray-600 tracking-widest uppercase flex items-center gap-2 transition-colors duration-200"
+      >
+        Mostrar más
+        <svg id="show-more-icon" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <!-- Lista expandida -->
+      <div id="more-trips" class="hidden w-full max-w-5xl px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[
+          { img: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=600&h=400&fit=crop", title: "Paths Through Time", subtitle: "1 día · Trekking" },
+          { img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop", title: "Spirit of South America", subtitle: "2 semanas · Luxury" },
+          { img: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&h=400&fit=crop", title: "Classic Luxury Peru", subtitle: "10 días · Cultural" },
+          { img: "https://images.unsplash.com/photo-1502933691298-84fc14542831?w=600&h=400&fit=crop", title: "Aracari Gallery", subtitle: "Flexible · Mixto" },
+          { img: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=600&h=400&fit=crop", title: "Immersive Day Treks", subtitle: "1 día · Aventura" },
+          { img: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop", title: "South America 2025", subtitle: "3 semanas · Completo" },
+        ].map(item => (
+          <div class="group relative overflow-hidden rounded-lg aspect-video cursor-pointer">
+            <img src={item.img} alt={item.title} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            <div class="absolute inset-0 bg-black/40 group-hover:bg-black/55 transition-colors duration-300"></div>
+            <div class="absolute inset-0 flex flex-col justify-end p-4 text-white">
+              <p class="font-bold text-sm leading-tight" style="font-family: 'Playfair Display', serif; font-style: italic;">{item.title}</p>
+              <p class="text-xs opacity-80 mt-1">{item.subtitle}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Middle Description Section -->
+    {trip.middle_description && (
+      <section class="bg-gray-50 py-20 px-4">
+        <div class="max-w-4xl mx-auto text-center">
+          <h2
+            class="text-3xl md:text-5xl font-bold text-gray-800 mb-8"
+            style="font-family: 'Playfair Display', serif; font-style: italic;"
+          >
+            {trip.middle_description.title}
+          </h2>
+          <div class="w-12 h-0.5 bg-yellow-600 mx-auto mb-8"></div>
+          <p class="text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto">
+            {trip.middle_description.description}
+          </p>
+        </div>
+      </section>
+    )}
+
+    <script>
+      const btn = document.getElementById('show-more-btn');
+      const list = document.getElementById('more-trips');
+      const icon = document.getElementById('show-more-icon');
+      let open = false;
+      btn?.addEventListener('click', () => {
+        open = !open;
+        list?.classList.toggle('hidden', !open);
+        list?.classList.toggle('grid', open);
+        if (icon) icon.style.transform = open ? 'rotate(180deg)' : '';
+        if (btn) btn.querySelector('span') && (btn.querySelector('span')!.textContent = open ? 'Mostrar menos' : 'Mostrar más');
+        btn!.childNodes[0].textContent = open ? 'Mostrar menos ' : 'Mostrar más ';
+      });
+    </script>
+
+    <!-- Carousel Section -->
+    <section class="bg-white py-16 px-4">
+      <div
+        class="flex gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4"
+        style="scrollbar-width: none;"
+      >
+        <CarouselCard
+          image="https://images.unsplash.com/photo-1483683804023-6ccdb62f86ef?w=600&h=400&fit=crop"
+          alt="Peru - Brazil"
+          days="15 DAYS / 14 NIGHTS"
+          location="PERÚ – BRAZIL"
+          title="A TALE OF TWO HALVES: FROM PERU TO BRAZIL"
+          description="A 14-night luxury South America vacation."
+        />
+        <CarouselCard
+          image="https://images.unsplash.com/photo-1526392060635-9d6019884377?w=600&h=400&fit=crop"
+          alt="Connecting with Peru"
+          days="14 DAYS / 13 NIGHTS"
+          location="PERÚ"
+          title="CONNECTING WITH PERU"
+          description="A 14-day luxury private tour to Peru."
+        />
+        <CarouselCard
+          image="https://images.unsplash.com/photo-1473625247510-8ceb1760943f?w=600&h=400&fit=crop"
+          alt="Golden Age of Travel"
+          days="11 DAYS / 10 NIGHTS"
+          location="PERÚ"
+          title="THE GOLDEN AGE OF TRAVEL: LUXURY PERU BY RAIL"
+          description="Visit Peru's top destinations by train."
+        />
+        <CarouselCard
+          image="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&h=400&fit=crop"
+          alt="Highlights of Bolivia"
+          days="7 DAYS / 6 NIGHTS"
+          location="BOLIVIA"
+          title="HIGHLIGHTS OF BOLIVIA"
+          description="Bolivia's most incredible sights."
+        />
+        <CarouselCard
+          image="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop"
+          alt="Peru - Bolivia"
+          days="14 DAYS / 13 NIGHTS"
+          location="PERÚ – BOLIVIA"
+          title="EXTRAORDINARY PERU & BOLIVIA"
+          description="Travel to an extraordinary spectrum of landscapes."
+        />
+        <CarouselCard
+          image="https://images.unsplash.com/photo-1483683804023-6ccdb62f86ef?w=600&h=400&fit=crop"
+          alt="Peru - Brazil"
+          days="15 DAYS / 14 NIGHTS"
+          location="PERÚ – BRAZIL"
+          title="A TALE OF TWO HALVES: FROM PERU TO BRAZIL"
+          description="A 14-night luxury South America vacation."
+        />
+      </div>
+    </section>
+
+    <Footer {currentLang} {t} />
+  </body>
+</html>
