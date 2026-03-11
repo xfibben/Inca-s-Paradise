@@ -9,20 +9,16 @@ import distritosData from '../../../i18n/ubigeo_distrito.json';
 
 const { lang } = Astro.params;
 
-const currentLang = Object.keys(languages).includes(lang as string)
-  ? (lang as Language)
-  : defaultLanguage;
-
-if (!Object.keys(languages).includes(lang as string)) {
-  return Astro.redirect(`/${defaultLanguage}/claims`);
+// Claims page only works in Spanish
+if (lang !== 'es') {
+  return Astro.redirect('/es/claims');
 }
 
+const currentLang = 'es' as const;
 const t = getTranslation(currentLang);
 
-const titles: Record<Language, string> = {
+const titles: Record<'es', string> = {
   es: "Reclamaciones — Inca's Paradise",
-  en: "Complaints — Inca's Paradise",
-  pt: "Reclamações — Inca's Paradise",
 };
 
 type Labels = Record<string, string>;

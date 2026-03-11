@@ -109,6 +109,21 @@
           "localized": true
         }
       }
+    },
+    "showInStyles": {
+      "type": "boolean",
+      "default": false,
+      "description": "Mostrar este tour en la sección de Small Trips de las páginas de estilos de viaje"
+    },
+    "tourType": {
+      "type": "enumeration",
+      "enum": [
+        "tour",
+        "small_trip",
+        "package"
+      ],
+      "default": "tour",
+      "description": "Tipo de tour: Tour, Small Trip o Paquete"
     }
   }
 }

@@ -17,12 +17,50 @@ function toSlug(name: string): string {
 }
 
 let navStyleTrips: any[] = [];
+let navDestinations: any[] = [];
 try {
-  const res = await fetch(`${STRAPI_URL}/api/style-trips?populate=image&locale=${strapiLocale}&status=published`);
-  if (res.ok) {
-    const json = await res.json();
+  const styleUrl = `${STRAPI_URL}/api/style-trips?populate[0]=image&locale=${strapiLocale}&status=published`;
+  const destUrl = `${STRAPI_URL}/api/destino-detalles?populate[0]=*&locale=${strapiLocale}&status=published`;
+  const toursUrl = `${STRAPI_URL}/api/tour-detalles?populate[0]=destinos&locale=${strapiLocale}&status=published`;
+  
+  console.log('[Navbar] Fetching:', { styleUrl, destUrl, toursUrl });
+  
+  const [styleRes, destRes, toursRes] = await Promise.all([
+    fetch(styleUrl),
+    fetch(destUrl),
+    fetch(toursUrl)
+  ]);
+  
+  console.log('[Navbar] Style Response:', styleRes.status);
+  console.log('[Navbar] Dest Response:', destRes.status);
+  console.log('[Navbar] Tours Response:', toursRes.status);
+  
+  if (styleRes.ok) {
+    const json = await styleRes.json();
     navStyleTrips = json.data ?? [];
+    console.log('[Navbar] Style Trips Count:', navStyleTrips.length);
   }
+  
+  if (destRes.ok) {
+    const json = await destRes.json();
+    navDestinations = json.data ?? [];
+    console.log('[Navbar] Destinations Count:', navDestinations.length);
+  }
+  
+  let navTours: any[] = [];
+  if (toursRes.ok) {
+    const json = await toursRes.json();
+    navTours = json.data ?? [];
+    console.log('[Navbar] Tours Count:', navTours.length);
+  }
+  
+  // Agregar tours relacionados a cada destino
+  navDestinations = navDestinations.map((dest: any) => ({
+    ...dest,
+    relatedTours: navTours.filter((tour: any) => 
+      tour.destinos && tour.destinos.some((d: any) => d.id === dest.id)
+    )
+  }));
 } catch (e) {}
 ---
 
@@ -110,14 +148,20 @@ try {
                   
                   <!-- Destinations scroll container -->
                   <div id="destinations-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
-                    {t.megamenu.destinos.map((dest: any) => (
+                    {navDestinations.map((dest: any) => (
                       <button
                         class="destination-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 whitespace-normal"
-                        data-dest={dest.key}
-                        data-name={dest.name}
-                        data-image={dest.image}
+                        data-dest={dest.slug}
+                        data-name={dest.title}
+                        data-image={(() => {
+                          const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
+                          if (slides.length > 0 && slides[0]?.image?.url) {
+                            return `${STRAPI_PUBLIC_URL}${slides[0].image.url}`;
+                          }
+                          return '';
+                        })()}
                       >
-                        {dest.name}
+                        {dest.title}
                       </button>
                     ))}
                   </div>
@@ -347,23 +391,35 @@ try {
         <div id="mobile-destinations-menu" class="hidden rounded mt-1 max-h-96 overflow-y-auto">
           <div id="mobile-destinations-list" class="flex flex-col">
             <div class="flex flex-col gap-1 p-1">
-              {t.megamenu.destinos.slice(0, 6).map((dest: any) => (
-                <button class="mobile-destination-item relative h-16 overflow-hidden rounded" data-dest={dest.key} data-name={dest.name}>
-                  <img src={dest.image.startsWith('landing page images') ? `/${dest.image}` : dest.image} alt={dest.name} class="w-full h-full object-cover" />
-                  <div class="absolute inset-0 bg-black/50"></div>
-                  <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.name}</span>
-                </button>
-              ))}
+              {navDestinations.slice(0, 6).map((dest: any) => {
+                const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
+                const imgUrl = slides.length > 0 && slides[0]?.image?.url
+                  ? `${STRAPI_PUBLIC_URL}${slides[0].image.url}`
+                  : '';
+                return (
+                  <button class="mobile-destination-item relative h-16 overflow-hidden rounded" data-dest={dest.slug} data-name={dest.title}>
+                    {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
+                    <div class="absolute inset-0 bg-black/50"></div>
+                    <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.title}</span>
+                  </button>
+                );
+              })}
             </div>
             <!-- Hidden remaining destinations -->
             <div id="mobile-destinations-extra" class="hidden flex flex-col gap-1 px-1 pb-1">
-              {t.megamenu.destinos.slice(6).map((dest: any) => (
-                <button class="mobile-destination-item relative h-16 overflow-hidden rounded" data-dest={dest.key} data-name={dest.name}>
-                  <img src={dest.image.startsWith('landing page images') ? `/${dest.image}` : dest.image} alt={dest.name} class="w-full h-full object-cover" />
-                  <div class="absolute inset-0 bg-black/50"></div>
-                  <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.name}</span>
-                </button>
-              ))}
+              {navDestinations.slice(6).map((dest: any) => {
+                const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
+                const imgUrl = slides.length > 0 && slides[0]?.image?.url
+                  ? `${STRAPI_PUBLIC_URL}${slides[0].image.url}`
+                  : '';
+                return (
+                  <button class="mobile-destination-item relative h-16 overflow-hidden rounded" data-dest={dest.slug} data-name={dest.title}>
+                    {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
+                    <div class="absolute inset-0 bg-black/50"></div>
+                    <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.title}</span>
+                  </button>
+                );
+              })}
             </div>
             <!-- Show all button -->
             <button id="mobile-destinations-show-all" class="mx-1 mb-1 py-2 text-xs text-blue-600 font-medium bg-blue-50 hover:bg-blue-100 rounded transition text-center">
@@ -464,12 +520,127 @@ try {
 <div id="mobile-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onclick="document.getElementById('mobile-menu-btn').click()"></div>
 
 <!-- Exponer traducciones al script externo -->
-<script is:inline define:vars={{ translations: t, navStyleTrips, STRAPI_PUBLIC_URL, currentLang }}>
+<script is:inline define:vars={{ translations: t, navStyleTrips, navDestinations, STRAPI_PUBLIC_URL, currentLang }}>
   window.__navbarT = translations;
   window.__navbarStyleTrips = navStyleTrips;
+  window.__navbarDestinations = navDestinations;
   window.__strapiPublicUrl = STRAPI_PUBLIC_URL;
   window.__currentLang = currentLang;
 </script>
 
 <!-- Lógica del navbar en archivo separado -->
 <script src="./navbar.js"></script>
+
+<!-- Initialize dynamic languages -->
+<script>
+  console.log('Navbar: Language script loaded');
+
+  function buildLanguageUrl(languageCode) {
+    const currentPath = window.location.pathname;
+    const pathMatch = currentPath.match(/^\/[a-z]{2}(.*)/);
+    const relativePath = pathMatch ? pathMatch[1] : '/';
+    return `/${languageCode}${relativePath}`;
+  }
+
+  async function initializeLanguages() {
+    try {
+      const backendUrl = (import.meta.env.PUBLIC_BACKEND_URL || 'http://localhost:1337');
+      console.log('Navbar: Fetching languages from', backendUrl);
+      
+      const response = await fetch(`${backendUrl}/api/locales`);
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.data)) {
+        console.log('Navbar: Languages from backend:', data.data);
+        
+        const languages = {};
+        data.data.forEach((locale) => {
+          const shortCode = locale.code.split('-')[0];
+          languages[shortCode] = locale.name;
+        });
+        
+        console.log('Navbar: Mapped languages:', languages);
+        updateLanguageSwitchers(languages);
+      }
+    } catch (error) {
+      console.warn('Navbar: Failed to fetch languages:', error);
+    }
+  }
+
+  function updateLanguageSwitchers(languages) {
+    // Detect current language from URL
+    const pathMatch = window.location.pathname.match(/^\/([a-z]{2})\//);
+    const currentLangCode = pathMatch ? pathMatch[1] : 'es';
+    
+    console.log('Navbar: Current language:', currentLangCode);
+    console.log('Navbar: Updating switchers with languages:', Object.keys(languages));
+
+    // Update ALL lang-switcher instances
+    const langSwitchers = document.querySelectorAll('#lang-switcher');
+    console.log('Navbar: Found', langSwitchers.length, 'switchers');
+
+    langSwitchers.forEach((switcher, switcherIndex) => {
+      console.log(`Navbar: Updating switcher ${switcherIndex}`);
+      
+      const button = switcher.querySelector('#lang-button');
+      const dropdown = switcher.querySelector('#lang-dropdown');
+      const langArrow = switcher.querySelector('#lang-arrow');
+      
+      if (!button || !dropdown) {
+        console.log(`Navbar: Switcher ${switcherIndex} missing button or dropdown`);
+        return;
+      }
+
+      // Update button text
+      const buttonSpan = button.querySelector('span');
+      if (buttonSpan && languages[currentLangCode]) {
+        buttonSpan.textContent = languages[currentLangCode];
+      }
+
+      // Clear dropdown completely
+      dropdown.innerHTML = '';
+
+      // Add all language links with event listeners
+      for (const [code, name] of Object.entries(languages)) {
+        if (code === currentLangCode) {
+          console.log(`Navbar: Skipping current language ${code}`);
+          continue;
+        }
+
+        const link = document.createElement('a');
+        link.className = 'flex items-center space-x-3 px-4 py-3 hover:bg-white/10 transition text-white text-sm cursor-pointer';
+        
+        const span = document.createElement('span');
+        span.textContent = name;
+        link.appendChild(span);
+
+        // Attach click handler IMMEDIATELY
+        link.addEventListener('click', (e) => {
+          console.log('Navbar: Language link clicked:', code);
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const url = buildLanguageUrl(code);
+          console.log('Navbar: Navigating to:', url);
+          
+          dropdown.classList.add('hidden');
+          langArrow?.classList.remove('rotate-180');
+          
+          window.location.href = url;
+        });
+
+        dropdown.appendChild(link);
+        console.log(`Navbar: Added link for ${code}: ${name}`);
+      }
+    });
+
+    console.log('Navbar: Update complete');
+  }
+
+  // Initialize on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeLanguages);
+  } else {
+    initializeLanguages();
+  }
+</script>

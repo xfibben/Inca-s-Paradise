@@ -664,6 +664,7 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    showInStyles: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     slug: Schema.Attribute.UID<'title'> &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -693,6 +694,8 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    tourType: Schema.Attribute.Enumeration<['tour', 'small_trip', 'package']> &
+      Schema.Attribute.DefaultTo<'tour'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

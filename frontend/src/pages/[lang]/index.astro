@@ -41,14 +41,16 @@ const currentLang = validLang;
 const titles: Record<Language, string> = {
   es: "Inca's Paradise - Aventuras Personalizadas",
   en: "Inca's Paradise - Tailor-made Adventures",
-  pt: "Inca's Paradise - Aventuras Personalizadas"
+  pt: "Inca's Paradise - Aventuras Personalizadas",
+  fr: "Inca's Paradise - Aventures Sur Mesure",
+  it: "Inca's Paradise - Avventure Personalizzate"
 };
 
-const langNames: Record<Language, string> = {
-  es: "es",
-  en: "en",
-  pt: "pt"
-};
+// Genera langNames dinámicamente desde los idiomas disponibles
+const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Record<string, string>, lang: string) => {
+  acc[lang] = lang;
+  return acc;
+}, {});
 ---
 
 <html lang={langNames[currentLang]}>
@@ -104,7 +106,7 @@ const langNames: Record<Language, string> = {
 		<Hero {t} />
 		<Features {t} />
     <Commitment {t} />
-		<DestinationsGallery {t} />
+		<DestinationsGallery {t} {currentLang} />
     <CertificationsDetail lang={currentLang} />
 		<StylesTrips {t} {currentLang} />
 		<SustainabilitySection {t} />

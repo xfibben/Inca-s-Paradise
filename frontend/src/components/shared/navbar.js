@@ -134,27 +134,35 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('destinations-scroll')?.scrollBy({ top: scrollAmount, behavior: 'smooth' });
   });
 
-  function updateMegamenu(destKey) {
-    const destination = t.megamenu.destinos.find(d => d.key === destKey);
+  function updateMegamenu(destSlug) {
+    const destinations = window.__navbarDestinations || [];
+    const destination = destinations.find(d => d.slug === destSlug);
     if (!destination) return;
 
-    document.getElementById('megamenu-tours').innerHTML = destination.tours.map(tour => `
+    // Mostrar tours relacionados
+    const relatedTours = destination.relatedTours || [];
+    document.getElementById('megamenu-tours').innerHTML = relatedTours.map(tour => `
       <div class="pb-3 border-b border-gray-100 last:border-0">
-        <p class="font-semibold text-gray-800 text-sm">${tour.name}</p>
-        <p class="text-xs text-gray-500">${tour.days} días</p>
+        <p class="font-semibold text-gray-800 text-sm">${tour.title}</p>
       </div>
     `).join('');
 
+    // Mostrar imagen del destino desde heroSlides
     const img = document.getElementById('megamenu-image');
-    img.src = destination.image.startsWith('landing page images')
-      ? `/${destination.image}`
-      : `https://images.unsplash.com/${destination.image}?w=400&h=400&fit=crop`;
-    document.getElementById('megamenu-dest-name').textContent = destination.name;
+    const slides = destination.heroSlides && Array.isArray(destination.heroSlides) ? destination.heroSlides : [];
+    if (slides.length > 0 && slides[0]?.image?.url) {
+      img.src = `${window.__strapiPublicUrl}${slides[0].image.url}`;
+    }
+    
+    // Mostrar nombre del destino
+    document.getElementById('megamenu-dest-name').textContent = destination.title || '';
   }
 
-  updateMegamenu('chachapoyas');
-  document.querySelector('[data-dest="chachapoyas"]')?.classList.add('bg-blue-50', 'text-blue-600');
-
+  const destinationsList = window.__navbarDestinations || [];
+  if (destinationsList.length > 0) {
+    updateMegamenu(destinationsList[0].slug);
+    document.querySelector('[data-dest="' + destinationsList[0].slug + '"]')?.classList.add('bg-blue-50', 'text-blue-600');
+  }
   document.querySelectorAll('.destination-item').forEach(item => {
     item.addEventListener('mouseenter', () => {
       updateMegamenu(item.dataset.dest);
@@ -272,18 +280,21 @@ document.addEventListener('DOMContentLoaded', function () {
   // Detalle destino mobile
   document.querySelectorAll('.mobile-destination-item').forEach(item => {
     item.addEventListener('click', () => {
-      const destination = t.megamenu.destinos.find(d => d.key === item.getAttribute('data-dest'));
+      const destinations = window.__navbarDestinations || [];
+      const destination = destinations.find(d => d.slug === item.getAttribute('data-dest'));
       if (!destination) return;
 
       mobileDestinationsList?.classList.add('hidden');
       mobileDestinationsDetails?.classList.remove('hidden');
-      document.getElementById('mobile-dest-name').textContent = destination.name;
-      document.getElementById('mobile-dest-tours').innerHTML = destination.tours.map(tour => `
+      document.getElementById('mobile-dest-name').textContent = destination.title || '';
+      
+      const relatedTours = destination.relatedTours || [];
+      const toursHtml = relatedTours.map(tour => `
         <div class="pb-2 border-b border-gray-300 last:border-0">
-          <p class="font-semibold text-gray-800 text-sm">${tour.name}</p>
-          <p class="text-xs text-gray-500">${tour.days} días</p>
+          <p class="font-semibold text-gray-800 text-sm">${tour.title}</p>
         </div>
       `).join('');
+      document.getElementById('mobile-dest-tours').innerHTML = toursHtml;
     });
   });
 
