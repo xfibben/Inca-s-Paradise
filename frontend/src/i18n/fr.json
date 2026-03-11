@@ -1,0 +1,393 @@
+{
+  "nav": {
+    "destinations": "Destinations",
+    "tripStyles": "Styles de Voyage",
+    "transport": "Transport",
+    "sustainability": "Durabilité",
+    "blog": "Blog",
+    "contactUs": "Nous Contacter",
+    "comingSoon": "À Venir"
+  },
+  "hero": {
+    "yearsLabel": "20 ANS",
+    "mainTitle": "Des aventures sur mesure.",
+    "subtitle": "Chez Inca's Paradise, nous pensons que voyager est synonyme d'aventure. Et pourtant, nous savons que chaque voyageur a sa propre vision de ce que cela signifie. C'est là que le sur mesure intervient. Quelle que soit votre idée d'aventure, tous nos voyages sont conçus spécialement pour vous, en respectant les cultures locales et l'environnement.",
+    "cta": "Commencez Votre Prochaine Aventure Aujourd'hui"
+  },
+  "features": {
+    "title": "Un voyage immersif qui respecte les cultures locales et l'environnement.",
+    "description": "Beaucoup d'entre nous chez Inca's Paradise vivent entre deux mondes et presque tous ont vécu ou travaillé dans les lieux remarquables que nous incluons dans la planification de nos voyages. Nos connaissances locales et nos connexions nous permettent de créer des itinéraires immersifs respectueux des cultures locales et de l'environnement, tout en mettant l'accent sur vos intérêts, vos goûts, votre calendrier et votre budget.",
+    "responsibleTravel": "Voyage Responsable",
+    "fiveStarReviews": "Avis 5 Étoiles",
+    "exceptionalProperties": "Propriétés Exceptionnelles Boutique"
+  },
+  "styles": {
+    "title": "Nos Styles de Voyage",
+    "images": {
+      "adventure": "landing page images/estilos/1. Aventura y trekking.jpg",
+      "gastronomy": "landing page images/estilos/2. Gastronomico.jpg",
+      "nature": "landing page images/estilos/4. Naturaleza.jpg",
+      "lifestyle": "landing page images/estilos/3. Estilo de vida y cultura.jpeg",
+      "biodiversity": "landing page images/estilos/5. Viajes a medida.webp"
+    },
+    "adventure": {
+      "name": "AVENTURE ET TREKKING"
+    },
+    "gastronomy": {
+      "name": "GOURMAND"
+    },
+    "nature": {
+      "name": "BIEN-ÊTRE & NATURE"
+    },
+    "lifestyle": {
+      "name": "STYLE DE VIE & CULTURE"
+    },
+    "biodiversity": {
+      "name": "SUR MESURE"
+    }
+  },
+  "stylesMenu": {
+    "travelStyles": {
+      "name": "Styles de Voyage",
+      "description": "Découvrez nos 5 styles de voyage uniques conçus pour chaque type d'aventurier.",
+      "image": "landing page images/estilos/4. Naturaleza.jpg",
+      "subitems": {
+        "adventure": {
+          "name": "AVENTURE ET TREKKING",
+          "image": "landing page images/estilos/1. Aventura y trekking.jpg"
+        },
+        "gastronomy": {
+          "name": "GOURMAND",
+          "image": "landing page images/estilos/2. Gastronomico.jpg"
+        },
+        "lifestyle": {
+          "name": "STYLE DE VIE & CULTURE",
+          "image": "landing page images/estilos/3. Estilo de vida y cultura.jpeg"
+        },
+        "nature": {
+          "name": "BIEN-ÊTRE & NATURE",
+          "image": "landing page images/estilos/4. Naturaleza.jpg"
+        },
+        "biodiversity": {
+          "name": "SUR MESURE",
+          "image": "landing page images/estilos/5. Viajes a medida.webp"
+        }
+      }
+    },
+    "smallTrips": {
+      "name": "Petits Voyages",
+      "description": "À Venir - Des expériences courtes et excitantes pour votre prochain voyage.",
+      "image": "",
+      "subitems": {}
+    },
+    "packages": {
+      "name": "Forfaits",
+      "description": "À Venir - Des forfaits spéciaux avec le meilleur du Pérou.",
+      "image": "",
+      "subitems": {}
+    }
+  },
+  "destinations": {
+    "chachapoyas": {
+      "name": "CHACHAPOYAS",
+      "description": "Découvrez les ruines anciennes et les paysages magiques de la forêt de nuages."
+    },
+    "iquitos": {
+      "name": "IQUITOS",
+      "description": "L'aventure au cœur de l'Amazonie."
+    },
+    "tarapoto": {
+      "name": "TARAPOTO",
+      "description": "Jungle verdoyante et eaux cristallines."
+    },
+    "tambopata": {
+      "name": "TAMBOPATA",
+      "description": "Biodiversité unique en Amazonie."
+    },
+    "limaIcaNazca": {
+      "name": "LIMA - ICA - NAZCA",
+      "description": "Culture ancestrale et mystère."
+    },
+    "arequipa": {
+      "name": "AREQUIPA",
+      "description": "Architecture coloniale et volcans."
+    },
+    "puno": {
+      "name": "PUNO",
+      "description": "Lac Titicaca et traditions vivantes."
+    },
+    "cusco": {
+      "name": "CUSCO",
+      "description": "Machu Picchu et le cœur de l'empire."
+    },
+    "copacabana": {
+      "name": "COPACABANA - ÎLE DU SOLEIL",
+      "description": "Île du Soleil et spiritualité."
+    },
+    "laPaz": {
+      "name": "LA PAZ",
+      "description": "Capitale en altitude."
+    },
+    "uyuni": {
+      "name": "UYUNI",
+      "description": "Le plus grand désert de sel du monde."
+    },
+    "sucre": {
+      "name": "SUCRE",
+      "description": "Ville blanche et capitale culturelle."
+    }
+  },
+  "commitment": {
+    "text": "Chez Inca's Paradise, nous nous engageons à vous accompagner à chaque voyage avec dévouement, transparence et chaleur humaine. Nous prenons soin de chaque détail, de la planification à votre retour, pour que vous viviez une expérience authentique, sûre et profondément significative. Nous ne guidons pas simplement les voyageurs : nous créons des moments qui inspirent, connectent et restent dans l'âme.",
+    "author": "Inca's Paradise"
+  },
+  "megamenu": {
+    "destinos": [
+      {
+        "key": "chachapoyas",
+        "name": "CHACHAPOYAS",
+        "image": "landing page images/destinos/1. Amazonas - Kuelap.jpg",
+        "tours": [
+          { "name": "Gata Malla", "days": 3 },
+          { "name": "Canyon Marañón", "days": 4 },
+          { "name": "Lac Pomacochas", "days": 2 }
+        ]
+      },
+      {
+        "key": "iquitos",
+        "name": "IQUITOS",
+        "image": "landing page images/destinos/2 Loreto - Iquitos.jpg",
+        "tours": [
+          { "name": "Amazonie Profonde", "days": 5 },
+          { "name": "Fleuve Napo", "days": 3 },
+          { "name": "Réserve Allpahuayo", "days": 2 }
+        ]
+      },
+      {
+        "key": "tarapoto",
+        "name": "TARAPOTO",
+        "image": "landing page images/destinos/3 San Martin-Tarapoto.jpg",
+        "tours": [
+          { "name": "Cascade Ahuashiyacú", "days": 2 },
+          { "name": "Lagon Bleu", "days": 3 },
+          { "name": "Fleuve Shilcayo", "days": 2 }
+        ]
+      },
+      {
+        "key": "tambopata",
+        "name": "TAMBOPATA",
+        "image": "landing page images/destinos/4. Tambopata.webp",
+        "tours": [
+          { "name": "Collpa Perroquet", "days": 3 },
+          { "name": "Lac Sandoval", "days": 4 },
+          { "name": "Forêt Vierge", "days": 2 }
+        ]
+      },
+      {
+        "key": "limaIcaNazca",
+        "name": "LIMA - ICA - NAZCA",
+        "image": "landing page images/destinos/5 Lima - Ica - Nazca.jpg",
+        "tours": [
+          { "name": "Vol Lignes de Nazca", "days": 1 },
+          { "name": "Oasis Huacachina", "days": 2 },
+          { "name": "Circuit Archéologique", "days": 3 }
+        ]
+      },
+      {
+        "key": "arequipa",
+        "name": "AREQUIPA",
+        "image": "landing page images/destinos/6 Arequipa.jpg",
+        "tours": [
+          { "name": "Volcan Misti", "days": 2 },
+          { "name": "Cañon Colca", "days": 3 },
+          { "name": "Ville Blanche", "days": 1 }
+        ]
+      },
+      {
+        "key": "puno",
+        "name": "PUNO",
+        "image": "landing page images/destinos/7. Puno tinajani.webp",
+        "tours": [
+          { "name": "Îles Uros", "days": 1 },
+          { "name": "Taquile et Amantaní", "days": 2 },
+          { "name": "Lac Titicaca", "days": 3 }
+        ]
+      },
+      {
+        "key": "cusco",
+        "name": "CUSCO",
+        "image": "landing page images/destinos/8. Cusco Machu Picchu.jpg",
+        "tours": [
+          { "name": "Machu Picchu Classique", "days": 2 },
+          { "name": "Sentier de l'Inca", "days": 4 },
+          { "name": "Vallée Sacrée", "days": 2 }
+        ]
+      },
+      {
+        "key": "copacabana",
+        "name": "COPACABANA - ÎLE DU SOLEIL",
+        "image": "landing page images/destinos/9. Isla del Sol - Copacabana.webp",
+        "tours": [
+          { "name": "Île du Soleil", "days": 1 },
+          { "name": "Sanctuaire Copacabana", "days": 1 },
+          { "name": "Lac Titicaca Bolivie", "days": 2 }
+        ]
+      },
+      {
+        "key": "laPaz",
+        "name": "LA PAZ",
+        "image": "landing page images/destinos/10. Valle de las Animas - La Paz.jpg",
+        "tours": [
+          { "name": "Téléphérique La Paz", "days": 1 },
+          { "name": "Vallée de la Lune", "days": 1 },
+          { "name": "Ville Magique", "days": 2 }
+        ]
+      },
+      {
+        "key": "uyuni",
+        "name": "UYUNI",
+        "image": "landing page images/destinos/12. Salar de Uyuni.jpg",
+        "tours": [
+          { "name": "Salar de Uyuni Classique", "days": 3 },
+          { "name": "Coucher Désert de Sel", "days": 2 },
+          { "name": "Lagunes Colorées", "days": 4 }
+        ]
+      },
+      {
+        "key": "sucre",
+        "name": "SUCRE",
+        "image": "landing page images/destinos/11. Sucre.jpg",
+        "tours": [
+          { "name": "Ville Blanche Bolivie", "days": 1 },
+          { "name": "Dinosaures Cal Orck'o", "days": 1 },
+          { "name": "Archéologie et Culture", "days": 2 }
+        ]
+      }
+    ]
+  },
+  "sustainability": {
+    "title": "Durabilité : Inca's Paradise",
+    "images": {
+      "fairTourism": "landing page images/sostenibilidad/Turismo justo.jpg",
+      "sustainability": "landing page images/sostenibilidad/Sostenibilidad.jpg",
+      "socialProjects": "landing page images/sostenibilidad/Proyecto social.jpg"
+    },
+    "fairTourism": {
+      "name": "TOURISME ÉQUITABLE",
+      "description": "Le tourisme équitable consiste à voyager en toute conscience et respect, en créant des connexions authentiques avec les personnes et les cultures qui donnent vie à chaque destination. Chaque expérience vise à créer un impact positif et laisser une empreinte qui transforme à la fois le voyageur et le lieu visité."
+    },
+    "sustainability": {
+      "name": "DURABILITÉ",
+      "description": "Nous comprenons la durabilité comme un engagement à long terme envers les destinations que nous visitons. Nous concevons des expériences responsables qui minimisent l'impact environnemental, soutiennent les économies locales et protègent les écosystèmes et l'identité culturelle, assurant le bien-être des communautés aujourd'hui et dans le futur."
+    },
+    "socialProjects": {
+      "name": "PROJETS SOCIAUX",
+      "description": "Nos projets sociaux visent à créer un impact positif dans les communautés locales en soutenant des initiatives qui renforcent les économies locales, préservent le patrimoine culturel et favorisent le développement durable. Grâce au tourisme responsable, nous aidons à créer de véritables opportunités pour les gens et les lieux que nous visitons."
+    }
+  },
+  "values": {
+    "title": "Nos Valeurs",
+    "sustainabilityAuthenticity": {
+      "name": "Durabilité / Authenticité",
+      "description": "Nous promouvons le tourisme responsable et authentique au Pérou et en Bolivie, en travaillant en partenariat avec les communautés locales, en prenant soin de l'environnement naturel et en favorisant des expériences authentiques qui connectent les voyageurs à la culture vivante de chaque destination."
+    },
+    "reliability": {
+      "name": "Fiabilité",
+      "description": "Une expérience soutenue par des années d'exploitation, des guides locaux experts et des processus clairs qui assurent la sécurité, la confiance et la tranquillité d'esprit dès le premier contact jusqu'à votre retour."
+    },
+    "humanityWarmth": {
+      "name": "Humanité / Chaleur",
+      "description": "Nous créons des expériences enracinées dans la proximité, le respect et l'empathie, connectant les voyageurs avec de véritables personnes et des cultures vivantes. À travers les guides locaux, les récits partagés et les traditions authentiques, chaque voyage devient une connexion humaine qui dépasse les destinations."
+    },
+    "adventureSafety": {
+      "name": "Aventure & Sécurité",
+      "description": "Nous explorons des itinéraires alternatifs et des expériences actives adaptées à différents niveaux, combinant l'esprit d'aventure avec des guides certifiés et des protocoles qui assurent la sécurité et la confiance à chaque étape."
+    },
+    "innovation": {
+      "name": "Innovation",
+      "description": "Nous intégrons la technologie et le design numérique pour offrir des processus rationalisés, une expérience de voyage moderne et une amélioration continue motivée par les commentaires, l'innovation et de nouvelles façons de voyager."
+    }
+  },
+  "buttons": {
+    "explore": "Explorer",
+    "findOutMore": "En Savoir Plus",
+    "goToComment": "Aller au Commentaire"
+  },
+  "reviews": {
+    "title": "Expériences de Nos Voyageurs",
+    "reviews": [
+      {
+        "year": "2017",
+        "title": "Tour Puno-Bolivie",
+        "opinion": "J'ai fait le voyage avec Inca's Paradise, et c'était un excellent choix, attention personnalisée, ils m'ont fait un programme sur mesure, respectant le programme et ce qui était offert à chaque étape. Les opérateurs choisis en Bolivie étaient excellents. Les hôtels fournis étaient complets. Nous avons visité Sillustany, Îles des Uros, Amantaní, Taquile. Ensuite Chucuito et la Porte Interdimensionnelle, un endroit incroyable. L'une des choses les plus impressionnantes était Tiahuanaco. Le Salar de Uyuni avec ses paysages impressionnants et ses photos hallucinantes. Nous avons terminé à Copacabana et la visite aux Îles du Soleil et de la Lune. Merci Gumercinda, Willy, Juan Carlos, Luis et les différents guides qui nous ont guidés à travers l'Altiplano.",
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r537539026-Inca_s_Paradise-Puno_Puno_Region.html",
+        "image": "review2017"
+      },
+      {
+        "year": "2018",
+        "title": "Excellents ! Professionnalisme et générosité",
+        "opinion": "Nous avons découvert l'entreprise par la recommandation d'une amie et ils nous ont organisé un voyage sur mesure qui a dépassé toutes nos attentes. Nous avons senti leur accompagnement dès le moment où nous avons posé le pied sur le sol péruvien à Arequipa (Gumer nous a accueillis là-bas) jusqu'au dernier jour où Yaque nous a dit au revoir à Juliaca. Ils ont pris soin de tous les détails et étaient très attentifs à nos suggestions et évaluations. Nous la recommandons sans doute !",
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r616420223-Inca_s_Paradise-Puno_Puno_Region.html",
+        "image": "review2018"
+      },
+      {
+        "year": "2019",
+        "title": "Agence de voyage recommandée avec excellent service",
+        "opinion": "J'ai réservé deux tours à la Vallée Sacrée et la montagne Arc-en-ciel et un billet d'autobus pour La Paz avec Inca's Paradise. J'ai reçu un service attentionné et utile à un prix compétitif. C'est définitivement une bonne agence de voyage en laquelle vous pouvez faire confiance. Recommandé !",
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r673294842-Inca_s_Paradise-Puno_Puno_Region.html",
+        "image": "review2019"
+      },
+      {
+        "year": "2020",
+        "title": "Professionnels et Attentifs",
+        "opinion": "Nous avons fait, avec Inca's Paradise, les visites du Canyon Colca en partant d'Arequipa, le transfert jusqu'à Puno et la visite aux îles Uros et Taquile sur le lac Titicaca. Tout comme convenu et, malgré une communication un peu 'hachée', dès que nous avons commencé à communiquer via WhatsApp, ils ont toujours répondu très rapidement et ont été très attentifs. De plus, ils nous ont mis à disposition des guides qui ont rendu les visites encore plus spéciales ! Je recommande !",
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r722384916-Inca_s_Paradise-Puno_Puno_Region.html",
+        "image": "review2020"
+      },
+      {
+        "year": "2023",
+        "title": "Les Meilleurs à Puno !",
+        "opinion": "Excellent service ! Very pleasant from the moment they pick you up, super patient and considerate. We started the tour and it adapted to our pace since we were coming from an altitude change, during the tour they explained and answered all our questions. In addition to that, our guide very friendly, very knowledgeable and with a beautiful vibe that definitely enhanced the experience. They took us exactly where we wanted to go. The transportation service excellent too. Definitely would recommend it, it's above other tour services. Highly recommended",
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r898348355-Inca_s_Paradise-Puno_Puno_Region.html",
+        "image": "review2023"
+      },
+      {
+        "year": "2024",
+        "title": "Grande Expérience à Puno et Bolivie",
+        "opinion": "Inca's Paradise a été définitivement mon meilleur choix lors de ce voyage en solo, ils ont été incroyables avec l'itinéraire. Adriana était la fille responsable et s'est occupée de chaque détail pour que mon expérience soit merveilleuse. Point culminant : communication, ponctualité, ils ont respecté mes préférences, et sans doute ils recommandent leur agence de voyage.",
+        "url": "https://www.tripadvisor.com.pe/Profile/yoselynd188?fid=59505cf2-06b2-4e08-840d-7f95fac023ad",
+        "image": "review2024"
+      }
+    ]
+  },
+  "certifications": [
+    {
+      "number": 1,
+      "title": "Travelers' Choice Awards – TripAdvisor",
+      "description": "Reconnaissance continue de la qualité de notre service et de la satisfaction de nos voyageurs sur la plateforme TripAdvisor, nous positionnant comme l'un des meilleurs opérateurs touristiques de la région."
+    },
+    {
+      "number": 2,
+      "title": "Prix de l'Innovation 2024 – Association Péruvienne des Entrepreneurs (ASPEM)",
+      "description": "Prix décerné en reconnaissance de notre trajectoire, succès soutenu et engagement constant envers l'innovation dans les services touristiques, reconnaissant notre contribution au développement du tourisme au Pérou."
+    },
+    {
+      "number": 3,
+      "title": "Sceau de Qualité et Engagement – MINCETUR et CALTUR",
+      "description": "Prix certifiant notre application rigoureuse des normes de qualité internationales et notre engagement permanent envers l'excellence du service à la clientèle."
+    },
+    {
+      "number": 4,
+      "title": "Diplôme de Reconnaissance d'Engagement Touristique – PROMPERÚ",
+      "description": "Reconnaissance officielle pour avoir complété avec succès les programmes de promotion commerciale de PROMPERÚ, démontrant notre engagement envers la promotion de l'image du tourisme péruvien dans le monde."
+    }
+  ],
+  "footer": {
+    "terms": "Conditions Générales",
+    "offers": "Offres",
+    "about": "À Propos de Nous",
+    "policies": "Politiques",
+    "cancellations": "Annulations",
+    "faq": "FAQ"
+  }
+}

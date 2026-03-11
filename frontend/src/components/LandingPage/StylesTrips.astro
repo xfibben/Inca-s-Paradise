@@ -22,7 +22,7 @@ function toSlug(name: string): string {
 
 let styleTrips: any[] = [];
 try {
-  const url = `${STRAPI_URL}/api/style-trips?populate=image&locale=${strapiLocale}&status=published`;
+  const url = `${STRAPI_URL}/api/style-trips?populate[0]=image&locale=${strapiLocale}&status=published`;
   console.log('[StylesTrips] fetching:', url);
   const res = await fetch(url);
   console.log('[StylesTrips] status:', res.status);
