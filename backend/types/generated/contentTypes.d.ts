@@ -453,6 +453,10 @@ export interface ApiDestinoDetalleDestinoDetalle
   attributes: {
     blogButton: Schema.Attribute.String;
     blogTitle: Schema.Attribute.String;
+    catalogInitialVisibleCount: Schema.Attribute.Integer;
+    catalogTabs: Schema.Attribute.JSON;
+    catalogViewLessLabel: Schema.Attribute.String;
+    catalogViewMoreLabel: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -467,10 +471,12 @@ export interface ApiDestinoDetalleDestinoDetalle
       'oneToMany',
       'api::destino-detalle.destino-detalle'
     >;
+    packageTours: Schema.Attribute.JSON;
     primaryRibbon: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     secondaryRibbon: Schema.Attribute.String;
     slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
+    smallTrips: Schema.Attribute.JSON;
     title: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -498,6 +504,30 @@ export interface ApiDestinoDestino extends Struct.SingleTypeSchema {
     };
   };
   attributes: {
+    contactBandButtonLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    contactBandButtonUrl: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    contactBandPhone: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    contactBandText: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

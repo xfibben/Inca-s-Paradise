@@ -2,6 +2,7 @@
 import { getTranslation } from "../../../i18n";
 import "../../../styles/global.css";
 import DestinationsGallery from "../../../components/LandingPage/DestinationsGallery.astro";
+import Ribbon from "../../../components/shared/Ribbon.astro";
 import fallbackEs from "../../../data/destinos.json";
 import fallbackEn from "../../../data/destinos.en.json";
 
@@ -39,6 +40,12 @@ let title =
   fallback.data?.attributes?.title ?? (isEnglish ? "Destinations" : "Destinos");
 let description = fallback.data?.attributes?.description ?? "";
 let ribbonText = fallback.data?.attributes?.ribbonText ?? "";
+let contactBandText = fallback.data?.attributes?.contactBandText ?? "";
+let contactBandPhone = fallback.data?.attributes?.contactBandPhone ?? "";
+let contactBandButtonLabel =
+  fallback.data?.attributes?.contactBandButtonLabel ?? "";
+let contactBandButtonUrl =
+  fallback.data?.attributes?.contactBandButtonUrl ?? "#";
 
 for (const baseUrl of STRAPI_URLS) {
   let loadedFromStrapi = false;
@@ -48,7 +55,7 @@ for (const baseUrl of STRAPI_URLS) {
 
     try {
       const res = await fetch(
-        `${baseUrl}/api/destino?${localePart}fields[0]=title&fields[1]=description&fields[2]=ribbonText`
+        `${baseUrl}/api/destino?${localePart}fields[0]=title&fields[1]=description&fields[2]=ribbonText&fields[3]=contactBandText&fields[4]=contactBandPhone&fields[5]=contactBandButtonLabel&fields[6]=contactBandButtonUrl`
       );
 
       if (!res.ok) continue;
@@ -61,6 +68,11 @@ for (const baseUrl of STRAPI_URLS) {
       title = attrs.title ?? title;
       description = attrs.description ?? description;
       ribbonText = attrs.ribbonText ?? ribbonText;
+      contactBandText = attrs.contactBandText ?? contactBandText;
+      contactBandPhone = attrs.contactBandPhone ?? contactBandPhone;
+      contactBandButtonLabel =
+        attrs.contactBandButtonLabel ?? contactBandButtonLabel;
+      contactBandButtonUrl = attrs.contactBandButtonUrl ?? contactBandButtonUrl;
       loadedFromStrapi = true;
       break;
     } catch {
@@ -102,15 +114,25 @@ const canonical = `${Astro.url.origin}/${lang}/destinos`;
 					</p>
 				</div>
 			</section>
-			<section class="bg-white">
-				<div class="mx-auto w-full max-w-5xl px-6 py-10 md:py-12">
-					<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed flex items-center gap-2">
-						<span class="inline-block h-2 w-2 rounded-sm bg-orange-500"></span>
-						<span>{ribbonText}</span>
-					</p>
+			<Ribbon text={ribbonText} maxWidthClass="max-w-5xl" />
+			<DestinationsGallery t={t} />
+			<section class="bg-[#db3f24] mt-8 mb-8 md:mt-12 md:mb-12">
+				<div class="mx-auto w-full max-w-7xl px-6 py-10 md:py-12">
+					<div class="grid gap-6 text-white md:grid-cols-[1.5fr_auto_auto] md:items-center md:gap-8">
+						<p class="flex items-center gap-3 text-lg md:text-xl leading-snug">
+							<span class="inline-block h-2 w-2 rounded-sm bg-white"></span>
+							<span>{contactBandText}</span>
+						</p>
+						<p class="text-lg md:text-xl">{contactBandPhone}</p>
+						<a
+							href={contactBandButtonUrl || "#"}
+							class="inline-flex w-fit items-center justify-center border border-white px-5 py-2 text-sm font-semibold text-white transition hover:bg-white hover:text-[#db3f24]"
+						>
+							{contactBandButtonLabel}
+						</a>
+					</div>
 				</div>
 			</section>
-			<DestinationsGallery t={t} />
 		</main>
 	</body>
 </html>

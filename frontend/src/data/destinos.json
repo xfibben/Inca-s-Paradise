@@ -3,7 +3,11 @@
     "attributes": {
       "title": "Bienvenidos al mundo.",
       "description": "Nadie conoce nuestros destinos mejor. Nuestros especialistas en destinos, inteligentes y atentos, aportan anos de experiencia de primera mano viviendo, trabajando y viajando extensamente por sus areas de especialidad. No encontraras un grupo mas informado y con mas experiencia en ninguna otra empresa de viajes. Nuestra profundidad de experiencia y enfoque marca la diferencia en la calidad de las relaciones que hemos desarrollado en nuestros destinos con operadores locales, guias y hoteles.",
-      "ribbonText": "Explora nuestros destinos y mas"
+      "ribbonText": "Explora nuestros destinos y mas",
+      "contactBandText": "Contactanos para empezar a planificar tu aventura hoy:",
+      "contactBandPhone": "+1 (800) 342-1796",
+      "contactBandButtonLabel": "Solicitar cotizacion",
+      "contactBandButtonUrl": "#"
     }
   }
 }
