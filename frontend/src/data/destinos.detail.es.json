@@ -140,6 +140,112 @@
           "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80"
         }
       ],
+      "smallTrips": [
+        {
+          "type": "card",
+          "tourSlug": "puno-iconico",
+          "title": "Tour autentico por Puno",
+          "description": "Conoce el verdadero Puno",
+          "route": "Machu Picchu, Cusco y Valle Sagrado",
+          "meta": "8 dias / desde: USD 1919",
+          "image": "https://images.unsplash.com/photo-1514917865447-999c8f6c5a31?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Aventura en Puno",
+          "description": "Del Camino Inca a las montanas de colores",
+          "route": "Lima, Cusco, Camino Inca, Machu Picchu",
+          "meta": "9 dias / desde: USD 2299",
+          "image": "https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Tour culinario",
+          "description": "Desde los mercados locales hasta los placeres gourmet",
+          "route": "Lima, Cusco y Machu Picchu",
+          "meta": "8 dias / desde: USD 1989",
+          "image": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Peru al descubierto",
+          "description": "Desde la costa de Lima hasta la Amazonia y Machu Picchu",
+          "route": "Machu Picchu, Puerto Maldonado",
+          "meta": "10 dias / desde: USD 2219",
+          "image": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Odisea peruana",
+          "description": "Desierto, Andes y selva amazonica",
+          "route": "Lima, Paracas y Huacachina",
+          "meta": "16 dias / desde: USD 3249",
+          "image": "https://images.unsplash.com/photo-1531065208531-4036c0dba3ca?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Maravillas peruanas",
+          "description": "Un viaje a traves de la historia, cultura y naturaleza",
+          "route": "Machu Picchu, Cusco, Lago Titicaca y Huacachina",
+          "meta": "8 dias / desde: USD 1979",
+          "image": "https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Puno profundo",
+          "description": "Vivencias locales en comunidades del altiplano",
+          "route": "Puno, Chucuito, Juli y Pomata",
+          "meta": "7 dias / desde: USD 2099",
+          "image": "https://images.unsplash.com/photo-1508264165352-258a6f82c9b2?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Lago y cultura viva",
+          "description": "Tradiciones, tejidos y navegacion en el Titicaca",
+          "route": "Uros, Taquile y Amantani",
+          "meta": "6 dias / desde: USD 1849",
+          "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Aventura altiplanica",
+          "description": "Caminatas suaves y paisajes de altura",
+          "route": "Puno, Sillustani y Lampa",
+          "meta": "9 dias / desde: USD 2390",
+          "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Rituales andinos",
+          "description": "Conexiones culturales en rutas sagradas",
+          "route": "Aramu Muru, Chucuito y Titicaca",
+          "meta": "5 dias / desde: USD 1690",
+          "image": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Puno escenico",
+          "description": "Miradores, gastronomia y fotografia de viaje",
+          "route": "Puno, Acora y Llachon",
+          "meta": "8 dias / desde: USD 2120",
+          "image": "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80"
+        },
+        {
+          "type": "card",
+          "title": "Titicaca premium",
+          "description": "Experiencia boutique entre lago y montana",
+          "route": "Puno, Suasi y Taquile",
+          "meta": "10 dias / desde: USD 2890",
+          "image": "https://images.unsplash.com/photo-1521292270410-a8c4d716d518?auto=format&fit=crop&w=1200&q=80"
+        }
+      ],
+      "catalogTabs": {
+        "smallTrips": "Small Trips",
+        "packages": "Paquetes"
+      },
+      "catalogViewMoreLabel": "Ver mas tours de destino",
+      "catalogViewLessLabel": "Ver menos tours de destino",
+      "catalogInitialVisibleCount": 6,
       "seeMore": {
         "label": "See More",
         "collapseLabel": "See Less"

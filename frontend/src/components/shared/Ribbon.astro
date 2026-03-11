@@ -1,0 +1,52 @@
+---
+interface Props {
+  text: string;
+  backgroundClass?: string;
+  maxWidthClass?: string;
+  paddingClass?: string;
+  textClass?: string;
+  accentClass?: string;
+  sectionClass?: string;
+  containerClass?: string;
+  textStyle?: string;
+  showAccent?: boolean;
+}
+
+const {
+  text,
+  backgroundClass = "bg-white",
+  maxWidthClass = "max-w-6xl",
+  paddingClass = "py-10 md:py-12",
+  textClass = "text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed",
+  accentClass = "bg-orange-500",
+  sectionClass = "",
+  containerClass = "",
+  textStyle = "",
+  showAccent = true
+} = Astro.props as Props;
+---
+
+<section class:list={[backgroundClass, sectionClass].filter(Boolean)}>
+  <div
+    class:list={[
+      "mx-auto w-full px-6",
+      maxWidthClass,
+      paddingClass,
+      containerClass
+    ].filter(Boolean)}
+  >
+    <p class:list={["flex items-center gap-2", textClass].filter(Boolean)} style={textStyle}>
+      {
+        showAccent ? (
+          <span
+            class:list={[
+              "inline-block h-2 w-2 rounded-sm",
+              accentClass
+            ].filter(Boolean)}
+          />
+        ) : null
+      }
+      <span>{text}</span>
+    </p>
+  </div>
+</section>

@@ -57,6 +57,24 @@
     },
     "blogButton": {
       "type": "string"
+    },
+    "packageTours": {
+      "type": "json"
+    },
+    "smallTrips": {
+      "type": "json"
+    },
+    "catalogTabs": {
+      "type": "json"
+    },
+    "catalogViewMoreLabel": {
+      "type": "string"
+    },
+    "catalogViewLessLabel": {
+      "type": "string"
+    },
+    "catalogInitialVisibleCount": {
+      "type": "integer"
     }
   }
 }

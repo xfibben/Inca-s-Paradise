@@ -2,6 +2,7 @@
 import { getTranslation } from "../../../i18n";
 import "../../../styles/global.css";
 import DestinationsGallery from "../../../components/LandingPage/DestinationsGallery.astro";
+import Ribbon from "../../../components/shared/Ribbon.astro";
 import destinosDetailEs from "../../../data/destinos.detail.es.json";
 import destinosDetailEn from "../../../data/destinos.detail.en.json";
 
@@ -141,9 +142,18 @@ const {
   intro,
   ribbons,
   packages,
+  packageTours,
+  smallTrips,
+  catalogTabs,
   seeMore,
+  catalogViewMoreLabel,
+  catalogViewLessLabel,
+  packageInitialVisibleCount,
+  smallTripsInitialRows,
+  smallTripsRowsPerLoad,
   blogCta,
-  initialVisibleCount = 8
+  initialVisibleCount = 8,
+  catalogInitialVisibleCount
 } = fallbackDestination;
 
 const strapiDetail = await fetchStrapiDetailBySlug(slugKey, getLocales(lang));
@@ -206,10 +216,6 @@ const secondaryRibbon =
   strapiDetail?.secondaryRibbon ??
   ribbons?.secondary ??
   (lang === "en" ? `Destination of ${pageTitle}` : `Destino de ${pageTitle}`);
-const seeMoreLabel =
-  seeMore?.label ?? (lang === "en" ? "See More" : "Ver mas");
-const seeLessLabel =
-  seeMore?.collapseLabel ?? (lang === "en" ? "See Less" : "Ver menos");
 const blogTitle =
   strapiDetail?.blogTitle ??
   blogCta?.title ??
@@ -225,6 +231,74 @@ const blogButton =
 const prevLabel = lang === "en" ? "Previous" : "Anterior";
 const nextLabel = lang === "en" ? "Next" : "Siguiente";
 const itineraryLabel = lang === "en" ? "See itinerary" : "Ver itinerario";
+const tabReadMoreLabel = lang === "en" ? "See more" : "Ver mas";
+
+const normalizeCatalogItems = (value: any) =>
+  Array.isArray(value)
+    ? value.filter(
+        (item) => item && typeof item === "object" && item.type !== "quote"
+      )
+    : [];
+
+const smallTripItems = normalizeCatalogItems(
+  strapiDetail?.smallTrips ?? smallTrips ?? []
+);
+const packageItemsFlat = Array.isArray(
+  strapiDetail?.packageTours ?? packageTours ?? packages ?? []
+)
+  ? (strapiDetail?.packageTours ?? packageTours ?? packages ?? [])
+  : [];
+const smallTripRows: Array<any[]> = [];
+for (let i = 0; i < smallTripItems.length; i += 3) {
+  smallTripRows.push(smallTripItems.slice(i, i + 3));
+}
+
+const tabLabels = strapiDetail?.catalogTabs ?? catalogTabs ?? {};
+const packagesTabLabel =
+  tabLabels?.packages ?? (lang === "en" ? "Packages" : "Paquetes");
+const smallTripsTabLabel = tabLabels?.smallTrips ?? "Small Trips";
+const catalogMoreLabel =
+  strapiDetail?.catalogViewMoreLabel ??
+  catalogViewMoreLabel ??
+  seeMore?.label ??
+  (lang === "en" ? "View more destination tours" : "Ver más tours de destino");
+const catalogLessLabel =
+  strapiDetail?.catalogViewLessLabel ??
+  catalogViewLessLabel ??
+  seeMore?.collapseLabel ??
+  (lang === "en"
+    ? "View fewer destination tours"
+    : "Ver menos tours de destino");
+
+const rawPackageInitialVisibleCount =
+  strapiDetail?.packageInitialVisibleCount ??
+  packageInitialVisibleCount ??
+  initialVisibleCount;
+const packageInitialCount = Number.isFinite(Number(rawPackageInitialVisibleCount))
+  ? Math.max(1, Number(rawPackageInitialVisibleCount))
+  : 8;
+
+const rawSmallInitialRows =
+  strapiDetail?.smallTripsInitialRows ??
+  smallTripsInitialRows ??
+  2;
+const smallInitialRows = Number.isFinite(Number(rawSmallInitialRows))
+  ? Math.max(1, Number(rawSmallInitialRows))
+  : 2;
+
+const rawSmallRowsPerLoad =
+  strapiDetail?.smallTripsRowsPerLoad ??
+  smallTripsRowsPerLoad ??
+  2;
+const smallRowsPerLoad = Number.isFinite(Number(rawSmallRowsPerLoad))
+  ? Math.max(1, Number(rawSmallRowsPerLoad))
+  : 2;
+
+const smallInitialCount =
+  Number.isFinite(Number(catalogInitialVisibleCount))
+    ? Math.max(1, Number(catalogInitialVisibleCount))
+    : smallInitialRows * 3;
+const smallStepCount = smallRowsPerLoad * 3;
 
 const highlightText = (text: string, words: string[] = []) => {
   let result = text;
@@ -429,25 +503,43 @@ const highlightText = (text: string, words: string[] = []) => {
 				</div>
 			</section>
 
-			<section class="bg-white">
-				<div class="mx-auto w-full max-w-6xl px-6 py-10 md:py-12">
-					<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed flex items-center gap-2">
-						<span class="inline-block h-2 w-2 rounded-sm bg-orange-500"></span>
-						<span>{primaryRibbon}</span>
-					</p>
-				</div>
-			</section>
+			<Ribbon text={primaryRibbon} maxWidthClass="max-w-6xl" />
 
 			<section class="bg-white">
 				<div class="mx-auto w-full max-w-7xl px-6 pb-14 md:pb-18 lg:pb-20">
-					<div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4" data-packages>
-						{packages.map((item, index) =>
+					<div class="mb-8 flex flex-wrap items-center gap-3 border-b border-gray-200 pb-4">
+						<button
+							type="button"
+							class="inline-flex items-center justify-center border border-[#0b2b3a] bg-[#0b2b3a] px-5 py-2 text-xs font-semibold uppercase tracking-wide text-white transition"
+							data-catalog-tab="smallTrips"
+							aria-selected="true"
+						>
+							{smallTripsTabLabel}
+						</button>
+						<button
+							type="button"
+							class="inline-flex items-center justify-center border border-[#0b2b3a] bg-white px-5 py-2 text-xs font-semibold uppercase tracking-wide text-[#0b2b3a] transition hover:bg-[#0b2b3a] hover:text-white"
+							data-catalog-tab="packages"
+							aria-selected="false"
+						>
+							{packagesTabLabel}
+						</button>
+					</div>
+
+					<div
+						class="hidden grid gap-8 md:grid-cols-2 lg:grid-cols-4"
+						data-catalog-panel="packages"
+						data-initial-count={String(packageInitialCount)}
+						data-step-count="4"
+					>
+						{packageItemsFlat.map((item, index) =>
 							item.type === "quote" ? (
 								<div
 									class={`flex min-h-[400px] items-center justify-center bg-[#0b2b3a] px-6 py-10 text-center text-white ${
-										index >= initialVisibleCount ? "hidden" : ""
+										index >= packageInitialCount ? "hidden" : ""
 									}`}
-									data-extra={index >= initialVisibleCount ? "true" : "false"}
+									data-catalog-extra={index >= packageInitialCount ? "true" : "false"}
+									data-catalog-index={String(index)}
 								>
 									<div>
 										<p class="text-base md:text-lg lg:text-xl font-semibold italic leading-snug">
@@ -460,8 +552,11 @@ const highlightText = (text: string, words: string[] = []) => {
 								</div>
 							) : (
 								<article
-									class={`flex flex-col ${index >= initialVisibleCount ? "hidden" : ""}`}
-									data-extra={index >= initialVisibleCount ? "true" : "false"}
+									class={`flex flex-col ${
+										index >= packageInitialCount ? "hidden" : ""
+									}`}
+									data-catalog-extra={index >= packageInitialCount ? "true" : "false"}
+									data-catalog-index={String(index)}
 								>
 									<div class="relative aspect-[4/3] overflow-hidden bg-gray-100 group">
 										<img
@@ -501,39 +596,95 @@ const highlightText = (text: string, words: string[] = []) => {
 							)
 						)}
 					</div>
-					<div class="mt-12 flex flex-col items-center gap-3">
+
+					<div
+						class="grid gap-2"
+						data-catalog-panel="smallTrips"
+						data-initial-count={String(smallInitialCount)}
+						data-step-count={String(smallStepCount)}
+					>
+						{smallTripRows.map((row, rowIndex) => (
+							<div
+								class={`grid grid-cols-1 gap-2 ${
+									rowIndex % 2 === 0
+										? "md:grid-cols-[48%_26%_26%]"
+										: "md:grid-cols-[26%_26%_48%]"
+								}`}
+								data-catalog-row
+							>
+								{row.map((item, colIndex) => {
+									const index = rowIndex * 3 + colIndex;
+									return (
+										<article
+											class={`group relative h-[380px] overflow-hidden md:h-[520px] ${
+												index >= smallInitialCount ? "hidden" : ""
+											}`}
+											data-catalog-extra={index >= smallInitialCount ? "true" : "false"}
+											data-catalog-index={String(index)}
+											data-catalog-card
+										>
+											<img
+												src={item.image}
+												alt={item.title}
+												class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+											/>
+											<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10"></div>
+											<div class="relative z-10 flex h-full flex-col justify-end p-4 text-white">
+												<h3 class="text-xl md:text-2xl font-semibold leading-tight">{item.title}</h3>
+												<p class="mt-1 text-sm text-white/90 leading-snug">
+													{item.description}
+												</p>
+												{item.route || item.locations || item.itinerary ? (
+													<p class="mt-3 border-t border-white/40 pt-2 text-sm text-white/90 leading-snug">
+														{item.route ?? item.locations ?? item.itinerary}
+													</p>
+												) : null}
+												<p class="mt-2 text-lg font-semibold text-[#ff7b2f]">
+													{item.meta}
+												</p>
+												{item.tourSlug ? (
+													<a
+														href={`/${lang}/tours/${item.tourSlug}`}
+														class="mt-3 inline-flex w-fit items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff8e46]"
+													>
+														{item.buttonLabel ?? tabReadMoreLabel}
+													</a>
+												) : (
+													<button
+														type="button"
+														class="mt-3 inline-flex w-fit items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff8e46]"
+													>
+														{item.buttonLabel ?? tabReadMoreLabel}
+													</button>
+												)}
+											</div>
+										</article>
+									);
+								})}
+							</div>
+						))}
+					</div>
+
+					<div class="mt-12 flex justify-center">
 						<button
 							type="button"
 							class="inline-flex items-center justify-center border border-gray-900 px-6 py-2 text-xs md:text-sm uppercase tracking-wide text-gray-900 transition hover:bg-gray-900 hover:text-white"
-							data-show-more
-							data-label-more={seeMoreLabel}
-							data-label-less={seeLessLabel}
+							data-catalog-more
+							data-more-label={catalogMoreLabel}
+							data-less-label={catalogLessLabel}
 							aria-expanded="false"
-							aria-controls="destinos-more"
 						>
-							{seeMoreLabel}
+							{catalogMoreLabel}
 						</button>
-						<svg class="h-4 w-6 text-gray-900" viewBox="0 0 24 12" fill="none" aria-hidden="true">
-							<path
-								d="m2 2 10 8 10-8"
-								stroke="currentColor"
-								stroke-width="1.5"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-							/>
-						</svg>
 					</div>
 				</div>
 			</section>
 
-			<section class="bg-[#f5f0e9]">
-				<div class="mx-auto w-full max-w-6xl px-6 py-10 md:py-12">
-					<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed flex items-center gap-2">
-						<span class="inline-block h-2 w-2 rounded-sm bg-orange-500"></span>
-						<span>{secondaryRibbon}</span>
-					</p>
-				</div>
-			</section>
+			<Ribbon
+				text={secondaryRibbon}
+				backgroundClass="bg-[#f5f0e9]"
+				maxWidthClass="max-w-6xl"
+			/>
 
 			<DestinationsGallery t={t} />
 
@@ -585,25 +736,133 @@ const highlightText = (text: string, words: string[] = []) => {
 			})();
 
 			(() => {
-				const toggle = document.querySelector("[data-show-more]");
-				const extras = Array.from(document.querySelectorAll('[data-extra="true"]'));
-				if (!toggle || !extras.length) return;
+				const tabButtons = Array.from(
+					document.querySelectorAll("[data-catalog-tab]")
+				);
+				const panels = Array.from(
+					document.querySelectorAll("[data-catalog-panel]")
+				);
+				const toggle = document.querySelector("[data-catalog-more]");
+				if (!tabButtons.length || !panels.length || !toggle) return;
 
-				let expanded = false;
-				const update = () => {
-					extras.forEach((item) => item.classList.toggle("hidden", !expanded));
-					const moreLabel = toggle.dataset.labelMore || "See More";
-					const lessLabel = toggle.dataset.labelLess || "See Less";
-					toggle.textContent = expanded ? lessLabel : moreLabel;
-					toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
-				};
-
-				toggle.addEventListener("click", () => {
-					expanded = !expanded;
-					update();
+				let activeTab = "smallTrips";
+				const stateByTab = {};
+				panels.forEach((panel) => {
+					const tab = panel.dataset.catalogPanel;
+					if (!tab) return;
+					const initial = Number(panel.dataset.initialCount || "0");
+					const step = Number(panel.dataset.stepCount || "1");
+					stateByTab[tab] = {
+						initial: initial > 0 ? initial : 1,
+						step: step > 0 ? step : 1,
+						visible: initial > 0 ? initial : 1
+					};
 				});
 
-				update();
+				const applyTabStyles = () => {
+					tabButtons.forEach((button) => {
+						const tab = button.dataset.catalogTab;
+						const isActive = tab === activeTab;
+						button.setAttribute("aria-selected", isActive ? "true" : "false");
+						button.classList.toggle("bg-[#0b2b3a]", isActive);
+						button.classList.toggle("text-white", isActive);
+						button.classList.toggle("bg-white", !isActive);
+						button.classList.toggle("text-[#0b2b3a]", !isActive);
+					});
+				};
+
+				const getActivePanel = () =>
+					panels.find((panel) => panel.dataset.catalogPanel === activeTab);
+
+				const updatePanels = () => {
+					panels.forEach((panel) => {
+						const panelTab = panel.dataset.catalogPanel;
+						if (!panelTab) return;
+						const isPanelActive = panelTab === activeTab;
+						panel.classList.toggle("hidden", !isPanelActive);
+
+						const cards = Array.from(
+							panel.querySelectorAll("[data-catalog-index]")
+						);
+						const state = stateByTab[panelTab];
+						const visibleLimit = Math.min(state.visible, cards.length);
+						cards.forEach((card) => {
+							const index = Number(card.dataset.catalogIndex || "0");
+							const isVisible = index < visibleLimit;
+							card.classList.toggle("hidden", !isPanelActive || !isVisible);
+						});
+
+						const rows = Array.from(
+							panel.querySelectorAll("[data-catalog-row]")
+						);
+						rows.forEach((row) => {
+							const cards = Array.from(
+								row.querySelectorAll("[data-catalog-card]")
+							);
+							const hasVisibleCards = cards.some(
+								(card) => !card.classList.contains("hidden")
+							);
+							row.classList.toggle(
+								"hidden",
+								!isPanelActive || !hasVisibleCards
+							);
+						});
+					});
+				};
+
+				const updateToggle = () => {
+					const activePanel = getActivePanel();
+					if (!activePanel) {
+						toggle.classList.add("hidden");
+						return;
+					}
+					const panelTab = activePanel.dataset.catalogPanel;
+					if (!panelTab) return;
+					const state = stateByTab[panelTab];
+					const totalCards = activePanel.querySelectorAll("[data-catalog-index]").length;
+					const canExpand = totalCards > state.initial;
+					toggle.classList.toggle("hidden", !canExpand);
+					if (!canExpand) return;
+					const moreLabel = toggle.dataset.moreLabel || "View more destination tours";
+					const lessLabel = toggle.dataset.lessLabel || "View fewer destination tours";
+					const isFullyExpanded = state.visible >= totalCards;
+					toggle.textContent = isFullyExpanded ? lessLabel : moreLabel;
+					toggle.setAttribute(
+						"aria-expanded",
+						state.visible > state.initial ? "true" : "false"
+					);
+				};
+
+				tabButtons.forEach((button) => {
+					button.addEventListener("click", () => {
+						const nextTab = button.dataset.catalogTab;
+						if (!nextTab || nextTab === activeTab) return;
+						activeTab = nextTab;
+						applyTabStyles();
+						updatePanels();
+						updateToggle();
+					});
+				});
+
+				toggle.addEventListener("click", () => {
+					const activePanel = getActivePanel();
+					if (!activePanel) return;
+					const panelTab = activePanel.dataset.catalogPanel;
+					if (!panelTab) return;
+					const state = stateByTab[panelTab];
+					const totalCards = activePanel.querySelectorAll("[data-catalog-index]").length;
+					if (state.visible < totalCards) {
+						state.visible = Math.min(totalCards, state.visible + state.step);
+					} else {
+						state.visible = state.initial;
+					}
+					updatePanels();
+					updateToggle();
+				});
+
+				applyTabStyles();
+				updatePanels();
+				updateToggle();
 			})();
 		</script>
 	</body>
