@@ -1,0 +1,869 @@
+---
+import { getTranslation } from "../../../i18n";
+import "../../../styles/global.css";
+import DestinationsGallery from "../../../components/LandingPage/DestinationsGallery.astro";
+import Ribbon from "../../../components/shared/Ribbon.astro";
+import destinosDetailEs from "../../../data/destinos.detail.es.json";
+import destinosDetailEn from "../../../data/destinos.detail.en.json";
+
+type SupportedLang = "es" | "en";
+
+const STRAPI_BASE_URLS = Array.from(
+  new Set([
+    import.meta.env.PUBLIC_STRAPI_URL,
+    import.meta.env.STRAPI_INTERNAL_URL,
+    "http://backend:1337",
+    "http://localhost:1337"
+  ].filter(Boolean))
+);
+const STRAPI_DETAIL_ENDPOINT = "/api/destino-detalles";
+
+const getLocales = (lang: SupportedLang) =>
+  lang === "en"
+    ? (["en", "en-US", null] as const)
+    : (["es-PE", "es", null] as const);
+
+function localePrefix(locale: string | null) {
+  return locale ? `locale=${encodeURIComponent(locale)}&` : "";
+}
+
+function normalizeRow(row: any) {
+  return row?.attributes ?? row ?? null;
+}
+
+async function fetchStrapiDetailBySlug(
+  slugValue: string,
+  locales: readonly (string | null)[]
+) {
+  for (const baseUrl of STRAPI_BASE_URLS) {
+    for (const locale of locales) {
+      const localePart = localePrefix(locale);
+      const url =
+        `${baseUrl}${STRAPI_DETAIL_ENDPOINT}?${localePart}` +
+        `filters[slug][$eq]=${encodeURIComponent(slugValue)}&pagination[pageSize]=1`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) continue;
+
+        const json = await res.json();
+        const rows = Array.isArray(json?.data) ? json.data : [];
+        const first = rows[0];
+        const attrs = normalizeRow(first);
+        if (attrs) return attrs;
+      } catch {
+        // Try next locale / URL.
+      }
+    }
+  }
+
+  return null;
+}
+
+export async function getStaticPaths() {
+  const strapiBaseUrls = Array.from(
+    new Set([
+      import.meta.env.PUBLIC_STRAPI_URL,
+      import.meta.env.STRAPI_INTERNAL_URL,
+      "http://backend:1337",
+      "http://localhost:1337"
+    ].filter(Boolean))
+  );
+
+  const allPaths: Array<{ params: { lang: SupportedLang; slug: string } }> = [];
+  const langs: SupportedLang[] = ["es", "en"];
+
+  for (const lang of langs) {
+    const fallbackData = lang === "en" ? destinosDetailEn : destinosDetailEs;
+    const fallbackSlugs = fallbackData.destinations.map((destination) =>
+      String(destination.slug).toLowerCase()
+    );
+    const strapiSlugs = new Set<string>();
+
+    for (const baseUrl of strapiBaseUrls) {
+      for (const locale of getLocales(lang)) {
+        const localePart = locale ? `locale=${encodeURIComponent(locale)}&` : "";
+        const url = `${baseUrl}${STRAPI_DETAIL_ENDPOINT}?${localePart}fields[0]=slug&pagination[pageSize]=200`;
+
+        try {
+          const res = await fetch(url);
+          if (!res.ok) continue;
+
+          const json = await res.json();
+          const rows = Array.isArray(json?.data) ? json.data : [];
+          rows.forEach((row: any) => {
+            const attrs = row?.attributes ?? row;
+            const value = String(attrs?.slug ?? "").toLowerCase();
+            if (value) strapiSlugs.add(value);
+          });
+
+          if (strapiSlugs.size > 0) break;
+        } catch {
+          // Try next locale / URL.
+        }
+      }
+
+      if (strapiSlugs.size > 0) break;
+    }
+
+    const merged = Array.from(
+      new Set([...fallbackSlugs, ...Array.from(strapiSlugs)])
+    );
+    merged.forEach((value) => {
+      allPaths.push({ params: { lang, slug: value } });
+    });
+  }
+
+  return allPaths;
+}
+
+const rawLang = (Astro.params.lang ?? "es").toLowerCase();
+const lang: SupportedLang = rawLang === "en" ? "en" : "es";
+const slugKey = String(Astro.params.slug ?? "").toLowerCase();
+
+if (rawLang !== lang) {
+  return Astro.redirect(`/${lang}/destinos/${slugKey}`);
+}
+
+const t = getTranslation(lang);
+const fallbackData = lang === "en" ? destinosDetailEn : destinosDetailEs;
+const fallbackDestination =
+  fallbackData.destinations.find(
+    (item) => String(item.slug).toLowerCase() === slugKey
+  ) ?? fallbackData.destinations[0];
+
+if (!fallbackDestination) {
+  return Astro.redirect(`/${lang}/destinos`);
+}
+
+const {
+  meta,
+  hero,
+  intro,
+  ribbons,
+  packages,
+  packageTours,
+  smallTrips,
+  catalogTabs,
+  seeMore,
+  catalogViewMoreLabel,
+  catalogViewLessLabel,
+  packageInitialVisibleCount,
+  smallTripsInitialRows,
+  smallTripsRowsPerLoad,
+  blogCta,
+  initialVisibleCount = 8,
+  catalogInitialVisibleCount
+} = fallbackDestination;
+
+const strapiDetail = await fetchStrapiDetailBySlug(slugKey, getLocales(lang));
+
+const pageTitle =
+  strapiDetail?.title ?? meta?.title ?? (lang === "en" ? "Destination" : "Destino");
+const pageDescription =
+  strapiDetail?.description ??
+  meta?.description ??
+  (lang === "en"
+    ? "Destination page placeholder."
+    : "Vista de destino en construccion.");
+const canonical = `${Astro.url.origin}/${lang}/destinos/${slugKey || ""}`;
+const slides =
+  Array.isArray(strapiDetail?.heroSlides) && strapiDetail.heroSlides.length > 0
+    ? strapiDetail.heroSlides
+    : hero?.slides ?? [];
+const introTitle =
+  strapiDetail?.introTitle ??
+  intro?.title ??
+  (lang === "en" ? "Explore the destination" : "Explora el destino");
+const introParagraphs =
+  Array.isArray(strapiDetail?.introParagraphs) &&
+  strapiDetail.introParagraphs.length > 0
+    ? strapiDetail.introParagraphs
+    : intro?.paragraphs ?? [];
+const introHighlights =
+  Array.isArray(strapiDetail?.introHighlights) &&
+  strapiDetail.introHighlights.length > 0
+    ? strapiDetail.introHighlights
+    : intro?.highlights ?? [];
+const iconLabels =
+  (Array.isArray(strapiDetail?.iconLabels) && strapiDetail.iconLabels.length > 0
+    ? strapiDetail.iconLabels
+    : intro?.iconLabels) ??
+  (lang === "en"
+    ? [
+        "Local cuisine",
+        "5-star reviews",
+        "Responsible travel",
+        "Boutique stays",
+        "Verified reviews",
+        "Expert local guides"
+      ]
+    : [
+        "Gastronomia local",
+        "5 estrellas",
+        "Viajes responsables",
+        "Alojamientos boutique",
+        "Resenas verificadas",
+        "Guias locales expertos"
+      ]);
+const primaryRibbon =
+  strapiDetail?.primaryRibbon ??
+  ribbons?.primary ??
+  (lang === "en"
+    ? `Best-selling tours in ${pageTitle}`
+    : `Mejores ventas en tours de ${pageTitle}`);
+const secondaryRibbon =
+  strapiDetail?.secondaryRibbon ??
+  ribbons?.secondary ??
+  (lang === "en" ? `Destination of ${pageTitle}` : `Destino de ${pageTitle}`);
+const blogTitle =
+  strapiDetail?.blogTitle ??
+  blogCta?.title ??
+  (lang === "en"
+    ? "Why travel with Incas Paradise"
+    : "Por que viajar con Incas Paradise");
+const blogButton =
+  strapiDetail?.blogButton ??
+  blogCta?.button ??
+  (lang === "en"
+    ? "10 reasons to travel with Incas Paradise"
+    : "10 razones para viajar con Incas Paradise");
+const prevLabel = lang === "en" ? "Previous" : "Anterior";
+const nextLabel = lang === "en" ? "Next" : "Siguiente";
+const itineraryLabel = lang === "en" ? "See itinerary" : "Ver itinerario";
+const tabReadMoreLabel = lang === "en" ? "See more" : "Ver mas";
+
+const normalizeCatalogItems = (value: any) =>
+  Array.isArray(value)
+    ? value.filter(
+        (item) => item && typeof item === "object" && item.type !== "quote"
+      )
+    : [];
+
+const smallTripItems = normalizeCatalogItems(
+  strapiDetail?.smallTrips ?? smallTrips ?? []
+);
+const packageItemsFlat = Array.isArray(
+  strapiDetail?.packageTours ?? packageTours ?? packages ?? []
+)
+  ? (strapiDetail?.packageTours ?? packageTours ?? packages ?? [])
+  : [];
+const smallTripRows: Array<any[]> = [];
+for (let i = 0; i < smallTripItems.length; i += 3) {
+  smallTripRows.push(smallTripItems.slice(i, i + 3));
+}
+
+const tabLabels = strapiDetail?.catalogTabs ?? catalogTabs ?? {};
+const packagesTabLabel =
+  tabLabels?.packages ?? (lang === "en" ? "Packages" : "Paquetes");
+const smallTripsTabLabel = tabLabels?.smallTrips ?? "Small Trips";
+const catalogMoreLabel =
+  strapiDetail?.catalogViewMoreLabel ??
+  catalogViewMoreLabel ??
+  seeMore?.label ??
+  (lang === "en" ? "View more destination tours" : "Ver más tours de destino");
+const catalogLessLabel =
+  strapiDetail?.catalogViewLessLabel ??
+  catalogViewLessLabel ??
+  seeMore?.collapseLabel ??
+  (lang === "en"
+    ? "View fewer destination tours"
+    : "Ver menos tours de destino");
+
+const rawPackageInitialVisibleCount =
+  strapiDetail?.packageInitialVisibleCount ??
+  packageInitialVisibleCount ??
+  initialVisibleCount;
+const packageInitialCount = Number.isFinite(Number(rawPackageInitialVisibleCount))
+  ? Math.max(1, Number(rawPackageInitialVisibleCount))
+  : 8;
+
+const rawSmallInitialRows =
+  strapiDetail?.smallTripsInitialRows ??
+  smallTripsInitialRows ??
+  2;
+const smallInitialRows = Number.isFinite(Number(rawSmallInitialRows))
+  ? Math.max(1, Number(rawSmallInitialRows))
+  : 2;
+
+const rawSmallRowsPerLoad =
+  strapiDetail?.smallTripsRowsPerLoad ??
+  smallTripsRowsPerLoad ??
+  2;
+const smallRowsPerLoad = Number.isFinite(Number(rawSmallRowsPerLoad))
+  ? Math.max(1, Number(rawSmallRowsPerLoad))
+  : 2;
+
+const smallInitialCount =
+  Number.isFinite(Number(catalogInitialVisibleCount))
+    ? Math.max(1, Number(catalogInitialVisibleCount))
+    : smallInitialRows * 3;
+const smallStepCount = smallRowsPerLoad * 3;
+
+const highlightText = (text: string, words: string[] = []) => {
+  let result = text;
+  words.forEach((word) => {
+    const safe = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    result = result.replace(
+      new RegExp(`\\b${safe}\\b`, "g"),
+      `<span class="underline decoration-1 decoration-gray-500 underline-offset-2">${word}</span>`
+    );
+  });
+  return result;
+};
+---
+
+<html lang={lang}>
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
+		<title>{pageTitle}</title>
+		<meta name="description" content={pageDescription} />
+		<link rel="canonical" href={canonical} />
+	</head>
+	<body class="min-h-screen bg-white text-gray-900">
+		<main>
+			<section class="relative w-full bg-black overflow-hidden h-screen min-h-screen">
+				<div id="destino-carousel" class="relative h-full w-full" data-carousel="slide">
+					<div class="relative h-full w-full overflow-hidden">
+						{slides.map((slide, index) => (
+							<div
+								class={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+									index === 0 ? "opacity-100" : "opacity-0"
+								}`}
+								data-carousel-item
+								data-index={index}
+							>
+								<img
+									src={slide.image}
+									alt={slide.title || pageTitle}
+									class="absolute inset-0 h-full w-full object-cover object-center scale-[1.02]"
+								/>
+								<div class="absolute inset-0 bg-black/40"></div>
+								<div class="absolute inset-0 z-10 flex h-full w-full items-center justify-center px-6 text-center">
+									<div class="mx-auto max-w-2xl text-white">
+										<div class="mb-5 flex justify-center">
+											<svg
+												width="54"
+												height="54"
+												viewBox="0 0 64 64"
+												fill="none"
+												aria-hidden="true"
+											>
+												<path
+													d="M32 6L37 20L52 14L44 28L58 32L44 36L52 50L37 44L32 58L27 44L12 50L20 36L6 32L20 28L12 14L27 20L32 6Z"
+													fill="white"
+													fill-opacity="0.95"
+												/>
+											</svg>
+										</div>
+										{slide.title ? (
+											<h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight mb-4 md:mb-6 lg:mb-8 italic drop-shadow-sm">
+												{slide.title}
+											</h1>
+										) : null}
+										{slide.description ? (
+											<p class="text-sm md:text-base lg:text-lg text-white/90 leading-relaxed mb-3 md:mb-4 lg:mb-6">
+												{slide.description}
+											</p>
+										) : null}
+									</div>
+								</div>
+							</div>
+						))}
+					</div>
+
+					<button
+						type="button"
+						class="absolute top-0 left-0 z-30 flex h-full items-center justify-center px-4 cursor-pointer group focus:outline-none"
+						aria-label={prevLabel}
+						data-carousel-prev
+					>
+						<span class="inline-flex items-center justify-center text-white/90 group-hover:text-white">
+							<svg class="w-5 h-5" viewBox="0 0 6 10" fill="none" aria-hidden="true">
+								<path
+									d="M5 1 1 5l4 4"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								/>
+							</svg>
+						</span>
+					</button>
+					<button
+						type="button"
+						class="absolute top-0 right-0 z-30 flex h-full items-center justify-center px-4 cursor-pointer group focus:outline-none"
+						aria-label={nextLabel}
+						data-carousel-next
+					>
+						<span class="inline-flex items-center justify-center text-white/90 group-hover:text-white">
+							<svg class="w-5 h-5" viewBox="0 0 6 10" fill="none" aria-hidden="true">
+								<path
+									d="m1 9 4-4-4-4"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+								/>
+							</svg>
+						</span>
+					</button>
+				</div>
+			</section>
+
+			<section class="bg-[#f5f0e9]">
+				<div class="mx-auto grid w-full max-w-6xl gap-14 px-6 py-16 md:grid-cols-[1.2fr_1fr] md:py-24 lg:py-28">
+					<div class="max-w-xl">
+						<h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic">
+							{introTitle}
+						</h2>
+						{introParagraphs[0] ? (
+							<p
+								class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed mb-3 md:mb-4 lg:mb-6"
+								set:html={highlightText(introParagraphs[0], introHighlights[0] ?? [])}
+							></p>
+						) : null}
+						{introParagraphs[1] ? (
+							<p
+								class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed mb-3 md:mb-4 lg:mb-6"
+								set:html={highlightText(introParagraphs[1], introHighlights[1] ?? [])}
+							></p>
+						) : null}
+					</div>
+					<div class="mx-auto w-full max-w-md">
+						<div class="grid grid-cols-3 gap-x-8 gap-y-10 text-center">
+							<div class="flex flex-col items-center gap-2">
+								<div class="h-12 w-12 text-slate-900">
+									<svg viewBox="0 0 64 64" fill="none" class="h-full w-full">
+										<path d="M14 42c8-10 28-10 36 0" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+										<path d="M20 42c0 8 6 14 12 14s12-6 12-14" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+										<path d="M24 28h16" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+									</svg>
+								</div>
+								<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed">{iconLabels[0]}</p>
+							</div>
+							<div class="flex flex-col items-center gap-2">
+								<div class="h-12 w-12 text-slate-900">
+									<svg viewBox="0 0 64 64" fill="none" class="h-full w-full">
+										<path d="M10 28h44" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+										<path d="M12 38h40" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+										<path d="M18 18l4 6h-8l4-6z" stroke="currentColor" stroke-width="3" stroke-linejoin="round" />
+									</svg>
+								</div>
+								<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed">{iconLabels[1]}</p>
+							</div>
+							<div class="flex flex-col items-center gap-2">
+								<div class="h-12 w-12 text-slate-900">
+									<svg viewBox="0 0 64 64" fill="none" class="h-full w-full">
+										<path d="M20 48c8-3 16-10 24-22" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+										<path d="M18 22l10 8-12 4" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+									</svg>
+								</div>
+								<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed">{iconLabels[2]}</p>
+							</div>
+							<div class="flex flex-col items-center gap-2">
+								<div class="h-12 w-12 text-slate-900">
+									<svg viewBox="0 0 64 64" fill="none" class="h-full w-full">
+										<path d="M12 44h40" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+										<path d="M20 44V24h24v20" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+										<path d="M16 24l16-10 16 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+									</svg>
+								</div>
+								<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed">{iconLabels[3]}</p>
+							</div>
+							<div class="flex flex-col items-center gap-2">
+								<div class="h-12 w-12 text-slate-900">
+									<svg viewBox="0 0 64 64" fill="none" class="h-full w-full">
+										<path d="M16 32h32" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+										<path d="M20 40h24" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+										<path d="M20 24h24" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+									</svg>
+								</div>
+								<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed">{iconLabels[4]}</p>
+							</div>
+							<div class="flex flex-col items-center gap-2">
+								<div class="h-12 w-12 text-slate-900">
+									<svg viewBox="0 0 64 64" fill="none" class="h-full w-full">
+										<path d="M12 40c12-10 32-10 44 0" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+										<path d="M22 28c6 6 14 6 20 0" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+										<path d="M20 22l12-10 12 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+									</svg>
+								</div>
+								<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed">{iconLabels[5]}</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<Ribbon text={primaryRibbon} maxWidthClass="max-w-6xl" />
+
+			<section class="bg-white">
+				<div class="mx-auto w-full max-w-7xl px-6 pb-14 md:pb-18 lg:pb-20">
+					<div class="mb-8 flex flex-wrap items-center gap-3 border-b border-gray-200 pb-4">
+						<button
+							type="button"
+							class="inline-flex items-center justify-center border border-[#0b2b3a] bg-[#0b2b3a] px-5 py-2 text-xs font-semibold uppercase tracking-wide text-white transition"
+							data-catalog-tab="smallTrips"
+							aria-selected="true"
+						>
+							{smallTripsTabLabel}
+						</button>
+						<button
+							type="button"
+							class="inline-flex items-center justify-center border border-[#0b2b3a] bg-white px-5 py-2 text-xs font-semibold uppercase tracking-wide text-[#0b2b3a] transition hover:bg-[#0b2b3a] hover:text-white"
+							data-catalog-tab="packages"
+							aria-selected="false"
+						>
+							{packagesTabLabel}
+						</button>
+					</div>
+
+					<div
+						class="hidden grid gap-8 md:grid-cols-2 lg:grid-cols-4"
+						data-catalog-panel="packages"
+						data-initial-count={String(packageInitialCount)}
+						data-step-count="4"
+					>
+						{packageItemsFlat.map((item, index) =>
+							item.type === "quote" ? (
+								<div
+									class={`flex min-h-[400px] items-center justify-center bg-[#0b2b3a] px-6 py-10 text-center text-white ${
+										index >= packageInitialCount ? "hidden" : ""
+									}`}
+									data-catalog-extra={index >= packageInitialCount ? "true" : "false"}
+									data-catalog-index={String(index)}
+								>
+									<div>
+										<p class="text-base md:text-lg lg:text-xl font-semibold italic leading-snug">
+											&quot;{item.quote}&quot;
+										</p>
+										<p class="mt-5 text-xs md:text-sm lg:text-base font-semibold">
+											{item.author}
+										</p>
+									</div>
+								</div>
+							) : (
+								<article
+									class={`flex flex-col ${
+										index >= packageInitialCount ? "hidden" : ""
+									}`}
+									data-catalog-extra={index >= packageInitialCount ? "true" : "false"}
+									data-catalog-index={String(index)}
+								>
+									<div class="relative aspect-[4/3] overflow-hidden bg-gray-100 group">
+										<img
+											src={item.image}
+											alt={item.title}
+											class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+										/>
+										<div class="absolute inset-0 bg-black/0 transition duration-300 group-hover:bg-black/40"></div>
+									</div>
+									<div class="mt-3 flex flex-col gap-0.5">
+										<h3 class="text-sm md:text-base lg:text-lg font-semibold text-gray-900 leading-snug">
+											{item.title}
+										</h3>
+										<p class="text-xs md:text-sm lg:text-base font-semibold text-gray-900 leading-relaxed">
+											{item.meta}
+										</p>
+										<p class="text-xs md:text-sm lg:text-base text-gray-700 leading-relaxed mt-1">
+											{item.description}
+										</p>
+										{item.tourSlug ? (
+											<a
+												href={`/${lang}/tours/${item.tourSlug}`}
+												class="mt-3 inline-flex w-fit items-center justify-center border border-gray-900 px-4 py-2 text-[11px] md:text-xs uppercase tracking-wide text-gray-900 transition hover:bg-gray-900 hover:text-white"
+											>
+												{itineraryLabel}
+											</a>
+										) : (
+											<button
+												type="button"
+												class="mt-3 inline-flex w-fit items-center justify-center border border-gray-900 px-4 py-2 text-[11px] md:text-xs uppercase tracking-wide text-gray-900 transition hover:bg-gray-900 hover:text-white"
+											>
+												{itineraryLabel}
+											</button>
+										)}
+									</div>
+								</article>
+							)
+						)}
+					</div>
+
+					<div
+						class="grid gap-2"
+						data-catalog-panel="smallTrips"
+						data-initial-count={String(smallInitialCount)}
+						data-step-count={String(smallStepCount)}
+					>
+						{smallTripRows.map((row, rowIndex) => (
+							<div
+								class={`grid grid-cols-1 gap-2 ${
+									rowIndex % 2 === 0
+										? "md:grid-cols-[48%_26%_26%]"
+										: "md:grid-cols-[26%_26%_48%]"
+								}`}
+								data-catalog-row
+							>
+								{row.map((item, colIndex) => {
+									const index = rowIndex * 3 + colIndex;
+									return (
+										<article
+											class={`group relative h-[380px] overflow-hidden md:h-[520px] ${
+												index >= smallInitialCount ? "hidden" : ""
+											}`}
+											data-catalog-extra={index >= smallInitialCount ? "true" : "false"}
+											data-catalog-index={String(index)}
+											data-catalog-card
+										>
+											<img
+												src={item.image}
+												alt={item.title}
+												class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+											/>
+											<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10"></div>
+											<div class="relative z-10 flex h-full flex-col justify-end p-4 text-white">
+												<h3 class="text-xl md:text-2xl font-semibold leading-tight">{item.title}</h3>
+												<p class="mt-1 text-sm text-white/90 leading-snug">
+													{item.description}
+												</p>
+												{item.route || item.locations || item.itinerary ? (
+													<p class="mt-3 border-t border-white/40 pt-2 text-sm text-white/90 leading-snug">
+														{item.route ?? item.locations ?? item.itinerary}
+													</p>
+												) : null}
+												<p class="mt-2 text-lg font-semibold text-[#ff7b2f]">
+													{item.meta}
+												</p>
+												{item.tourSlug ? (
+													<a
+														href={`/${lang}/tours/${item.tourSlug}`}
+														class="mt-3 inline-flex w-fit items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff8e46]"
+													>
+														{item.buttonLabel ?? tabReadMoreLabel}
+													</a>
+												) : (
+													<button
+														type="button"
+														class="mt-3 inline-flex w-fit items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff8e46]"
+													>
+														{item.buttonLabel ?? tabReadMoreLabel}
+													</button>
+												)}
+											</div>
+										</article>
+									);
+								})}
+							</div>
+						))}
+					</div>
+
+					<div class="mt-12 flex justify-center">
+						<button
+							type="button"
+							class="inline-flex items-center justify-center border border-gray-900 px-6 py-2 text-xs md:text-sm uppercase tracking-wide text-gray-900 transition hover:bg-gray-900 hover:text-white"
+							data-catalog-more
+							data-more-label={catalogMoreLabel}
+							data-less-label={catalogLessLabel}
+							aria-expanded="false"
+						>
+							{catalogMoreLabel}
+						</button>
+					</div>
+				</div>
+			</section>
+
+			<Ribbon
+				text={secondaryRibbon}
+				backgroundClass="bg-[#f5f0e9]"
+				maxWidthClass="max-w-6xl"
+			/>
+
+			<DestinationsGallery t={t} />
+
+			<section class="bg-white">
+				<div class="mx-auto w-full max-w-6xl px-6 py-12 md:py-14 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+					<h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-gray-800 leading-snug italic">
+						{blogTitle}
+					</h2>
+					<button
+						type="button"
+						class="inline-flex items-center justify-center border border-gray-900 px-5 py-2 text-xs md:text-sm uppercase tracking-wide text-gray-900 transition hover:bg-gray-900 hover:text-white"
+					>
+						{blogButton}
+					</button>
+				</div>
+			</section>
+		</main>
+		<script is:inline>
+			(() => {
+				const slides = Array.from(document.querySelectorAll("[data-carousel-item]"));
+				const prev = document.querySelector("[data-carousel-prev]");
+				const next = document.querySelector("[data-carousel-next]");
+				if (!slides.length) return;
+
+				let index = 0;
+				const show = (i) => {
+					index = (i + slides.length) % slides.length;
+					slides.forEach((slide, idx) => {
+						slide.classList.toggle("opacity-100", idx === index);
+						slide.classList.toggle("opacity-0", idx !== index);
+						slide.classList.toggle("pointer-events-none", idx !== index);
+					});
+				};
+
+				let timer = setInterval(() => show(index + 1), 3000);
+				const resetTimer = () => {
+					clearInterval(timer);
+					timer = setInterval(() => show(index + 1), 3000);
+				};
+
+				prev?.addEventListener("click", () => {
+					show(index - 1);
+					resetTimer();
+				});
+				next?.addEventListener("click", () => {
+					show(index + 1);
+					resetTimer();
+				});
+			})();
+
+			(() => {
+				const tabButtons = Array.from(
+					document.querySelectorAll("[data-catalog-tab]")
+				);
+				const panels = Array.from(
+					document.querySelectorAll("[data-catalog-panel]")
+				);
+				const toggle = document.querySelector("[data-catalog-more]");
+				if (!tabButtons.length || !panels.length || !toggle) return;
+
+				let activeTab = "smallTrips";
+				const stateByTab = {};
+				panels.forEach((panel) => {
+					const tab = panel.dataset.catalogPanel;
+					if (!tab) return;
+					const initial = Number(panel.dataset.initialCount || "0");
+					const step = Number(panel.dataset.stepCount || "1");
+					stateByTab[tab] = {
+						initial: initial > 0 ? initial : 1,
+						step: step > 0 ? step : 1,
+						visible: initial > 0 ? initial : 1
+					};
+				});
+
+				const applyTabStyles = () => {
+					tabButtons.forEach((button) => {
+						const tab = button.dataset.catalogTab;
+						const isActive = tab === activeTab;
+						button.setAttribute("aria-selected", isActive ? "true" : "false");
+						button.classList.toggle("bg-[#0b2b3a]", isActive);
+						button.classList.toggle("text-white", isActive);
+						button.classList.toggle("bg-white", !isActive);
+						button.classList.toggle("text-[#0b2b3a]", !isActive);
+					});
+				};
+
+				const getActivePanel = () =>
+					panels.find((panel) => panel.dataset.catalogPanel === activeTab);
+
+				const updatePanels = () => {
+					panels.forEach((panel) => {
+						const panelTab = panel.dataset.catalogPanel;
+						if (!panelTab) return;
+						const isPanelActive = panelTab === activeTab;
+						panel.classList.toggle("hidden", !isPanelActive);
+
+						const cards = Array.from(
+							panel.querySelectorAll("[data-catalog-index]")
+						);
+						const state = stateByTab[panelTab];
+						const visibleLimit = Math.min(state.visible, cards.length);
+						cards.forEach((card) => {
+							const index = Number(card.dataset.catalogIndex || "0");
+							const isVisible = index < visibleLimit;
+							card.classList.toggle("hidden", !isPanelActive || !isVisible);
+						});
+
+						const rows = Array.from(
+							panel.querySelectorAll("[data-catalog-row]")
+						);
+						rows.forEach((row) => {
+							const cards = Array.from(
+								row.querySelectorAll("[data-catalog-card]")
+							);
+							const hasVisibleCards = cards.some(
+								(card) => !card.classList.contains("hidden")
+							);
+							row.classList.toggle(
+								"hidden",
+								!isPanelActive || !hasVisibleCards
+							);
+						});
+					});
+				};
+
+				const updateToggle = () => {
+					const activePanel = getActivePanel();
+					if (!activePanel) {
+						toggle.classList.add("hidden");
+						return;
+					}
+					const panelTab = activePanel.dataset.catalogPanel;
+					if (!panelTab) return;
+					const state = stateByTab[panelTab];
+					const totalCards = activePanel.querySelectorAll("[data-catalog-index]").length;
+					const canExpand = totalCards > state.initial;
+					toggle.classList.toggle("hidden", !canExpand);
+					if (!canExpand) return;
+					const moreLabel = toggle.dataset.moreLabel || "View more destination tours";
+					const lessLabel = toggle.dataset.lessLabel || "View fewer destination tours";
+					const isFullyExpanded = state.visible >= totalCards;
+					toggle.textContent = isFullyExpanded ? lessLabel : moreLabel;
+					toggle.setAttribute(
+						"aria-expanded",
+						state.visible > state.initial ? "true" : "false"
+					);
+				};
+
+				tabButtons.forEach((button) => {
+					button.addEventListener("click", () => {
+						const nextTab = button.dataset.catalogTab;
+						if (!nextTab || nextTab === activeTab) return;
+						activeTab = nextTab;
+						applyTabStyles();
+						updatePanels();
+						updateToggle();
+					});
+				});
+
+				toggle.addEventListener("click", () => {
+					const activePanel = getActivePanel();
+					if (!activePanel) return;
+					const panelTab = activePanel.dataset.catalogPanel;
+					if (!panelTab) return;
+					const state = stateByTab[panelTab];
+					const totalCards = activePanel.querySelectorAll("[data-catalog-index]").length;
+					if (state.visible < totalCards) {
+						state.visible = Math.min(totalCards, state.visible + state.step);
+					} else {
+						state.visible = state.initial;
+					}
+					updatePanels();
+					updateToggle();
+				});
+
+				applyTabStyles();
+				updatePanels();
+				updateToggle();
+			})();
+		</script>
+	</body>
+</html>

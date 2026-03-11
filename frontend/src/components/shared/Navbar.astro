@@ -1,0 +1,646 @@
+---
+import LanguageSwitcher from './LanguageSwitcher.astro';
+
+interface Props {
+  t: any;
+  currentLang: string;
+}
+
+const { t, currentLang } = Astro.props;
+
+const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
+const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+
+function toSlug(name: string): string {
+  return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
+}
+
+let navStyleTrips: any[] = [];
+let navDestinations: any[] = [];
+try {
+  const styleUrl = `${STRAPI_URL}/api/style-trips?populate[0]=image&locale=${strapiLocale}&status=published`;
+  const destUrl = `${STRAPI_URL}/api/destino-detalles?populate[0]=*&locale=${strapiLocale}&status=published`;
+  const toursUrl = `${STRAPI_URL}/api/tour-detalles?populate[0]=destinos&locale=${strapiLocale}&status=published`;
+  
+  console.log('[Navbar] Fetching:', { styleUrl, destUrl, toursUrl });
+  
+  const [styleRes, destRes, toursRes] = await Promise.all([
+    fetch(styleUrl),
+    fetch(destUrl),
+    fetch(toursUrl)
+  ]);
+  
+  console.log('[Navbar] Style Response:', styleRes.status);
+  console.log('[Navbar] Dest Response:', destRes.status);
+  console.log('[Navbar] Tours Response:', toursRes.status);
+  
+  if (styleRes.ok) {
+    const json = await styleRes.json();
+    navStyleTrips = json.data ?? [];
+    console.log('[Navbar] Style Trips Count:', navStyleTrips.length);
+  }
+  
+  if (destRes.ok) {
+    const json = await destRes.json();
+    navDestinations = json.data ?? [];
+    console.log('[Navbar] Destinations Count:', navDestinations.length);
+  }
+  
+  let navTours: any[] = [];
+  if (toursRes.ok) {
+    const json = await toursRes.json();
+    navTours = json.data ?? [];
+    console.log('[Navbar] Tours Count:', navTours.length);
+  }
+  
+  // Agregar tours relacionados a cada destino
+  navDestinations = navDestinations.map((dest: any) => ({
+    ...dest,
+    relatedTours: navTours.filter((tour: any) => 
+      tour.destinos && tour.destinos.some((d: any) => d.id === dest.id)
+    )
+  }));
+} catch (e) {}
+---
+
+<style>
+  /* Force black text in all dropdowns by default */
+  #megamenu-dropdown,
+  #styles-dropdown,
+  #sustainability-dropdown {
+    color: #000 !important;
+  }
+
+  /* Avoid overriding white text elements */
+  #megamenu-dropdown *:not(#megamenu-dest-name):not(.style-item-grid h3),
+  #styles-dropdown *:not(.style-item-grid h3),
+  #sustainability-dropdown * {
+    color: inherit !important;
+  }
+
+  /* Ensure specific elements remain dark/readable */
+  #megamenu-dropdown a,
+  #styles-dropdown a,
+  #sustainability-dropdown a {
+    color: #1f2937 !important;
+  }
+
+  #megamenu-dropdown h3,
+  #sustainability-dropdown h3 {
+    color: #111827 !important;
+  }
+
+  /* White text for style items inside images */
+  #styles-dropdown .style-item-grid h3 {
+    color: #ffffff !important;
+  }
+
+  #megamenu-dropdown p,
+  #styles-dropdown p:not(#styles-menu-footer),
+  #sustainability-dropdown p {
+    color: #374151 !important;
+  }
+
+  /* White text for destination name in megamenu - HIGHEST PRIORITY */
+  #megamenu-dropdown #megamenu-dest-name,
+  p#megamenu-dest-name {
+    color: #ffffff !important;
+    font-weight: bold !important;
+  }
+
+  /* White text for styles menu footer - OVERRIDE ALL */
+  #styles-menu-footer {
+    color: #ffffff !important;
+  }
+</style>
+
+<!-- Navbar -->
+<nav id="navbar" class="fixed top-0 w-full bg-transparent transition-all duration-300 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-24">
+      <!-- Logo -->
+      <div class="flex-shrink-0">
+        <a href={`/${currentLang}/`}>
+          <img src="/landing page images/incasparadiselogo.png" alt="Inca's Paradise Logo" class="h-20 w-auto" />
+        </a>
+      </div>
+
+      <!-- Desktop Menu -->
+      <div class="hidden md:flex items-center space-x-8 h-24">
+        <!-- Destinations with Megamenu -->
+        <div class="relative h-full flex items-center" id="megamenu-container">
+          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.destinations}</a>
+          
+          <!-- Megamenu -->
+          <div id="megamenu-dropdown" class="fixed left-0 right-0 top-24 pt-0 hidden z-50 w-full">
+            <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
+              <!-- Megamenu Container -->
+              <div class="flex h-full">
+                <!-- Column 1: Destinations List with Vertical Slider -->
+                <div class="w-1/3 bg-gray-50 border-r border-gray-200 flex flex-col relative">
+                  <!-- Scroll Up Button -->
+                  <button id="scroll-up" class="bg-white/90 hover:bg-white p-2 border-b border-gray-200 transition">
+                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                    </svg>
+                  </button>
+                  
+                  <!-- Destinations scroll container -->
+                  <div id="destinations-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
+                    {navDestinations.map((dest: any) => (
+                      <button
+                        class="destination-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 whitespace-normal"
+                        data-dest={dest.slug}
+                        data-name={dest.title}
+                        data-image={(() => {
+                          const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
+                          if (slides.length > 0 && slides[0]?.image?.url) {
+                            return `${STRAPI_PUBLIC_URL}${slides[0].image.url}`;
+                          }
+                          return '';
+                        })()}
+                      >
+                        {dest.title}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <!-- Scroll Down Button -->
+                  <button id="scroll-down" class="bg-white/90 hover:bg-white p-2 border-t border-gray-200 transition">
+                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Column 2: Tours -->
+                <div class="w-1/3 bg-white p-6 border-r border-gray-200 overflow-y-auto">
+                  <div id="megamenu-tours" class="space-y-3">
+                    <!-- Tours will be inserted here via JavaScript -->
+                  </div>
+                </div>
+
+                <!-- Column 3: Image and Destination Name -->
+                <div class="w-1/3 bg-gray-100 overflow-hidden relative">
+                  <img
+                    id="megamenu-image"
+                    src="https://images.unsplash.com/photo-1587595431973-160550652147?w=400&h=400&fit=crop"
+                    alt="Destination"
+                    class="w-full h-full object-cover"
+                  />
+                  <div class="absolute inset-0 bg-black/30"></div>
+                  <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                    <p id="megamenu-dest-name" class="text-white font-bold text-lg">CHACHAPOYAS</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trip Styles with Megamenu -->
+        <div class="relative h-full flex items-center" id="styles-container">
+          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.tripStyles}</a>
+          
+          <!-- Styles Megamenu - Sidebar + Grid Layout -->
+          <div id="styles-dropdown" class="fixed left-0 right-0 top-24 pt-0 hidden z-50 w-full">
+            <div class="bg-white shadow-2xl overflow-hidden" style="height: 58vh;">
+              <!-- Container for sidebar + grid -->
+              <div class="flex h-full">
+                <!-- Sidebar - 1/6 width -->
+                <div class="w-1/6 bg-gray-50 border-r border-gray-200 flex flex-col">
+                  <button class="styles-menu-btn w-full px-4 py-4 text-left text-sm font-medium text-blue-600 hover:bg-blue-50 transition border-b-2 border-blue-600" data-menu="travelStyles">
+                    {t.stylesMenu.travelStyles.name}
+                  </button>
+                  <button class="styles-menu-btn w-full px-4 py-4 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 transition border-b-2 border-transparent" data-menu="smallTrips">
+                    {t.stylesMenu.smallTrips.name}
+                  </button>
+                  <button class="styles-menu-btn w-full px-4 py-4 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 transition border-b-2 border-transparent" data-menu="packages">
+                    {t.stylesMenu.packages.name}
+                  </button>
+
+                  <!-- Menu Footer with Image and Description -->
+                  <div class="mt-2 ml-auto mr-auto mb-2 bg-white relative w-full h-80 overflow-hidden">
+                    <img id="styles-footer-image" src="" alt="Menu" class="w-full h-full object-cover" />
+                    <div class="absolute inset-0 bg-black/10"></div>
+                    <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-3">
+                      <p id="styles-menu-footer" class="text-xs leading-tight" style="color: white !important;">
+                        <!-- Will be populated by JavaScript -->
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Content Area - 5/6 width -->
+                <div class="w-5/6 bg-white overflow-hidden h-full">
+                  <!-- Travel Styles Grid (default) -->
+                  <div class="styles-menu-content h-full" id="content-travelStyles">
+                    <div class="grid grid-cols-5 gap-2 h-full w-full px-2 py-2">
+                      {navStyleTrips.map((item: any) => {
+                        const navImg = Array.isArray(item.image) ? item.image[0] : item.image;
+                        const imgUrl = navImg?.formats?.medium?.url
+                          ? `${STRAPI_PUBLIC_URL}${navImg.formats.medium.url}`
+                          : navImg?.url
+                          ? `${STRAPI_PUBLIC_URL}${navImg.url}`
+                          : null;
+                        return (
+                          <a
+                            href={`/${currentLang}/style-trips/${toSlug(item.name)}`}
+                            class="style-item-grid group relative overflow-hidden cursor-pointer transition-all duration-300 hover:z-20"
+                          >
+                            {imgUrl && (
+                              <img src={imgUrl} alt={item.name} class="w-full h-full object-cover" />
+                            )}
+                            <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
+                            <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white border-b-2 border-transparent group-hover:border-white">
+                              <h3 class="text-xs lg:text-sm font-bold transition-colors duration-300" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
+                                {item.name}
+                              </h3>
+                            </div>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <!-- Small Trips (empty) -->
+                  <div class="styles-menu-content hidden" id="content-smallTrips">
+                    <div class="h-full flex items-center justify-center text-gray-400">
+                      <p class="text-lg">{t.stylesMenu.smallTrips.name} - {t.nav.comingSoon}</p>
+                    </div>
+                  </div>
+
+                  <!-- Packages (empty) -->
+                  <div class="styles-menu-content hidden" id="content-packages">
+                    <div class="h-full flex items-center justify-center text-gray-400">
+                      <p class="text-lg">{t.stylesMenu.packages.name} - {t.nav.comingSoon}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sustainability with Megamenu -->
+        <div class="relative h-full flex items-center" id="sustainability-container">
+          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.sustainability}</a>
+          
+          <!-- Sustainability Megamenu -->
+          <div id="sustainability-dropdown" class="fixed left-0 right-0 top-24 pt-0 hidden z-50 w-full">
+            <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
+              <!-- Megamenu Container -->
+              <div class="flex h-full">
+                <!-- Column 1: Sustainability Items List with Vertical Slider -->
+                <div class="w-1/3 bg-gray-50 border-r border-gray-200 flex flex-col relative">
+                  <!-- Scroll Up Button -->
+                  <button id="scroll-up-sustainability" class="bg-white/90 hover:bg-white p-2 border-b border-gray-200 transition">
+                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                    </svg>
+                  </button>
+                  
+                  <!-- Sustainability scroll container -->
+                  <div id="sustainability-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
+                    {Object.entries(t.sustainability).filter(([key]: [string, any]) => !['title', 'images'].includes(key)).map(([key, item]: [string, any]) => {
+                      const itemObj = item as { name: string; description: string };
+                      return (
+                        <button
+                          class="sustainability-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 whitespace-normal"
+                          data-sustainability={key}
+                          data-name={itemObj.name}
+                          data-image={(t.sustainability as any).images[key]}
+                          data-description={itemObj.description}
+                        >
+                          {itemObj.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <!-- Scroll Down Button -->
+                  <button id="scroll-down-sustainability" class="bg-white/90 hover:bg-white p-2 border-t border-gray-200 transition">
+                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Column 2: Description -->
+                <div class="w-1/3 bg-white p-6 border-r border-gray-200 overflow-y-auto">
+                  <div id="sustainability-description">
+                    <p class="text-sm text-gray-600"></p>
+                  </div>
+                </div>
+
+                <!-- Column 3: Image -->
+                <div class="w-1/3 bg-gray-100 overflow-hidden relative">
+                  <img
+                    id="sustainability-image"
+                    src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop"
+                    alt="Sustainability"
+                    class="w-full h-full object-cover"
+                  />
+                  <div class="absolute inset-0 bg-black/30"></div>
+                  <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                    <p id="sustainability-name" class="text-white font-bold text-lg">SOSTENIBILIDAD</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.transport}</a>
+        <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.blog}</a>
+      </div>
+
+      <!-- Language Switcher + Contact Button -->
+      <div class="hidden md:flex items-center space-x-4">
+        <LanguageSwitcher currentLang={currentLang} />
+        <a
+          id="contact-btn"
+          href="https://wa.me/51953556680?text=Hola%20Inca's%20Paradise!%20Estoy%20interesado%20en%20saber%20más%20sobre%20sus%20tours."
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-white text-sm font-semibold border border-white/30"
+        >
+          <img src="/landing page images/footer/whatsapp logo.svg" alt="WhatsApp" class="w-5 h-5" />
+          {t.nav.contactUs}
+        </a>
+      </div>
+
+      <!-- Mobile Menu Button -->
+      <div class="md:hidden">
+        <button id="mobile-menu-btn" class="text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden pb-4 space-y-3 backdrop-blur-md rounded-lg">
+      <!-- Destinations Mobile -->
+      <div class="relative">
+        <button id="mobile-destinations-btn" class="block w-full text-left px-4 py-2 text-white text-sm hover:text-gray-300 transition bg-white/10 rounded">
+          {t.nav.destinations} ▼
+        </button>
+        <div id="mobile-destinations-menu" class="hidden rounded mt-1 max-h-96 overflow-y-auto">
+          <div id="mobile-destinations-list" class="flex flex-col">
+            <div class="flex flex-col gap-1 p-1">
+              {navDestinations.slice(0, 6).map((dest: any) => {
+                const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
+                const imgUrl = slides.length > 0 && slides[0]?.image?.url
+                  ? `${STRAPI_PUBLIC_URL}${slides[0].image.url}`
+                  : '';
+                return (
+                  <button class="mobile-destination-item relative h-16 overflow-hidden rounded" data-dest={dest.slug} data-name={dest.title}>
+                    {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
+                    <div class="absolute inset-0 bg-black/50"></div>
+                    <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <!-- Hidden remaining destinations -->
+            <div id="mobile-destinations-extra" class="hidden flex flex-col gap-1 px-1 pb-1">
+              {navDestinations.slice(6).map((dest: any) => {
+                const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
+                const imgUrl = slides.length > 0 && slides[0]?.image?.url
+                  ? `${STRAPI_PUBLIC_URL}${slides[0].image.url}`
+                  : '';
+                return (
+                  <button class="mobile-destination-item relative h-16 overflow-hidden rounded" data-dest={dest.slug} data-name={dest.title}>
+                    {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
+                    <div class="absolute inset-0 bg-black/50"></div>
+                    <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <!-- Show all button -->
+            <button id="mobile-destinations-show-all" class="mx-1 mb-1 py-2 text-xs text-blue-600 font-medium bg-blue-50 hover:bg-blue-100 rounded transition text-center">
+              Ver todos los destinos ▼
+            </button>
+          </div>
+          <div id="mobile-destinations-details" class="hidden border-t border-gray-200 p-4">
+            <button id="mobile-dest-back" class="text-blue-600 text-sm hover:text-blue-800 mb-2 font-medium">← Atrás</button>
+            <h3 id="mobile-dest-name" class="font-bold text-gray-800 mb-3 text-sm"></h3>
+            <div id="mobile-dest-tours" class="space-y-2">
+              <!-- Tours will be inserted here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trip Styles Mobile -->
+      <div class="relative">
+        <button id="mobile-styles-btn" class="block w-full text-left px-4 py-2 text-white text-sm hover:text-gray-300 transition bg-white/10 rounded">
+          {t.nav.tripStyles} ▼
+        </button>
+        <div id="mobile-styles-menu" class="hidden rounded mt-1 max-h-72 overflow-y-auto">
+          <!-- Main Menu Options -->
+          <div id="mobile-styles-list" class="flex flex-col gap-1 p-1">
+            {Object.entries(t.stylesMenu).map(([key, item]: [string, any]) => {
+              const itemObj = item as { name: string; image: string };
+              return (
+                <button class="mobile-styles-option relative h-16 overflow-hidden rounded" data-option={key} data-name={itemObj.name}>
+                  {itemObj.image ? (
+                    <img src={itemObj.image.startsWith('landing page images') ? `/${itemObj.image}` : itemObj.image} alt={itemObj.name} class="w-full h-full object-cover" />
+                  ) : (
+                    <div class="w-full h-full bg-gray-400"></div>
+                  )}
+                  <div class="absolute inset-0 bg-black/50"></div>
+                  <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{itemObj.name}</span>
+                </button>
+              );
+            })}
+          </div>
+          <!-- Subitems Details -->
+          <div id="mobile-styles-details" class="hidden border-t border-gray-200 p-1">
+            <div class="flex items-center gap-2 p-2">
+              <button id="mobile-styles-back" class="text-blue-600 text-sm hover:text-blue-800 font-medium">← Atrás</button>
+              <h3 id="mobile-style-name" class="font-bold text-gray-800 text-sm"></h3>
+            </div>
+            <div id="mobile-style-subitems" class="p-0">
+              <!-- Subitems will be inserted here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Other Links -->
+      <a href="#" class="block text-white text-sm hover:text-gray-300 transition px-4 py-2">{t.nav.transport}</a>
+      
+      <!-- Sustainability Mobile -->
+      <div class="relative">
+        <button id="mobile-sustainability-btn" class="block w-full text-left px-4 py-2 text-white text-sm hover:text-gray-300 transition bg-white/10 rounded">
+          {t.nav.sustainability} ▼
+        </button>
+        <div id="mobile-sustainability-menu" class="hidden bg-gray-100 rounded mt-1 max-h-60 overflow-y-auto">
+          <div id="mobile-sustainability-list" class="flex flex-col">
+            {Object.entries(t.sustainability).filter(([key]: [string, any]) => !['title', 'images'].includes(key)).map(([key, item]: [string, any]) => {
+              const itemObj = item as { name: string; description: string };
+              return (
+                <button class="mobile-sustainability-item w-full text-left px-4 py-2 text-gray-700 text-sm hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-200" data-sustainability={key} data-name={itemObj.name} data-description={itemObj.description}>
+                  {itemObj.name}
+                </button>
+              );
+            })}
+          </div>
+          <div id="mobile-sustainability-details" class="hidden border-t border-gray-200 p-4">
+            <h3 id="mobile-sustainability-name" class="font-bold text-gray-800 mb-3 text-sm"></h3>
+            <p id="mobile-sustainability-description" class="text-gray-700 text-sm"></p>
+          </div>
+        </div>
+      </div>
+      
+      <a href="#" class="block text-white text-sm hover:text-gray-300 transition px-4 py-2">{t.nav.blog}</a>
+      
+      <div class="py-2 px-4">
+        <LanguageSwitcher currentLang={currentLang} />
+      </div>
+      <a
+        href="https://wa.me/51984434547"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="flex items-center justify-center gap-2 w-full mx-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition text-sm"
+      >
+        <img src="/landing page images/footer/whatsapp logo.svg" alt="WhatsApp" class="w-5 h-5" />
+        {t.nav.contactUs}
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile Menu Backdrop -->
+<div id="mobile-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onclick="document.getElementById('mobile-menu-btn').click()"></div>
+
+<!-- Exponer traducciones al script externo -->
+<script is:inline define:vars={{ translations: t, navStyleTrips, navDestinations, STRAPI_PUBLIC_URL, currentLang }}>
+  window.__navbarT = translations;
+  window.__navbarStyleTrips = navStyleTrips;
+  window.__navbarDestinations = navDestinations;
+  window.__strapiPublicUrl = STRAPI_PUBLIC_URL;
+  window.__currentLang = currentLang;
+</script>
+
+<!-- Lógica del navbar en archivo separado -->
+<script src="./navbar.js"></script>
+
+<!-- Initialize dynamic languages -->
+<script>
+  console.log('Navbar: Language script loaded');
+
+  function buildLanguageUrl(languageCode) {
+    const currentPath = window.location.pathname;
+    const pathMatch = currentPath.match(/^\/[a-z]{2}(.*)/);
+    const relativePath = pathMatch ? pathMatch[1] : '/';
+    return `/${languageCode}${relativePath}`;
+  }
+
+  async function initializeLanguages() {
+    try {
+      const backendUrl = (import.meta.env.PUBLIC_BACKEND_URL || 'http://localhost:1337');
+      console.log('Navbar: Fetching languages from', backendUrl);
+      
+      const response = await fetch(`${backendUrl}/api/locales`);
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.data)) {
+        console.log('Navbar: Languages from backend:', data.data);
+        
+        const languages = {};
+        data.data.forEach((locale) => {
+          const shortCode = locale.code.split('-')[0];
+          languages[shortCode] = locale.name;
+        });
+        
+        console.log('Navbar: Mapped languages:', languages);
+        updateLanguageSwitchers(languages);
+      }
+    } catch (error) {
+      console.warn('Navbar: Failed to fetch languages:', error);
+    }
+  }
+
+  function updateLanguageSwitchers(languages) {
+    // Detect current language from URL
+    const pathMatch = window.location.pathname.match(/^\/([a-z]{2})\//);
+    const currentLangCode = pathMatch ? pathMatch[1] : 'es';
+    
+    console.log('Navbar: Current language:', currentLangCode);
+    console.log('Navbar: Updating switchers with languages:', Object.keys(languages));
+
+    // Update ALL lang-switcher instances
+    const langSwitchers = document.querySelectorAll('#lang-switcher');
+    console.log('Navbar: Found', langSwitchers.length, 'switchers');
+
+    langSwitchers.forEach((switcher, switcherIndex) => {
+      console.log(`Navbar: Updating switcher ${switcherIndex}`);
+      
+      const button = switcher.querySelector('#lang-button');
+      const dropdown = switcher.querySelector('#lang-dropdown');
+      const langArrow = switcher.querySelector('#lang-arrow');
+      
+      if (!button || !dropdown) {
+        console.log(`Navbar: Switcher ${switcherIndex} missing button or dropdown`);
+        return;
+      }
+
+      // Update button text
+      const buttonSpan = button.querySelector('span');
+      if (buttonSpan && languages[currentLangCode]) {
+        buttonSpan.textContent = languages[currentLangCode];
+      }
+
+      // Clear dropdown completely
+      dropdown.innerHTML = '';
+
+      // Add all language links with event listeners
+      for (const [code, name] of Object.entries(languages)) {
+        if (code === currentLangCode) {
+          console.log(`Navbar: Skipping current language ${code}`);
+          continue;
+        }
+
+        const link = document.createElement('a');
+        link.className = 'flex items-center space-x-3 px-4 py-3 hover:bg-white/10 transition text-white text-sm cursor-pointer';
+        
+        const span = document.createElement('span');
+        span.textContent = name;
+        link.appendChild(span);
+
+        // Attach click handler IMMEDIATELY
+        link.addEventListener('click', (e) => {
+          console.log('Navbar: Language link clicked:', code);
+          e.preventDefault();
+          e.stopPropagation();
+          
+          const url = buildLanguageUrl(code);
+          console.log('Navbar: Navigating to:', url);
+          
+          dropdown.classList.add('hidden');
+          langArrow?.classList.remove('rotate-180');
+          
+          window.location.href = url;
+        });
+
+        dropdown.appendChild(link);
+        console.log(`Navbar: Added link for ${code}: ${name}`);
+      }
+    });
+
+    console.log('Navbar: Update complete');
+  }
+
+  // Initialize on page load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeLanguages);
+  } else {
+    initializeLanguages();
+  }
+</script>

@@ -1,0 +1,154 @@
+---
+interface Props {
+  t: any;
+}
+
+const { t } = Astro.props;
+
+const values = [
+  { key: 'sustainabilityAuthenticity', name: t.values.sustainabilityAuthenticity.name, description: t.values.sustainabilityAuthenticity.description },
+  { key: 'reliability', name: t.values.reliability.name, description: t.values.reliability.description },
+  { key: 'humanityWarmth', name: t.values.humanityWarmth.name, description: t.values.humanityWarmth.description },
+  { key: 'adventureSafety', name: t.values.adventureSafety.name, description: t.values.adventureSafety.description },
+  { key: 'innovation', name: t.values.innovation.name, description: t.values.innovation.description },
+];
+---
+
+<section class="bg-gradient-to-b from-slate-900 to-slate-800 px-4 py-12 md:py-16 lg:py-20 flex items-center justify-center">
+  <div class="max-w-4xl mx-auto w-full">
+    <!-- Slider Container -->
+    <div class="relative">
+      <!-- Values Slider -->
+      <div id="values-slider" class="relative min-h-64 md:min-h-72 flex items-center justify-center">
+        {values.map((value, index) => (
+          <div 
+            class="value-slide absolute inset-0 flex flex-col justify-center items-center text-center px-6 md:px-12 transition-opacity duration-500"
+            data-index={index}
+          >
+            <h3 class="text-2xl md:text-3xl lg:text-4xl font-semibold text-white mb-4 md:mb-6" style="font-family: 'Playfair Display', serif; font-weight: 500; font-style: italic;">
+              {value.name}
+            </h3>
+            <p class="text-lg md:text-2xl lg:text-3xl text-gray-300 leading-relaxed max-w-3xl" style="font-family: 'Playfair Display', serif; font-weight: 400;">
+              {value.description}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <!-- Navigation Arrows -->
+      <button id="values-prev" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 md:-translate-x-16 z-30 h-12 w-12 flex items-center justify-center rounded-full bg-gray-400/30 hover:bg-gray-500/30 transition-colors text-white text-2xl">
+        ‹
+      </button>
+      <button id="values-next" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 md:translate-x-16 z-30 h-12 w-12 flex items-center justify-center rounded-full bg-gray-400/30 hover:bg-gray-500/30 transition-colors text-white text-2xl">
+        ›
+      </button>
+
+      <!-- Indicator Dots -->
+      <div class="flex justify-center gap-2 mt-8 md:mt-10">
+        {values.map((_, index) => (
+          <button 
+            class="value-dot h-3 w-3 rounded-full transition-all duration-300"
+            data-index={index}
+          />
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script is:inline>
+document.addEventListener('DOMContentLoaded', function() {
+  const slider = document.getElementById('values-slider');
+  const slides = document.querySelectorAll('.value-slide');
+  const dots = document.querySelectorAll('.value-dot');
+  const prevBtn = document.getElementById('values-prev');
+  const nextBtn = document.getElementById('values-next');
+
+  let currentIndex = 0;
+  let autoPlayTimer;
+  const totalSlides = slides.length;
+  const autoPlayInterval = 3000; // 3 seconds
+
+  function showSlide(index) {
+    // Normalize index
+    currentIndex = (index % totalSlides + totalSlides) % totalSlides;
+
+    // Update slides
+    slides.forEach((slide, i) => {
+      if (i === currentIndex) {
+        slide.style.opacity = '1';
+        slide.style.zIndex = '10';
+        slide.style.pointerEvents = 'auto';
+      } else {
+        slide.style.opacity = '0';
+        slide.style.zIndex = '0';
+        slide.style.pointerEvents = 'none';
+      }
+    });
+
+    // Update dots
+    dots.forEach((dot, i) => {
+      if (i === currentIndex) {
+        dot.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+      } else {
+        dot.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+      }
+    });
+  }
+
+  function nextSlide() {
+    showSlide(currentIndex + 1);
+    resetAutoPlay();
+  }
+
+  function prevSlide() {
+    showSlide(currentIndex - 1);
+    resetAutoPlay();
+  }
+
+  function startAutoPlay() {
+    autoPlayTimer = setInterval(() => {
+      showSlide(currentIndex + 1);
+    }, autoPlayInterval);
+  }
+
+  function resetAutoPlay() {
+    clearInterval(autoPlayTimer);
+    startAutoPlay();
+  }
+
+  function pauseAutoPlay() {
+    clearInterval(autoPlayTimer);
+  }
+
+  function resumeAutoPlay() {
+    startAutoPlay();
+  }
+
+  // Initialize first slide
+  showSlide(0);
+
+  // Event listeners
+  if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+  if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+
+  dots.forEach((dot) => {
+    dot.addEventListener('click', () => {
+      const index = parseInt(dot.getAttribute('data-index'));
+      showSlide(index);
+      resetAutoPlay();
+    });
+  });
+
+  // Pause on hover
+  if (slider) {
+    slider.addEventListener('mouseenter', pauseAutoPlay);
+    slider.addEventListener('mouseleave', resumeAutoPlay);
+  }
+
+  // Start autoplay
+  startAutoPlay();
+});
+</script>
+
+

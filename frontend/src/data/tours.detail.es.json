@@ -1,0 +1,82 @@
+{
+  "tours": [
+    {
+      "destinationSlug": "puno",
+      "slug": "puno-iconico",
+      "metatitle": {
+        "title": "Puno Iconico",
+        "description": "Recorrido completo por Puno y el Lago Titicaca."
+      },
+      "hero": {
+        "title": "Puno Iconico",
+        "description": "Un recorrido completo por Puno.",
+        "slides": [
+          {
+            "image": "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2000&q=80"
+          },
+          {
+            "image": "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=2000&q=80"
+          },
+          {
+            "image": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2000&q=80"
+          }
+        ]
+      },
+      "summary": {
+        "title": "Explora Puno y sus sitios mas iconicos",
+        "metaLine": "Dias: 6 | Desde: $320 por persona",
+        "bullets": [
+          "Incluye alojamientos seleccionados que reflejan cultura local.",
+          "Incluye excursiones y recorridos con guias privados."
+        ],
+        "paragraph": "Disfruta navegacion por el Lago Titicaca, visitas a Uros y Taquile, y una ruta cultural por el altiplano puneno. Este viaje combina paisaje, comunidad viva y tiempos flexibles para explorar a tu ritmo.",
+        "ctaLabel": "Solicitar cotizacion",
+        "contactCard": {
+          "title": "Habla con un especialista de viajes",
+          "description": "Personalizamos itinerarios segun tus fechas, intereses y ritmo de viaje.",
+          "phone": "+51 951 234 567",
+          "buttonLabel": "Contactanos",
+          "reviewsTitle": "Resenas 5 estrellas",
+          "reviewsDescription": "Recibimos valoraciones sobresalientes por nuestro servicio personalizado."
+        }
+      },
+      "atGlance": {
+        "title": "At a Glance",
+        "items": [
+          {
+            "location": "Puno Ciudad",
+            "nights": "1 noche",
+            "summary": "Recorrido por la ciudad, museos, puertos, miradores y restaurantes."
+          },
+          {
+            "location": "Titicaca",
+            "nights": "2 noches",
+            "summary": "Recorrido por Uros, amanecer en el lago, Taquile, Amantani y kayak."
+          },
+          {
+            "location": "Sillustani",
+            "nights": "1 noche",
+            "summary": "Ruinas de Sillustani, laguna Umayo y alrededores del altiplano."
+          },
+          {
+            "location": "Ruta Aymara",
+            "nights": "2 noches",
+            "summary": "Ruta Aymara por Chucuito, Ilave y Aramu Muru con enfoque cultural."
+          }
+        ],
+        "footnote": "Cada itinerario se puede ajustar a tus intereses y fechas sin costo adicional.",
+        "mapImage": "https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1200&q=80"
+      },
+      "reviewsBand": {
+        "title": "5-Star Reviews",
+        "description": "Conoce por que nuestros viajeros nos califican consistentemente con 5 estrellas.",
+        "brands": [
+          "Trustpilot",
+          "Google Reviews",
+          "Yelp"
+        ]
+      },
+      "itineraryRibbon": "Sample Itinerary"
+    }
+  ]
+}

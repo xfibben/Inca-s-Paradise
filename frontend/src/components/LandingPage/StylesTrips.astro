@@ -1,0 +1,92 @@
+---
+interface Props {
+  t: any;
+  currentLang?: string;
+}
+
+const { t, currentLang = 'es' } = Astro.props;
+
+const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';           // server-side fetch
+const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337'; // browser img src
+
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+let styleTrips: any[] = [];
+try {
+  const url = `${STRAPI_URL}/api/style-trips?populate[0]=image&locale=${strapiLocale}&status=published`;
+  console.log('[StylesTrips] fetching:', url);
+  const res = await fetch(url);
+  console.log('[StylesTrips] status:', res.status);
+  if (res.ok) {
+    const json = await res.json();
+    console.log('[StylesTrips] data count:', json.data?.length);
+    styleTrips = json.data ?? [];
+  } else {
+    const err = await res.text();
+    console.log('[StylesTrips] error body:', err);
+  }
+} catch (e) {
+  console.log('[StylesTrips] fetch exception:', e);
+}
+---
+
+<style>
+  @media (max-width: 1024px) {
+    .styles-grid > :nth-child(4) {
+      grid-column: 2 / 3;
+    }
+    .styles-grid > :nth-child(5) {
+      grid-column: 3 / 4;
+    }
+  }
+</style>
+
+<section class="bg-white px-2 py-0 w-full flex items-center justify-center" style="height: calc(100vh - 6rem);">
+  <div class="w-full h-full">
+    <!-- Grid Layout: 3 cols mobile (with 2 centered below), 5 cols desktop -->
+    <div class="styles-grid grid grid-cols-3 lg:grid-cols-5 gap-1 w-full h-full" style="grid-auto-rows: 1fr;">
+      {styleTrips.map((item: any) => {
+        const name = item.name ?? '';
+        const description = item.description ?? '';
+        const img = Array.isArray(item.image) ? item.image[0] : item.image;
+        const imageUrl = img?.url
+          ? `${STRAPI_PUBLIC_URL}${img.url}`
+          : null;
+
+        return (
+          <div class="group relative overflow-hidden cursor-pointer transition-transform duration-300 group-hover:scale-x-125 group-hover:z-20">
+            <!-- Image -->
+            {imageUrl && (
+              <img
+                src={imageUrl}
+                alt={name}
+                class="w-full h-full object-cover"
+              />
+            )}
+
+            <!-- Overlay -->
+            <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
+
+            <!-- Content -->
+            <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white">
+              <a href={`/${currentLang}/style-trips/${toSlug(name)}`} class="text-sm md:text-base lg:text-lg font-bold transition-transform duration-300 group-hover:-translate-y-3 hover:opacity-80" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
+                {name}
+              </a>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+

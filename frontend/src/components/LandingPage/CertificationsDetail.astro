@@ -1,0 +1,231 @@
+---
+import es from '../../i18n/es.json';
+import en from '../../i18n/en.json';
+import pt from '../../i18n/pt.json';
+import fr from '../../i18n/fr.json';
+import it from '../../i18n/it.json';
+
+const translations = { es, en, pt, fr, it };
+
+interface Props {
+  lang: 'es' | 'en' | 'pt' | 'fr' | 'it';
+}
+
+const { lang } = Astro.props as Props;
+const t = translations[lang];
+
+// Configuración de altura para las imágenes certificaciondoc
+// El ancho se ajusta automáticamente
+const imageSizes: Record<number, string> = {
+  1: '400px',   // certificaciondoc1.jpg
+  2: '400px',   // certificaciondoc2.jpg
+  3: '400px',   // certificaciondoc3.jpg
+  4: '400px',   // certificaciondoc4.jpg
+};
+
+function getImageHeight(docNumber: number): string {
+  return imageSizes[docNumber] || '400px';
+}
+
+// Datos de las certificaciones desde JSON
+const certifications = t.certifications;
+---
+
+<style>
+  .carousel-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    min-height: 350px;
+  }
+
+  .carousel-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+    visibility: hidden;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    display: flex;
+  }
+
+  .carousel-slide.active {
+    position: relative;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  @media (max-width: 768px) {
+    .carousel-slide {
+      flex-direction: column;
+      padding: 1rem;
+      gap: 1rem;
+    }
+
+    .carousel-container {
+      min-height: 450px;
+    }
+  }
+
+  .slide-image {
+    flex: 1;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slide-image img {
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 0.5rem;
+    box-shadow: 8px 8px 25px rgba(0, 0, 0, 0.35), 5px 5px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .slide-content {
+    flex: 1;
+  }
+
+  .slide-content h3 {
+    font-size: 1.875rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  .slide-content p {
+    font-size: 1rem;
+    color: #d1d5db;
+    line-height: 1.6;
+  }
+
+  .carousel-nav {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .carousel-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #64748b;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .carousel-dot.active {
+    background-color: #10b981;
+  }
+
+  .carousel-arrow {
+    display: none;
+  }
+
+  .image-left {
+    flex-direction: row;
+  }
+
+  .image-right {
+    flex-direction: row-reverse;
+  }
+
+  @media (max-width: 768px) {
+    .image-left,
+    .image-right {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<section class="bg-gradient-to-b from-slate-900 to-slate-800 px-4 lg:px-8 py-8 lg:py-12">
+  <div class="max-w-7xl mx-auto">
+    <div class="carousel-container">
+      {certifications.map((cert, index) => (
+        <div 
+          class={`carousel-slide ${index === 0 ? 'active' : ''} ${index % 2 === 0 ? 'image-left' : 'image-right'}`}
+          data-index={index}
+        >
+          <div class="slide-image">
+            <img 
+              src={`/landing page images/certifications/certificaciondoc${cert.number}.jpg`}
+              alt={cert.title}
+              style={`height: ${getImageHeight(cert.number)}; width: auto;`}
+            />
+          </div>
+          <div class="slide-content">
+            <h3>{cert.title}</h3>
+            <p>{cert.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Dots Navigation -->
+    <div class="carousel-nav">
+      {certifications.map((_, index) => (
+        <button 
+          class={`carousel-dot ${index === 0 ? 'active' : ''}`} 
+          data-index={index}
+        ></button>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', function() {
+    let currentIndex = 0;
+    const slides = document.querySelectorAll('.carousel-slide');
+    const dots = document.querySelectorAll('.carousel-dot');
+    const autoPlayInterval = 6500; // 6.5 segundos
+
+    function showSlide(index) {
+      // Validar índice
+      if (index >= slides.length) {
+        currentIndex = 0;
+      } else if (index < 0) {
+        currentIndex = slides.length - 1;
+      } else {
+        currentIndex = index;
+      }
+
+      // Actualizar slides
+      slides.forEach((slide, i) => {
+        slide.classList.remove('active');
+        if (i === currentIndex) {
+          slide.classList.add('active');
+        }
+      });
+
+      // Actualizar dots
+      dots.forEach((dot, i) => {
+        dot.classList.remove('active');
+        if (i === currentIndex) {
+          dot.classList.add('active');
+        }
+      });
+    }
+
+    // Auto-play - cambiar slide cada 3 segundos
+    setInterval(() => {
+      showSlide(currentIndex + 1);
+    }, autoPlayInterval);
+
+    // Click en dots para navegar manualmente
+    dots.forEach(dot => {
+      dot.addEventListener('click', () => {
+        showSlide(parseInt(dot.getAttribute('data-index')));
+      });
+    });
+  });
+</script>

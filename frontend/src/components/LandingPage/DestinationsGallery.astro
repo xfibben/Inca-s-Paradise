@@ -1,0 +1,74 @@
+---
+interface Props {
+  t: any;
+  currentLang?: string;
+}
+
+const { t, currentLang = 'es' } = Astro.props;
+
+const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
+const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
+
+let destinations: any[] = [];
+try {
+  const url = `${STRAPI_URL}/api/destino-detalles?populate[0]=heroSlides&locale=${strapiLocale}&status=published`;
+  console.log('[DestinationsGallery] fetching:', url);
+  const res = await fetch(url);
+  console.log('[DestinationsGallery] status:', res.status);
+  if (res.ok) {
+    const json = await res.json();
+    console.log('[DestinationsGallery] data count:', json.data?.length);
+    destinations = json.data ?? [];
+  } else {
+    const err = await res.text();
+    console.log('[DestinationsGallery] error:', err);
+  }
+} catch (e) {
+  console.log('[DestinationsGallery] fetch exception:', e);
+}
+---
+
+<!-- Destinations Gallery Section -->
+<section class="bg-white w-screen px-0 py-0 flex items-center justify-center min-h-screen">
+  <div class="w-screen">
+    <div class="grid gap-px grid-cols-3 lg:grid-cols-4 w-screen" style="height: 120vh; grid-auto-rows: 1fr;">
+      
+      {destinations.map((dest: any) => {
+        const heroSlides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
+        const firstSlide = heroSlides.length > 0 ? heroSlides[0] : null;
+        const img = firstSlide?.image;
+        const imageUrl = img?.formats?.medium?.url
+          ? `${STRAPI_PUBLIC_URL}${img.formats.medium.url}`
+          : img?.url
+          ? `${STRAPI_PUBLIC_URL}${img.url}`
+          : null;
+
+        return (
+          <div class="group relative overflow-hidden cursor-pointer">
+            {imageUrl && (
+              <img 
+                src={imageUrl}
+                alt={dest.title} 
+                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              />
+            )}
+            <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
+            <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white">
+              <h3 class="text-base transition-transform duration-300 group-hover:-translate-y-3 font-s['Roboto' ,sans-serif] ">{dest.title}</h3>
+              <div class="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col space-y-2 md:space-y-3 items-center w-full bottom-0 left-0 right-0 p-4">
+                <p class="text-xs sm:text-sm md:text-base leading-relaxed hidden sm:block max-w-xs">
+                  {dest.description}
+                </p>
+                <button class="px-3 py-1.5 sm:px-4 sm:py-2 border border-white text-white text-xs sm:text-sm font-semibold hover:bg-orange-500 hover:border-orange-500 hover:text-white transition">
+                  {t.buttons.explore}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+    </div>
+  </div>
+</section>

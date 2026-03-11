@@ -1,0 +1,329 @@
+---
+import Navbar from '../../../components/shared/Navbar.astro';
+import Footer from '../../../components/shared/Footer.astro';
+import CarouselCard from '../../../components/stylestrips/StylesCarouselCard.astro';
+import { getTranslation, languages } from '../../../i18n';
+import '../../../styles/global.css';
+
+const { lang, slug } = Astro.params;
+const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
+const t = getTranslation(currentLang);
+
+const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
+const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+let trip: any = null;
+try {
+  const res = await fetch(
+    `${STRAPI_URL}/api/style-trips?populate[0]=wallpaper&populate[1]=image&locale=${strapiLocale}&status=published`
+  );
+  if (res.ok) {
+    const json = await res.json();
+    trip = (json.data ?? []).find((item: any) => toSlug(item.name) === slug) ?? null;
+  }
+} catch (e) {}
+
+// 404 if not found
+if (!trip) {
+  return Astro.redirect(`/${currentLang}/style-trips`);
+}
+
+// Obtener tours relacionados al style-trip actual
+let relatedTours: any[] = [];
+let carouselTours: any[] = [];
+try {
+  const toursUrl = `${STRAPI_URL}/api/tour-detalles?populate[0]=styleTrips&locale=${strapiLocale}&status=published`;
+  console.log('[Style-Trips] Tours URL:', toursUrl);
+  
+  const toursRes = await fetch(toursUrl);
+  console.log('[Style-Trips] Tours Response Status:', toursRes.status);
+  
+  if (toursRes.ok) {
+    const toursJson = await toursRes.json();
+    console.log('[Style-Trips] Tours Data Count:', toursJson.data?.length);
+    console.log('[Style-Trips] Trip ID:', trip.id);
+    
+    const allTours = toursJson.data ?? [];
+    
+    // Filtrar tours relacionados a este style-trip
+    const relatedToThisStyle = allTours.filter((tour: any) => 
+      tour.styleTrips && tour.styleTrips.some((st: any) => st.id === trip.id)
+    );
+    console.log('[Style-Trips] Related Tours Count:', relatedToThisStyle.length);
+    
+    // Small Trips: solo tours con showInStyles = true y tourType = "small_trip"
+    relatedTours = relatedToThisStyle.filter((tour: any) => 
+      tour.showInStyles === true && tour.tourType === 'small_trip'
+    );
+    console.log('[Style-Trips] Small Trips Count:', relatedTours.length);
+    
+    // Carousel: tours y packages (tourType = "tour" o "package")
+    carouselTours = relatedToThisStyle.filter((tour: any) => 
+      tour.tourType === 'tour' || tour.tourType === 'package'
+    );
+    console.log('[Style-Trips] Carousel Tours Count:', carouselTours.length);
+  } else {
+    const errorText = await toursRes.text();
+    console.log('[Style-Trips] Tours Error:', toursRes.status, errorText);
+  }
+} catch (e) {
+  console.log('[Style-Trips] Tours fetch exception:', e);
+}
+
+// Usar wallpaper si existe, sino fallback a image
+const heroImage = (() => {
+  const wp = Array.isArray(trip.wallpaper) ? trip.wallpaper[0] : trip.wallpaper;
+  if (wp) return wp;
+  return Array.isArray(trip.image) ? trip.image[0] : trip.image;
+})();
+const heroImageUrl = heroImage?.formats?.large?.url
+  ? `${STRAPI_PUBLIC_URL}${heroImage.formats.large.url}`
+  : heroImage?.url
+  ? `${STRAPI_PUBLIC_URL}${heroImage.url}`
+  : null;
+---
+
+<!DOCTYPE html>
+<html lang={currentLang}>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
+    <title>{trip.name} — Inca's Paradise</title>
+    <style>
+      @media (max-width: 767px) {
+        /* Gallery collage: stack vertically */
+        #gallery-collage {
+          display: flex !important;
+          flex-direction: column !important;
+          height: auto !important;
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
+        }
+        #gallery-collage a {
+          height: 220px;
+        }
+        /* More trips: text-only list on mobile */
+        #more-trips:not(.hidden) {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 0 !important;
+          padding: 0 1rem !important;
+        }
+        #more-trips > div {
+          aspect-ratio: unset !important;
+          height: auto !important;
+          border-radius: 0 !important;
+          overflow: visible !important;
+          position: static !important;
+          background: none !important;
+          border-bottom: 1px solid #e5e7eb;
+          padding: 0.875rem 0;
+        }
+        #more-trips > div img,
+        #more-trips > div > div:first-of-type {
+          display: none !important;
+        }
+        #more-trips > div > div:last-of-type {
+          position: static !important;
+          padding: 0 !important;
+          inset: unset !important;
+        }
+        #more-trips > div > div:last-of-type p {
+          color: #374151 !important;
+          font-size: 1rem !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <Navbar {t} {currentLang} />
+
+    <!-- Hero Section: 3/4 viewport height -->
+    <header class="relative w-full overflow-hidden" style="height: 75vh;">
+      {heroImageUrl && (
+        <img
+          src={heroImageUrl}
+          alt={trip.name}
+          class="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+      <div class="absolute inset-0 bg-black/40"></div>
+      <div class="relative z-10 flex flex-col items-center justify-center h-full text-white text-center px-4">
+        <h1
+          class="text-4xl md:text-6xl font-bold mb-4"
+          style="font-family: 'Playfair Display', serif; font-style: italic;"
+        >
+          {trip.name}
+        </h1>
+      </div>
+    </header>
+
+    <main class="bg-white pb-16 px-4 md:px-32">
+      <div class="pt-12">
+        {trip.description && (
+          <p class="text-xl text-gray-700 leading-relaxed text-center">
+            {trip.description}
+          </p>
+        )}
+      </div>
+    </main>
+
+    
+
+    <!-- Gallery Title -->
+    <div class="bg-white px-4 pt-2 pb-8 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-gray-800" style="font-family: 'Playfair Display', serif; font-style: italic;">
+        Small Trips
+      </h2>
+    </div>
+
+    {relatedTours.length > 0 && (
+    <section id="gallery-collage" class="w-full h-[75vh] px-20" style="display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(2, 1fr);">
+
+      {relatedTours.slice(0, 5).map((tour: any, index: number) => {
+        const heroData = tour.hero && Array.isArray(tour.hero) ? tour.hero[0] : tour.hero;
+        const heroImg = heroData?.image;
+        const tourImageUrl = heroImg?.formats?.large?.url
+          ? `${STRAPI_PUBLIC_URL}${heroImg.formats.large.url}`
+          : heroImg?.formats?.medium?.url
+          ? `${STRAPI_PUBLIC_URL}${heroImg.formats.medium.url}`
+          : heroImg?.url
+          ? `${STRAPI_PUBLIC_URL}${heroImg.url}`
+          : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop';
+        
+        let gridConfig = '';
+        if (index === 0) gridConfig = 'grid-column: 1 / 5; grid-row: 1 / 3;';
+        else if (index === 1) gridConfig = 'grid-column: 5 / 7; grid-row: 1 / 2;';
+        else if (index === 2) gridConfig = 'grid-column: 7 / 13; grid-row: 1 / 2;';
+        else if (index === 3) gridConfig = 'grid-column: 5 / 10; grid-row: 2 / 3;';
+        else if (index === 4) gridConfig = 'grid-column: 10 / 13; grid-row: 2 / 3;';
+        
+        return (
+          <a href="#" class="relative overflow-hidden cursor-pointer group" style={gridConfig}>
+            <span class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={`background-image: url('${tourImageUrl}');`}></span>
+            <span class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60 flex flex-col justify-end p-6 text-white">
+              <div class="text-2xl font-bold leading-tight" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</div>
+            </span>
+          </a>
+        );
+      })}
+
+    </section>
+
+    <!-- Mostrar más -->
+    <div class="bg-white py-8 flex flex-col items-center gap-6">
+      <button
+        id="show-more-btn"
+        class="text-sm text-gray-400 hover:text-gray-600 tracking-widest uppercase flex items-center gap-2 transition-colors duration-200"
+      >
+        Mostrar más
+        <svg id="show-more-icon" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <!-- Lista expandida -->
+      <div id="more-trips" class="hidden w-full max-w-5xl px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {relatedTours.map((tour: any) => {
+          const heroData = tour.hero && Array.isArray(tour.hero) ? tour.hero[0] : tour.hero;
+          const heroImg = heroData?.image;
+          const tourImageUrl = heroImg?.formats?.medium?.url
+            ? `${STRAPI_PUBLIC_URL}${heroImg.formats.medium.url}`
+            : heroImg?.url
+            ? `${STRAPI_PUBLIC_URL}${heroImg.url}`
+            : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop';
+          return (
+            <div class="group relative overflow-hidden aspect-video cursor-pointer">
+              <img src={tourImageUrl} alt={tour.title} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <div class="absolute inset-0 bg-black/40 group-hover:bg-black/55 transition-colors duration-300"></div>
+              <div class="absolute inset-0 flex flex-col justify-end p-4 text-white">
+                <p class="font-bold text-sm leading-tight" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+    )}
+
+    <!-- Middle Description Section -->
+    {trip.middle_description && (
+      <section class="bg-gray-50 py-12 md:py-20 px-4 md:px-16">
+        <div class="max-w-4xl mx-auto text-center">
+          <h2
+            class="text-2xl md:text-5xl font-bold text-gray-800 mb-6 md:mb-8"
+            style="font-family: 'Playfair Display', serif; font-style: italic;"
+          >
+            {trip.middle_description.title}
+          </h2>
+          <div class="w-12 h-0.5 bg-yellow-600 mx-auto mb-6 md:mb-8"></div>
+          <p class="text-base md:text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto">
+            {trip.middle_description.description}
+          </p>
+        </div>
+      </section>
+    )}
+
+    <script>
+      const btn = document.getElementById('show-more-btn');
+      const list = document.getElementById('more-trips');
+      const icon = document.getElementById('show-more-icon');
+      let open = false;
+      btn?.addEventListener('click', () => {
+        open = !open;
+        list?.classList.toggle('hidden', !open);
+        list?.classList.toggle('grid', open);
+        if (icon) icon.style.transform = open ? 'rotate(180deg)' : '';
+        if (btn) btn.querySelector('span') && (btn.querySelector('span')!.textContent = open ? 'Mostrar menos' : 'Mostrar más');
+        btn!.childNodes[0].textContent = open ? 'Mostrar menos ' : 'Mostrar más ';
+      });
+    </script>
+
+    <!-- Carousel Section -->
+    <section class="bg-white py-8 md:py-16 px-0 md:px-4">
+      <div
+        class="flex gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4"
+        style="scrollbar-width: none;"
+      >
+        {carouselTours.map((tour: any) => {
+          const heroData = tour.hero && Array.isArray(tour.hero) ? tour.hero[0] : tour.hero;
+          const heroImg = heroData?.image;
+          const tourImageUrl = heroImg?.formats?.medium?.url
+            ? `${STRAPI_PUBLIC_URL}${heroImg.formats.medium.url}`
+            : heroImg?.url
+            ? `${STRAPI_PUBLIC_URL}${heroImg.url}`
+            : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop';
+          return (
+            <CarouselCard
+              image={tourImageUrl}
+              alt={tour.title}
+              days={tour.slug}
+              location={tour.slug}
+              title={tour.title}
+              description={tour.slug}
+            />
+          );
+        })}
+      </div>
+    </section>
+
+    <Footer {currentLang} {t} />
+  </body>
+</html>

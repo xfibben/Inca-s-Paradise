@@ -1,0 +1,80 @@
+{
+  "kind": "collectionType",
+  "collectionName": "destino_detalles",
+  "info": {
+    "singularName": "destino-detalle",
+    "pluralName": "destino-detalles",
+    "displayName": "Destino Detalle",
+    "description": "Contenido editable de la vista detalle de destinos"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "content-api": {
+      "enabled": true
+    },
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "heroSlides": {
+      "type": "json"
+    },
+    "introTitle": {
+      "type": "string"
+    },
+    "introParagraphs": {
+      "type": "json"
+    },
+    "introHighlights": {
+      "type": "json"
+    },
+    "iconLabels": {
+      "type": "json"
+    },
+    "primaryRibbon": {
+      "type": "string"
+    },
+    "secondaryRibbon": {
+      "type": "string"
+    },
+    "blogTitle": {
+      "type": "string"
+    },
+    "blogButton": {
+      "type": "string"
+    },
+    "packageTours": {
+      "type": "json"
+    },
+    "smallTrips": {
+      "type": "json"
+    },
+    "catalogTabs": {
+      "type": "json"
+    },
+    "catalogViewMoreLabel": {
+      "type": "string"
+    },
+    "catalogViewLessLabel": {
+      "type": "string"
+    },
+    "catalogInitialVisibleCount": {
+      "type": "integer"
+    }
+  }
+}

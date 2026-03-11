@@ -1,0 +1,1239 @@
+---
+import "../../../styles/global.css";
+import fallbackToursData from "../../../data/tours.detail.es.json";
+import Ribbon from "../../../components/shared/Ribbon.astro";
+
+type SupportedLang = "es" | "en";
+
+const STRAPI_BASE_URLS = Array.from(
+  new Set([
+    import.meta.env.PUBLIC_STRAPI_URL,
+    import.meta.env.STRAPI_INTERNAL_URL,
+    "http://backend:1337",
+    "http://localhost:1337"
+  ].filter(Boolean))
+);
+const STRAPI_TOUR_ENDPOINT = "/api/tour-detalles";
+
+const getLocales = (lang: SupportedLang) =>
+  lang === "en"
+    ? (["en", "en-US", null] as const)
+    : (["es-PE", "es", null] as const);
+
+function localePrefix(locale: string | null) {
+  return locale ? `locale=${encodeURIComponent(locale)}&` : "";
+}
+
+function normalizeRow(row: any) {
+  return row?.attributes ?? row ?? null;
+}
+
+export async function getStaticPaths() {
+  const strapiBaseUrls = Array.from(
+    new Set([
+      import.meta.env.PUBLIC_STRAPI_URL,
+      import.meta.env.STRAPI_INTERNAL_URL,
+      "http://backend:1337",
+      "http://localhost:1337"
+    ].filter(Boolean))
+  );
+  const strapiEndpoint = "/api/tour-detalles";
+
+  const fallbackPaths = fallbackToursData.tours.flatMap((item) => [
+    {
+      params: {
+        lang: "es",
+        tour: String(item.slug).toLowerCase()
+      }
+    },
+    {
+      params: {
+        lang: "en",
+        tour: String(item.slug).toLowerCase()
+      }
+    }
+  ]);
+
+  const strapiPaths: Array<{
+    params: { lang: SupportedLang; tour: string };
+  }> = [];
+  const strapiSeen = new Set<string>();
+  const langs: SupportedLang[] = ["es", "en"];
+
+  for (const lang of langs) {
+    for (const baseUrl of strapiBaseUrls) {
+      for (const locale of getLocales(lang)) {
+        const localePart = locale ? `locale=${encodeURIComponent(locale)}&` : "";
+        const url =
+          `${baseUrl}${strapiEndpoint}?${localePart}` +
+          "fields[0]=slug&pagination[pageSize]=200";
+
+        try {
+          const res = await fetch(url);
+          if (!res.ok) continue;
+
+          const json = await res.json();
+          const rows = Array.isArray(json?.data) ? json.data : [];
+          rows.forEach((row: any) => {
+            const attrs = row?.attributes ?? row;
+            const tour = String(attrs?.slug ?? "").toLowerCase();
+            if (!tour) return;
+
+            const key = `${lang}::${tour}`;
+            if (strapiSeen.has(key)) return;
+            strapiSeen.add(key);
+            strapiPaths.push({ params: { lang, tour } });
+          });
+
+          if (strapiPaths.length > 0) break;
+        } catch {
+          // Try next locale / URL.
+        }
+      }
+
+      if (strapiPaths.length > 0) break;
+    }
+  }
+
+  const merged: Array<{
+    params: { lang: SupportedLang; tour: string };
+  }> = [];
+  const mergedSeen = new Set<string>();
+  [...fallbackPaths, ...strapiPaths].forEach((entry) => {
+    const key = `${entry.params.lang}::${entry.params.tour}`;
+    if (mergedSeen.has(key)) return;
+    mergedSeen.add(key);
+    merged.push(entry);
+  });
+
+  return merged;
+}
+
+const rawLang = (Astro.params.lang ?? "es").toLowerCase();
+const lang: SupportedLang = rawLang === "en" ? "en" : "es";
+const tourSlug = String(Astro.params.tour ?? "").toLowerCase();
+
+if (rawLang !== lang) {
+  return Astro.redirect(`/${lang}/tours/${tourSlug}`);
+}
+
+const fallbackTour = fallbackToursData.tours.find(
+  (item) => String(item.slug).toLowerCase() === tourSlug
+);
+
+let strapiTourRaw: Record<string, any> | null = null;
+for (const baseUrl of STRAPI_BASE_URLS) {
+  for (const locale of getLocales(lang)) {
+    const localePart = localePrefix(locale);
+    const url =
+      `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
+      `filters[slug][$eq]=${encodeURIComponent(tourSlug)}&` +
+      "pagination[pageSize]=1";
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) continue;
+
+      const json = await res.json();
+      const rows = Array.isArray(json?.data) ? json.data : [];
+      const first = rows[0];
+      const attrs = normalizeRow(first);
+      if (attrs) {
+        strapiTourRaw = attrs;
+        break;
+      }
+    } catch {
+      // Try next locale / URL.
+    }
+  }
+
+  if (strapiTourRaw) break;
+}
+
+if (!fallbackTour && !strapiTourRaw) {
+  return Astro.redirect(`/${lang}/destinos`);
+}
+
+const sourceTour = strapiTourRaw ?? fallbackTour ?? {};
+const tourMeta = sourceTour.meta ?? sourceTour.metatitle ?? fallbackTour?.meta ?? {};
+const tourHero = sourceTour.hero ?? fallbackTour?.hero ?? {};
+const tourSummary = sourceTour.summary ?? fallbackTour?.summary ?? {};
+const tourAtGlance = sourceTour.atGlance ?? fallbackTour?.atGlance ?? {};
+const tourReviewsBand =
+  sourceTour.reviewsBand ??
+  sourceTour.reviwesBand ??
+  fallbackTour?.reviewsBand ??
+  {};
+const itineraryRibbon =
+  sourceTour.itineraryRibbon ??
+  fallbackTour?.itineraryRibbon ??
+  (lang === "en" ? "Sample Itinerary" : "Sample Itinerary");
+
+const tourData = {
+  ...sourceTour,
+  meta: tourMeta,
+  hero: tourHero,
+  summary: tourSummary,
+  atGlance: tourAtGlance,
+  reviewsBand: tourReviewsBand,
+  itineraryRibbon
+};
+
+const pageTitle =
+  tourData.meta?.title ??
+  tourData.title ??
+  (lang === "en" ? "Tour Details" : "Detalle de tour");
+const pageDescription =
+  tourData.meta?.description ??
+  tourData.description ??
+  (lang === "en"
+    ? "Tour detail placeholder."
+    : "Detalle del tour en construccion.");
+const heroTitle = tourData.meta?.title ?? tourData.hero?.title ?? pageTitle;
+const canonical = `${Astro.url.origin}/${lang}/tours/${tourSlug}`;
+const heroSlides = Array.isArray(tourData.hero?.slides) ? tourData.hero.slides : [];
+const summaryBullets = Array.isArray(tourData.summary?.bullets)
+  ? tourData.summary.bullets
+  : [];
+const defaultFeatureTitles =
+  lang === "en"
+    ? ["Avoid the crowds", "Authentic experiences", "Total flexibility"]
+    : ["Eviten las multitudes", "Experiencias autenticas", "Flexibilidad total"];
+const defaultFeatureDescriptions =
+  lang === "en"
+    ? [
+        "Optimized routes so you can explore beyond the typical tourist spots.",
+        "Connect with local culture and hidden treasures.",
+        "Customize your trip to match your style, budget and dates."
+      ]
+    : [
+        "Itinerarios optimizados para explorar mas alla de los lugares tipicos.",
+        "Conecten con la cultura local y los tesoros escondidos.",
+        "Personalicen su viaje para ajustarlo a su estilo, presupuesto y fechas."
+      ];
+const rawFeatureItems = Array.isArray(tourData.summary?.featureItems)
+  ? tourData.summary.featureItems
+  : [];
+const summaryFeatureItems =
+  rawFeatureItems.length > 0
+    ? rawFeatureItems
+    : defaultFeatureTitles.map((title, index) => ({
+        title,
+        description: summaryBullets[index] ?? defaultFeatureDescriptions[index]
+      }));
+const summaryIntro =
+  tourData.summary?.intro ??
+  (lang === "en"
+    ? "Live Peru your way with tours designed by experts for a truly personal experience."
+    : "Vivan Peru a su manera con tours disenados por expertos para una experiencia verdaderamente personal.");
+const summaryImage =
+  tourData.summary?.image ??
+  "https://images.unsplash.com/photo-1531968455001-5c5272a41129?auto=format&fit=crop&w=900&q=80";
+const summaryImageAlt =
+  tourData.summary?.imageAlt ??
+  (lang === "en"
+    ? "Travel experience in Peru"
+    : "Experiencia de viaje en Peru");
+const summaryCtaUrl = tourData.summary?.ctaUrl ?? "#";
+const stickyBooking = sourceTour.bookingCta ?? fallbackTour?.bookingCta ?? {};
+const stickyBookingTitle =
+  stickyBooking.title ?? (lang === "en" ? "BOOK NOW" : "RESERVA AHORA");
+const stickyBookingPrice =
+  stickyBooking.price ??
+  (lang === "en" ? "From USD 320 per person" : "Desde USD 320 por persona");
+const stickyBookingDuration =
+  stickyBooking.duration ??
+  (lang === "en" ? "Duration: 6 days" : "Duracion: 6 dias");
+const stickyBookingButton =
+  stickyBooking.buttonLabel ??
+  (lang === "en" ? "Reserve online" : "Reservar online");
+const stickyBookingAvailability =
+  stickyBooking.availabilityLabel ??
+  (lang === "en" ? "Real-time availability" : "Disponibilidad en tiempo real");
+const stickyBookingMonth =
+  stickyBooking.monthLabel ?? (lang === "en" ? "March 2026" : "Marzo 2026");
+const stickyCalendarLocale = lang === "en" ? "en-US" : "es-PE";
+const stickyCalendarStart = stickyBooking.calendarStart ?? "2026-03";
+const stickyCalendarWeekdays = Array.isArray(stickyBooking.weekdays)
+  ? stickyBooking.weekdays
+  : lang === "en"
+    ? ["M", "T", "W", "Th", "F", "S", "S"]
+    : ["L", "M", "X", "Ju", "V", "S", "D"];
+const stickyCalendarAvailableDays = Array.isArray(stickyBooking.availableDays)
+  ? stickyBooking.availableDays
+  : [1, 2, 4, 6, 7, 8, 9, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29];
+const descriptionSection = tourData.summary?.descriptionSection ?? {};
+const descriptionTitle =
+  descriptionSection.title ?? (lang === "en" ? "Description" : "Descripcion");
+const descriptionLead =
+  descriptionSection.lead ??
+  (lang === "en"
+    ? "Discover the soul of the Andes with our authentic Peru tour in 8 days. This itinerary is crafted for travelers looking for deep cultural experiences and real local encounters."
+    : "Descubran el alma verdadera de los Andes con nuestro tour autentico por Peru en 8 dias. Este itinerario esta disenado para viajeros que buscan experiencias culturales profundas y vivencias locales reales.");
+const descriptionDetails = Array.isArray(descriptionSection.details)
+  ? descriptionSection.details
+  : [
+      {
+        title: "Experiencia autentica en Lima y Cusco",
+        text: "El viaje comienza en Lima, donde la herencia colonial se fusiona con la gastronomia contemporanea. En Cusco, priorizamos inmersion cultural y una adecuada aclimatacion."
+      },
+      {
+        title: "Valle Sagrado y Machu Picchu",
+        text: "El corazon del tour se encuentra en el Valle Sagrado. Visitamos Moray y Maras en horarios estrategicos para evitar multitudes, y continuamos con una visita guiada a Machu Picchu."
+      },
+      {
+        title: "Lago Titicaca y comunidades locales",
+        text: "Desde los Andes viajamos al Lago Titicaca para una experiencia unica de homestay en islas Uros y Taquile, compartiendo tradiciones ancestrales."
+      },
+      {
+        title: "Viaje sostenible por Peru",
+        text: "Disenamos itinerarios que minimizan impacto ambiental y benefician directamente a comunidades locales para un viaje autentico y seguro."
+      }
+    ];
+const descriptionReadMoreLabel =
+  descriptionSection.readMoreLabel ??
+  (lang === "en" ? "Read more" : "Leer mas");
+const descriptionReadLessLabel =
+  descriptionSection.readLessLabel ??
+  (lang === "en" ? "See less" : "Ver menos");
+const featuredSection = tourData.summary?.featuredSection ?? {};
+const featuredTitle =
+  featuredSection.title ?? (lang === "en" ? "Featured" : "Destacado");
+const fallbackFeaturedImages = [
+  {
+    src: "https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=1200&q=80",
+    alt: "Moray"
+  },
+  {
+    src: "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=1200&q=80",
+    alt: "Salineras"
+  },
+  {
+    src: "https://images.unsplash.com/photo-1531065208531-4036c0dba3ca?auto=format&fit=crop&w=1200&q=80",
+    alt: "Mercado local"
+  },
+  {
+    src: "https://images.unsplash.com/photo-1535868463750-c78d9543614f?auto=format&fit=crop&w=1200&q=80",
+    alt: "Llama"
+  },
+  {
+    src: "https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=1200&q=80",
+    alt: "Machu Picchu"
+  }
+];
+const featuredImagesRaw = Array.isArray(featuredSection.images)
+  ? featuredSection.images
+      .map((item: any, index: number) => {
+        if (typeof item === "string") {
+          return { src: item, alt: `Featured ${index + 1}` };
+        }
+        if (item?.src || item?.image || item?.url) {
+          return {
+            src: item.src ?? item.image ?? item.url,
+            alt: item.alt ?? item.title ?? `Featured ${index + 1}`
+          };
+        }
+        return null;
+      })
+      .filter(Boolean)
+  : [];
+const featuredImages =
+  featuredImagesRaw.length > 0 ? featuredImagesRaw : fallbackFeaturedImages;
+const itinerarySection = sourceTour.itinerary ?? fallbackTour?.itinerary ?? {};
+const itineraryTitle =
+  itinerarySection.title ??
+  (lang === "en" ? "Detailed Itinerary" : "Itinerario detallado");
+const itineraryDayLabel = lang === "en" ? "Day" : "Dia";
+const itineraryExpandLabel =
+  itinerarySection.expandLabel ??
+  (lang === "en" ? "View full itinerary" : "Ver itinerario completo");
+const itineraryCollapseLabel =
+  itinerarySection.collapseLabel ??
+  (lang === "en" ? "Show less" : "Ver menos");
+const itineraryImagePool =
+  heroSlides.length > 0
+    ? heroSlides
+        .map((slide: any) => slide?.image)
+        .filter((value: any) => Boolean(value))
+    : [
+        "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1531065208531-4036c0dba3ca?auto=format&fit=crop&w=1200&q=80"
+      ];
+const defaultItineraryItems =
+  lang === "en"
+    ? [
+        {
+          title: "Arrival in Puno and optional city visit",
+          highlight: "Today highlight: city viewpoints and local gastronomy.",
+          description:
+            "We receive you at your hotel and begin with a soft introduction to Puno, including scenic stops and local culture.",
+          includes: ["Dinner included", "Night in Puno"]
+        },
+        {
+          title: "Uros floating islands and transfer to Amantani",
+          highlight: "Today highlight: first contact with Titicaca communities.",
+          description:
+            "Navigate Lake Titicaca, visit Uros and continue to Amantani for a cultural immersion with local families.",
+          includes: ["Boat transfer", "Night in Amantani"]
+        },
+        {
+          title: "Sunrise in Amantani and visit to Taquile",
+          highlight: "Today highlight: Andean textile traditions and panoramic views.",
+          description:
+            "After sunrise over the lake, continue to Taquile Island to learn about local weaving culture and lifestyle.",
+          includes: ["Breakfast and lunch", "Night in Puno"]
+        },
+        {
+          title: "Sillustani route and highland landscapes",
+          highlight: "Today highlight: pre-Inca funerary towers and Umayo lagoon.",
+          description:
+            "Explore Sillustani archaeological complex and surrounding landscapes before returning to Puno.",
+          includes: ["Guided visit", "Night in Puno"]
+        }
+      ]
+    : [
+        {
+          title: "Llegada a Puno y recorrido opcional por la ciudad",
+          highlight:
+            "El destacado de hoy: miradores, centro historico y gastronomia local.",
+          description:
+            "Te recibimos en Puno y empezamos con un recorrido suave por la ciudad para conocer su historia, plazas y mejores vistas.",
+          includes: ["Cena incluida", "Noche en Puno"]
+        },
+        {
+          title: "Islas flotantes de Uros y traslado a Amantani",
+          highlight:
+            "El destacado de hoy: primer contacto con las comunidades del Titicaca.",
+          description:
+            "Navegamos por el Lago Titicaca, visitamos Uros y continuamos hacia Amantani para una experiencia cultural con familias locales.",
+          includes: ["Traslado en bote", "Noche en Amantani"]
+        },
+        {
+          title: "Amanecer en Amantani y visita a Taquile",
+          highlight:
+            "El destacado de hoy: tradiciones textiles andinas y vistas panoramicas.",
+          description:
+            "Luego del amanecer en el lago, visitamos la isla Taquile para conocer su cultura textil y su forma de vida comunitaria.",
+          includes: ["Desayuno y almuerzo", "Noche en Puno"]
+        },
+        {
+          title: "Ruta Sillustani y paisajes del altiplano",
+          highlight:
+            "El destacado de hoy: chullpas preincas y laguna Umayo.",
+          description:
+            "Recorremos el complejo arqueologico de Sillustani y sus alrededores antes de regresar a Puno.",
+          includes: ["Visita guiada", "Noche en Puno"]
+        }
+      ];
+const rawItineraryItems = Array.isArray(itinerarySection.items)
+  ? itinerarySection.items
+  : [];
+const atGlanceAsItinerary = Array.isArray(tourData.atGlance?.items)
+  ? tourData.atGlance.items.map((item: any) => ({
+      title: item.location ?? item.title ?? "",
+      highlight: item.nights ? `${item.nights}` : "",
+      description: item.summary ?? item.detail ?? "",
+      includes: item.nights ? [String(item.nights)] : []
+    }))
+  : [];
+const itineraryBaseItems =
+  rawItineraryItems.length > 0
+    ? rawItineraryItems
+    : atGlanceAsItinerary.length > 0
+      ? atGlanceAsItinerary
+      : defaultItineraryItems;
+const itineraryItems = itineraryBaseItems.map((item: any, index: number) => ({
+  title:
+    item?.title ??
+    item?.name ??
+    (lang === "en" ? `Itinerary day ${index + 1}` : `Actividad del dia ${index + 1}`),
+  highlight:
+    item?.highlight ??
+    item?.subtitle ??
+    (lang === "en" ? "Personalized activity schedule." : "Actividad personalizada del dia."),
+  description:
+    item?.description ??
+    item?.detail ??
+    item?.summary ??
+    (lang === "en"
+      ? "Private activities and logistics coordinated for your travel rhythm."
+      : "Actividades privadas y logistica coordinada segun tu ritmo de viaje."),
+  includes: Array.isArray(item?.includes)
+    ? item.includes
+    : item?.includes
+      ? [String(item.includes)]
+      : [],
+  optional: item?.optional ?? "",
+  image:
+    item?.image ??
+    item?.imageUrl ??
+    item?.photo ??
+    itineraryImagePool[index % itineraryImagePool.length],
+  imageAlt:
+    item?.imageAlt ??
+    item?.title ??
+    (lang === "en" ? `Day ${index + 1}` : `Dia ${index + 1}`)
+}));
+const reviewBrands = Array.isArray(tourData.reviewsBand?.brands)
+  ? tourData.reviewsBand.brands
+  : ["Trustpilot", "Google Reviews", "Yelp"];
+const prevLabel = lang === "en" ? "Previous" : "Anterior";
+const nextLabel = lang === "en" ? "Next" : "Siguiente";
+---
+
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Lato:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style is:global>
+      body.tour-detail {
+        font-family: "Lato", sans-serif;
+        font-weight: 300;
+      }
+
+      body.tour-detail main {
+        font-family: "Lato", sans-serif;
+      }
+
+      body.tour-detail main p,
+      body.tour-detail main li,
+      body.tour-detail main span {
+        font-family: "Lato", sans-serif;
+        font-weight: 300 !important;
+        letter-spacing: 0.01em;
+      }
+
+      body.tour-detail main a,
+      body.tour-detail main button {
+        font-family: "Lato", sans-serif;
+        font-weight: 400 !important;
+        letter-spacing: 0.02em;
+      }
+
+      body.tour-detail main h1,
+      body.tour-detail main h2,
+      body.tour-detail main h3,
+      body.tour-detail main h4 {
+        font-family: "Cormorant Garamond", serif;
+        font-weight: 600 !important;
+        letter-spacing: 0.01em;
+      }
+
+      body.tour-detail main h1 {
+        font-style: italic;
+        font-weight: 700 !important;
+      }
+
+      body.tour-detail [data-tour-slide] p {
+        font-size: clamp(1.25rem, 2vw, 2rem);
+        font-weight: 400 !important;
+      }
+
+      body.tour-detail [data-booking-card] p,
+      body.tour-detail [data-booking-card] span,
+      body.tour-detail [data-booking-card] button {
+        font-family: "Lato", sans-serif;
+        font-weight: 400 !important;
+      }
+
+      body.tour-detail [data-booking-card] a,
+      body.tour-detail [data-itinerary-expand],
+      body.tour-detail [data-description-toggle] {
+        font-weight: 500 !important;
+        letter-spacing: 0.01em;
+      }
+    </style>
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonical} />
+  </head>
+  <body class="tour-detail min-h-screen bg-white text-gray-900">
+    <main>
+      <section class="relative w-full bg-black overflow-hidden min-h-[70vh]">
+        <div id="tour-carousel" class="relative h-[70vh] min-h-[520px] w-full">
+          <div class="relative h-full w-full overflow-hidden">
+            {
+              heroSlides.map((slide, index) => (
+                <div
+                  class={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                    index === 0
+                      ? "opacity-100"
+                      : "opacity-0 pointer-events-none"
+                  }`}
+                  data-tour-slide
+                >
+                  <img
+                    src={slide.image}
+                    alt={heroTitle}
+                    class="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div class="absolute inset-0 bg-black/45" />
+                  <div class="relative z-10 flex h-full items-center justify-center px-6 text-center text-white">
+                    <div class="max-w-3xl">
+                      <h1
+                        class="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight mb-4 md:mb-6 lg:mb-8 italic"
+                        style="font-family: 'Cormorant Garamond', serif;"
+                      >
+                        {heroTitle}
+                      </h1>
+                      <p class="text-sm md:text-base lg:text-lg text-white leading-relaxed">
+                        {tourData.hero?.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+
+          <button
+            type="button"
+            class="absolute left-0 top-1/2 z-20 -translate-y-1/2 px-4 py-2 text-white/90 hover:text-white transition"
+            data-tour-prev
+            aria-label={prevLabel}
+          >
+            <svg
+              class="h-8 w-8"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M15 19 8 12l7-7"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="absolute right-0 top-1/2 z-20 -translate-y-1/2 px-4 py-2 text-white/90 hover:text-white transition"
+            data-tour-next
+            aria-label={nextLabel}
+          >
+            <svg
+              class="h-8 w-8"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="m9 5 7 7-7 7"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+            </svg>
+          </button>
+        </div>
+      </section>
+
+      <section class="bg-[#f5f0e9]">
+        <div
+          class="mx-auto grid w-full max-w-7xl gap-10 px-6 py-14 md:grid-cols-[1.3fr_0.9fr] lg:gap-16 lg:py-20"
+        >
+          <div>
+            <h2
+              class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight"
+            >
+              {tourData.summary?.title}
+            </h2>
+            <p class="mt-4 text-sm md:text-base text-gray-700 max-w-2xl">
+              {summaryIntro}
+            </p>
+
+            <div class="mt-8 space-y-6">
+              {
+                summaryFeatureItems.map((item, index) => (
+                  <div class="flex items-start gap-3">
+                    <span class="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-orange-500 text-orange-500">
+                      {
+                        index === 0 ? (
+                          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" aria-hidden="true">
+                            <path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                          </svg>
+                        ) : index === 1 ? (
+                          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" aria-hidden="true">
+                            <path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9L12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" aria-hidden="true">
+                            <path d="M4 18v-1a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v1M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm8 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                          </svg>
+                        )
+                      }
+                    </span>
+                    <div>
+                      <p class="text-lg font-semibold text-gray-900 leading-snug">
+                        {item.title}
+                      </p>
+                      <p class="mt-1 text-sm md:text-base text-gray-700 leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              }
+            </div>
+
+            <a
+              href={summaryCtaUrl}
+              class="mt-8 inline-flex items-center justify-center bg-orange-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-orange-700"
+            >
+              {tourData.summary?.ctaLabel}
+            </a>
+          </div>
+
+          <aside class="self-center">
+            <div class="overflow-hidden">
+              <img
+                src={summaryImage}
+                alt={summaryImageAlt}
+                class="h-full w-full object-cover"
+              />
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="bg-[#f5f0e9]">
+        <div class="mx-auto grid w-full max-w-[1160px] gap-10 px-6 pb-16 pt-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-8">
+          <div class="min-w-0">
+            <section class="pb-16 md:pb-20">
+              <div class="mx-auto max-w-4xl text-center">
+                <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900">
+                  {descriptionTitle}
+                </h2>
+                <p class="mx-auto mt-5 max-w-3xl text-base md:text-xl leading-relaxed text-gray-800">
+                  {descriptionLead}
+                </p>
+
+                <div
+                  class="mt-12 hidden space-y-10"
+                  data-description-extra
+                  aria-hidden="true"
+                >
+                  {
+                    descriptionDetails.map((item) => (
+                      <article class="mx-auto max-w-3xl">
+                        <h3 class="text-2xl md:text-3xl font-bold text-gray-900">
+                          {item.title}
+                        </h3>
+                        <p class="mt-3 text-base md:text-lg leading-relaxed text-gray-800">
+                          {item.text}
+                        </p>
+                      </article>
+                    ))
+                  }
+                </div>
+
+                <button
+                  type="button"
+                  class="mt-6 inline-flex items-center justify-center text-lg font-medium text-orange-500 transition hover:text-orange-600"
+                  data-description-toggle
+                  data-label-more={descriptionReadMoreLabel}
+                  data-label-less={descriptionReadLessLabel}
+                  aria-expanded="false"
+                >
+                  {descriptionReadMoreLabel}
+                </button>
+              </div>
+            </section>
+
+            <section class="pb-14 md:pb-20">
+              <h2 class="mb-6 text-center text-4xl md:text-5xl font-extrabold text-gray-900">
+                {featuredTitle}
+              </h2>
+
+              <div class="space-y-2">
+                <div class="grid gap-2 sm:grid-cols-2">
+                  {
+                    featuredImages.slice(0, 2).map((item) => (
+                      <article class="relative overflow-hidden h-48 md:h-56">
+                        <img src={item.src} alt={item.alt} class="h-full w-full object-cover" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent"></div>
+                      </article>
+                    ))
+                  }
+                </div>
+                <div class="grid gap-2 sm:grid-cols-3">
+                  {
+                    featuredImages.slice(2, 5).map((item) => (
+                      <article class="relative overflow-hidden h-44 md:h-52">
+                        <img src={item.src} alt={item.alt} class="h-full w-full object-cover" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent"></div>
+                      </article>
+                    ))
+                  }
+                </div>
+              </div>
+            </section>
+
+            <section class="pb-16 md:pb-20">
+              <h2 class="text-3xl md:text-4xl font-bold text-gray-900">
+                {itineraryTitle}
+              </h2>
+
+              <div class="mt-8 border-t border-gray-300">
+                {
+                  itineraryItems.map((item, index) => (
+                    <article class="border-b border-gray-200 py-4" data-itinerary-item data-index={index}>
+                      <button
+                        type="button"
+                        class="flex w-full items-start gap-4 text-left"
+                        data-itinerary-trigger
+                        data-index={index}
+                        aria-expanded={index === 0 ? "true" : "false"}
+                      >
+                        <span class="mt-0.5 inline-flex shrink-0 items-center gap-2 text-orange-600">
+                          <span class="text-base font-semibold">{itineraryDayLabel}</span>
+                          <span class="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-orange-500 px-1 text-xs font-bold leading-none">
+                            {index + 1}
+                          </span>
+                        </span>
+                        <span class="pt-0.5 text-base md:text-lg font-semibold text-gray-900">
+                          {item.title}
+                        </span>
+                      </button>
+
+                      <div class={`${index === 0 ? "mt-4" : "mt-4 hidden"}`} data-itinerary-panel>
+                        <div class="pl-0 md:pl-24">
+                          <img
+                            src={item.image}
+                            alt={item.imageAlt}
+                            class="h-44 w-full max-w-lg object-cover md:h-52"
+                          />
+                          <p class="mt-4 text-sm md:text-base font-semibold text-gray-900">
+                            {item.highlight}
+                          </p>
+                          <p class="mt-3 text-sm md:text-base leading-relaxed text-gray-700">
+                            {item.description}
+                          </p>
+
+                          {
+                            item.includes.length > 0 && (
+                              <ul class="mt-4 space-y-1 text-sm md:text-base text-gray-700">
+                                {item.includes.map((entry: string) => (
+                                  <li class="flex items-start gap-2">
+                                    <span class="mt-0.5 text-orange-500">+</span>
+                                    <span>{entry}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            )
+                          }
+
+                          {
+                            item.optional && (
+                              <p class="mt-4 text-sm md:text-base text-gray-700">
+                                {item.optional}
+                              </p>
+                            )
+                          }
+                        </div>
+                      </div>
+                    </article>
+                  ))
+                }
+              </div>
+
+              {
+                itineraryItems.length > 1 && (
+                  <div class="mt-8 flex justify-center">
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center border border-orange-500 px-7 py-3 text-sm font-semibold text-orange-500 transition hover:bg-orange-500 hover:text-white"
+                      data-itinerary-expand
+                      data-label-more={itineraryExpandLabel}
+                      data-label-less={itineraryCollapseLabel}
+                      aria-expanded="false"
+                    >
+                      {itineraryExpandLabel}
+                    </button>
+                  </div>
+                )
+              }
+            </section>
+
+            <section>
+              <div class="grid gap-10 lg:grid-cols-[1.2fr_1fr] lg:py-6">
+                <div>
+                  <h2
+                    class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic"
+                    style="font-family: 'Cormorant Garamond', serif;"
+                  >
+                    {tourData.reviewsBand?.title ?? "5-Star Reviews"}
+                  </h2>
+                  <p
+                    class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed max-w-2xl"
+                  >
+                    {tourData.reviewsBand?.description ??
+                      (lang === "en"
+                        ? "Find out why our travelers consistently rate us with 5 stars."
+                        : "Conoce por que nuestros viajeros nos califican consistentemente con 5 estrellas.")}
+                  </p>
+                </div>
+                <div
+                  class="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-center sm:justify-items-center"
+                >
+                  {
+                    reviewBrands.map((brand) => (
+                      <div class="text-center text-[#032b43]">
+                        <p class="text-lg md:text-xl font-semibold leading-snug">
+                          {brand}
+                        </p>
+                        <p class="text-sm md:text-base font-semibold tracking-wide">
+                          *****
+                        </p>
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <aside class="mt-6 lg:mt-0 lg:sticky lg:top-24" data-booking-card>
+            <div class="mx-auto w-full max-w-sm overflow-hidden rounded-2xl border border-[#d8dde4] bg-white shadow-[0_16px_32px_rgba(15,23,42,0.12)]">
+              <div class="border-b border-[#d8dde4] bg-[#f6f8fb] px-5 py-3">
+                <p class="text-[1.05rem] font-semibold uppercase tracking-[0.08em] text-[#1f2937]">
+                  {stickyBookingTitle}
+                </p>
+                <div class="mt-2 h-[2px] w-20 bg-[#bcc6d3]"></div>
+              </div>
+
+              <div class="space-y-2 px-5 py-4 text-slate-900">
+                <p class="text-[1.05rem] leading-snug text-[#2f3947]">{stickyBookingPrice}</p>
+                <p class="text-[1.9rem] leading-[0.95] tracking-tight text-[#111827]">
+                  {stickyBookingDuration}
+                </p>
+
+                <div class="mt-2 flex items-center justify-between gap-3">
+                  <a
+                    href={summaryCtaUrl}
+                    class="inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#08263a] px-4 text-[0.86rem] font-medium leading-tight tracking-normal text-white transition hover:bg-[#0d3148]"
+                  >
+                    {stickyBookingButton}
+                  </a>
+                  <div class="flex max-w-[132px] items-center gap-1 text-[0.84rem] leading-[1.1] text-[#16a34a]">
+                    <span class="mt-0.5 text-base">&#10003;</span>
+                    <span>{stickyBookingAvailability}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="border-t border-[#d8dde4] px-5 py-4"
+                data-booking-calendar
+                data-locale={stickyCalendarLocale}
+                data-start={stickyCalendarStart}
+                data-available-days={JSON.stringify(stickyCalendarAvailableDays)}
+              >
+                <div class="flex items-center justify-between border-y border-[#e2e8f0] py-3">
+                  <p class="text-[1.1rem] text-[#1f2937]" data-calendar-title>
+                    {stickyBookingMonth}
+                  </p>
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      class="inline-flex h-7 w-7 items-center justify-center rounded border border-[#cbd5e1] text-base leading-none text-[#334155] transition hover:bg-slate-100"
+                      data-calendar-prev
+                      aria-label={lang === "en" ? "Previous month" : "Mes anterior"}
+                    >
+                      &#8249;
+                    </button>
+                    <button
+                      type="button"
+                      class="inline-flex h-7 w-7 items-center justify-center rounded border border-[#cbd5e1] text-base leading-none text-[#334155] transition hover:bg-slate-100"
+                      data-calendar-next
+                      aria-label={lang === "en" ? "Next month" : "Mes siguiente"}
+                    >
+                      &#8250;
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] uppercase tracking-wide text-[#64748b]">
+                  {
+                    stickyCalendarWeekdays.map((weekday) => (
+                      <span>{weekday}</span>
+                    ))
+                  }
+                </div>
+                <div class="mt-2 grid grid-cols-7 gap-1 text-center text-xs" data-calendar-grid>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <Ribbon
+        text={itineraryRibbon}
+        backgroundClass="bg-[#032b43]"
+        maxWidthClass="max-w-7xl"
+        paddingClass="py-12"
+        textClass="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight italic"
+        textStyle="font-family: 'Cormorant Garamond', serif;"
+      />
+    </main>
+
+    <script is:inline>
+      (() => {
+        const slides = Array.from(
+          document.querySelectorAll("[data-tour-slide]")
+        );
+        const prev = document.querySelector("[data-tour-prev]");
+        const next = document.querySelector("[data-tour-next]");
+        if (slides.length) {
+          let current = 0;
+          const show = (index) => {
+            current = (index + slides.length) % slides.length;
+            slides.forEach((slide, i) => {
+              const active = i === current;
+              slide.classList.toggle("opacity-100", active);
+              slide.classList.toggle("opacity-0", !active);
+              slide.classList.toggle("pointer-events-none", !active);
+            });
+          };
+
+          let interval = setInterval(() => show(current + 1), 3000);
+          const reset = () => {
+            clearInterval(interval);
+            interval = setInterval(() => show(current + 1), 3000);
+          };
+
+          prev?.addEventListener("click", () => {
+            show(current - 1);
+            reset();
+          });
+
+          next?.addEventListener("click", () => {
+            show(current + 1);
+            reset();
+          });
+        }
+
+        const descriptionToggle = document.querySelector(
+          "[data-description-toggle]"
+        );
+        const descriptionExtra = document.querySelector(
+          "[data-description-extra]"
+        );
+        if (descriptionToggle && descriptionExtra) {
+          const moreLabel =
+            descriptionToggle.getAttribute("data-label-more") || "Leer mas";
+          const lessLabel =
+            descriptionToggle.getAttribute("data-label-less") || "Ver menos";
+
+          descriptionToggle.addEventListener("click", () => {
+            const expanded =
+              descriptionToggle.getAttribute("aria-expanded") === "true";
+            descriptionToggle.setAttribute("aria-expanded", String(!expanded));
+            descriptionExtra.classList.toggle("hidden", expanded);
+            descriptionExtra.setAttribute("aria-hidden", String(expanded));
+            descriptionToggle.textContent = expanded ? moreLabel : lessLabel;
+          });
+        }
+
+        const itineraryEntries = Array.from(
+          document.querySelectorAll("[data-itinerary-item]")
+        );
+        const itineraryExpand = document.querySelector("[data-itinerary-expand]");
+        if (itineraryEntries.length) {
+          const setSingleOpen = (activeIndex) => {
+            itineraryEntries.forEach((entry, index) => {
+              const panel = entry.querySelector("[data-itinerary-panel]");
+              const trigger = entry.querySelector("[data-itinerary-trigger]");
+              const isActive = index === activeIndex;
+              panel?.classList.toggle("hidden", !isActive);
+              trigger?.setAttribute("aria-expanded", String(isActive));
+            });
+          };
+
+          setSingleOpen(0);
+
+          itineraryEntries.forEach((entry, index) => {
+            const trigger = entry.querySelector("[data-itinerary-trigger]");
+            trigger?.addEventListener("click", () => {
+              setSingleOpen(index);
+              if (itineraryExpand) {
+                const moreLabel =
+                  itineraryExpand.getAttribute("data-label-more") ||
+                  "Ver itinerario completo";
+                itineraryExpand.setAttribute("aria-expanded", "false");
+                itineraryExpand.textContent = moreLabel;
+              }
+            });
+          });
+
+          if (itineraryExpand) {
+            const moreLabel =
+              itineraryExpand.getAttribute("data-label-more") ||
+              "Ver itinerario completo";
+            const lessLabel =
+              itineraryExpand.getAttribute("data-label-less") || "Ver menos";
+
+            itineraryExpand.addEventListener("click", () => {
+              const expanded =
+                itineraryExpand.getAttribute("aria-expanded") === "true";
+
+              if (expanded) {
+                setSingleOpen(0);
+                itineraryExpand.setAttribute("aria-expanded", "false");
+                itineraryExpand.textContent = moreLabel;
+                return;
+              }
+
+              itineraryEntries.forEach((entry) => {
+                const panel = entry.querySelector("[data-itinerary-panel]");
+                const trigger = entry.querySelector("[data-itinerary-trigger]");
+                panel?.classList.remove("hidden");
+                trigger?.setAttribute("aria-expanded", "true");
+              });
+
+              itineraryExpand.setAttribute("aria-expanded", "true");
+              itineraryExpand.textContent = lessLabel;
+            });
+          }
+        }
+
+        const calendarRoot = document.querySelector("[data-booking-calendar]");
+        if (calendarRoot) {
+          const titleEl = calendarRoot.querySelector("[data-calendar-title]");
+          const gridEl = calendarRoot.querySelector("[data-calendar-grid]");
+          const prevBtn = calendarRoot.querySelector("[data-calendar-prev]");
+          const nextBtn = calendarRoot.querySelector("[data-calendar-next]");
+          const locale = calendarRoot.getAttribute("data-locale") || "es-PE";
+          const startValue = calendarRoot.getAttribute("data-start") || "2026-03";
+          const [startYearRaw, startMonthRaw] = startValue.split("-");
+          const startYear = Number(startYearRaw) || 2026;
+          const startMonth = Number(startMonthRaw) || 3;
+          let viewDate = new Date(startYear, startMonth - 1, 1);
+          let selectedDate = null;
+
+          let baseAvailableDays = [];
+          try {
+            baseAvailableDays = JSON.parse(
+              calendarRoot.getAttribute("data-available-days") || "[]"
+            );
+          } catch {
+            baseAvailableDays = [];
+          }
+          if (!Array.isArray(baseAvailableDays) || !baseAvailableDays.length) {
+            baseAvailableDays = [1, 2, 4, 6, 7, 8, 9, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29];
+          }
+
+          const toMonthTitle = (date) => {
+            const monthName = date.toLocaleDateString(locale, { month: "long" });
+            const normalizedMonth =
+              monthName.charAt(0).toUpperCase() + monthName.slice(1);
+            return `${normalizedMonth} ${date.getFullYear()}`;
+          };
+
+          const getAvailableSet = (year, monthIndex) => {
+            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+            return new Set(
+              baseAvailableDays
+                .map((day, index) =>
+                  (((Number(day) + (monthIndex + year + index)) - 1) % daysInMonth) + 1
+                )
+                .filter((day, index, arr) => arr.indexOf(day) === index)
+            );
+          };
+
+          const renderCalendar = () => {
+            if (!titleEl || !gridEl) return;
+
+            const year = viewDate.getFullYear();
+            const month = viewDate.getMonth();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const prevMonthDays = new Date(year, month, 0).getDate();
+            const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+            const availableSet = getAvailableSet(year, month);
+
+            titleEl.textContent = toMonthTitle(viewDate);
+            gridEl.innerHTML = "";
+
+            for (let i = 0; i < firstWeekday; i += 1) {
+              const dayNumber = prevMonthDays - firstWeekday + i + 1;
+              const prevDay = document.createElement("span");
+              prevDay.textContent = String(dayNumber);
+              prevDay.className =
+                "inline-flex h-8 items-center justify-center rounded text-xs text-[#94a3b8] bg-[#f1f5f9]";
+              gridEl.appendChild(prevDay);
+            }
+
+            for (let day = 1; day <= daysInMonth; day += 1) {
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.textContent = String(day);
+              btn.className =
+                "inline-flex h-8 items-center justify-center rounded text-xs font-medium transition";
+
+              const isAvailable = availableSet.has(day);
+              if (isAvailable) {
+                btn.classList.add(
+                  "bg-[#1a9c64]",
+                  "text-white",
+                  "hover:bg-[#158353]"
+                );
+              } else {
+                btn.classList.add("bg-gray-100", "text-gray-600", "hover:bg-gray-200");
+              }
+
+              const isSelected =
+                selectedDate &&
+                selectedDate.getFullYear() === year &&
+                selectedDate.getMonth() === month &&
+                selectedDate.getDate() === day;
+              if (isSelected) {
+                btn.classList.add("ring-2", "ring-[#032b43]");
+              }
+
+              btn.addEventListener("click", () => {
+                selectedDate = new Date(year, month, day);
+                renderCalendar();
+              });
+
+              gridEl.appendChild(btn);
+            }
+
+            const totalCells = firstWeekday + daysInMonth;
+            const trailingCells = (7 - (totalCells % 7)) % 7;
+            for (let i = 1; i <= trailingCells; i += 1) {
+              const nextDay = document.createElement("span");
+              nextDay.textContent = String(i);
+              nextDay.className =
+                "inline-flex h-8 items-center justify-center rounded text-xs text-[#94a3b8] bg-[#f1f5f9]";
+              gridEl.appendChild(nextDay);
+            }
+          };
+
+          prevBtn?.addEventListener("click", () => {
+            viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
+            renderCalendar();
+          });
+
+          nextBtn?.addEventListener("click", () => {
+            viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
+            renderCalendar();
+          });
+
+          renderCalendar();
+        }
+      })();
+    </script>
+  </body>
+</html>
