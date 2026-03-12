@@ -6,7 +6,7 @@ services:
   # -----------------------------------------------------------
   postgres:
     image: postgres:14.22-alpine3.22
-    container_name: incas_db
+    container_name: incas_db_test
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -22,7 +22,7 @@ services:
   # -----------------------------------------------------------
   backend:
     image: node:24
-    container_name: incas_backend
+    container_name: incas_backend_test
     restart: unless-stopped
     working_dir: /srv/app
     volumes:
