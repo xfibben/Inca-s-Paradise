@@ -42,7 +42,7 @@ services:
       DATABASE_PASSWORD: ${DB_PASSWORD}
       NODE_ENV: production
       PUBLIC_URL: ${PUBLIC_URL}
-      STRAPI_URL: http://backend:1337
+      STRAPI_URL: http://backend:1336
       ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
       API_TOKEN_SALT: ${API_TOKEN_SALT}
       APP_KEYS: ${APP_KEYS}
@@ -56,7 +56,7 @@ services:
     networks:
       - incas_network
     expose:
-      - "1337"
+      - "1336"
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,7 +75,7 @@ services:
       - frontend_dist:/srv/app/dist
     environment:
       NODE_ENV: production
-      STRAPI_URL: http://backend:1337
+      STRAPI_URL: http://backend:1336
       PUBLIC_STRAPI_URL: ${PUBLIC_STRAPI_URL}
     command: >
       sh -c "
@@ -86,7 +86,7 @@ services:
     networks:
       - incas_network
     expose:
-      - "4321"
+      - "4320"
     depends_on:
       - backend
 

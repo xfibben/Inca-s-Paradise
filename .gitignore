@@ -7,6 +7,7 @@ yarn-error.log
 .env
 .env.local
 .env.prod
+.env.prod.example
 
 # Ignorar la base de datos física de Docker
 docker-data/
