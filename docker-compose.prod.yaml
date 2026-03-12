@@ -81,7 +81,7 @@ services:
       sh -c "
       npm install --legacy-peer-deps &&
       npm run build &&
-      npm run preview -- --host 0.0.0.0
+      npm run preview
       "
     networks:
       - incas_network
