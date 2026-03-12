@@ -41,6 +41,7 @@ services:
       DATABASE_USERNAME: ${DB_USER}
       DATABASE_PASSWORD: ${DB_PASSWORD}
       NODE_ENV: production
+      PORT: 1336
       PUBLIC_URL: ${PUBLIC_URL}
       STRAPI_URL: http://backend:1336
       ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
