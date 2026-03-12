@@ -39,6 +39,10 @@ services:
       DATABASE_USERNAME: ${DB_USER}
       DATABASE_PASSWORD: ${DB_PASSWORD}
       NODE_ENV: ${NODE_ENV}
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+      API_TOKEN_SALT: ${API_TOKEN_SALT}
+      APP_KEYS: ${APP_KEYS}
+      JWT_SECRET: ${JWT_SECRET}
     # Auto-instalador con vacuna para Mac (.DS_Store)
     command: >
       sh -c "
