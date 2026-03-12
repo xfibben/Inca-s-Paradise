@@ -12,6 +12,8 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5431:5431"
     networks:
       - incas_network
     healthcheck:
@@ -34,7 +36,7 @@ services:
     environment:
       DATABASE_CLIENT: postgres
       DATABASE_HOST: postgres
-      DATABASE_PORT: ${DATABASE_PORT}
+      DATABASE_PORT: 5432
       DATABASE_NAME: ${DB_NAME}
       DATABASE_USERNAME: ${DB_USER}
       DATABASE_PASSWORD: ${DB_PASSWORD}
