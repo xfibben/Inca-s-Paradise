@@ -35,7 +35,12 @@ Para mantener **consistencia y simplificar** el desarrollo, este proyecto utiliz
 - **Color:** `text-gray-900`
 
 ```html
-<h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8">
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
+</head>
+<h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 style="font-family: 'Playfair Display', serif; font-style: italic;">
   Título Principal
 </h1>
 ```
