@@ -82,7 +82,7 @@ services:
       sh -c "
       npm install --legacy-peer-deps &&
       npm run build &&
-      npm run preview -- --port 4320
+      npm run preview -- --port 4320 --host 0.0.0.0
       "
     networks:
       - incas_network
