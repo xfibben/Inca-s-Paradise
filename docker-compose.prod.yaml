@@ -1,0 +1,101 @@
+services:
+  # -----------------------------------------------------------
+  # 1. BASE DE DATOS (PostgreSQL) - PRODUCCIÓN
+  # -----------------------------------------------------------
+  postgres:
+    image: postgres:14.22-alpine3.22
+    container_name: incas_db_prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - incas_network
+    ports:
+      - "127.0.0.1:5432:5432"  # Solo acceso local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -----------------------------------------------------------
+  # 2. BACKEND Y CMS (Strapi) - PRODUCCIÓN
+  # -----------------------------------------------------------
+  backend:
+    image: node:24-alpine
+    container_name: incas_backend_prod
+    restart: always
+    working_dir: /srv/app
+    volumes:
+      - ./backend:/srv/app
+      - backend_node_modules:/srv/app/node_modules
+    environment:
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DB_NAME}
+      DATABASE_USERNAME: ${DB_USER}
+      DATABASE_PASSWORD: ${DB_PASSWORD}
+      NODE_ENV: production
+      PUBLIC_URL: ${PUBLIC_URL}
+      STRAPI_URL: http://backend:1337
+      ADMIN_JWT_SECRET: ${ADMIN_JWT_SECRET}
+      API_TOKEN_SALT: ${API_TOKEN_SALT}
+      APP_KEYS: ${APP_KEYS}
+      JWT_SECRET: ${JWT_SECRET}
+    command: >
+      sh -c "
+      npm install &&
+      npm run build &&
+      npm run start
+      "
+    networks:
+      - incas_network
+    expose:
+      - "1337"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # -----------------------------------------------------------
+  # 3. FRONTEND (Astro) - PRODUCCIÓN
+  # -----------------------------------------------------------
+  frontend:
+    image: node:24-alpine
+    container_name: incas_frontend_prod
+    restart: always
+    working_dir: /srv/app
+    volumes:
+      - ./frontend:/srv/app
+      - frontend_node_modules:/srv/app/node_modules
+      - frontend_dist:/srv/app/dist
+    environment:
+      NODE_ENV: production
+      STRAPI_URL: http://backend:1337
+      PUBLIC_STRAPI_URL: ${PUBLIC_STRAPI_URL}
+    command: >
+      sh -c "
+      npm install --legacy-peer-deps &&
+      npm run build &&
+      npm run preview -- --host 0.0.0.0
+      "
+    networks:
+      - incas_network
+    expose:
+      - "4321"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  backend_node_modules:
+  frontend_node_modules:
+  frontend_dist:
+
+networks:
+  incas_network:
+    driver: bridge

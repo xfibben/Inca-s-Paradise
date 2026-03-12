@@ -6,6 +6,7 @@ yarn-error.log
 # Ignorar variables de entorno (contraseñas)
 .env
 .env.local
+.env.prod
 
 # Ignorar la base de datos física de Docker
 docker-data/
