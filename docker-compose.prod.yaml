@@ -56,8 +56,8 @@ services:
       "
     networks:
       - incas_network
-    expose:
-      - "1336"
+    ports:
+      - "0.0.0.0:1336:1336"
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,8 +86,8 @@ services:
       "
     networks:
       - incas_network
-    expose:
-      - "4320"
+    ports:
+      - "0.0.0.0:4320:4320"
     depends_on:
       - backend
 
