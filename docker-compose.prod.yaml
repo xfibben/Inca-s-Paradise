@@ -14,8 +14,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - incas_network
-    ports:
-      - "127.0.0.1:5431:5431"  # Solo acceso local
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
@@ -36,7 +34,7 @@ services:
     environment:
       DATABASE_CLIENT: postgres
       DATABASE_HOST: postgres
-      DATABASE_PORT: 5431
+      DATABASE_PORT: ${DATABASE_PORT}
       DATABASE_NAME: ${DB_NAME}
       DATABASE_USERNAME: ${DB_USER}
       DATABASE_PASSWORD: ${DB_PASSWORD}
