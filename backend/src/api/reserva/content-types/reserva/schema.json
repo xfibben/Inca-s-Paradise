@@ -1,0 +1,104 @@
+{
+  "kind": "collectionType",
+  "collectionName": "reservas",
+  "info": {
+    "singularName": "reserva",
+    "pluralName": "reservas",
+    "displayName": "Reserva"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": false
+    }
+  },
+  "attributes": {
+    "usuario": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "required": false
+    },
+    "tour": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::tour-detalle.tour-detalle",
+      "required": true
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "telefono": {
+      "type": "string",
+      "required": true
+    },
+    "fecha_inicio": {
+      "type": "datetime",
+      "required": true
+    },
+    "fecha_fin": {
+      "type": "datetime",
+      "required": true
+    },
+    "cantidad_adultos": {
+      "type": "integer",
+      "required": true,
+      "default": 1,
+      "min": 1
+    },
+    "cantidad_ninos": {
+      "type": "integer",
+      "required": true,
+      "default": 0,
+      "min": 0
+    },
+    "monto_unitario_adulto": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "monto_unitario_nino": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "descuento": {
+      "type": "decimal",
+      "required": false,
+      "default": 0,
+      "min": 0
+    },
+    "monto_subtotal": {
+      "type": "decimal",
+      "required": false
+    },
+    "igv_porcentaje": {
+      "type": "decimal",
+      "required": true,
+      "default": 18,
+      "min": 0,
+      "max": 100
+    },
+    "monto_final": {
+      "type": "decimal",
+      "required": false
+    },
+    "estado": {
+      "type": "enumeration",
+      "enum": [
+        "pendiente",
+        "confirmada",
+        "cancelada"
+      ],
+      "default": "pendiente",
+      "required": true
+    },
+    "notas": {
+      "type": "text",
+      "required": false
+    }
+  }
+}
