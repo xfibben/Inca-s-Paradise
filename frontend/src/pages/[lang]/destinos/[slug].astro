@@ -3,6 +3,8 @@ import { getTranslation } from "../../../i18n";
 import "../../../styles/global.css";
 import DestinationsGallery from "../../../components/LandingPage/DestinationsGallery.astro";
 import Ribbon from "../../../components/shared/Ribbon.astro";
+import Navbar from "../../../components/shared/Navbar.astro";
+import Footer from "../../../components/shared/Footer.astro";
 import destinosDetailEs from "../../../data/destinos.detail.es.json";
 import destinosDetailEn from "../../../data/destinos.detail.en.json";
 
@@ -31,6 +33,20 @@ function normalizeRow(row: any) {
   return row?.attributes ?? row ?? null;
 }
 
+function toAbsoluteMediaUrl(url: string | null | undefined) {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+
+  const publicBase =
+    import.meta.env.PUBLIC_STRAPI_URL ??
+    import.meta.env.STRAPI_PUBLIC_URL ??
+    import.meta.env.PUBLIC_BACKEND_URL ??
+    "http://localhost:1337";
+  const normalizedBase = String(publicBase).replace(/\/$/, "");
+  const normalizedPath = String(url).startsWith("/") ? String(url) : `/${url}`;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
 async function fetchStrapiDetailBySlug(
   slugValue: string,
   locales: readonly (string | null)[]
@@ -40,7 +56,10 @@ async function fetchStrapiDetailBySlug(
       const localePart = localePrefix(locale);
       const url =
         `${baseUrl}${STRAPI_DETAIL_ENDPOINT}?${localePart}` +
-        `filters[slug][$eq]=${encodeURIComponent(slugValue)}&pagination[pageSize]=1`;
+        `filters[slug][$eq]=${encodeURIComponent(slugValue)}&pagination[pageSize]=1&` +
+        `populate[heroSlideImages][fields][0]=url&` +
+        `populate[heroSlideImages][fields][1]=alternativeText&` +
+        `populate[heroSlideImages][fields][2]=formats`;
 
       try {
         const res = await fetch(url);
@@ -50,7 +69,7 @@ async function fetchStrapiDetailBySlug(
         const rows = Array.isArray(json?.data) ? json.data : [];
         const first = rows[0];
         const attrs = normalizeRow(first);
-        if (attrs) return attrs;
+        if (attrs) return { ...attrs, __fetchedBaseUrl: baseUrl };
       } catch {
         // Try next locale / URL.
       }
@@ -167,10 +186,51 @@ const pageDescription =
     ? "Destination page placeholder."
     : "Vista de destino en construccion.");
 const canonical = `${Astro.url.origin}/${lang}/destinos/${slugKey || ""}`;
-const slides =
+const strapiSlideText =
   Array.isArray(strapiDetail?.heroSlides) && strapiDetail.heroSlides.length > 0
     ? strapiDetail.heroSlides
-    : hero?.slides ?? [];
+    : [];
+const strapiSlideImagesRaw = Array.isArray(strapiDetail?.heroSlideImages?.data)
+  ? strapiDetail.heroSlideImages.data
+  : Array.isArray(strapiDetail?.heroSlideImages)
+    ? strapiDetail.heroSlideImages
+    : [];
+const strapiSlidesFromMedia = strapiSlideImagesRaw
+  .map((item: any, index: number) => {
+    const media = item?.attributes ?? item ?? {};
+    const mediaUrl =
+      media?.formats?.large?.url ??
+      media?.formats?.medium?.url ??
+      media?.formats?.small?.url ??
+      media?.url ??
+      "";
+    const image = toAbsoluteMediaUrl(mediaUrl);
+    if (!image) return null;
+
+    return {
+      image,
+      title: strapiSlideText[index]?.title ?? pageTitle,
+      description: strapiSlideText[index]?.description ?? "",
+      alt: media?.alternativeText ?? strapiSlideText[index]?.title ?? pageTitle
+    };
+  })
+  .filter(Boolean);
+const strapiSlidesFromJson = strapiSlideText
+  .map((slide: any) => {
+    const image = toAbsoluteMediaUrl(slide?.image);
+    if (!image) return null;
+    return {
+      ...slide,
+      image
+    };
+  })
+  .filter(Boolean);
+const slides =
+  strapiSlidesFromMedia.length > 0
+    ? strapiSlidesFromMedia
+    : strapiSlidesFromJson.length > 0
+      ? strapiSlidesFromJson
+      : hero?.slides ?? [];
 const introTitle =
   strapiDetail?.introTitle ??
   intro?.title ??
@@ -328,6 +388,8 @@ const highlightText = (text: string, words: string[] = []) => {
 		<link rel="canonical" href={canonical} />
 	</head>
 	<body class="min-h-screen bg-white text-gray-900">
+		<script is:inline src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
+		<Navbar {t} currentLang={lang} />
 		<main>
 			<section class="relative w-full bg-black overflow-hidden h-screen min-h-screen">
 				<div id="destino-carousel" class="relative h-full w-full" data-carousel="slide">
@@ -342,7 +404,7 @@ const highlightText = (text: string, words: string[] = []) => {
 							>
 								<img
 									src={slide.image}
-									alt={slide.title || pageTitle}
+									alt={slide.alt || slide.title || pageTitle}
 									class="absolute inset-0 h-full w-full object-cover object-center scale-[1.02]"
 								/>
 								<div class="absolute inset-0 bg-black/40"></div>
@@ -364,7 +426,7 @@ const highlightText = (text: string, words: string[] = []) => {
 											</svg>
 										</div>
 										{slide.title ? (
-											<h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight mb-4 md:mb-6 lg:mb-8 italic drop-shadow-sm">
+											<h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight mb-4 md:mb-6 lg:mb-8 italic drop-shadow-sm" style="font-family: 'Playfair Display', serif;">
 												{slide.title}
 											</h1>
 										) : null}
@@ -686,7 +748,7 @@ const highlightText = (text: string, words: string[] = []) => {
 				maxWidthClass="max-w-6xl"
 			/>
 
-			<DestinationsGallery t={t} />
+			<DestinationsGallery t={t} currentLang={lang} />
 
 			<section class="bg-white">
 				<div class="mx-auto w-full max-w-6xl px-6 py-12 md:py-14 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
@@ -702,6 +764,7 @@ const highlightText = (text: string, words: string[] = []) => {
 				</div>
 			</section>
 		</main>
+		<Footer currentLang={lang} {t} />
 		<script is:inline>
 			(() => {
 				const slides = Array.from(document.querySelectorAll("[data-carousel-item]"));

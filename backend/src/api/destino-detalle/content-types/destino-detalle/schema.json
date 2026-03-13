@@ -34,6 +34,18 @@
     "heroSlides": {
       "type": "json"
     },
+    "heroSlideImages": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images"
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
     "introTitle": {
       "type": "string"
     },
