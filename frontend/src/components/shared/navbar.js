@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateNavbarStyle() {
     if (!navbar) return;
+    // Don't update if a dropdown is open
+    if (isAnyDropdownOpen()) return;
+    
     if (window.scrollY > 50) {
       navbar.classList.remove('bg-transparent');
       navbar.classList.add('bg-white', 'shadow-md');
@@ -65,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
     mobileMenu?.classList.toggle('hidden');
     mobileBackdrop?.classList.toggle('hidden');
     if (!mobileMenu?.classList.contains('hidden')) {
-      navbar?.classList.add('bg-white', 'shadow-md');
+      navbar?.classList.add('bg-white', 'shadow-md', 'menu-open');
       navbar?.classList.remove('bg-transparent');
       document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
         el.classList.remove('text-white', 'hover:text-gray-300');
@@ -73,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       setContactBtn(true);
     } else if (window.scrollY <= 50) {
-      navbar?.classList.remove('bg-white', 'shadow-md');
+      navbar?.classList.remove('bg-white', 'shadow-md', 'menu-open');
       navbar?.classList.add('bg-transparent');
       document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
         el.classList.remove('text-gray-900', 'hover:text-gray-600');
@@ -86,9 +89,21 @@ document.addEventListener('DOMContentLoaded', function () {
   mobileBackdrop?.addEventListener('click', () => {
     mobileMenu?.classList.add('hidden');
     mobileBackdrop?.classList.add('hidden');
+    navbar?.classList.remove('menu-open');
   });
 
   // ── Helper: hover dropdown con timeout ───────────────────────────────────
+  let activeDropdown = null; // Track which dropdown is open
+
+  function isAnyDropdownOpen() {
+    const allDropdowns = [
+      document.getElementById('megamenu-dropdown'),
+      document.getElementById('styles-dropdown'),
+      document.getElementById('sustainability-dropdown')
+    ];
+    return allDropdowns.some(dd => dd && !dd.classList.contains('hidden'));
+  }
+
   function makeDropdown(containerId, dropdownId) {
     const container = document.getElementById(containerId);
     const dropdown = document.getElementById(dropdownId);
@@ -98,6 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const open = () => {
       clearTimeout(timeout);
+      activeDropdown = dropdownId;
       dropdown.classList.remove('hidden');
       navbar.classList.add('bg-white', 'shadow-md');
       navbar.classList.remove('bg-transparent');
@@ -110,7 +126,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const close = () => {
       timeout = setTimeout(() => {
         dropdown.classList.add('hidden');
-        if (window.scrollY <= 50) {
+        // Only revert navbar if NO dropdowns are open
+        if (!isAnyDropdownOpen() && window.scrollY <= 50) {
           navbar.classList.remove('bg-white', 'shadow-md');
           navbar.classList.add('bg-transparent');
           document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
@@ -118,6 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
             el.classList.add('text-white', 'hover:text-gray-300');
           });
         }
+        activeDropdown = null;
       }, 200);
     };
 

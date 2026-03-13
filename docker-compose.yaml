@@ -77,5 +77,5 @@ services:
       if [ ! -f package.json ]; then
         npx create-astro@latest . --template minimal --install --no-git --yes;
       fi;
-      npm install && npm run dev -- --host 0.0.0.0
+      npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0
       "
