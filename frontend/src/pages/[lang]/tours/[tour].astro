@@ -1,7 +1,10 @@
 ---
+import { getTranslation } from "../../../i18n";
 import "../../../styles/global.css";
 import fallbackToursData from "../../../data/tours.detail.es.json";
 import Ribbon from "../../../components/shared/Ribbon.astro";
+import Navbar from "../../../components/shared/Navbar.astro";
+import Footer from "../../../components/shared/Footer.astro";
 
 type SupportedLang = "es" | "en";
 
@@ -26,6 +29,20 @@ function localePrefix(locale: string | null) {
 
 function normalizeRow(row: any) {
   return row?.attributes ?? row ?? null;
+}
+
+function toAbsoluteMediaUrl(url: string | null | undefined) {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+
+  const publicBase =
+    import.meta.env.PUBLIC_STRAPI_URL ??
+    import.meta.env.STRAPI_PUBLIC_URL ??
+    import.meta.env.PUBLIC_BACKEND_URL ??
+    "http://localhost:1337";
+  const normalizedBase = String(publicBase).replace(/\/$/, "");
+  const normalizedPath = String(url).startsWith("/") ? String(url) : `/${url}`;
+  return `${normalizedBase}${normalizedPath}`;
 }
 
 export async function getStaticPaths() {
@@ -112,6 +129,7 @@ export async function getStaticPaths() {
 const rawLang = (Astro.params.lang ?? "es").toLowerCase();
 const lang: SupportedLang = rawLang === "en" ? "en" : "es";
 const tourSlug = String(Astro.params.tour ?? "").toLowerCase();
+const t = getTranslation(lang);
 
 if (rawLang !== lang) {
   return Astro.redirect(`/${lang}/tours/${tourSlug}`);
@@ -128,7 +146,10 @@ for (const baseUrl of STRAPI_BASE_URLS) {
     const url =
       `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
       `filters[slug][$eq]=${encodeURIComponent(tourSlug)}&` +
-      "pagination[pageSize]=1";
+      "pagination[pageSize]=1&" +
+      "populate[heroSlideImages][fields][0]=url&" +
+      "populate[heroSlideImages][fields][1]=alternativeText&" +
+      "populate[heroSlideImages][fields][2]=formats";
 
     try {
       const res = await fetch(url);
@@ -139,7 +160,7 @@ for (const baseUrl of STRAPI_BASE_URLS) {
       const first = rows[0];
       const attrs = normalizeRow(first);
       if (attrs) {
-        strapiTourRaw = attrs;
+        strapiTourRaw = { ...attrs, __fetchedBaseUrl: baseUrl };
         break;
       }
     } catch {
@@ -191,7 +212,44 @@ const pageDescription =
     : "Detalle del tour en construccion.");
 const heroTitle = tourData.meta?.title ?? tourData.hero?.title ?? pageTitle;
 const canonical = `${Astro.url.origin}/${lang}/tours/${tourSlug}`;
-const heroSlides = Array.isArray(tourData.hero?.slides) ? tourData.hero.slides : [];
+const heroSlidesFromJson = Array.isArray(tourData.hero?.slides)
+  ? tourData.hero.slides
+      .map((slide: any) => ({
+        ...slide,
+        image: toAbsoluteMediaUrl(slide?.image)
+      }))
+      .filter((slide: any) => Boolean(slide?.image))
+  : [];
+const heroSlidesMediaRaw = Array.isArray(strapiTourRaw?.heroSlideImages?.data)
+  ? strapiTourRaw.heroSlideImages.data
+  : Array.isArray(strapiTourRaw?.heroSlideImages)
+    ? strapiTourRaw.heroSlideImages
+    : [];
+const heroSlidesFromMedia = heroSlidesMediaRaw
+  .map((item: any, index: number) => {
+    const media = item?.attributes ?? item ?? {};
+    const mediaUrl =
+      media?.formats?.large?.url ??
+      media?.formats?.medium?.url ??
+      media?.formats?.small?.url ??
+      media?.url ??
+      "";
+    const image = toAbsoluteMediaUrl(mediaUrl);
+    if (!image) return null;
+    return {
+      image,
+      title: heroSlidesFromJson[index]?.title ?? heroTitle,
+      description:
+        heroSlidesFromJson[index]?.description ?? tourData.hero?.description ?? "",
+      alt:
+        media?.alternativeText ??
+        heroSlidesFromJson[index]?.title ??
+        heroTitle
+    };
+  })
+  .filter(Boolean);
+const heroSlides =
+  heroSlidesFromMedia.length > 0 ? heroSlidesFromMedia : heroSlidesFromJson;
 const summaryBullets = Array.isArray(tourData.summary?.bullets)
   ? tourData.summary.bullets
   : [];
@@ -221,6 +279,40 @@ const summaryFeatureItems =
         title,
         description: summaryBullets[index] ?? defaultFeatureDescriptions[index]
       }));
+const highlightsPanel = sourceTour.highlightsPanel ?? fallbackTour?.highlightsPanel ?? {};
+const highlightsTitle =
+  highlightsPanel.title ??
+  (lang === "en"
+    ? "Experts in personalized city tours"
+    : "Expertos en tours personalizados por Peru");
+const highlightsLead =
+  highlightsPanel.lead ??
+  (lang === "en"
+    ? "Travel at your own pace with a tour designed by local experts, ideal for discovering culture, history and landscapes without complications."
+    : "Vive el destino a tu manera con un tour disenado por expertos locales, ideal para descubrir cultura, historia y paisajes sin complicaciones.");
+const highlightsQuestion =
+  highlightsPanel.question ??
+  (lang === "en" ? "Why choose this tour?" : "Por que elegir este tour?");
+const rawHighlightsItems = Array.isArray(highlightsPanel.items)
+  ? highlightsPanel.items
+  : [];
+const highlightsItems =
+  rawHighlightsItems.length > 0
+    ? rawHighlightsItems
+    : summaryFeatureItems.slice(0, 3).map((item) => ({
+        title: item.title,
+        description: item.description
+      }));
+const highlightsImage =
+  highlightsPanel.image ??
+  tourData.summary?.image ??
+  "https://images.unsplash.com/photo-1531968455001-5c5272a41129?auto=format&fit=crop&w=900&q=80";
+const highlightsImageAlt =
+  highlightsPanel.imageAlt ??
+  (lang === "en" ? "City tour experience" : "Experiencia de tour personalizado");
+const highlightsCtaLabel =
+  highlightsPanel.ctaLabel ??
+  (lang === "en" ? "Customize your trip" : "Personalicen su viaje");
 const summaryIntro =
   tourData.summary?.intro ??
   (lang === "en"
@@ -492,65 +584,19 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Lato:wght@300;400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap"
       rel="stylesheet"
     />
     <style is:global>
       body.tour-detail {
-        font-family: "Lato", sans-serif;
-        font-weight: 300;
-      }
-
-      body.tour-detail main {
-        font-family: "Lato", sans-serif;
-      }
-
-      body.tour-detail main p,
-      body.tour-detail main li,
-      body.tour-detail main span {
-        font-family: "Lato", sans-serif;
-        font-weight: 300 !important;
-        letter-spacing: 0.01em;
-      }
-
-      body.tour-detail main a,
-      body.tour-detail main button {
-        font-family: "Lato", sans-serif;
-        font-weight: 400 !important;
-        letter-spacing: 0.02em;
-      }
-
-      body.tour-detail main h1,
-      body.tour-detail main h2,
-      body.tour-detail main h3,
-      body.tour-detail main h4 {
-        font-family: "Cormorant Garamond", serif;
-        font-weight: 600 !important;
-        letter-spacing: 0.01em;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+          "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+          sans-serif;
       }
 
       body.tour-detail main h1 {
+        font-family: "Playfair Display", serif;
         font-style: italic;
-        font-weight: 700 !important;
-      }
-
-      body.tour-detail [data-tour-slide] p {
-        font-size: clamp(1.25rem, 2vw, 2rem);
-        font-weight: 400 !important;
-      }
-
-      body.tour-detail [data-booking-card] p,
-      body.tour-detail [data-booking-card] span,
-      body.tour-detail [data-booking-card] button {
-        font-family: "Lato", sans-serif;
-        font-weight: 400 !important;
-      }
-
-      body.tour-detail [data-booking-card] a,
-      body.tour-detail [data-itinerary-expand],
-      body.tour-detail [data-description-toggle] {
-        font-weight: 500 !important;
-        letter-spacing: 0.01em;
       }
     </style>
     <title>{pageTitle}</title>
@@ -558,6 +604,8 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
     <link rel="canonical" href={canonical} />
   </head>
   <body class="tour-detail min-h-screen bg-white text-gray-900">
+    <script is:inline src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
+    <Navbar {t} currentLang={lang} />
     <main>
       <section class="relative w-full bg-black overflow-hidden min-h-[70vh]">
         <div id="tour-carousel" class="relative h-[70vh] min-h-[520px] w-full">
@@ -574,7 +622,7 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
                 >
                   <img
                     src={slide.image}
-                    alt={heroTitle}
+                    alt={slide.alt || heroTitle}
                     class="absolute inset-0 h-full w-full object-cover"
                   />
                   <div class="absolute inset-0 bg-black/45" />
@@ -582,7 +630,7 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
                     <div class="max-w-3xl">
                       <h1
                         class="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight mb-4 md:mb-6 lg:mb-8 italic"
-                        style="font-family: 'Cormorant Garamond', serif;"
+                        style="font-family: 'Playfair Display', serif;"
                       >
                         {heroTitle}
                       </h1>
@@ -645,7 +693,7 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
         >
           <div>
             <h2
-              class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight"
+              class="text-4xl md:text-5xl font-bold text-gray-900 leading-tight"
             >
               {tourData.summary?.title}
             </h2>
@@ -708,11 +756,63 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
       </section>
 
       <section class="bg-[#f5f0e9]">
-        <div class="mx-auto grid w-full max-w-[1160px] gap-10 px-6 pb-16 pt-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-8">
+        <div class="mx-auto grid w-full max-w-7xl gap-10 px-6 pb-16 pt-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-8">
           <div class="min-w-0">
+            <section class="pb-12 md:pb-14">
+              <div class="grid gap-6 border border-[#e2e8f0] bg-white p-4 shadow-sm md:grid-cols-[240px_1fr] md:gap-8 md:p-6">
+                <div class="overflow-hidden">
+                  <img
+                    src={highlightsImage}
+                    alt={highlightsImageAlt}
+                    class="h-full min-h-[280px] w-full object-cover"
+                  />
+                </div>
+
+                <div>
+                  <h2 class="text-3xl leading-tight text-[#1f2937] md:text-4xl">
+                    {highlightsTitle}
+                  </h2>
+                  <p class="mt-3 text-sm leading-relaxed text-[#4b5563] md:text-base">
+                    {highlightsLead}
+                  </p>
+
+                  <h3 class="mt-5 text-xl uppercase tracking-wide text-[#1f2937] md:text-2xl">
+                    {highlightsQuestion}
+                  </h3>
+
+                  <div class="mt-4 space-y-4">
+                    {
+                      highlightsItems.map((item, index) => (
+                        <article class="flex items-start gap-3">
+                          <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-orange-500 text-orange-500">
+                            {index + 1}
+                          </span>
+                          <div>
+                            <p class="text-base text-[#111827] md:text-lg">
+                              {item.title}
+                            </p>
+                            <p class="text-sm leading-relaxed text-[#4b5563] md:text-base">
+                              {item.description}
+                            </p>
+                          </div>
+                        </article>
+                      ))
+                    }
+                  </div>
+
+                  <a
+                    href={summaryCtaUrl}
+                    class="mt-6 inline-flex items-center justify-center bg-orange-600 px-5 py-2.5 text-sm text-white transition hover:bg-orange-700"
+                  >
+                    {highlightsCtaLabel}
+                  </a>
+                </div>
+              </div>
+            </section>
+
             <section class="pb-16 md:pb-20">
               <div class="mx-auto max-w-4xl text-center">
-                <h2 class="text-4xl md:text-5xl font-extrabold text-gray-900">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900">
                   {descriptionTitle}
                 </h2>
                 <p class="mx-auto mt-5 max-w-3xl text-base md:text-xl leading-relaxed text-gray-800">
@@ -752,7 +852,7 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
             </section>
 
             <section class="pb-14 md:pb-20">
-              <h2 class="mb-6 text-center text-4xl md:text-5xl font-extrabold text-gray-900">
+              <h2 class="mb-6 text-center text-4xl md:text-5xl font-bold text-gray-900">
                 {featuredTitle}
               </h2>
 
@@ -871,7 +971,7 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
                 <div>
                   <h2
                     class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic"
-                    style="font-family: 'Cormorant Garamond', serif;"
+                    style="font-family: 'Playfair Display', serif;"
                   >
                     {tourData.reviewsBand?.title ?? "5-Star Reviews"}
                   </h2>
@@ -905,7 +1005,7 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
           </div>
 
           <aside class="mt-6 lg:mt-0 lg:sticky lg:top-24" data-booking-card>
-            <div class="mx-auto w-full max-w-sm overflow-hidden rounded-2xl border border-[#d8dde4] bg-white shadow-[0_16px_32px_rgba(15,23,42,0.12)]">
+            <div class="mx-auto w-full max-w-sm overflow-hidden border border-[#d8dde4] bg-white shadow-[0_16px_32px_rgba(15,23,42,0.12)]">
               <div class="border-b border-[#d8dde4] bg-[#f6f8fb] px-5 py-3">
                 <p class="text-[1.05rem] font-semibold uppercase tracking-[0.08em] text-[#1f2937]">
                   {stickyBookingTitle}
@@ -985,9 +1085,10 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
         maxWidthClass="max-w-7xl"
         paddingClass="py-12"
         textClass="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight italic"
-        textStyle="font-family: 'Cormorant Garamond', serif;"
+        textStyle="font-family: 'Playfair Display', serif;"
       />
     </main>
+    <Footer currentLang={lang} {t} />
 
     <script is:inline>
       (() => {

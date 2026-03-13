@@ -78,6 +78,18 @@
         }
       }
     },
+    "heroSlideImages": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images"
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
     "summary": {
       "type": "json",
       "pluginOptions": {
