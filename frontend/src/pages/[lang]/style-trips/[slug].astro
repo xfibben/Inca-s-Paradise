@@ -9,9 +9,13 @@ const { lang, slug } = Astro.params;
 const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
 const t = getTranslation(currentLang);
 
-const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
-const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = import.meta.env.STRAPI_URL;
+const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL;
 const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+
+console.log('=== STYLE-TRIPS PAGE ===');
+console.log('Slug:', slug);
+console.log('STRAPI_URL:', STRAPI_URL);
 
 function toSlug(name: string): string {
   return name
@@ -24,69 +28,63 @@ function toSlug(name: string): string {
 }
 
 let trip: any = null;
-try {
-  const res = await fetch(
-    `${STRAPI_URL}/api/style-trips?populate[0]=wallpaper&populate[1]=image&locale=${strapiLocale}&status=published`
-  );
-  if (res.ok) {
-    const json = await res.json();
-    trip = (json.data ?? []).find((item: any) => toSlug(item.name) === slug) ?? null;
-  }
-} catch (e) {}
-
-// 404 if not found
-if (!trip) {
-  return Astro.redirect(`/${currentLang}/style-trips`);
-}
-
-// Obtener tours relacionados al style-trip actual
 let relatedTours: any[] = [];
 let carouselTours: any[] = [];
+
 try {
-  const toursUrl = `${STRAPI_URL}/api/tour-detalles?populate[0]=styleTrips&locale=${strapiLocale}&status=published`;
-  console.log('[Style-Trips] Tours URL:', toursUrl);
+  const fetchUrl = `${STRAPI_URL}/api/style-trips?populate=*&locale=${strapiLocale}&status=published`;
+  console.log('Fetching from:', fetchUrl);
   
-  const toursRes = await fetch(toursUrl);
-  console.log('[Style-Trips] Tours Response Status:', toursRes.status);
+  const res = await fetch(fetchUrl);
+  console.log('Response status:', res.status);
   
-  if (toursRes.ok) {
-    const toursJson = await toursRes.json();
-    console.log('[Style-Trips] Tours Data Count:', toursJson.data?.length);
-    console.log('[Style-Trips] Trip ID:', trip.id);
+  if (res.ok) {
+    const json = await res.json();
+    const allTrips = json.data ?? [];
+    console.log('Total trips:', allTrips.length);
     
-    const allTours = toursJson.data ?? [];
+    const slugsAvailable = allTrips.map((t: any) => toSlug(t.name));
+    console.log('Available slugs:', slugsAvailable);
+    console.log('Looking for:', slug);
     
-    // Filtrar tours relacionados a este style-trip
-    const relatedToThisStyle = allTours.filter((tour: any) => 
-      tour.styleTrips && tour.styleTrips.some((st: any) => st.id === trip.id)
-    );
-    console.log('[Style-Trips] Related Tours Count:', relatedToThisStyle.length);
+    trip = allTrips.find((item: any) => toSlug(item.name) === slug) ?? null;
+    console.log('Found trip:', trip?.name);
     
-    // Small Trips: solo tours con showInStyles = true y tourType = "small_trip"
-    relatedTours = relatedToThisStyle.filter((tour: any) => 
-      tour.showInStyles === true && tour.tourType === 'small_trip'
-    );
-    console.log('[Style-Trips] Small Trips Count:', relatedTours.length);
-    
-    // Carousel: tours y packages (tourType = "tour" o "package")
-    carouselTours = relatedToThisStyle.filter((tour: any) => 
-      tour.tourType === 'tour' || tour.tourType === 'package'
-    );
-    console.log('[Style-Trips] Carousel Tours Count:', carouselTours.length);
-  } else {
-    const errorText = await toursRes.text();
-    console.log('[Style-Trips] Tours Error:', toursRes.status, errorText);
+    if (trip) {
+      const toursUrl = `${STRAPI_URL}/api/tour-detalles?populate=*&locale=${strapiLocale}&status=published`;
+      const toursRes = await fetch(toursUrl);
+      
+      if (toursRes.ok) {
+        const toursJson = await toursRes.json();
+        const allTours = toursJson.data ?? [];
+        
+        const relatedToThisStyle = allTours.filter((tour: any) => 
+          tour.styleTrips && tour.styleTrips.some((st: any) => st.id === trip.id)
+        );
+        
+        relatedTours = relatedToThisStyle.filter((tour: any) => 
+          tour.showInStyles === true && tour.tourType === 'small_trip'
+        );
+        
+        carouselTours = relatedToThisStyle.filter((tour: any) => 
+          tour.tourType === 'tour' || tour.tourType === 'package'
+        );
+        
+        console.log('Related tours:', relatedTours.length);
+        console.log('Carousel tours:', carouselTours.length);
+      }
+    }
   }
 } catch (e) {
-  console.log('[Style-Trips] Tours fetch exception:', e);
+  console.error('Error:', e);
 }
 
 // Usar wallpaper si existe, sino fallback a image
-const heroImage = (() => {
+const heroImage = trip ? (() => {
   const wp = Array.isArray(trip.wallpaper) ? trip.wallpaper[0] : trip.wallpaper;
   if (wp) return wp;
   return Array.isArray(trip.image) ? trip.image[0] : trip.image;
-})();
+})() : null;
 const heroImageUrl = heroImage?.formats?.large?.url
   ? `${STRAPI_PUBLIC_URL}${heroImage.formats.large.url}`
   : heroImage?.url
@@ -105,7 +103,7 @@ const heroImageUrl = heroImage?.formats?.large?.url
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
-    <title>{trip.name} — Inca's Paradise</title>
+    <title>{trip?.name || 'Style Trip'} — Inca's Paradise</title>
     <style>
       @media (max-width: 767px) {
         /* Gallery collage: stack vertically */
@@ -170,14 +168,14 @@ const heroImageUrl = heroImage?.formats?.large?.url
           class="text-4xl md:text-6xl font-bold mb-4"
           style="font-family: 'Playfair Display', serif; font-style: italic;"
         >
-          {trip.name}
+          {trip?.name || 'Style Trip'}
         </h1>
       </div>
     </header>
 
     <main class="bg-white pb-16 px-4 md:px-32">
       <div class="pt-12">
-        {trip.description && (
+        {trip?.description && (
           <p class="text-xl text-gray-700 leading-relaxed text-center">
             {trip.description}
           </p>
@@ -264,7 +262,7 @@ const heroImageUrl = heroImage?.formats?.large?.url
     )}
 
     <!-- Middle Description Section -->
-    {trip.middle_description && (
+    {trip?.middle_description && (
       <section class="bg-gray-50 py-12 md:py-20 px-4 md:px-16">
         <div class="max-w-4xl mx-auto text-center">
           <h2

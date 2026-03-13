@@ -8,8 +8,8 @@ interface Props {
 
 const { t, currentLang } = Astro.props;
 
-const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
-const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const STRAPI_URL = import.meta.env.STRAPI_URL;
+const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL;
 const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
 
 function toSlug(name: string): string {
@@ -19,9 +19,9 @@ function toSlug(name: string): string {
 let navStyleTrips: any[] = [];
 let navDestinations: any[] = [];
 try {
-  const styleUrl = `${STRAPI_URL}/api/style-trips?populate[0]=image&locale=${strapiLocale}&status=published`;
-  const destUrl = `${STRAPI_URL}/api/destino-detalles?populate[0]=*&locale=${strapiLocale}&status=published`;
-  const toursUrl = `${STRAPI_URL}/api/tour-detalles?populate[0]=destinos&locale=${strapiLocale}&status=published`;
+  const styleUrl = `${STRAPI_URL}/api/style-trips?populate=*&locale=${strapiLocale}&status=published`;
+  const destUrl = `${STRAPI_URL}/api/destino-detalles?populate=*&locale=${strapiLocale}&status=published`;
+  const toursUrl = `${STRAPI_URL}/api/tour-detalles?populate=*&locale=${strapiLocale}&status=published`;
   
   console.log('[Navbar] Fetching:', { styleUrl, destUrl, toursUrl });
   
@@ -39,12 +39,14 @@ try {
     const json = await styleRes.json();
     navStyleTrips = json.data ?? [];
     console.log('[Navbar] Style Trips Count:', navStyleTrips.length);
+    console.log('[Navbar] Style Trips Data:', navStyleTrips);
   }
   
   if (destRes.ok) {
     const json = await destRes.json();
     navDestinations = json.data ?? [];
     console.log('[Navbar] Destinations Count:', navDestinations.length);
+    console.log('[Navbar] Destinations Data:', navDestinations);
   }
   
   let navTours: any[] = [];
@@ -52,6 +54,7 @@ try {
     const json = await toursRes.json();
     navTours = json.data ?? [];
     console.log('[Navbar] Tours Count:', navTours.length);
+    console.log('[Navbar] Tours Data:', navTours);
   }
   
   // Agregar tours relacionados a cada destino
@@ -61,7 +64,11 @@ try {
       tour.destinos && tour.destinos.some((d: any) => d.id === dest.id)
     )
   }));
-} catch (e) {}
+  
+  console.log('[Navbar] Final Destinations with Tours:', navDestinations);
+} catch (e) {
+  console.error('[Navbar] Fetch error:', e);
+}
 ---
 
 <style>
@@ -149,20 +156,14 @@ try {
                   <!-- Destinations scroll container -->
                   <div id="destinations-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
                     {navDestinations.map((dest: any) => (
-                      <button
-                        class="destination-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 whitespace-normal"
+                      <a
+                        href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`}
+                        class="destination-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 whitespace-normal block"
+                        title={dest.title}
                         data-dest={dest.slug}
-                        data-name={dest.title}
-                        data-image={(() => {
-                          const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
-                          if (slides.length > 0 && slides[0]?.image?.url) {
-                            return `${STRAPI_PUBLIC_URL}${slides[0].image.url}`;
-                          }
-                          return '';
-                        })()}
                       >
                         {dest.title}
-                      </button>
+                      </a>
                     ))}
                   </div>
                   
@@ -397,11 +398,11 @@ try {
                   ? `${STRAPI_PUBLIC_URL}${slides[0].image.url}`
                   : '';
                 return (
-                  <button class="mobile-destination-item relative h-16 overflow-hidden rounded" data-dest={dest.slug} data-name={dest.title}>
+                  <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} class="mobile-destination-item relative h-16 overflow-hidden rounded block">
                     {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
                     <div class="absolute inset-0 bg-black/50"></div>
                     <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.title}</span>
-                  </button>
+                  </a>
                 );
               })}
             </div>
@@ -413,11 +414,11 @@ try {
                   ? `${STRAPI_PUBLIC_URL}${slides[0].image.url}`
                   : '';
                 return (
-                  <button class="mobile-destination-item relative h-16 overflow-hidden rounded" data-dest={dest.slug} data-name={dest.title}>
+                  <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} class="mobile-destination-item relative h-16 overflow-hidden rounded block">
                     {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
                     <div class="absolute inset-0 bg-black/50"></div>
                     <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.title}</span>
-                  </button>
+                  </a>
                 );
               })}
             </div>
@@ -507,7 +508,7 @@ try {
         href="https://wa.me/51984434547"
         target="_blank"
         rel="noopener noreferrer"
-        class="flex items-center justify-center gap-2 w-full mx-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition text-sm"
+        class="flex items-center justify-center gap-2 w-full mx-4 px-4 py-2 bg-white text-gray-900 font-semibold rounded hover:bg-gray-100 transition text-sm"
       >
         <img src="/landing page images/footer/whatsapp logo.svg" alt="WhatsApp" class="w-5 h-5" />
         {t.nav.contactUs}
@@ -544,7 +545,7 @@ try {
 
   async function initializeLanguages() {
     try {
-      const backendUrl = (import.meta.env.PUBLIC_BACKEND_URL || 'http://localhost:1337');
+      const backendUrl = (import.meta.env.PUBLIC_BACKEND_URL);
       console.log('Navbar: Fetching languages from', backendUrl);
       
       const response = await fetch(`${backendUrl}/api/locales`);
@@ -560,7 +561,12 @@ try {
         });
         
         console.log('Navbar: Mapped languages:', languages);
+        window.__navbarLanguages = languages;
         updateLanguageSwitchers(languages);
+        // Llamar a updateLanguageSwitcherDesktop si existe (para actualizar dropdown)
+        if (window.updateLanguageSwitcherDesktop) {
+          window.updateLanguageSwitcherDesktop(languages);
+        }
       }
     } catch (error) {
       console.warn('Navbar: Failed to fetch languages:', error);
@@ -642,5 +648,19 @@ try {
     document.addEventListener('DOMContentLoaded', initializeLanguages);
   } else {
     initializeLanguages();
+  }
+
+  // Fallback: Establecer idiomas por defecto
+  if (!window.__navbarLanguages) {
+    window.__navbarLanguages = {
+      es: 'Spanish',
+      en: 'English',
+      pt: 'Portuguese',
+      fr: 'French',
+      it: 'Italian'
+    };
+    if (window.updateLanguageSwitcherDesktop) {
+      window.updateLanguageSwitcherDesktop(window.__navbarLanguages);
+    }
   }
 </script>

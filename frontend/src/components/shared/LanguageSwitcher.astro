@@ -6,65 +6,113 @@ interface Props {
 const { currentLang } = Astro.props;
 
 const languages = [
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'pt', name: 'Português', flag: '🇧🇷' }
+  { code: 'es', name: 'Español' },
+  { code: 'en', name: 'English' },
+  { code: 'pt', name: 'Português' },
+  { code: 'fr', name: 'Français' },
+  { code: 'it', name: 'Italiano' },
 ];
-
-const currentLanguage = languages.find(lang => lang.code === currentLang);
-const otherLanguages = languages.filter(lang => lang.code !== currentLang);
 ---
 
-<div id="lang-switcher" class="relative">
+<!-- Mobile: Mostrar todos los idiomas en fila horizontal -->
+<div class="flex md:hidden items-center gap-2 justify-center flex-wrap w-full">
+  {languages.map((lang) => (
+    <a 
+      href={`/${lang.code}/`}
+      class={`px-3 py-2 text-xs font-medium rounded-md transition whitespace-nowrap ${
+        lang.code === currentLang 
+          ? 'border-2 border-black text-gray-900 bg-white' 
+          : 'text-white bg-white/10 hover:bg-white/20'
+      }`}
+    >
+      {lang.code.toUpperCase()}
+    </a>
+  ))}
+</div>
+
+<!-- Desktop: Dropdown desplegable -->
+<div id="lang-switcher" class="hidden md:flex relative">
   <!-- Language Button -->
   <button id="lang-button" class="flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-white text-sm font-semibold border border-white/30">
-    <span>{currentLanguage?.flag}</span>
-    <span>{currentLanguage?.name}</span>
+    <span id="lang-name">Idioma</span>
     <svg id="lang-arrow" class="w-4 h-4 transition transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
     </svg>
   </button>
 
-  <!-- Dropdown Menu -->
-  <div id="lang-dropdown" class="absolute hidden top-full right-0 mt-2 bg-black/80 backdrop-blur-md rounded-lg border border-white/30 overflow-hidden z-50">
-    {otherLanguages.map((lang) => (
-      <a
-        href={`/${lang.code}/`}
-        class="flex items-center space-x-3 px-4 py-3 hover:bg-white/10 transition text-white text-sm"
-      >
-        <span>{lang.flag}</span>
-        <span>{lang.name}</span>
-      </a>
-    ))}
+  <!-- Dropdown -->
+  <div id="lang-dropdown" class="absolute hidden top-full right-0 mt-2 bg-black/80 backdrop-blur-md rounded-lg border border-white/30 overflow-hidden z-50 min-w-[220px]">
   </div>
 </div>
 
 <script>
-  const langButton = document.getElementById('lang-button');
-  const langDropdown = document.getElementById('lang-dropdown');
-  const langArrow = document.getElementById('lang-arrow');
-  const langSwitcher = document.getElementById('lang-switcher');
+  console.log('LanguageSwitcher: Initialized');
+  
+  function setupDesktopDropdown() {
+    const langSwitcher = document.getElementById('lang-switcher');
+    if (!langSwitcher) return;
+    
+    const langButton = langSwitcher.querySelector('#lang-button');
+    const langDropdown = langSwitcher.querySelector('#lang-dropdown');
+    const langArrow = langSwitcher.querySelector('#lang-arrow');
 
-  // Toggle dropdown on button click
-  langButton?.addEventListener('click', () => {
-    langDropdown?.classList.toggle('hidden');
-    langArrow?.classList.toggle('rotate-180');
-  });
+    if (!langButton || !langDropdown) return;
 
-  // Close dropdown when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!langSwitcher?.contains(e.target)) {
-      langDropdown?.classList.add('hidden');
-      langArrow?.classList.remove('rotate-180');
-    }
-  });
-
-  // Close dropdown when clicking on a link
-  const langLinks = langDropdown?.querySelectorAll('a');
-  langLinks?.forEach(link => {
-    link.addEventListener('click', () => {
-      langDropdown?.classList.add('hidden');
-      langArrow?.classList.remove('rotate-180');
+    // Toggle dropdown
+    langButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      langDropdown.classList.toggle('hidden');
+      langArrow?.classList.toggle('rotate-180');
     });
-  });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!langSwitcher.contains(e.target)) {
+        langDropdown.classList.add('hidden');
+        langArrow?.classList.remove('rotate-180');
+      }
+    });
+
+    // Close dropdown when clicking a link
+    langDropdown.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A') {
+        langDropdown.classList.add('hidden');
+        langArrow?.classList.remove('rotate-180');
+      }
+    });
+  }
+
+  // Initialize on load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupDesktopDropdown);
+  } else {
+    setupDesktopDropdown();
+  }
+
+  // Exponer función para que Navbar la actualice
+  window.updateLanguageSwitcherDesktop = function(languages) {
+    const langButton = document.querySelector('#lang-button span#lang-name');
+    const langDropdown = document.querySelector('#lang-dropdown');
+    
+    if (!langButton || !langDropdown) return;
+
+    const currentCode = window.location.pathname.match(/^\/([a-z]{2})/)?.[1] || 'es';
+    
+    // Actualizar botón
+    if (languages[currentCode]) {
+      langButton.textContent = languages[currentCode];
+    }
+
+    // Actualizar dropdown
+    langDropdown.innerHTML = '';
+    Object.entries(languages).forEach(([code, name]) => {
+      if (code === currentCode) return;
+      
+      const link = document.createElement('a');
+      link.href = `/${code}/`;
+      link.className = 'block w-full px-4 py-3 hover:bg-white/10 transition text-white text-sm whitespace-nowrap';
+      link.textContent = name;
+      langDropdown.appendChild(link);
+    });
+  };
 </script>

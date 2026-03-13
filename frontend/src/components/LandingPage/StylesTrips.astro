@@ -7,8 +7,8 @@ interface Props {
 const { t, currentLang = 'es' } = Astro.props;
 
 const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
-const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';           // server-side fetch
-const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337'; // browser img src
+const STRAPI_URL = import.meta.env.STRAPI_URL;          // server-side fetch
+const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL // browser img src
 
 function toSlug(name: string): string {
   return name

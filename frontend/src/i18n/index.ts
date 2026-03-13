@@ -48,7 +48,7 @@ export async function fetchLanguagesFromBackend(): Promise<Record<string, string
 
   languagesPromise = (async () => {
     try {
-      const backendUrl = import.meta.env.PUBLIC_BACKEND_URL || 'http://localhost:1337';
+      const backendUrl = import.meta.env.PUBLIC_BACKEND_URL;
       const response = await fetch(`${backendUrl}/api/locales`, {
         method: 'GET',
         headers: {

@@ -3,3 +3,13 @@
 @plugin "flowbite/plugin";
 @source "../**/*.{astro,html,js,jsx,ts,tsx,md,mdx}";
 @source "../../node_modules/flowbite";
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+}
+
+* {
+  box-sizing: border-box;
+}

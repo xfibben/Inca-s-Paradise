@@ -5,6 +5,13 @@ function toSlug(name) {
   return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
 }
 
+function buildLanguageUrl(languageCode) {
+  const currentPath = window.location.pathname;
+  const pathMatch = currentPath.match(/^\/[a-z]{2}(.*)/);
+  const relativePath = pathMatch ? pathMatch[1] : '/';
+  return `/${languageCode}${relativePath}`;
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   const t = window.__navbarT;
   if (!t) return;
@@ -141,9 +148,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Mostrar tours relacionados
     const relatedTours = destination.relatedTours || [];
+    const currentLang = window.__currentLang || 'es';
     document.getElementById('megamenu-tours').innerHTML = relatedTours.map(tour => `
       <div class="pb-3 border-b border-gray-100 last:border-0">
-        <p class="font-semibold text-gray-800 text-sm">${tour.title}</p>
+        <a href="/${currentLang}/tours/${tour.slug || toSlug(tour.title)}" class="font-semibold text-gray-800 text-sm hover:text-blue-600 transition">
+          ${tour.title}
+        </a>
       </div>
     `).join('');
 
@@ -288,10 +298,13 @@ document.addEventListener('DOMContentLoaded', function () {
       mobileDestinationsDetails?.classList.remove('hidden');
       document.getElementById('mobile-dest-name').textContent = destination.title || '';
       
+      const currentLang = window.__currentLang || 'es';
       const relatedTours = destination.relatedTours || [];
       const toursHtml = relatedTours.map(tour => `
         <div class="pb-2 border-b border-gray-300 last:border-0">
-          <p class="font-semibold text-gray-800 text-sm">${tour.title}</p>
+          <a href="/${currentLang}/tours/${tour.slug || toSlug(tour.title)}" class="font-semibold text-gray-800 text-sm hover:text-blue-600 transition">
+            ${tour.title}
+          </a>
         </div>
       `).join('');
       document.getElementById('mobile-dest-tours').innerHTML = toursHtml;

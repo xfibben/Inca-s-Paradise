@@ -10,22 +10,40 @@ const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es
 const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
 const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
 let destinations: any[] = [];
 try {
-  const url = `${STRAPI_URL}/api/destino-detalles?populate[0]=heroSlides&locale=${strapiLocale}&status=published`;
-  console.log('[DestinationsGallery] fetching:', url);
+  console.log('[DestinationsGallery] STRAPI_URL:', STRAPI_URL);
+  console.log('[DestinationsGallery] strapiLocale:', strapiLocale);
+  
+  const url = `${STRAPI_URL}/api/destino-detalles?populate=*&locale=${strapiLocale}&status=published`;
+  console.log('[DestinationsGallery] Full URL:', url);
+  
   const res = await fetch(url);
-  console.log('[DestinationsGallery] status:', res.status);
+  console.log('[DestinationsGallery] Response status:', res.status);
+  console.log('[DestinationsGallery] Response ok:', res.ok);
+  
   if (res.ok) {
     const json = await res.json();
+    console.log('[DestinationsGallery] Full response:', json);
     console.log('[DestinationsGallery] data count:', json.data?.length);
     destinations = json.data ?? [];
+    console.log('[DestinationsGallery] destinations assigned:', destinations.length);
   } else {
     const err = await res.text();
-    console.log('[DestinationsGallery] error:', err);
+    console.log('[DestinationsGallery] Error response:', res.status, err);
   }
 } catch (e) {
-  console.log('[DestinationsGallery] fetch exception:', e);
+  console.log('[DestinationsGallery] Fetch error:', e);
 }
 ---
 
@@ -45,7 +63,7 @@ try {
           : null;
 
         return (
-          <div class="group relative overflow-hidden cursor-pointer">
+          <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} class="group relative overflow-hidden cursor-pointer block">
             {imageUrl && (
               <img 
                 src={imageUrl}
@@ -60,12 +78,12 @@ try {
                 <p class="text-xs sm:text-sm md:text-base leading-relaxed hidden sm:block max-w-xs">
                   {dest.description}
                 </p>
-                <button class="px-3 py-1.5 sm:px-4 sm:py-2 border border-white text-white text-xs sm:text-sm font-semibold hover:bg-orange-500 hover:border-orange-500 hover:text-white transition">
+                <span class="px-3 py-1.5 sm:px-4 sm:py-2 border border-white text-white text-xs sm:text-sm font-semibold hover:bg-orange-500 hover:border-orange-500 hover:text-white transition">
                   {t.buttons.explore}
-                </button>
+                </span>
               </div>
             </div>
-          </div>
+          </a>
         );
       })}
 
