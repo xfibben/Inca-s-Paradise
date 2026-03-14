@@ -262,24 +262,53 @@ const heroImageUrl = heroImage?.formats?.large?.url
     )}
 
     <!-- Middle Description Section -->
-    {trip?.middle_description && (
+    {(trip?.middle_tittle || trip?.middle_description) && (
       <section class="bg-gray-50 py-12 md:py-20 px-4 md:px-16">
         <div class="max-w-4xl mx-auto text-center">
-          <h2
-            class="text-2xl md:text-5xl font-bold text-gray-800 mb-6 md:mb-8"
-            style="font-family: 'Playfair Display', serif; font-style: italic;"
-          >
-            {trip.middle_description.title}
-          </h2>
-          <div class="w-12 h-0.5 bg-yellow-600 mx-auto mb-6 md:mb-8"></div>
-          <p class="text-base md:text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto">
-            {trip.middle_description.description}
-          </p>
+          {trip?.middle_tittle && (
+            <>
+              <h2
+                class="text-2xl md:text-5xl font-bold text-gray-800 mb-6 md:mb-8"
+                style="font-family: 'Playfair Display', serif; font-style: italic;"
+              >
+                {trip.middle_tittle}
+              </h2>
+              <div class="w-12 h-0.5 bg-yellow-600 mx-auto mb-6 md:mb-8"></div>
+            </>
+          )}
+          {trip?.middle_description && (
+            <div 
+              class="text-base md:text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto markdown-content"
+              data-markdown={trip.middle_description}
+            />
+          )}
         </div>
       </section>
     )}
 
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@10.0.0/dist/markdown-it.min.js"></script>
+    
     <script>
+      // Procesar markdown cuando cargue markdown-it
+      function processMarkdown() {
+        if (typeof window.markdownit !== 'undefined') {
+          const md = window.markdownit();
+          const markdownElements = document.querySelectorAll('.markdown-content');
+          markdownElements.forEach(element => {
+            const markdown = element.getAttribute('data-markdown');
+            if (markdown) {
+              element.innerHTML = md.render(markdown);
+              element.removeAttribute('data-markdown');
+            }
+          });
+        } else {
+          // Reintentar si markdown-it aún no carga
+          setTimeout(processMarkdown, 100);
+        }
+      }
+      processMarkdown();
+
+      // Script original para mostrar más
       const btn = document.getElementById('show-more-btn');
       const list = document.getElementById('more-trips');
       const icon = document.getElementById('show-more-icon');
