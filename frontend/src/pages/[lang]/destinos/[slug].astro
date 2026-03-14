@@ -309,11 +309,7 @@ const fallbackData = lang === "en" ? destinosDetailEn : destinosDetailEs;
 const fallbackDestination =
   fallbackData.destinations.find(
     (item) => String(item.slug).toLowerCase() === slugKey
-  ) ?? fallbackData.destinations[0];
-
-if (!fallbackDestination) {
-  return Astro.redirect(`/${lang}/destinos`);
-}
+  ) ?? null;
 
 const {
   meta,
@@ -333,13 +329,17 @@ const {
   blogCta,
   initialVisibleCount = 8,
   catalogInitialVisibleCount
-} = fallbackDestination;
+} = fallbackDestination ?? {};
 
 const strapiDetail = await fetchStrapiDetailBySlug(slugKey, getLocales(lang));
 const strapiToursForCatalog = await fetchStrapiToursByDestination(
   slugKey,
   getLocales(lang)
 );
+
+if (!fallbackDestination && !strapiDetail) {
+  return Astro.redirect(`/${lang}/destinos`);
+}
 
 const pageTitle =
   strapiDetail?.title ?? meta?.title ?? (lang === "en" ? "Destination" : "Destino");
