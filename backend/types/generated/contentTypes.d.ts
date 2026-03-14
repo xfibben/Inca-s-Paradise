@@ -454,35 +454,82 @@ export interface ApiDestinoDetalleDestinoDetalle
     blogButton: Schema.Attribute.String;
     blogTitle: Schema.Attribute.String;
     catalogInitialVisibleCount: Schema.Attribute.Integer;
-    catalogTabs: Schema.Attribute.JSON;
     catalogViewLessLabel: Schema.Attribute.String;
     catalogViewMoreLabel: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
+    galleryThumbnail: Schema.Attribute.Media<'images'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    heroDescription1: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    heroDescription2: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    heroDescription3: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     heroSlideImages: Schema.Attribute.Media<'images', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
-    heroSlides: Schema.Attribute.JSON;
-    iconLabels: Schema.Attribute.JSON;
-    introHighlights: Schema.Attribute.JSON;
-    introParagraphs: Schema.Attribute.JSON;
+    heroTitle1: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    heroTitle2: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    heroTitle3: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    iconItems: Schema.Attribute.Component<'destinos.icon-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    introContent: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     introTitle: Schema.Attribute.String;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::destino-detalle.destino-detalle'
     >;
-    packageTours: Schema.Attribute.JSON;
     primaryRibbon: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     secondaryRibbon: Schema.Attribute.String;
     slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
-    smallTrips: Schema.Attribute.JSON;
     title: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -566,98 +613,6 @@ export interface ApiDestinoDestino extends Struct.SingleTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-  };
-}
-
-export interface ApiReservaReserva extends Struct.CollectionTypeSchema {
-  collectionName: 'reservas';
-  info: {
-    displayName: 'Reserva';
-    pluralName: 'reservas';
-    singularName: 'reserva';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  pluginOptions: {
-    i18n: {
-      localized: false;
-    };
-  };
-  attributes: {
-    cantidad_adultos: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 1;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<1>;
-    cantidad_ninos: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    descuento: Schema.Attribute.Decimal &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
-    email: Schema.Attribute.Email & Schema.Attribute.Required;
-    estado: Schema.Attribute.Enumeration<
-      ['pendiente', 'confirmada', 'cancelada']
-    > &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'pendiente'>;
-    fecha_fin: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    fecha_inicio: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    igv_porcentaje: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          max: 100;
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<18>;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::reserva.reserva'
-    > &
-      Schema.Attribute.Private;
-    monto_final: Schema.Attribute.Decimal;
-    monto_subtotal: Schema.Attribute.Decimal;
-    notas: Schema.Attribute.Text;
-    publishedAt: Schema.Attribute.DateTime;
-    telefono: Schema.Attribute.String & Schema.Attribute.Required;
-    ticket: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.Unique;
-    tour: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::tour-detalle.tour-detalle'
-    > &
-      Schema.Attribute.Required;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    usuario: Schema.Attribute.Relation<
-      'manyToOne',
-      'plugin::users-permissions.user'
-    >;
   };
 }
 
@@ -747,14 +702,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    descuento: Schema.Attribute.Decimal &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
     destinationSlug: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -770,20 +717,19 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    duracion_dias: Schema.Attribute.Integer &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 1;
-        },
-        number
-      >;
-    hero: Schema.Attribute.JSON &
+    heroDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
     heroSlideImages: Schema.Attribute.Media<'images', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    heroTitle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -800,28 +746,18 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::tour-detalle.tour-detalle'
     >;
-    metatitle: Schema.Attribute.JSON &
+    metaDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
         };
       }>;
-    precio_unitario_adulto: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      >;
-    precio_unitario_nino: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      >;
+    metaTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
     reviwesBand: Schema.Attribute.JSON &
       Schema.Attribute.SetPluginOptions<{
@@ -846,7 +782,85 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    summary: Schema.Attribute.JSON &
+    summaryBullet1: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryBullet2: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryBullet3: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryContactButtonLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryContactDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryContactPhone: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryContactReviewsDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryContactReviewsTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryContactTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryCtaLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryCtaUrl: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryMetaLine: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryParagraph: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    summaryTitle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -1380,7 +1394,6 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::destino-detalle.destino-detalle': ApiDestinoDetalleDestinoDetalle;
       'api::destino.destino': ApiDestinoDestino;
-      'api::reserva.reserva': ApiReservaReserva;
       'api::style-trip.style-trip': ApiStyleTripStyleTrip;
       'api::tour-detalle.tour-detalle': ApiTourDetalleTourDetalle;
       'plugin::content-releases.release': PluginContentReleasesRelease;

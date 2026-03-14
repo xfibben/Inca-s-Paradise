@@ -31,8 +31,53 @@
     "description": {
       "type": "text"
     },
-    "heroSlides": {
-      "type": "json"
+    "heroTitle1": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "heroDescription1": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "heroTitle2": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "heroDescription2": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "heroTitle3": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "heroDescription3": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "heroSlideImages": {
       "type": "media",
@@ -46,17 +91,38 @@
         }
       }
     },
+    "galleryThumbnail": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
     "introTitle": {
       "type": "string"
     },
-    "introParagraphs": {
-      "type": "json"
+    "introContent": {
+      "type": "richtext",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
-    "introHighlights": {
-      "type": "json"
-    },
-    "iconLabels": {
-      "type": "json"
+    "iconItems": {
+      "type": "component",
+      "repeatable": true,
+      "component": "destinos.icon-item",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "primaryRibbon": {
       "type": "string"
@@ -69,15 +135,6 @@
     },
     "blogButton": {
       "type": "string"
-    },
-    "packageTours": {
-      "type": "json"
-    },
-    "smallTrips": {
-      "type": "json"
-    },
-    "catalogTabs": {
-      "type": "json"
     },
     "catalogViewMoreLabel": {
       "type": "string"

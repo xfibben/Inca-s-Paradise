@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_destinos_icon_items",
+  "info": {
+    "displayName": "Icon Item",
+    "description": "Elemento visual de beneficios para la seccion introductoria"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "iconAlt": {
+      "type": "string"
+    }
+  }
+}
