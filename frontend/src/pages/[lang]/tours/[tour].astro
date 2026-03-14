@@ -5,6 +5,7 @@ import fallbackToursData from "../../../data/tours.detail.es.json";
 import Ribbon from "../../../components/shared/Ribbon.astro";
 import Navbar from "../../../components/shared/Navbar.astro";
 import Footer from "../../../components/shared/Footer.astro";
+import ReservaModal from "../../../components/tours/ReservaModal.astro";
 
 type SupportedLang = "es" | "en";
 
@@ -149,7 +150,19 @@ for (const baseUrl of STRAPI_BASE_URLS) {
       "pagination[pageSize]=1&" +
       "populate[heroSlideImages][fields][0]=url&" +
       "populate[heroSlideImages][fields][1]=alternativeText&" +
-      "populate[heroSlideImages][fields][2]=formats";
+      "populate[heroSlideImages][fields][2]=formats&" +
+      "fields[0]=slug&" +
+      "fields[1]=title&" +
+      "fields[2]=precio_unitario_adulto&" +
+      "fields[3]=precio_unitario_nino&" +
+      "fields[4]=descuento&" +
+      "fields[5]=duracion_dias&" +
+      "fields[6]=hero&" +
+      "fields[7]=summary&" +
+      "fields[8]=atGlance&" +
+      "fields[9]=reviwesBand&" +
+      "fields[10]=itineraryRibbon&" +
+      "fields[11]=metatitle";
 
     try {
       const res = await fetch(url);
@@ -160,7 +173,13 @@ for (const baseUrl of STRAPI_BASE_URLS) {
       const first = rows[0];
       const attrs = normalizeRow(first);
       if (attrs) {
-        strapiTourRaw = { ...attrs, __fetchedBaseUrl: baseUrl };
+        // Preserve id and documentId before normalizing
+        strapiTourRaw = { 
+          ...attrs, 
+          __fetchedBaseUrl: baseUrl,
+          __strapiId: first?.id,
+          __strapiDocumentId: first?.documentId
+        };
         break;
       }
     } catch {
@@ -330,12 +349,38 @@ const summaryCtaUrl = tourData.summary?.ctaUrl ?? "#";
 const stickyBooking = sourceTour.bookingCta ?? fallbackTour?.bookingCta ?? {};
 const stickyBookingTitle =
   stickyBooking.title ?? (lang === "en" ? "BOOK NOW" : "RESERVA AHORA");
+
+// Obtener precios del tour desde Strapi
+const precioAdulto = sourceTour.precio_unitario_adulto ?? 320;
+const precioNino = sourceTour.precio_unitario_nino ?? 240;
+const descuentoTour = sourceTour.descuento ?? 0;
+// Calcular precio_final localmente: (precio_adulto + precio_nino) / 2 - descuento
+const precioFinal = (precioAdulto + precioNino) / 2 - descuentoTour;
+const precioConDescuento = precioFinal;
+
+// Formato de precio
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat(lang === "en" ? "en-US" : "es-PE", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(price);
+};
+
 const stickyBookingPrice =
   stickyBooking.price ??
-  (lang === "en" ? "From USD 320 per person" : "Desde USD 320 por persona");
+  (lang === "en" 
+    ? `From ${formatPrice(precioConDescuento)} per person` 
+    : `Desde ${formatPrice(precioConDescuento)} por persona`);
+
+// Obtener duración desde Strapi o usar default
+const duracionDias = sourceTour.duracion_dias ?? 6;
 const stickyBookingDuration =
   stickyBooking.duration ??
-  (lang === "en" ? "Duration: 6 days" : "Duracion: 6 dias");
+  (lang === "en" 
+    ? `Duration: ${duracionDias} days` 
+    : `Duracion: ${duracionDias} dias`);
 const stickyBookingButton =
   stickyBooking.buttonLabel ??
   (lang === "en" ? "Reserve online" : "Reservar online");
@@ -1020,12 +1065,13 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
                 </p>
 
                 <div class="mt-2 flex items-center justify-between gap-3">
-                  <a
-                    href={summaryCtaUrl}
+                  <button
+                    type="button"
+                    onclick="window.openReservaModal && window.openReservaModal()"
                     class="inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#08263a] px-4 text-[0.86rem] font-medium leading-tight tracking-normal text-white transition hover:bg-[#0d3148]"
                   >
                     {stickyBookingButton}
-                  </a>
+                  </button>
                   <div class="flex max-w-[132px] items-center gap-1 text-[0.84rem] leading-[1.1] text-[#16a34a]">
                     <span class="mt-0.5 text-base">&#10003;</span>
                     <span>{stickyBookingAvailability}</span>
@@ -1089,6 +1135,25 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
       />
     </main>
     <Footer currentLang={lang} {t} />
+    
+    <ReservaModal
+      tourTitle={tourData.title}
+      tourSlug={tourSlug}
+      precioUnitarioAdulto={precioAdulto}
+      precioUnitarioNino={precioNino}
+      descuento={descuentoTour}
+      duracionDias={duracionDias}
+      {lang}
+    />
+
+    <script define:vars={{ strapiTourId: strapiTourRaw?.__strapiId || 0, strapiTourDocId: strapiTourRaw?.__strapiDocumentId || "" }}>
+      // Make tour data available for reserva form
+      window.__tourData = {
+        id: strapiTourDocId || strapiTourId,
+        numericId: strapiTourId
+      };
+      console.log("Tour data initialized:", window.__tourData);
+    </script>
 
     <script is:inline>
       (() => {

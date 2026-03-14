@@ -55,16 +55,6 @@
       "default": 0,
       "min": 0
     },
-    "monto_unitario_adulto": {
-      "type": "decimal",
-      "required": true,
-      "min": 0
-    },
-    "monto_unitario_nino": {
-      "type": "decimal",
-      "required": true,
-      "min": 0
-    },
     "descuento": {
       "type": "decimal",
       "required": false,
@@ -99,6 +89,12 @@
     "notas": {
       "type": "text",
       "required": false
+    },
+    "ticket": {
+      "type": "string",
+      "required": true,
+      "unique": true,
+      "description": "Número de ticket generado automáticamente para seguimiento"
     }
   }
 }

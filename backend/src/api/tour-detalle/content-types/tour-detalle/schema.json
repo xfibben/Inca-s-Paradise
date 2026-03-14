@@ -136,6 +136,31 @@
       ],
       "default": "tour",
       "description": "Tipo de tour: Tour, Small Trip o Paquete"
+    },
+    "precio_unitario_adulto": {
+      "type": "decimal",
+      "required": true,
+      "min": 0,
+      "description": "Precio base por adulto"
+    },
+    "precio_unitario_nino": {
+      "type": "decimal",
+      "required": true,
+      "min": 0,
+      "description": "Precio base por niño"
+    },
+    "descuento": {
+      "type": "decimal",
+      "required": false,
+      "default": 0,
+      "min": 0,
+      "description": "Descuento opcional"
+    },
+    "duracion_dias": {
+      "type": "integer",
+      "required": false,
+      "min": 1,
+      "description": "Duración del tour en días"
     }
   }
 }
