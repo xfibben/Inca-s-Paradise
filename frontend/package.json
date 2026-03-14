@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.1",
-    "@astrojs/node": "^6.0.0",
+    "@astrojs/node": "^9.5.0",
     "astro": "^5.17.1",
     "flowbite": "^4.0.1",
     "tailwindcss": "^4.2.1"
