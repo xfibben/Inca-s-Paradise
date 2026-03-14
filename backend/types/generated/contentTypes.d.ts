@@ -744,7 +744,13 @@ export interface ApiStyleTripStyleTrip extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::style-trip.style-trip'
     >;
-    middle_description: Schema.Attribute.JSON &
+    middle_description: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    middle_tittle: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;

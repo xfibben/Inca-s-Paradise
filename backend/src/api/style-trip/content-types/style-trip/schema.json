@@ -59,8 +59,16 @@
         "files"
       ]
     },
+    "middle_tittle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
     "middle_description": {
-      "type": "json",
+      "type": "richtext",
       "pluginOptions": {
         "i18n": {
           "localized": true
