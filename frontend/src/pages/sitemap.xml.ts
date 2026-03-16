@@ -1,4 +1,3 @@
----
 // File: src/pages/sitemap.xml.ts
 // Generates a dynamic sitemap for all available routes
 
