@@ -6,20 +6,32 @@ interface Props {
 const { t } = Astro.props;
 ---
 
+<style>
+  @media (max-width: 768px) {
+    .sustainability-card img {
+      height: 300px;
+    }
+
+    .sustainability-card.active img {
+      height: auto;
+    }
+  }
+</style>
+
 <section class="bg-white px-4 md:px-8 py-12 md:py-16 lg:py-20 flex items-center" style="min-height: calc(100vh - 6rem);">
   <div class="max-w-7xl mx-auto w-full">
     <!-- Main Title -->
-    <h2 class="text-3xl md:text-4xl lg:text-5xl text-gray-900 text-center mb-12 md:mb-16" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
+    <h2 class="text-2xl md:text-3xl lg:text-4xl text-gray-900 text-center mb-12 md:mb-16" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
       {t.sustainability.title}
     </h2>
 
     <!-- Flex Container with Dynamic Widths -->
-    <div class="flex gap-4 h-[500px] md:h-[600px]">
+    <div class="flex flex-col md:flex-row gap-4 h-auto md:h-[600px]">
       <!-- Card 1: Fair Tourism (Active by default) -->
       <div class="sustainability-card active flex-1 transition-all duration-500 ease-out cursor-pointer" data-card="0" style="flex: 2;">
         <div class="h-full flex flex-col">
           <!-- Title -->
-          <h3 class="text-xl md:text-2xl font-semibold text-gray-900 mb-3 md:mb-4 flex-shrink-0">
+          <h3 class="text-md lg:text-xl font-semibold text-gray-900 mb-3 md:mb-4 flex-shrink-0">
             {t.sustainability.fairTourism.name}
           </h3>
           
@@ -36,6 +48,7 @@ const { t } = Astro.props;
                 : t.sustainability.images.fairTourism}
               alt={t.sustainability.fairTourism.name}
               class="w-full h-full object-cover"
+              fetchpriority="high"
             />
           </div>
         </div>
@@ -45,7 +58,7 @@ const { t } = Astro.props;
       <div class="sustainability-card flex-1 transition-all duration-500 ease-out cursor-pointer" data-card="1">
         <div class="h-full flex flex-col">
           <!-- Title -->
-          <h3 class="text-lg md:text-xl font-semibold text-gray-900 mb-2 md:mb-3 flex-shrink-0">
+          <h3 class="text-md lg:text-xl font-semibold text-gray-900 mb-2 md:mb-3 flex-shrink-0">
             {t.sustainability.sustainability.name}
           </h3>
           
@@ -62,6 +75,7 @@ const { t } = Astro.props;
                 : t.sustainability.images.sustainability}
               alt={t.sustainability.sustainability.name}
               class="w-full h-full object-cover"
+              loading="lazy"
             />
           </div>
         </div>
@@ -71,7 +85,7 @@ const { t } = Astro.props;
       <div class="sustainability-card flex-1 transition-all duration-500 ease-out cursor-pointer" data-card="2">
         <div class="h-full flex flex-col">
           <!-- Title -->
-          <h3 class="text-lg md:text-xl font-semibold text-gray-900 mb-2 md:mb-3 flex-shrink-0">
+          <h3 class="text-md lg:text-xl font-semibold text-gray-900 mb-2 md:mb-3 flex-shrink-0">
             {t.sustainability.socialProjects.name}
           </h3>
           
@@ -88,6 +102,7 @@ const { t } = Astro.props;
                 : t.sustainability.images.socialProjects}
               alt={t.sustainability.socialProjects.name}
               class="w-full h-full object-cover"
+              loading="lazy"
             />
           </div>
         </div>

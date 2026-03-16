@@ -10,23 +10,35 @@ const { t } = Astro.props;
 <section class="relative w-full h-screen overflow-hidden">
   <!-- Image Carousel Background -->
   <div id="hero-carousel" class="absolute top-0 left-0 w-full h-full">
+    <!-- First image: loaded immediately -->
     <img 
-      src="/landing page images/Imagen2.png" 
-      alt="Hero Background" 
+      src="/landing page images/Imagen2.jpg" 
+      alt="Aventuras personalizadas en Perú - Machu Picchu y Los Andes" 
       class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-2500 opacity-100"
       data-index="0"
+      width="1280"
+      height="720"
+      fetchpriority="high"
     />
+    <!-- Second image: lazy loaded -->
     <img 
-      src="/landing page images/Imagen3.png" 
-      alt="Hero Background" 
+      src="/landing page images/Imagen3.jpg" 
+      alt="Experiencias de viaje exclusivas en los Andes peruanos" 
       class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-2500 opacity-0"
       data-index="1"
+      width="1280"
+      height="720"
+      loading="lazy"
     />
+    <!-- Third image: lazy loaded -->
     <img 
       src="/landing page images/ubicacion-choquequirao-full.jpg" 
-      alt="Hero Background" 
+      alt="Choquequirao - Ciudadela inca perdida en Cusco" 
       class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-2500 opacity-0"
       data-index="2"
+      width="2000"
+      height="1333"
+      loading="lazy"
     />
   </div>
 
@@ -44,7 +56,7 @@ const { t } = Astro.props;
   <div class="relative h-full flex flex-col justify-start items-center text-center px-4 pt-20 md:pt-30">
 
     <!-- Main Heading -->
-    <h1 class="text-4xl md:text-5xl lg:text-6xl text-white leading-tight mb-12 md:mb-16 max-w-4xl font-serif" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
+    <h1 class="text-4xl md:text-3xl lg:text-4xl text-white leading-tight mb-12 md:mb-16 max-w-4xl font-serif" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
       {t.hero.mainTitle}
     </h1>
 
