@@ -99,16 +99,16 @@ export async function getStaticPaths() {
 
           const json = await res.json();
           const rows = Array.isArray(json?.data) ? json.data : [];
-          rows.forEach((row: any) => {
+          for (const row of rows) {
             const attrs = row?.attributes ?? row;
             const tour = String(attrs?.slug ?? "").toLowerCase();
-            if (!tour) return;
+            if (!tour) continue;
 
             const key = `${lang}::${tour}`;
-            if (strapiSeen.has(key)) return;
+            if (strapiSeen.has(key)) continue;
             strapiSeen.add(key);
             strapiPaths.push({ params: { lang, tour } });
-          });
+          }
 
           if (strapiPaths.length > 0) break;
         } catch {
@@ -126,9 +126,10 @@ export async function getStaticPaths() {
   const mergedSeen = new Set<string>();
   [...fallbackPaths, ...strapiPaths].forEach((entry) => {
     const key = `${entry.params.lang}::${entry.params.tour}`;
-    if (mergedSeen.has(key)) return;
-    mergedSeen.add(key);
-    merged.push(entry);
+    if (!mergedSeen.has(key)) {
+      mergedSeen.add(key);
+      merged.push(entry);
+    }
   });
 
   return merged;
@@ -503,8 +504,8 @@ const highlightsImageFromField = toAbsoluteMediaUrl(
 );
 const highlightsImage =
   highlightsImageFromField ||
-  legacyHighlightsPanel.image ??
-  tourData.summary?.image ??
+  legacyHighlightsPanel.image ||
+  tourData.summary?.image ||
   "https://images.unsplash.com/photo-1531968455001-5c5272a41129?auto=format&fit=crop&w=900&q=80";
 const highlightsImageAlt =
   sourceTour.highlightsImageAlt ??
