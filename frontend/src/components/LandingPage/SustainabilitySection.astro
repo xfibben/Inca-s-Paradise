@@ -7,9 +7,77 @@ const { t } = Astro.props;
 ---
 
 <style>
+  .sustainability-card {
+    transition: flex 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .description {
+    transition: opacity 600ms ease-out;
+    opacity: 0;
+  }
+
+  .description.visible {
+    opacity: 1;
+  }
+
   @media (max-width: 768px) {
+    .sustainability-container {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      height: 100vh;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      /* Hide scrollbar for all browsers */
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE 10+ */
+    }
+    .sustainability-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .sustainability-card {
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      height: 100vh;
+      flex: none !important;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sustainability-card .card-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 2rem 1rem;
+    }
+
+    .sustainability-card .card-image {
+      height: 50vh;
+      flex: none;
+    }
+
+    .sustainability-card .card-title {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .sustainability-card .card-description {
+      margin-bottom: 1.5rem;
+      flex: none;
+    }
+  }
+
+  @media (min-width: 769px) {
+    .sustainability-container {
+      display: flex;
+      flex-direction: row;
+      gap: 1rem;
+      height: auto;
+      min-height: 600px;
+    }
+
     .sustainability-card img {
-      height: 300px;
+      transition: height 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     .sustainability-card.active img {
@@ -18,36 +86,38 @@ const { t } = Astro.props;
   }
 </style>
 
-<section class="bg-white px-4 md:px-8 py-12 md:py-16 lg:py-20 flex items-center" style="min-height: calc(100vh - 6rem);">
+<section class="bg-white px-4 md:px-8 py-12 md:py-16 lg:py-20" style="min-height: auto;">
   <div class="max-w-7xl mx-auto w-full">
     <!-- Main Title -->
-    <h2 class="text-2xl md:text-3xl lg:text-4xl text-gray-900 text-center mb-12 md:mb-16" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
+    <h2 class="text-2xl md:text-3xl lg:text-4xl text-gray-900 text-center mb-12 md:mb-16 sticky top-0 z-10 bg-white md:bg-transparent md:relative md:z-auto md:top-auto" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
       {t.sustainability.title}
     </h2>
 
-    <!-- Flex Container with Dynamic Widths -->
-    <div class="flex flex-col md:flex-row gap-4 h-auto md:h-[600px]">
-      <!-- Card 1: Fair Tourism (Active by default) -->
-      <div class="sustainability-card active flex-1 transition-all duration-500 ease-out cursor-pointer" data-card="0" style="flex: 2;">
-        <div class="h-full flex flex-col">
+    <!-- Cards Container with Scroll Snap on Mobile -->
+    <div class="sustainability-container">
+      <!-- Card 1: Fair Tourism -->
+      <div class="sustainability-card active flex-1 transition-all duration-500 ease-out cursor-pointer md:h-[600px]" data-card="0" style="flex: 2;">
+        <div class="card-content h-full md:flex md:flex-col">
           <!-- Title -->
-          <h3 class="text-md lg:text-xl font-semibold text-gray-900 mb-3 md:mb-4 flex-shrink-0">
+          <h3 class="card-title text-md lg:text-xl font-semibold text-gray-900 mb-3 md:mb-4 flex-shrink-0">
             {t.sustainability.fairTourism.name}
           </h3>
           
-          <!-- Description (only visible when active) -->
-          <p class="description text-base md:text-lg text-gray-700 leading-relaxed mb-4 md:mb-6 flex-shrink-0">
+          <!-- Description -->
+          <p class="card-description description text-base md:text-lg text-gray-700 leading-relaxed mb-4 md:mb-6 flex-shrink-0 text-justify">
             {t.sustainability.fairTourism.description}
           </p>
           
           <!-- Image -->
-          <div class="flex-1 overflow-hidden rounded-lg">
+          <div class="card-image flex-1 overflow-hidden rounded-lg md:flex-1">
             <img
               src={t.sustainability.images.fairTourism.startsWith('landing page images')
                 ? `/${t.sustainability.images.fairTourism}`
                 : t.sustainability.images.fairTourism}
               alt={t.sustainability.fairTourism.name}
+              width="400" height="300"
               class="w-full h-full object-cover"
+              loading="eager"
               fetchpriority="high"
             />
           </div>
@@ -55,54 +125,58 @@ const { t } = Astro.props;
       </div>
 
       <!-- Card 2: Sustainability -->
-      <div class="sustainability-card flex-1 transition-all duration-500 ease-out cursor-pointer" data-card="1">
-        <div class="h-full flex flex-col">
+      <div class="sustainability-card flex-1 transition-all duration-500 ease-out cursor-pointer md:h-[600px]" data-card="1">
+        <div class="card-content h-full md:flex md:flex-col">
           <!-- Title -->
-          <h3 class="text-md lg:text-xl font-semibold text-gray-900 mb-2 md:mb-3 flex-shrink-0">
+          <h3 class="card-title text-md lg:text-xl font-semibold text-gray-900 mb-2 md:mb-3 flex-shrink-0">
             {t.sustainability.sustainability.name}
           </h3>
           
-          <!-- Description (only visible when active) -->
-          <p class="description text-sm md:text-base text-gray-700 leading-relaxed mb-3 md:mb-4 flex-shrink-0 hidden">
+          <!-- Description -->
+          <p class="card-description description text-sm md:text-base text-gray-700 leading-relaxed mb-3 md:mb-4 flex-shrink-0 hidden text-justify">
             {t.sustainability.sustainability.description}
           </p>
           
           <!-- Image -->
-          <div class="flex-1 overflow-hidden rounded-lg">
+          <div class="card-image flex-1 overflow-hidden rounded-lg md:flex-1">
             <img
               src={t.sustainability.images.sustainability.startsWith('landing page images')
                 ? `/${t.sustainability.images.sustainability}`
                 : t.sustainability.images.sustainability}
               alt={t.sustainability.sustainability.name}
+              width="400" height="300"
               class="w-full h-full object-cover"
               loading="lazy"
+              fetchpriority="low"
             />
           </div>
         </div>
       </div>
 
       <!-- Card 3: Social Projects -->
-      <div class="sustainability-card flex-1 transition-all duration-500 ease-out cursor-pointer" data-card="2">
-        <div class="h-full flex flex-col">
+      <div class="sustainability-card flex-1 transition-all duration-500 ease-out cursor-pointer md:h-[600px]" data-card="2">
+        <div class="card-content h-full md:flex md:flex-col">
           <!-- Title -->
-          <h3 class="text-md lg:text-xl font-semibold text-gray-900 mb-2 md:mb-3 flex-shrink-0">
+          <h3 class="card-title text-md lg:text-xl font-semibold text-gray-900 mb-2 md:mb-3 flex-shrink-0">
             {t.sustainability.socialProjects.name}
           </h3>
           
-          <!-- Description (only visible when active) -->
-          <p class="description text-sm md:text-base text-gray-700 leading-relaxed mb-3 md:mb-4 flex-shrink-0 hidden">
+          <!-- Description -->
+          <p class="card-description description text-sm md:text-base text-gray-700 leading-relaxed mb-3 md:mb-4 flex-shrink-0 hidden text-justify">
             {t.sustainability.socialProjects.description}
           </p>
           
           <!-- Image -->
-          <div class="flex-1 overflow-hidden rounded-lg">
+          <div class="card-image flex-1 overflow-hidden rounded-lg md:flex-1">
             <img
               src={t.sustainability.images.socialProjects.startsWith('landing page images')
                 ? `/${t.sustainability.images.socialProjects}`
                 : t.sustainability.images.socialProjects}
               alt={t.sustainability.socialProjects.name}
+              width="400" height="300"
               class="w-full h-full object-cover"
               loading="lazy"
+              fetchpriority="low"
             />
           </div>
         </div>
@@ -112,57 +186,94 @@ const { t } = Astro.props;
 </section>
 
 <script is:inline>
-  // Sustainability Card Expansion Logic
+  // Sustainability Card Expansion Logic - Desktop Only
   const cards = document.querySelectorAll('.sustainability-card');
   
-  cards.forEach((card) => {
-    card.addEventListener('click', () => {
-      const cardIndex = card.getAttribute('data-card');
+  // Check if desktop
+  function isDesktop() {
+    return window.innerWidth >= 768;
+  }
+  
+  // Function to set active card
+  function setActiveCard(cardIndex) {
+    cards.forEach((c) => {
+      const index = c.getAttribute('data-card');
+      const description = c.querySelector('.description');
       
-      cards.forEach((c) => {
-        const index = c.getAttribute('data-card');
-        const description = c.querySelector('.description');
-        
-        if (index === cardIndex) {
-          // Expand active card
-          c.style.flex = '2';
-          c.classList.add('active');
-          // Show description
-          if (description) {
-            description.classList.remove('hidden');
-          }
-        } else {
-          // Shrink inactive cards
-          c.style.flex = '1';
-          c.classList.remove('active');
-          // Hide description
-          if (description) {
-            description.classList.add('hidden');
-          }
+      if (index === cardIndex) {
+        // Expand active card
+        c.style.flex = '2';
+        c.classList.add('active');
+        // Show description with smooth opacity
+        if (description) {
+          description.classList.remove('hidden');
+          // Trigger reflow to ensure CSS transition applies
+          void description.offsetWidth;
+          description.classList.add('visible');
         }
+      } else {
+        // Shrink inactive cards
+        c.style.flex = '1';
+        c.classList.remove('active');
+        // Hide description with smooth opacity
+        if (description) {
+          description.classList.remove('visible');
+          // Wait for opacity transition before hiding
+          setTimeout(() => {
+            if (!description.classList.contains('visible')) {
+              description.classList.add('hidden');
+            }
+          }, 600);
+        }
+      }
+    });
+  }
+  
+  // Setup click listeners for desktop only
+  if (isDesktop()) {
+    cards.forEach((card) => {
+      card.addEventListener('click', () => {
+        const cardIndex = card.getAttribute('data-card');
+        setActiveCard(cardIndex);
       });
     });
-  });
-
-  // Initial state: first card expanded, others collapsed
-  if (cards.length > 0) {
-    cards[0].style.flex = '2';
-    cards[0].classList.add('active');
     
-    // Show description for first card
-    const firstDescription = cards[0].querySelector('.description');
-    if (firstDescription) {
-      firstDescription.classList.remove('hidden');
+    // Initial state: first card expanded
+    if (cards.length > 0) {
+      setActiveCard('0');
     }
-    
-    // Hide descriptions for other cards
-    for (let i = 1; i < cards.length; i++) {
-      cards[i].style.flex = '1';
-      const description = cards[i].querySelector('.description');
+  } else {
+    // Mobile: show all descriptions
+    cards.forEach((card) => {
+      const description = card.querySelector('.description');
       if (description) {
-        description.classList.add('hidden');
+        description.classList.remove('hidden');
+        description.classList.add('visible');
       }
-    }
+    });
   }
+  
+  // Handle resize to switch between modes
+  window.addEventListener('resize', () => {
+    if (isDesktop()) {
+      // Show click behavior on desktop
+      cards.forEach((card) => {
+        card.style.cursor = 'pointer';
+      });
+      if (cards.length > 0) {
+        setActiveCard('0');
+      }
+    } else {
+      // Show all descriptions on mobile
+      cards.forEach((card) => {
+        card.style.cursor = 'auto';
+        const description = card.querySelector('.description');
+        if (description) {
+          description.classList.remove('hidden');
+          description.classList.add('visible');
+        }
+      });
+    }
+  });
 </script>
 

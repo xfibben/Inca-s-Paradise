@@ -49,9 +49,11 @@ function getImageSizeClass(year: number): string {
         <div class="w-1/2 h-full flex items-center justify-center">
           <img 
             src={`/landing%20page%20images/reviews/${review.year}trip.webp`}
-            alt="Trip Logo" 
+            alt="Trip Logo"
+            width="120" height="120"
             class={`w-auto brightness-0 invert ${getImageSizeClass(review.year)}`}
             loading="lazy"
+            fetchpriority="low"
           />
         </div>
 

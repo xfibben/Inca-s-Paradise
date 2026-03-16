@@ -172,6 +172,7 @@ const certifications = t.certifications;
             <img 
               src={`/landing page images/certifications/certificaciondoc${cert.number}.jpg`}
               alt={cert.title}
+              width="200" height="120"
               style={`height: ${getImageHeight(cert.number)}; width: auto;`}
               loading={index === 0 ? 'eager' : 'lazy'}
               fetchpriority={index === 0 ? 'high' : 'low'}
