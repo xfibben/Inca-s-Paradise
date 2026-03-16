@@ -13,6 +13,7 @@ import CertificationsCarousel from '../../components/LandingPage/CertificationsC
 import CertificationsDetail from '../../components/LandingPage/CertificationsDetail.astro';
 import Commitment from '../../components/LandingPage/Commitment.astro';
 import Footer from '../../components/shared/Footer.astro';
+import SEOHead from '../../components/SEO/SEOHead.astro';
 
 // Función requerida para rutas dinámicas en Astro
 export function getStaticPaths() {
@@ -37,13 +38,56 @@ if (!Object.keys(languages).includes(lang as string)) {
 const t = getTranslation(validLang);
 const currentLang = validLang;
 
-// Mapeo de idiomas a títulos
+// SEO Configuration
 const titles: Record<Language, string> = {
-  es: "Inca's Paradise - Aventuras Personalizadas",
-  en: "Inca's Paradise - Tailor-made Adventures",
-  pt: "Inca's Paradise - Aventuras Personalizadas",
-  fr: "Inca's Paradise - Aventures Sur Mesure",
-  it: "Inca's Paradise - Avventure Personalizzate"
+  es: "Inca's Paradise - Aventuras Personalizadas en Perú",
+  en: "Inca's Paradise - Tailor-made Adventures in Peru",
+  pt: "Inca's Paradise - Aventuras Personalizadas no Peru",
+  fr: "Inca's Paradise - Aventures Sur Mesure au Pérou",
+  it: "Inca's Paradise - Avventure Personalizzate in Perù"
+};
+
+const descriptions: Record<Language, string> = {
+  es: "Viajes personalizados de lujo a Perú. Experimente el Camino Inca, Machu Picchu y aventuras sostenibles con guías expertos locales.",
+  en: "Tailor-made luxury travel in Peru. Experience the Inca Trail, Machu Picchu, and sustainable adventures with expert local guides.",
+  pt: "Viagens personalizadas de luxo no Peru. Experiencie a Trilha Inca, Machu Picchu e aventuras sustentáveis com guias locais especialistas.",
+  fr: "Voyages de luxe sur mesure au Pérou. Découvrez le Chemin de l'Inca, Machu Picchu et des aventures durables avec des guides locaux experts.",
+  it: "Viaggio di lusso su misura in Perù. Scopri il Sentiero Inca, Machu Picchu e avventure sostenibili con guide locali esperte."
+};
+
+// Alternate language links for hreflang
+const alternateLanguages = Object.keys(languages).map(lang => ({
+  lang: lang === 'es' ? 'es-PE' : lang === 'pt' ? 'pt-BR' : lang,
+  url: `${Astro.site}${lang}/`
+}));
+
+// Schema.org Organization Structured Data
+const organizationSchema = {
+  "@context": "https://schema.org",
+  "@type": "TravelAgency",
+  "name": "Inca's Paradise",
+  "description": descriptions[currentLang],
+  "url": Astro.site,
+  "logo": `${Astro.site}logo.png`,
+  "image": `${Astro.site}og-image.jpg`,
+  "sameAs": [
+    "https://www.facebook.com/IncasParadise",
+    "https://www.instagram.com/incasparadise_/",
+    "https://www.tiktok.com/@incasparadise_"
+  ],
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Jr. Grau 460",
+    "addressLocality": "Puno",
+    "addressCountry": "PE"
+  },
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+51-953-556-680",
+    "contactType": "Customer Service",
+    "email": "booking@incasparadise.com"
+  },
+  "priceRange": "$$"
 };
 
 // Genera langNames dinámicamente desde los idiomas disponibles
@@ -58,12 +102,34 @@ const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Re
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
-		<title>{titles[currentLang]}</title>
+		
+		<!-- SEO Meta Tags -->
+		<SEOHead
+			title={titles[currentLang]}
+			description={descriptions[currentLang]}
+			canonical={`${Astro.site}${currentLang}/`}
+			ogImage={`${Astro.site}og-image.jpg`}
+			ogType="website"
+			currentLang={currentLang}
+			alternateLanguages={alternateLanguages}
+			structuredData={organizationSchema}
+		/>
+		
+		<!-- Performance: Preload hero image for faster LCP -->
+		<link rel="preload" as="image" href="/landing page images/Imagen2.jpg" />
+		<!-- Prefetch carousel images -->
+		<link rel="prefetch" as="image" href="/landing page images/Imagen3.jpg" />
+		<link rel="prefetch" as="image" href="/landing page images/ubicacion-choquequirao-full.jpg" />
+		<!-- Prefetch reviews images -->
+		<link rel="prefetch" as="image" href="/landing page images/reviews/2017.jpg" />
+		<link rel="prefetch" as="image" href="/landing page images/reviews/2020.jpg" />
+		<!-- Prefetch sustainability images -->
+		<link rel="prefetch" as="image" href="/landing page images/sostenibilidad/Turismo justo.jpg" />
+		<link rel="prefetch" as="image" href="/landing page images/sostenibilidad/Sostenibilidad.jpg" />
+		
 		<style>
 			h1, h2 {
 				font-family: 'Playfair Display', serif;

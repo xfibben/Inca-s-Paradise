@@ -1,0 +1,70 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  canonical?: string;
+  ogImage?: string;
+  ogType?: string;
+  twitterHandle?: string;
+  currentLang?: string;
+  alternateLanguages?: Array<{ lang: string; url: string }>;
+  structuredData?: Record<string, any>;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  ogImage = 'https://incasparadise.com/og-image.jpg',
+  ogType = 'website',
+  twitterHandle = '@IncasParadise',
+  currentLang = 'es',
+  alternateLanguages = [],
+  structuredData,
+} = Astro.props;
+
+const baseUrl = Astro.url.origin;
+const canonicalUrl = canonical || Astro.url.href;
+---
+
+<!-- Basic Meta Tags -->
+<meta name="description" content={description} />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0b2b3a" />
+
+<!-- Canonical -->
+<link rel="canonical" href={canonicalUrl} />
+
+<!-- Alternate Languages (hreflang) -->
+{alternateLanguages.map(alt => (
+  <link rel="alternate" hrefLang={alt.lang} href={alt.url} />
+))}
+<link rel="alternate" hrefLang="x-default" href={`${baseUrl}/${currentLang}/`} />
+
+<!-- Open Graph Tags -->
+<meta property="og:type" content={ogType} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:image" content={ogImage} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:site_name" content="Inca's Paradise" />
+<meta property="og:locale" content={currentLang === 'es' ? 'es_PE' : currentLang === 'pt' ? 'pt_BR' : 'en_US'} />
+
+<!-- Twitter Card Tags -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+{twitterHandle && <meta name="twitter:creator" content={twitterHandle} />}
+
+<!-- Additional SEO -->
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+<meta name="googlebot" content="index, follow" />
+<meta name="bingbot" content="index, follow" />
+
+<!-- Structured Data (JSON-LD) -->
+{structuredData && (
+  <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+)}

@@ -47,10 +47,22 @@ try {
 }
 ---
 
+<style>
+  .destinations-grid {
+    height: 180vh;
+  }
+
+  @media (min-width: 1024px) {
+    .destinations-grid {
+      height: 150vh;
+    }
+  }
+</style>
+
 <!-- Destinations Gallery Section -->
 <section class="bg-white w-screen px-0 py-0 flex items-center justify-center min-h-screen">
   <div class="w-screen">
-    <div class="grid gap-px grid-cols-3 lg:grid-cols-4 w-screen" style="height: 120vh; grid-auto-rows: 1fr;">
+    <div class="destinations-grid grid gap-px grid-cols-1 md:grid-cols-3 lg:grid-cols-4 w-screen" style="grid-auto-rows: 1fr;">
       
       {destinations.map((dest: any) => {
         const heroSlides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
@@ -73,12 +85,12 @@ try {
             )}
             <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
             <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white">
-              <h3 class="text-base transition-transform duration-300 group-hover:-translate-y-3 font-s['Roboto' ,sans-serif] ">{dest.title}</h3>
+              <h3 class="text-md  transition-transform duration-300 group-hover:-translate-y-3 font-s['Roboto' ,sans-serif] ">{dest.title}</h3>
               <div class="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col space-y-2 md:space-y-3 items-center w-full bottom-0 left-0 right-0 p-4">
                 <p class="text-xs sm:text-sm md:text-base leading-relaxed hidden sm:block max-w-xs">
                   {dest.description}
                 </p>
-                <span class="px-3 py-1.5 sm:px-4 sm:py-2 border border-white text-white text-xs sm:text-sm font-semibold hover:bg-orange-500 hover:border-orange-500 hover:text-white transition">
+                <span class="px-3 py-1.5 sm:px-4 sm:py-2 border border-white text-white text-xs sm:text-sm font-semibold hover:bg-white hover:border-white hover:text-gray-900 transition">
                   {t.buttons.explore}
                 </span>
               </div>

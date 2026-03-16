@@ -40,7 +40,24 @@ try {
 ---
 
 <style>
-  @media (max-width: 1024px) {
+  @media (max-width: 768px) {
+    section {
+      height: auto !important;
+      min-height: auto !important;
+      padding: 1rem 0;
+    }
+    
+    .styles-grid {
+      height: auto !important;
+      gap: 0.25rem;
+    }
+
+    .styles-grid > div {
+      min-height: 240px;
+    }
+  }
+
+  @media (min-width: 769px) and (max-width: 1024px) {
     .styles-grid > :nth-child(4) {
       grid-column: 2 / 3;
     }
@@ -52,8 +69,8 @@ try {
 
 <section class="bg-white px-2 py-0 w-full flex items-center justify-center" style="height: calc(100vh - 6rem);">
   <div class="w-full h-full">
-    <!-- Grid Layout: 3 cols mobile (with 2 centered below), 5 cols desktop -->
-    <div class="styles-grid grid grid-cols-3 lg:grid-cols-5 gap-1 w-full h-full" style="grid-auto-rows: 1fr;">
+    <!-- Grid Layout: 1 col mobile, 3 cols tablet, 5 cols desktop -->
+    <div class="styles-grid grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-1 w-full h-full" style="grid-auto-rows: 1fr;">
       {styleTrips.map((item: any) => {
         const name = item.name ?? '';
         const description = item.description ?? '';
@@ -78,7 +95,7 @@ try {
 
             <!-- Content -->
             <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white">
-              <a href={`/${currentLang}/style-trips/${toSlug(name)}`} class="text-sm md:text-base lg:text-lg font-bold transition-transform duration-300 group-hover:-translate-y-3 hover:opacity-80" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
+              <a href={`/${currentLang}/style-trips/${toSlug(name)}`} class="text-md md:text-xl lg:text-xl font-bold transition-transform duration-300 group-hover:-translate-y-3 hover:opacity-80" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
                 {name}
               </a>
             </div>

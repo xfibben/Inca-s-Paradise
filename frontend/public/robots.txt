@@ -1,0 +1,33 @@
+# Robots.txt for Inca's Paradise
+# Allow search engines to crawl the site
+
+User-agent: *
+Allow: /
+Allow: /es/
+Allow: /en/
+Allow: /pt/
+Disallow: /admin/
+Disallow: /_astro/
+Disallow: /private/
+Disallow: /*.json$
+Disallow: /*.jsonfeed$
+
+# Allow specific pages
+Allow: /es/*.html
+Allow: /en/*.html
+Allow: /pt/*.html
+
+# Sitemap
+Sitemap: https://incasparadise.com/sitemap.xml
+
+# Crawl delay for bots
+Crawl-delay: 1
+
+# Allow specific user agents
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
