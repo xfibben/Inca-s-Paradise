@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_tours_highlight_items",
+  "info": {
+    "displayName": "Highlight Item",
+    "description": "Item de beneficios del bloque principal del tour"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    }
+  }
+}

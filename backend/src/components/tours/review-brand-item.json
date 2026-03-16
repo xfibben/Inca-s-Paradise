@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_tours_review_brand_items",
+  "info": {
+    "displayName": "Review Brand Item",
+    "description": "Marca de resenas para la banda de 5 estrellas"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "collectionName": "components_tours_itinerary_items",
+  "info": {
+    "displayName": "Itinerary Item",
+    "description": "Dia/actividad del itinerario detallado"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "highlight": {
+      "type": "text"
+    },
+    "description": {
+      "type": "text"
+    },
+    "optional": {
+      "type": "text"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "imageAlt": {
+      "type": "string"
+    },
+    "includes": {
+      "type": "component",
+      "repeatable": true,
+      "component": "tours.itinerary-include-item"
+    }
+  }
+}

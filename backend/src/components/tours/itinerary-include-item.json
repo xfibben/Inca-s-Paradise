@@ -1,0 +1,14 @@
+{
+  "collectionName": "components_tours_itinerary_include_items",
+  "info": {
+    "displayName": "Itinerary Include Item",
+    "description": "Texto de incluye del item de itinerario"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "string",
+      "required": true
+    }
+  }
+}
