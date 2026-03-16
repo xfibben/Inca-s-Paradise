@@ -119,8 +119,19 @@ function toCardImageFromTour(tour: any) {
 }
 
 function toRouteFromTour(tour: any) {
-  const locations = Array.isArray(tour?.atGlance?.items)
+  const rootAtGlanceItems = Array.isArray(tour?.atGlanceItems)
+    ? tour.atGlanceItems
+        .map((entry: any) => normalizeRow(entry))
+        .filter(Boolean)
+    : [];
+  const legacyAtGlanceItems = Array.isArray(tour?.atGlance?.items)
     ? tour.atGlance.items
+    : [];
+  const candidateAtGlanceItems =
+    rootAtGlanceItems.length > 0 ? rootAtGlanceItems : legacyAtGlanceItems;
+
+  const locations = candidateAtGlanceItems.length > 0
+    ? candidateAtGlanceItems
         .map((item: any) => firstNonEmptyText(item?.location))
         .filter(Boolean)
     : [];
@@ -178,6 +189,12 @@ async function fetchStrapiDetailBySlug(
         `populate[heroSlideImages][fields][0]=url&` +
         `populate[heroSlideImages][fields][1]=alternativeText&` +
         `populate[heroSlideImages][fields][2]=formats&` +
+        `populate[ogImage][fields][0]=url&` +
+        `populate[ogImage][fields][1]=alternativeText&` +
+        `populate[ogImage][fields][2]=formats&` +
+        `populate[twitterImage][fields][0]=url&` +
+        `populate[twitterImage][fields][1]=alternativeText&` +
+        `populate[twitterImage][fields][2]=formats&` +
         `populate[iconItems][populate][icon][fields][0]=url&` +
         `populate[iconItems][populate][icon][fields][1]=alternativeText&` +
         `populate[iconItems][populate][icon][fields][2]=formats`;
@@ -349,7 +366,26 @@ const pageDescription =
   (lang === "en"
     ? "Destination page placeholder."
     : "Vista de destino en construccion.");
-const canonical = `${Astro.url.origin}/${lang}/destinos/${slugKey || ""}`;
+const canonicalRaw = String(strapiDetail?.seoCanonicalUrl ?? "").trim();
+const canonical =
+  canonicalRaw.length > 0
+    ? /^https?:\/\//i.test(canonicalRaw)
+      ? canonicalRaw
+      : `${Astro.url.origin}${canonicalRaw.startsWith("/") ? canonicalRaw : `/${canonicalRaw}`}`
+    : `${Astro.url.origin}/${lang}/destinos/${slugKey || ""}`;
+const seoTitle = String(strapiDetail?.seoTitle ?? "").trim() || pageTitle;
+const seoDescription =
+  String(strapiDetail?.seoDescription ?? "").trim() || pageDescription;
+const seoKeywords = String(strapiDetail?.seoKeywords ?? "").trim();
+const seoNoIndex = Boolean(strapiDetail?.seoNoIndex);
+const ogTitle = String(strapiDetail?.ogTitle ?? "").trim() || seoTitle;
+const ogDescription =
+  String(strapiDetail?.ogDescription ?? "").trim() || seoDescription;
+const twitterTitle =
+  String(strapiDetail?.twitterTitle ?? "").trim() || ogTitle;
+const twitterDescription =
+  String(strapiDetail?.twitterDescription ?? "").trim() || ogDescription;
+const ogLocale = lang === "en" ? "en_US" : "es_PE";
 const strapiSlideText =
   Array.isArray(strapiDetail?.heroSlides) && strapiDetail.heroSlides.length > 0
     ? strapiDetail.heroSlides
@@ -417,6 +453,26 @@ const slides =
     : strapiSlidesFromJson.length > 0
       ? strapiSlidesFromJson
       : hero?.slides ?? [];
+const fallbackHeroImage =
+  toAbsoluteMediaUrl(hero?.slides?.[0]?.image) ||
+  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2000&q=80";
+const resolvedSlides =
+  slides.length > 0
+    ? slides
+    : [
+        {
+          image: fallbackHeroImage,
+          title: pageTitle,
+          description: pageDescription,
+          alt: pageTitle
+        }
+      ];
+const ogImage =
+  toAbsoluteMediaUrl(toMediaObject(strapiDetail?.ogImage)) ||
+  resolvedSlides[0]?.image ||
+  "";
+const twitterImage =
+  toAbsoluteMediaUrl(toMediaObject(strapiDetail?.twitterImage)) || ogImage;
 const introTitle =
   strapiDetail?.introTitle ??
   intro?.title ??
@@ -599,23 +655,35 @@ const smallStepCount = smallRowsPerLoad * 3;
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
-		<title>{pageTitle}</title>
-		<meta name="description" content={pageDescription} />
+		<title>{seoTitle}</title>
+		<meta name="description" content={seoDescription} />
+		{seoKeywords ? <meta name="keywords" content={seoKeywords} /> : null}
+		<meta name="robots" content={seoNoIndex ? "noindex,nofollow" : "index,follow"} />
 		<link rel="canonical" href={canonical} />
+		<meta property="og:type" content="website" />
+		<meta property="og:locale" content={ogLocale} />
+		<meta property="og:title" content={ogTitle} />
+		<meta property="og:description" content={ogDescription} />
+		<meta property="og:url" content={canonical} />
+		{ogImage ? <meta property="og:image" content={ogImage} /> : null}
+		<meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+		<meta name="twitter:title" content={twitterTitle} />
+		<meta name="twitter:description" content={twitterDescription} />
+		{twitterImage ? <meta name="twitter:image" content={twitterImage} /> : null}
 	</head>
 	<body class="min-h-screen bg-white text-gray-900">
 		<script is:inline src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
 		<Navbar {t} currentLang={lang} />
 		<main>
 			<section class="relative w-full bg-black overflow-hidden h-screen min-h-screen">
-				<div id="destino-carousel" class="relative h-full w-full" data-carousel="slide">
+				<div id="destino-carousel" class="relative h-full w-full">
 					<div class="relative h-full w-full overflow-hidden">
-						{slides.map((slide, index) => (
+						{resolvedSlides.map((slide, index) => (
 							<div
 								class={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
 									index === 0 ? "opacity-100" : "opacity-0"
 								}`}
-								data-carousel-item
+								data-destino-slide
 								data-index={index}
 							>
 								<img
@@ -661,7 +729,7 @@ const smallStepCount = smallRowsPerLoad * 3;
 						type="button"
 						class="absolute top-0 left-0 z-30 flex h-full items-center justify-center px-4 cursor-pointer group focus:outline-none"
 						aria-label={prevLabel}
-						data-carousel-prev
+						data-destino-prev
 					>
 						<span class="inline-flex items-center justify-center text-white/90 group-hover:text-white">
 							<svg class="w-5 h-5" viewBox="0 0 6 10" fill="none" aria-hidden="true">
@@ -679,7 +747,7 @@ const smallStepCount = smallRowsPerLoad * 3;
 						type="button"
 						class="absolute top-0 right-0 z-30 flex h-full items-center justify-center px-4 cursor-pointer group focus:outline-none"
 						aria-label={nextLabel}
-						data-carousel-next
+						data-destino-next
 					>
 						<span class="inline-flex items-center justify-center text-white/90 group-hover:text-white">
 							<svg class="w-5 h-5" viewBox="0 0 6 10" fill="none" aria-hidden="true">
@@ -945,9 +1013,9 @@ const smallStepCount = smallRowsPerLoad * 3;
 		<Footer currentLang={lang} {t} />
 		<script is:inline>
 			(() => {
-				const slides = Array.from(document.querySelectorAll("[data-carousel-item]"));
-				const prev = document.querySelector("[data-carousel-prev]");
-				const next = document.querySelector("[data-carousel-next]");
+				const slides = Array.from(document.querySelectorAll("[data-destino-slide]"));
+				const prev = document.querySelector("[data-destino-prev]");
+				const next = document.querySelector("[data-destino-next]");
 				if (!slides.length) return;
 
 				let index = 0;
@@ -960,10 +1028,10 @@ const smallStepCount = smallRowsPerLoad * 3;
 					});
 				};
 
-				let timer = setInterval(() => show(index + 1), 3000);
+				let timer = slides.length > 1 ? setInterval(() => show(index + 1), 3000) : null;
 				const resetTimer = () => {
-					clearInterval(timer);
-					timer = setInterval(() => show(index + 1), 3000);
+					if (timer) clearInterval(timer);
+					if (slides.length > 1) timer = setInterval(() => show(index + 1), 3000);
 				};
 
 				prev?.addEventListener("click", () => {

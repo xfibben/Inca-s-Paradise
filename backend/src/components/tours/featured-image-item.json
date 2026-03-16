@@ -1,0 +1,21 @@
+{
+  "collectionName": "components_tours_featured_image_items",
+  "info": {
+    "displayName": "Featured Image Item",
+    "description": "Imagen para la seccion destacado"
+  },
+  "options": {},
+  "attributes": {
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "alt": {
+      "type": "string"
+    }
+  }
+}

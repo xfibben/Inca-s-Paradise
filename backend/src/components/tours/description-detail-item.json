@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_tours_description_detail_items",
+  "info": {
+    "displayName": "Description Detail Item",
+    "description": "Bloque de texto expandido de la seccion descripcion"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "text": {
+      "type": "text",
+      "required": true
+    }
+  }
+}
