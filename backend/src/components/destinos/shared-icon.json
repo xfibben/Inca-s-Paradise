@@ -1,20 +1,14 @@
 {
-  "collectionName": "components_destinos_icon_items",
+  "collectionName": "components_destinos_shared_icons",
   "info": {
-    "displayName": "Icon Item",
-    "description": "Elemento visual de beneficios para la seccion introductoria"
+    "displayName": "Shared Icon",
+    "description": "Icono compartido entre idiomas para destino detalle"
   },
   "options": {},
   "attributes": {
     "iconKey": {
-      "type": "string"
-    },
-    "label": {
       "type": "string",
       "required": true
-    },
-    "description": {
-      "type": "string"
     },
     "icon": {
       "type": "media",

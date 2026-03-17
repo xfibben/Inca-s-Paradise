@@ -460,10 +460,11 @@ export interface ApiDestinoDetalleDestinoDetalle
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
+    displayOrder: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<100>;
     galleryThumbnail: Schema.Attribute.Media<'images'> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: true;
+          localized: false;
         };
       }>;
     heroDescription1: Schema.Attribute.Text &
@@ -487,7 +488,7 @@ export interface ApiDestinoDetalleDestinoDetalle
     heroSlideImages: Schema.Attribute.Media<'images', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: true;
+          localized: false;
         };
       }>;
     heroTitle1: Schema.Attribute.String &
@@ -506,6 +507,12 @@ export interface ApiDestinoDetalleDestinoDetalle
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
+        };
+      }>;
+    iconCatalog: Schema.Attribute.Component<'destinos.shared-icon', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
         };
       }>;
     iconItems: Schema.Attribute.Component<'destinos.icon-item', true> &
@@ -535,7 +542,7 @@ export interface ApiDestinoDetalleDestinoDetalle
     ogImage: Schema.Attribute.Media<'images'> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: true;
+          localized: false;
         };
       }>;
     ogTitle: Schema.Attribute.String &
@@ -589,7 +596,7 @@ export interface ApiDestinoDetalleDestinoDetalle
     twitterImage: Schema.Attribute.Media<'images'> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: true;
+          localized: false;
         };
       }>;
     twitterTitle: Schema.Attribute.String &
