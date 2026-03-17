@@ -11,7 +11,7 @@ const t = getTranslation(currentLang);
 
 const STRAPI_URL = import.meta.env.STRAPI_URL;
 const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL;
-const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' :currentLang === 'it' ? 'it':currentLang === 'fr' ? 'fr': currentLang;
 
 console.log('=== STYLE-TRIPS PAGE ===');
 console.log('Slug:', slug);
