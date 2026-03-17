@@ -104,6 +104,8 @@ const heroImageUrl = heroImage?.formats?.large?.url
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
     <title>{trip?.name || 'Style Trip'} — Inca's Paradise</title>
+      <meta name="description" content={trip?.seoDescription || trip?.description || 'Style Trip'} />
+      <meta name="title" content={trip?.seoTitle || trip?.name || 'Style Trip'} />
     <style>
       @media (max-width: 767px) {
         /* Gallery collage: stack vertically */

@@ -10,8 +10,13 @@ const { t, currentLang } = Astro.props;
 
 const STRAPI_URL = import.meta.env.STRAPI_URL;
 const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL;
-const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+// const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+  const strapiLocale = currentLang === 'pt' ? 'pt' : currentLang === 'es' ? 'es-PE' : currentLang;
 
+  // Soporte para portugués en destinos
+  function getDestTitle(dest: any) {
+    return dest.title || dest.name || dest.titulo || dest.titulo_pt || dest.titulo_en || dest.titulo_es || '';
+  }
 function toSlug(name: string): string {
   return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
 }
@@ -163,12 +168,12 @@ try {
                   <div id="destinations-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
                     {navDestinations.map((dest: any) => (
                       <a
-                        href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`}
+                        href={`/${currentLang}/destinos/${dest.slug || toSlug(getDestTitle(dest))}`}
                         class="destination-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition border-b border-gray-100 whitespace-normal block"
-                        title={dest.title}
+                        title={getDestTitle(dest)}
                         data-dest={dest.slug}
                       >
-                        {dest.title}
+                        {getDestTitle(dest)}
                       </a>
                     ))}
                   </div>
