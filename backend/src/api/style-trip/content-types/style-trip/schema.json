@@ -75,5 +75,22 @@
         }
       }
     }
+      ,
+      "seoTitle": {
+        "type": "string",
+        "pluginOptions": {
+          "i18n": {
+            "localized": true
+          }
+        }
+      },
+      "seoDescription": {
+        "type": "text",
+        "pluginOptions": {
+          "i18n": {
+            "localized": true
+          }
+        }
+      }
   }
 }
