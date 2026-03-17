@@ -87,7 +87,11 @@ for (const baseUrl of STRAPI_URLS) {
   }
 }
 
-const canonical = `${Astro.url.origin}/${lang}/destinos`;
+const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(
+  /\/$/,
+  ""
+);
+const canonical = `${siteOrigin}/${lang}/destinos`;
 ---
 
 <html lang={lang}>
