@@ -6,7 +6,9 @@ interface Props {
 
 const { t, currentLang = 'es' } = Astro.props;
 
-const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+const supportedLangs = ['es', 'en', 'pt', 'fr', 'it'];
+const langToUse = supportedLangs.includes(currentLang) ? currentLang : 'es';
+const strapiLocale = langToUse === 'pt' ? 'pt-BR' : langToUse === 'es' ? 'es-PE' : langToUse;
 const STRAPI_URL = import.meta.env.STRAPI_URL;          // server-side fetch
 const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL // browser img src
 
@@ -95,7 +97,7 @@ try {
 
             <!-- Content -->
             <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white">
-              <a href={`/${currentLang}/style-trips/${toSlug(name)}`} class="text-md md:text-xl lg:text-xl font-bold transition-transform duration-300 group-hover:-translate-y-3 hover:opacity-80" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
+              <a href={`/${langToUse}/style-trips/${toSlug(name)}`} class="text-md md:text-xl lg:text-xl font-bold transition-transform duration-300 group-hover:-translate-y-3 hover:opacity-80" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
                 {name}
               </a>
             </div>

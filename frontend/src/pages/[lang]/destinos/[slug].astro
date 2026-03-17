@@ -8,7 +8,7 @@ import Footer from "../../../components/shared/Footer.astro";
 import destinosDetailEs from "../../../data/destinos.detail.es.json";
 import destinosDetailEn from "../../../data/destinos.detail.en.json";
 
-type SupportedLang = "es" | "en";
+type SupportedLang = "es" | "en" | "pt" | "it" | "fr";
 
 const STRAPI_BASE_URLS = Array.from(
   new Set([
@@ -24,7 +24,13 @@ const STRAPI_TOUR_ENDPOINT = "/api/tour-detalles";
 const getLocales = (lang: SupportedLang) =>
   lang === "en"
     ? (["en", "en-US", null] as const)
-    : (["es-PE", "es", null] as const);
+    : lang === "es"
+    ? (["es-PE", "es", null] as const)
+    : lang === "pt"
+    ? (["pt-BR", "pt", null] as const)
+    : lang === "it"
+    ? (["it", null] as const)
+    : (["fr", null] as const);
 
 function localePrefix(locale: string | null) {
   return locale ? `locale=${encodeURIComponent(locale)}&` : "";
@@ -276,7 +282,7 @@ export async function getStaticPaths() {
   );
 
   const allPaths: Array<{ params: { lang: SupportedLang; slug: string } }> = [];
-  const langs: SupportedLang[] = ["es", "en"];
+  const langs: SupportedLang[] = ["es", "en", "pt", "it", "fr"];
 
   for (const lang of langs) {
     const fallbackData = lang === "en" ? destinosDetailEn : destinosDetailEs;
@@ -323,11 +329,12 @@ export async function getStaticPaths() {
 }
 
 const rawLang = (Astro.params.lang ?? "es").toLowerCase();
-const lang: SupportedLang = rawLang === "en" ? "en" : "es";
+const supportedLangs = ["es", "en", "pt", "fr", "it"];
+const lang: SupportedLang = supportedLangs.includes(rawLang) ? rawLang : "es";
 const slugKey = String(Astro.params.slug ?? "").toLowerCase();
 
-if (rawLang !== lang) {
-  return Astro.redirect(`/${lang}/destinos/${slugKey}`);
+if (!supportedLangs.includes(rawLang)) {
+  return Astro.redirect(`/es/destinos/${slugKey}`);
 }
 
 const t = getTranslation(lang);
