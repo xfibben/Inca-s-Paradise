@@ -23,6 +23,10 @@
       "type": "string",
       "required": true
     },
+    "displayOrder": {
+      "type": "integer",
+      "default": 100
+    },
     "slug": {
       "type": "uid",
       "targetField": "title",
@@ -96,7 +100,7 @@
       ],
       "pluginOptions": {
         "i18n": {
-          "localized": true
+          "localized": false
         }
       }
     },
@@ -124,7 +128,7 @@
       ],
       "pluginOptions": {
         "i18n": {
-          "localized": true
+          "localized": false
         }
       }
     },
@@ -184,7 +188,7 @@
       ],
       "pluginOptions": {
         "i18n": {
-          "localized": true
+          "localized": false
         }
       }
     },
@@ -196,7 +200,7 @@
       ],
       "pluginOptions": {
         "i18n": {
-          "localized": true
+          "localized": false
         }
       }
     },
@@ -208,6 +212,16 @@
       "pluginOptions": {
         "i18n": {
           "localized": true
+        }
+      }
+    },
+    "iconCatalog": {
+      "type": "component",
+      "repeatable": true,
+      "component": "destinos.shared-icon",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
         }
       }
     },

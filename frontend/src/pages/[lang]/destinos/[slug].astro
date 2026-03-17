@@ -195,9 +195,18 @@ async function fetchStrapiDetailBySlug(
         `populate[twitterImage][fields][0]=url&` +
         `populate[twitterImage][fields][1]=alternativeText&` +
         `populate[twitterImage][fields][2]=formats&` +
+        `populate[iconCatalog][fields][0]=iconKey&` +
+        `populate[iconCatalog][fields][1]=iconAlt&` +
+        `populate[iconCatalog][populate][icon][fields][0]=url&` +
+        `populate[iconCatalog][populate][icon][fields][1]=alternativeText&` +
+        `populate[iconCatalog][populate][icon][fields][2]=formats&` +
         `populate[iconItems][populate][icon][fields][0]=url&` +
         `populate[iconItems][populate][icon][fields][1]=alternativeText&` +
-        `populate[iconItems][populate][icon][fields][2]=formats`;
+        `populate[iconItems][populate][icon][fields][2]=formats&` +
+        `populate[iconItems][fields][0]=iconKey&` +
+        `populate[iconItems][fields][1]=label&` +
+        `populate[iconItems][fields][2]=description&` +
+        `populate[iconItems][fields][3]=iconAlt`;
 
       try {
         const res = await fetch(url);
@@ -353,6 +362,10 @@ const strapiToursForCatalog = await fetchStrapiToursByDestination(
   slugKey,
   getLocales(lang)
 );
+const sharedIconSourceDetail =
+  lang === "es"
+    ? strapiDetail
+    : await fetchStrapiDetailBySlug(slugKey, ["es-PE", "es", null]);
 
 if (!fallbackDestination && !strapiDetail) {
   return Astro.redirect(`/${lang}/destinos`);
@@ -482,62 +495,107 @@ const introParagraphs =
   introParagraphsFromEditor.length > 0
     ? introParagraphsFromEditor
     : intro?.paragraphs ?? [];
-const fallbackIconLabels =
-  intro?.iconLabels ??
-  (lang === "en"
-    ? [
-        "Local cuisine",
-        "5-star reviews",
-        "Responsible travel",
-        "Boutique stays",
-        "Verified reviews",
-        "Expert local guides"
-      ]
-    : [
-        "Gastronomia local",
-        "5 estrellas",
-        "Viajes responsables",
-        "Alojamientos boutique",
-        "Resenas verificadas",
-        "Guias locales expertos"
-      ]);
-const defaultIconSvgs = [
-  `<svg viewBox="0 0 64 64" fill="none" class="h-full w-full"><path d="M14 42c8-10 28-10 36 0" stroke="currentColor" stroke-width="3" stroke-linecap="round" /><path d="M20 42c0 8 6 14 12 14s12-6 12-14" stroke="currentColor" stroke-width="3" stroke-linecap="round" /><path d="M24 28h16" stroke="currentColor" stroke-width="3" stroke-linecap="round" /></svg>`,
-  `<svg viewBox="0 0 64 64" fill="none" class="h-full w-full"><path d="M10 28h44" stroke="currentColor" stroke-width="3" stroke-linecap="round" /><path d="M12 38h40" stroke="currentColor" stroke-width="3" stroke-linecap="round" /><path d="M18 18l4 6h-8l4-6z" stroke="currentColor" stroke-width="3" stroke-linejoin="round" /></svg>`,
-  `<svg viewBox="0 0 64 64" fill="none" class="h-full w-full"><path d="M20 48c8-3 16-10 24-22" stroke="currentColor" stroke-width="3" stroke-linecap="round" /><path d="M18 22l10 8-12 4" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>`,
-  `<svg viewBox="0 0 64 64" fill="none" class="h-full w-full"><path d="M12 44h40" stroke="currentColor" stroke-width="3" stroke-linecap="round" /><path d="M20 44V24h24v20" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /><path d="M16 24l16-10 16 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>`,
-  `<svg viewBox="0 0 64 64" fill="none" class="h-full w-full"><path d="M16 32h32" stroke="currentColor" stroke-width="3" stroke-linecap="round" /><path d="M20 40h24" stroke="currentColor" stroke-width="3" stroke-linecap="round" /><path d="M20 24h24" stroke="currentColor" stroke-width="3" stroke-linecap="round" /></svg>`,
-  `<svg viewBox="0 0 64 64" fill="none" class="h-full w-full"><path d="M12 40c12-10 32-10 44 0" stroke="currentColor" stroke-width="3" stroke-linecap="round" /><path d="M22 28c6 6 14 6 20 0" stroke="currentColor" stroke-width="3" stroke-linecap="round" /><path d="M20 22l12-10 12 10" stroke="currentColor" stroke-width="3" stroke-linecap="round" /></svg>`
-];
-const strapiIconItemsRaw = Array.isArray(strapiDetail?.iconItems)
-  ? strapiDetail.iconItems
+const fallbackIconItemsFromIntro = Array.isArray(intro?.iconLabels)
+  ? intro.iconLabels
+      .map((label: any) => String(label ?? "").trim())
+      .filter(Boolean)
+      .map((label: string) => ({
+        label,
+        description: "",
+        iconUrl: "",
+        iconAlt: label
+      }))
   : [];
-const strapiIconItems = strapiIconItemsRaw
+const strapiIconCatalogRaw = Array.isArray(strapiDetail?.iconCatalog)
+  ? strapiDetail.iconCatalog
+  : [];
+const sharedIconCatalogRaw = Array.isArray(sharedIconSourceDetail?.iconCatalog)
+  ? sharedIconSourceDetail.iconCatalog
+  : [];
+const strapiIconCatalog = strapiIconCatalogRaw
   .map((entry: any) => {
     const item = normalizeRow(entry);
     const media = toMediaObject(item?.icon);
     const iconUrl = toAbsoluteMediaUrl(media);
+    const iconKey = String(item?.iconKey ?? "").trim().toLowerCase();
+    const iconAlt = String(item?.iconAlt ?? media?.alternativeText ?? "").trim();
+    return { iconKey, iconUrl, iconAlt };
+  })
+  .filter((item) => item.iconUrl);
+const sharedIconCatalog = sharedIconCatalogRaw
+  .map((entry: any) => {
+    const item = normalizeRow(entry);
+    const media = toMediaObject(item?.icon);
+    const iconUrl = toAbsoluteMediaUrl(media);
+    const iconKey = String(item?.iconKey ?? "").trim().toLowerCase();
+    const iconAlt = String(item?.iconAlt ?? media?.alternativeText ?? "").trim();
+    return { iconKey, iconUrl, iconAlt };
+  })
+  .filter((item) => item.iconUrl);
+const iconCatalogByKey = new Map(
+  [...sharedIconCatalog, ...strapiIconCatalog]
+    .filter((item) => Boolean(item.iconKey))
+    .map((item) => [item.iconKey, item] as const)
+);
+const iconCatalogByIndex =
+  strapiIconCatalog.length > 0 ? strapiIconCatalog : sharedIconCatalog;
+
+const strapiIconItemsRaw = Array.isArray(strapiDetail?.iconItems)
+  ? strapiDetail.iconItems
+  : [];
+const sharedIconItemsRaw = Array.isArray(sharedIconSourceDetail?.iconItems)
+  ? sharedIconSourceDetail.iconItems
+  : [];
+const mapIconItems = (entries: any[], catalogEntries: Array<{ iconKey: string; iconUrl: string; iconAlt: string }>) =>
+  entries
+  .map((entry: any, index: number) => {
+    const item = normalizeRow(entry);
+    const iconKey = String(item?.iconKey ?? "").trim().toLowerCase();
+    const catalogItem =
+      (iconKey ? iconCatalogByKey.get(iconKey) : null) ??
+      catalogEntries[index] ??
+      null;
+    const media = toMediaObject(item?.icon);
+    const iconUrl = catalogItem?.iconUrl || toAbsoluteMediaUrl(media);
     const label = String(item?.label ?? "").trim();
     const description = String(item?.description ?? "").trim();
     return {
+      iconKey,
       label,
       description,
       iconUrl,
-      iconAlt: String(item?.iconAlt ?? media?.alternativeText ?? label).trim()
+      iconAlt: String(
+        catalogItem?.iconAlt ?? item?.iconAlt ?? media?.alternativeText ?? label
+      ).trim()
     };
   })
   .filter((item) => item.label || item.iconUrl);
-const iconItems = Array.from({ length: 6 }, (_, index) => {
-  const item = strapiIconItems[index];
-  if (item?.label || item?.iconUrl) return item;
-  const fallbackLabel = String(fallbackIconLabels[index] ?? "").trim();
+const strapiIconItems = mapIconItems(strapiIconItemsRaw, iconCatalogByIndex);
+const sharedIconItems = mapIconItems(sharedIconItemsRaw, sharedIconCatalog);
+const hydratedIconItems = strapiIconItems.map((item, index) => {
+  if (item.iconUrl) return item;
+  const fallbackByKey = item.iconKey
+    ? sharedIconItems.find(
+        (sharedItem) =>
+          sharedItem.iconKey === item.iconKey && Boolean(sharedItem.iconUrl)
+      )
+    : null;
+  const fallbackByIndex = sharedIconItems[index];
+  const fallbackIcon =
+    fallbackByKey?.iconUrl ? fallbackByKey : fallbackByIndex?.iconUrl ? fallbackByIndex : null;
+  if (!fallbackIcon) return item;
   return {
-    label: fallbackLabel,
-    description: "",
-    iconUrl: "",
-    iconAlt: fallbackLabel
+    ...item,
+    iconUrl: fallbackIcon.iconUrl,
+    iconAlt: item.iconAlt || fallbackIcon.iconAlt
   };
-}).filter((item) => item.label || item.iconUrl);
+});
+const iconItems =
+  hydratedIconItems.length > 0
+    ? hydratedIconItems
+    : sharedIconItems.length > 0
+      ? sharedIconItems
+      : fallbackIconItemsFromIntro;
 const primaryRibbon =
   strapiDetail?.primaryRibbon ??
   ribbons?.primary ??
@@ -785,10 +843,10 @@ const smallStepCount = smallRowsPerLoad * 3;
 					</div>
 					<div class="mx-auto w-full max-w-md">
 						<div class="grid grid-cols-3 gap-x-8 gap-y-10 text-center">
-							{iconItems.map((item, index) => (
+							{iconItems.map((item) => (
 								<div class="flex flex-col items-center gap-2">
-									<div class="h-12 w-12 text-slate-900">
-										{item.iconUrl ? (
+									{item.iconUrl ? (
+										<div class="h-12 w-12 text-slate-900">
 											<img
 												src={item.iconUrl}
 												alt={item.iconAlt || item.label || pageTitle}
@@ -796,10 +854,8 @@ const smallStepCount = smallRowsPerLoad * 3;
 												loading="lazy"
 												decoding="async"
 											/>
-										) : (
-											<Fragment set:html={defaultIconSvgs[index % defaultIconSvgs.length]} />
-										)}
-									</div>
+										</div>
+									) : null}
 									<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed">{item.label}</p>
 									{item.description ? (
 										<p class="text-xs md:text-sm text-gray-600 leading-relaxed">{item.description}</p>

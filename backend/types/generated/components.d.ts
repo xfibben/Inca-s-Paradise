@@ -10,7 +10,21 @@ export interface DestinosIconItem extends Struct.ComponentSchema {
     description: Schema.Attribute.String;
     icon: Schema.Attribute.Media<'images'>;
     iconAlt: Schema.Attribute.String;
+    iconKey: Schema.Attribute.String;
     label: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface DestinosSharedIcon extends Struct.ComponentSchema {
+  collectionName: 'components_destinos_shared_icons';
+  info: {
+    description: 'Icono compartido entre idiomas para destino detalle';
+    displayName: 'Shared Icon';
+  };
+  attributes: {
+    icon: Schema.Attribute.Media<'images'>;
+    iconAlt: Schema.Attribute.String;
+    iconKey: Schema.Attribute.String & Schema.Attribute.Required;
   };
 }
 
@@ -136,6 +150,7 @@ declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
       'destinos.icon-item': DestinosIconItem;
+      'destinos.shared-icon': DestinosSharedIcon;
       'tours.at-glance-item': ToursAtGlanceItem;
       'tours.calendar-available-day-item': ToursCalendarAvailableDayItem;
       'tours.calendar-weekday-item': ToursCalendarWeekdayItem;
