@@ -127,6 +127,10 @@ try {
               : null;
           }
 
+        // Obtener slug seguro
+        const slug = dest.slug || toSlug(dest.title || dest.name || '');
+        const title = dest.title || dest.name || '';
+        const description = dest.description || '';
         return (
           <a href={`/${currentLang}/destinos/${slug}`} class="group relative overflow-hidden cursor-pointer block">
             {imageUrl && (
