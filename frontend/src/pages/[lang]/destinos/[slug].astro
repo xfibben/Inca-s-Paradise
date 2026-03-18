@@ -212,7 +212,8 @@ async function fetchStrapiDetailBySlug(
         `populate[iconItems][fields][0]=iconKey&` +
         `populate[iconItems][fields][1]=label&` +
         `populate[iconItems][fields][2]=description&` +
-        `populate[iconItems][fields][3]=iconAlt`;
+        `populate[iconItems][fields][3]=iconAlt`
+        ;
 
       try {
         const res = await fetch(url);
