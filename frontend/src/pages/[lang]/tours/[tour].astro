@@ -163,9 +163,6 @@ for (const baseUrl of STRAPI_BASE_URLS) {
       "populate[featuredImages][populate][image][fields][0]=url&" +
       "populate[featuredImages][populate][image][fields][1]=alternativeText&" +
       "populate[featuredImages][populate][image][fields][2]=formats&" +
-      "populate[atGlanceMapImage][fields][0]=url&" +
-      "populate[atGlanceMapImage][fields][1]=formats&" +
-      "populate[atGlanceMapImage][fields][2]=alternativeText&" +
       "populate[descriptionDetails][fields][0]=title&" +
       "populate[descriptionDetails][fields][1]=text&" +
       "populate[highlightsItems][fields][0]=title&" +
@@ -179,11 +176,6 @@ for (const baseUrl of STRAPI_BASE_URLS) {
       "populate[itineraryItems][populate][image][fields][1]=alternativeText&" +
       "populate[itineraryItems][populate][image][fields][2]=formats&" +
       "populate[itineraryItems][populate][includes][fields][0]=text&" +
-      "populate[atGlanceItems][fields][0]=location&" +
-      "populate[atGlanceItems][fields][1]=nights&" +
-      "populate[atGlanceItems][fields][2]=summary&" +
-      "populate[bookingWeekdays][fields][0]=label&" +
-      "populate[bookingAvailableDays][fields][0]=day&" +
       "populate[reviewsBandItems][fields][0]=label";
 
     try {
@@ -237,106 +229,6 @@ const tourHero = {
   slides: sourceTour.hero?.slides ?? fallbackHero?.slides ?? []
 };
 const fallbackSummary = fallbackTour?.summary ?? {};
-const sourceSummary = sourceTour.summary ?? {};
-const summaryBulletsFromFields = [
-  sourceTour.summaryBullet1,
-  sourceTour.summaryBullet2,
-  sourceTour.summaryBullet3
-]
-  .map((item: any) => (typeof item === "string" ? item.trim() : ""))
-  .filter(Boolean);
-const summaryBulletsFromJson = Array.isArray(sourceSummary?.bullets)
-  ? sourceSummary.bullets
-  : Array.isArray(fallbackSummary?.bullets)
-    ? fallbackSummary.bullets
-    : [];
-const normalizedSummaryBullets =
-  summaryBulletsFromFields.length > 0
-    ? summaryBulletsFromFields
-    : summaryBulletsFromJson;
-const tourSummary = {
-  title: sourceTour.summaryTitle ?? sourceSummary?.title ?? fallbackSummary?.title,
-  metaLine:
-    sourceTour.summaryMetaLine ??
-    sourceSummary?.metaLine ??
-    fallbackSummary?.metaLine,
-  paragraph:
-    sourceTour.summaryParagraph ??
-    sourceSummary?.paragraph ??
-    fallbackSummary?.paragraph,
-  ctaLabel:
-    sourceTour.summaryCtaLabel ??
-    sourceSummary?.ctaLabel ??
-    fallbackSummary?.ctaLabel,
-  ctaUrl:
-    sourceTour.summaryCtaUrl ??
-    sourceSummary?.ctaUrl ??
-    fallbackSummary?.ctaUrl,
-  bullets: normalizedSummaryBullets,
-  featureItems:
-    sourceSummary?.featureItems ??
-    fallbackSummary?.featureItems ??
-    [],
-  image: sourceSummary?.image ?? fallbackSummary?.image,
-  imageAlt: sourceSummary?.imageAlt ?? fallbackSummary?.imageAlt,
-  intro: sourceSummary?.intro ?? fallbackSummary?.intro,
-  descriptionSection:
-    sourceSummary?.descriptionSection ?? fallbackSummary?.descriptionSection,
-  featuredSection:
-    sourceSummary?.featuredSection ?? fallbackSummary?.featuredSection,
-  contactCard: {
-    title:
-      sourceTour.summaryContactTitle ??
-      sourceSummary?.contactCard?.title ??
-      fallbackSummary?.contactCard?.title,
-    description:
-      sourceTour.summaryContactDescription ??
-      sourceSummary?.contactCard?.description ??
-      fallbackSummary?.contactCard?.description,
-    phone:
-      sourceTour.summaryContactPhone ??
-      sourceSummary?.contactCard?.phone ??
-      fallbackSummary?.contactCard?.phone,
-    buttonLabel:
-      sourceTour.summaryContactButtonLabel ??
-      sourceSummary?.contactCard?.buttonLabel ??
-      fallbackSummary?.contactCard?.buttonLabel,
-    reviewsTitle:
-      sourceTour.summaryContactReviewsTitle ??
-      sourceSummary?.contactCard?.reviewsTitle ??
-      fallbackSummary?.contactCard?.reviewsTitle,
-    reviewsDescription:
-      sourceTour.summaryContactReviewsDescription ??
-      sourceSummary?.contactCard?.reviewsDescription ??
-      fallbackSummary?.contactCard?.reviewsDescription
-  }
-};
-const legacyAtGlance = sourceTour.atGlance ?? fallbackTour?.atGlance ?? {};
-const atGlanceItemsFromFields = Array.isArray(sourceTour.atGlanceItems)
-  ? sourceTour.atGlanceItems
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any) => ({
-        location: item?.location ?? "",
-        nights: item?.nights ?? "",
-        summary: item?.summary ?? ""
-      }))
-      .filter((item: any) => item.location || item.nights || item.summary)
-  : [];
-const atGlanceMapImageFromField = toAbsoluteMediaUrl(
-  sourceTour.atGlanceMapImage?.data ?? sourceTour.atGlanceMapImage
-);
-const tourAtGlance = {
-  title: sourceTour.atGlanceTitle ?? legacyAtGlance?.title,
-  items:
-    atGlanceItemsFromFields.length > 0
-      ? atGlanceItemsFromFields
-      : Array.isArray(legacyAtGlance?.items)
-        ? legacyAtGlance.items
-        : [],
-  footnote: sourceTour.atGlanceFootnote ?? legacyAtGlance?.footnote,
-  mapImage: atGlanceMapImageFromField || legacyAtGlance?.mapImage
-};
 
 const legacyReviewsBand =
   sourceTour.reviewsBand ??
@@ -372,8 +264,6 @@ const tourData = {
   ...sourceTour,
   meta: tourMeta,
   hero: tourHero,
-  summary: tourSummary,
-  atGlance: tourAtGlance,
   reviewsBand: tourReviewsBand,
   itineraryRibbon
 };
@@ -428,9 +318,6 @@ const heroSlidesFromMedia = heroSlidesMediaRaw
   .filter(Boolean);
 const heroSlides =
   heroSlidesFromMedia.length > 0 ? heroSlidesFromMedia : heroSlidesFromJson;
-const summaryBullets = Array.isArray(tourData.summary?.bullets)
-  ? tourData.summary.bullets
-  : [];
 const defaultFeatureTitles =
   lang === "en"
     ? ["Avoid the crowds", "Authentic experiences", "Total flexibility"]
@@ -447,16 +334,10 @@ const defaultFeatureDescriptions =
         "Conecten con la cultura local y los tesoros escondidos.",
         "Personalicen su viaje para ajustarlo a su estilo, presupuesto y fechas."
       ];
-const rawFeatureItems = Array.isArray(tourData.summary?.featureItems)
-  ? tourData.summary.featureItems
-  : [];
-const summaryFeatureItems =
-  rawFeatureItems.length > 0
-    ? rawFeatureItems
-    : defaultFeatureTitles.map((title, index) => ({
-        title,
-        description: summaryBullets[index] ?? defaultFeatureDescriptions[index]
-      }));
+const summaryFeatureItems = defaultFeatureTitles.map((title, index) => ({
+  title,
+  description: defaultFeatureDescriptions[index]
+}));
 const legacyHighlightsPanel =
   sourceTour.highlightsPanel ?? fallbackTour?.highlightsPanel ?? {};
 const highlightsItemsFromFields = Array.isArray(sourceTour.highlightsItems)
@@ -503,7 +384,7 @@ const highlightsImageFromField = toAbsoluteMediaUrl(
 const highlightsImage =
   highlightsImageFromField ||
   legacyHighlightsPanel.image ||
-  tourData.summary?.image ||
+  fallbackSummary?.image ||
   "https://images.unsplash.com/photo-1531968455001-5c5272a41129?auto=format&fit=crop&w=900&q=80";
 const highlightsImageAlt =
   sourceTour.highlightsImageAlt ??
@@ -512,9 +393,13 @@ const highlightsImageAlt =
 const highlightsCtaLabel =
   sourceTour.highlightsCtaLabel ??
   legacyHighlightsPanel.ctaLabel ??
-  tourData.summary?.ctaLabel ??
+  fallbackSummary?.ctaLabel ??
   (lang === "en" ? "Customize your trip" : "Personalicen su viaje");
-const summaryCtaUrl = tourData.summary?.ctaUrl ?? "#";
+const summaryCtaUrl =
+  sourceTour.highlightsCtaUrl ??
+  legacyHighlightsPanel.ctaUrl ??
+  fallbackSummary?.ctaUrl ??
+  "#";
 const legacyStickyBooking = sourceTour.bookingCta ?? fallbackTour?.bookingCta ?? {};
 const stickyBookingTitle =
   sourceTour.bookingTitle ??
@@ -523,7 +408,7 @@ const stickyBookingTitle =
 const stickyBookingPrice =
   sourceTour.bookingPrice ??
   legacyStickyBooking.price ??
-  tourData.summary?.metaLine ??
+  fallbackSummary?.metaLine ??
   (lang === "en" ? "From USD 320 per person" : "Desde USD 320 por persona");
 const stickyBookingDuration =
   sourceTour.bookingDuration ??
@@ -538,43 +423,23 @@ const stickyBookingAvailability =
   legacyStickyBooking.availabilityLabel ??
   (lang === "en" ? "Real-time availability" : "Disponibilidad en tiempo real");
 const stickyBookingMonth =
-  sourceTour.bookingMonthLabel ??
   legacyStickyBooking.monthLabel ??
   (lang === "en" ? "March 2026" : "Marzo 2026");
 const stickyCalendarLocale = lang === "en" ? "en-US" : "es-PE";
 const stickyCalendarStart =
-  sourceTour.bookingCalendarStart ??
   legacyStickyBooking.calendarStart ??
   "2026-03";
-const stickyWeekdaysFromFields = Array.isArray(sourceTour.bookingWeekdays)
-  ? sourceTour.bookingWeekdays
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any) => String(item?.label ?? "").trim())
-      .filter(Boolean)
-  : [];
-const stickyCalendarWeekdays = stickyWeekdaysFromFields.length > 0
-  ? stickyWeekdaysFromFields
-  : Array.isArray(legacyStickyBooking.weekdays)
+const stickyCalendarWeekdays = Array.isArray(legacyStickyBooking.weekdays)
     ? legacyStickyBooking.weekdays
   : lang === "en"
     ? ["M", "T", "W", "Th", "F", "S", "S"]
     : ["L", "M", "X", "Ju", "V", "S", "D"];
-const stickyAvailableDaysFromFields = Array.isArray(sourceTour.bookingAvailableDays)
-  ? sourceTour.bookingAvailableDays
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any) => Number(item?.day))
-      .filter((day: number) => Number.isInteger(day) && day >= 1 && day <= 31)
-  : [];
-const stickyCalendarAvailableDays = stickyAvailableDaysFromFields.length > 0
-  ? stickyAvailableDaysFromFields
-  : Array.isArray(legacyStickyBooking.availableDays)
+const stickyCalendarAvailableDays = Array.isArray(legacyStickyBooking.availableDays)
     ? legacyStickyBooking.availableDays
   : [1, 2, 4, 6, 7, 8, 9, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29];
 const legacyDescriptionSection =
   sourceTour.descriptionSection ??
-  tourData.summary?.descriptionSection ??
+  fallbackSummary?.descriptionSection ??
   {};
 const descriptionTitle =
   sourceTour.descriptionTitle ??
@@ -628,7 +493,7 @@ const descriptionReadLessLabel =
   (lang === "en" ? "See less" : "Ver menos");
 const legacyFeaturedSection =
   sourceTour.featuredSection ??
-  tourData.summary?.featuredSection ??
+  fallbackSummary?.featuredSection ??
   {};
 const featuredTitle =
   sourceTour.featuredTitle ??
@@ -810,20 +675,10 @@ const rawItineraryItems = itineraryItemsFromFields.length > 0
   : Array.isArray(legacyItinerarySection.items)
     ? legacyItinerarySection.items
   : [];
-const atGlanceAsItinerary = Array.isArray(tourData.atGlance?.items)
-  ? tourData.atGlance.items.map((item: any) => ({
-      title: item.location ?? item.title ?? "",
-      highlight: item.nights ? `${item.nights}` : "",
-      description: item.summary ?? item.detail ?? "",
-      includes: item.nights ? [String(item.nights)] : []
-    }))
-  : [];
 const itineraryBaseItems =
   rawItineraryItems.length > 0
     ? rawItineraryItems
-    : atGlanceAsItinerary.length > 0
-      ? atGlanceAsItinerary
-      : defaultItineraryItems;
+    : defaultItineraryItems;
 const itineraryItems = itineraryBaseItems.map((item: any, index: number) => ({
   title:
     item?.title ??
