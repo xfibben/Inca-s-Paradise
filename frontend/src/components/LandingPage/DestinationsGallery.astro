@@ -76,8 +76,8 @@ try {
   const url = `${STRAPI_URL}/api/destino-detalles?locale=${strapiLocale}` +
     `&fields[0]=title` +
     `&fields[1]=slug` +
-    `&populate[ogImage][fields][0]=url` +
-    `&populate[ogImage][fields][1]=alternativeText` +
+    `&populate[galleryThumbnail][fields][0]=url` +
+    `&populate[galleryThumbnail][fields][1]=alternativeText` +
     `&populate[tours][fields][0]=title` +
     `&populate[tours][fields][1]=slug` +
     `&populate[tours][populate][heroSlideImages][fields][0]=url` +
@@ -113,7 +113,7 @@ try {
         const row = normalizeRow(dest);
         const title = row.title;
         const slug = row.slug;
-        const ogImage = toAbsoluteMediaUrl(row.ogImage);
+        const ogImage = toAbsoluteMediaUrl(row.galleryThumbnail);
         const tours = Array.isArray(row.tours?.data) ? row.tours.data : [];
         return (
           <a href={`/${currentLang}/destinos/${slug}`} class="relative group block h-full w-full">
