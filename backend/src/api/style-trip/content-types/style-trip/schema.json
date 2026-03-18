@@ -74,23 +74,33 @@
           "localized": true
         }
       }
-    }
-      ,
-      "seoTitle": {
-        "type": "string",
-        "pluginOptions": {
-          "i18n": {
-            "localized": true
-          }
-        }
-      },
-      "seoDescription": {
-        "type": "text",
-        "pluginOptions": {
-          "i18n": {
-            "localized": true
-          }
+    },
+    "seoTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
         }
       }
+    },
+    "seoDescription": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "tours": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tour-detalle.tour-detalle",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "inversedBy": "estilos"
+    }
   }
 }

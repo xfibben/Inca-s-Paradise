@@ -6,7 +6,12 @@ interface Props {
 
 const { t, currentLang = 'es' } = Astro.props;
 
-const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+const strapiLocale =
+  currentLang === 'pt' ? 'pt'
+  : currentLang === 'es' ? 'es-PE'
+  : currentLang === 'it' ? 'it'
+  : currentLang === 'fr' ? 'fr'
+  : currentLang;
 const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
 const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
@@ -25,7 +30,7 @@ try {
   console.log('[DestinationsGallery] STRAPI_URL:', STRAPI_URL);
   console.log('[DestinationsGallery] strapiLocale:', strapiLocale);
   
-  const url = `${STRAPI_URL}/api/destino-detalles?populate=*&locale=${strapiLocale}&status=published`;
+  const url = `${STRAPI_URL}/api/destino-detalles?populate=heroSlides.image&locale=${strapiLocale}`;
   console.log('[DestinationsGallery] Full URL:', url);
   
   const res = await fetch(url);
@@ -68,11 +73,22 @@ try {
         const heroSlides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
         const firstSlide = heroSlides.length > 0 ? heroSlides[0] : null;
         const img = firstSlide?.image;
-        const imageUrl = img?.formats?.medium?.url
-          ? `${STRAPI_PUBLIC_URL}${img.formats.medium.url}`
-          : img?.url
-          ? `${STRAPI_PUBLIC_URL}${img.url}`
-          : null;
+          let imageUrl = null;
+          if (img) {
+            imageUrl = img?.formats?.medium?.url
+              ? `${STRAPI_PUBLIC_URL}${img.formats.medium.url}`
+              : img?.url
+              ? `${STRAPI_PUBLIC_URL}${img.url}`
+              : null;
+          }
+          // Fallback to ogImage if heroSlides is empty or imageUrl is null
+          if (!imageUrl && dest.ogImage) {
+            imageUrl = dest.ogImage.formats?.medium?.url
+              ? `${STRAPI_PUBLIC_URL}${dest.ogImage.formats.medium.url}`
+              : dest.ogImage.url
+              ? `${STRAPI_PUBLIC_URL}${dest.ogImage.url}`
+              : null;
+          }
 
         return (
           <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} class="group relative overflow-hidden cursor-pointer block">
