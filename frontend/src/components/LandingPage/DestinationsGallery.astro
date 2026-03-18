@@ -94,13 +94,7 @@ try {
 
 <style>
   .destinations-grid {
-    height: 180vh;
-  }
-
-  @media (min-width: 1024px) {
-    .destinations-grid {
-      height: 150vh;
-    }
+    height: auto;
   }
 </style>
 
@@ -116,16 +110,16 @@ try {
         const ogImage = toAbsoluteMediaUrl(row.galleryThumbnail);
         const tours = Array.isArray(row.tours?.data) ? row.tours.data : [];
         return (
-          <a href={`/${currentLang}/destinos/${slug}`} class="relative group block h-full w-full">
+          <a href={`/${currentLang}/destinos/${slug}`} class="relative group block w-full overflow-hidden h-60 md:h-full">
             <img
               src={ogImage}
               alt={title}
-              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
             <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
             <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white">
               <h3 class="text-md transition-transform duration-300 group-hover:-translate-y-3 font-s['Roboto',sans-serif]">{title}</h3>
-              <div class="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col space-y-2 md:space-y-3 items-center w-full bottom-0 left-0 right-0 p-4">
+              <div class="absolute opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-opacity duration-300 flex flex-col space-y-2 md:space-y-3 items-center w-full bottom-0 left-0 right-0 p-4">
                 <ul>
                   {tours.map((tour: any) => {
                     const tourRow = normalizeRow(tour);

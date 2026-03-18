@@ -45,8 +45,8 @@ function getImageSizeClass(year: number): string {
 
       <!-- Content Container - Divided Layout -->
       <div class="absolute inset-0 w-full h-full flex">
-        <!-- Left Side - Logo (50%) -->
-        <div class="w-1/2 h-full flex items-center justify-center">
+        <!-- Left Side - Logo (mobile 1/3, desktop 1/2) -->
+        <div class="w-1/3 md:w-1/2 h-full flex items-center justify-center">
           <img 
             src={`/landing%20page%20images/reviews/${review.year}trip.webp`}
             alt="Trip Logo"
@@ -57,8 +57,8 @@ function getImageSizeClass(year: number): string {
           />
         </div>
 
-        <!-- Right Side - Content (50%) -->
-        <div class="w-1/2 h-full flex items-center justify-start pr-6 md:pr-12 lg:pr-20">
+        <!-- Right Side - Content (mobile 2/3, desktop 1/2) -->
+        <div class="w-2/3 md:w-1/2 h-full flex items-center justify-start pr-6 md:pr-12 lg:pr-20">
           <div class="w-full text-white">
             <!-- Review Title -->
             <h3 class="text-2xl md:text-3xl lg:text-4xl font-bold mb-6 leading-tight">
