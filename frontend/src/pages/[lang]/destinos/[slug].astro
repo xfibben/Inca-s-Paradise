@@ -386,13 +386,17 @@ const pageDescription =
   (lang === "en"
     ? "Destination page placeholder."
     : "Vista de destino en construccion.");
+const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(
+  /\/$/,
+  ""
+);
 const canonicalRaw = String(strapiDetail?.seoCanonicalUrl ?? "").trim();
 const canonical =
   canonicalRaw.length > 0
     ? /^https?:\/\//i.test(canonicalRaw)
       ? canonicalRaw
-      : `${Astro.url.origin}${canonicalRaw.startsWith("/") ? canonicalRaw : `/${canonicalRaw}`}`
-    : `${Astro.url.origin}/${lang}/destinos/${slugKey || ""}`;
+      : `${siteOrigin}${canonicalRaw.startsWith("/") ? canonicalRaw : `/${canonicalRaw}`}`
+    : `${siteOrigin}/${lang}/destinos/${slugKey || ""}`;
 const seoTitle = String(strapiDetail?.seoTitle ?? "").trim() || pageTitle;
 const seoDescription =
   String(strapiDetail?.seoDescription ?? "").trim() || pageDescription;
