@@ -6,7 +6,12 @@ interface Props {
 
 const { t, currentLang = 'es' } = Astro.props;
 
-const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+const strapiLocale =
+  currentLang === 'pt' ? 'pt'
+  : currentLang === 'es' ? 'es-PE'
+  : currentLang === 'it' ? 'it'
+  : currentLang === 'fr' ? 'fr'
+  : currentLang;
 const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
 const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
@@ -20,42 +25,76 @@ function toSlug(name: string): string {
     .replace(/\s+/g, '-');
 }
 
+function normalizeRow(row: any) {
+  return row?.attributes ?? row ?? null;
+}
+
+function toMediaObject(value: any) {
+  if (!value) return null;
+  const source = value?.data ?? value;
+  return source?.attributes ?? source ?? null;
+}
+
+function toAbsoluteMediaUrl(value: any) {
+  const media = toMediaObject(value);
+  const rawUrl =
+    media?.formats?.medium?.url ??
+    media?.formats?.small?.url ??
+    media?.formats?.thumbnail?.url ??
+    media?.url ??
+    (typeof value === 'string' ? value : '');
+  if (!rawUrl) return '';
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
+  const normalizedBase = String(STRAPI_PUBLIC_URL).replace(/\/$/, '');
+  const normalizedPath = String(rawUrl).startsWith('/') ? String(rawUrl) : `/${rawUrl}`;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
+function getCardImageUrl(destination: any) {
+  const row = normalizeRow(destination) ?? {};
+
+  const thumbnailUrl = toAbsoluteMediaUrl(row.galleryThumbnail);
+  if (thumbnailUrl) return thumbnailUrl;
+
+  const heroSlideMediaRows = Array.isArray(row.heroSlideImages?.data)
+    ? row.heroSlideImages.data
+    : Array.isArray(row.heroSlideImages)
+      ? row.heroSlideImages
+      : [];
+  const heroMediaUrl = toAbsoluteMediaUrl(heroSlideMediaRows[0]);
+  if (heroMediaUrl) return heroMediaUrl;
+
+  const heroSlides = Array.isArray(row.heroSlides) ? row.heroSlides : [];
+  const heroJsonUrl = toAbsoluteMediaUrl(heroSlides[0]?.image);
+  if (heroJsonUrl) return heroJsonUrl;
+
+  return '';
+}
+
 let destinations: any[] = [];
 try {
-  console.log('[DestinationsGallery] STRAPI_URL:', STRAPI_URL);
-  console.log('[DestinationsGallery] strapiLocale:', strapiLocale);
-  
-  const url = `${STRAPI_URL}/api/destino-detalles?populate=*&locale=${strapiLocale}&status=published`;
-  console.log('[DestinationsGallery] Full URL:', url);
-  
+  const url = `${STRAPI_URL}/api/destino-detalles?locale=${strapiLocale}` +
+    `&fields[0]=title` +
+    `&fields[1]=slug` +
+    `&populate[galleryThumbnail][fields][0]=url` +
+    `&populate[galleryThumbnail][fields][1]=alternativeText` +
+    `&populate[tours][fields][0]=title` +
+    `&populate[tours][fields][1]=slug` +
+    `&populate[tours][populate][heroSlideImages][fields][0]=url` +
+    `&populate[tours][populate][heroSlideImages][fields][1]=alternativeText`;
   const res = await fetch(url);
-  console.log('[DestinationsGallery] Response status:', res.status);
-  console.log('[DestinationsGallery] Response ok:', res.ok);
-  
   if (res.ok) {
     const json = await res.json();
-    console.log('[DestinationsGallery] Full response:', json);
-    console.log('[DestinationsGallery] data count:', json.data?.length);
     destinations = json.data ?? [];
-    console.log('[DestinationsGallery] destinations assigned:', destinations.length);
-  } else {
-    const err = await res.text();
-    console.log('[DestinationsGallery] Error response:', res.status, err);
   }
 } catch (e) {
-  console.log('[DestinationsGallery] Fetch error:', e);
+  // no-op: keep empty gallery if Strapi is unreachable
 }
 ---
 
 <style>
   .destinations-grid {
-    height: 180vh;
-  }
-
-  @media (min-width: 1024px) {
-    .destinations-grid {
-      height: 150vh;
-    }
+    height: auto;
   }
 </style>
 
@@ -65,31 +104,38 @@ try {
     <div class="destinations-grid grid gap-px grid-cols-1 md:grid-cols-3 lg:grid-cols-4 w-screen" style="grid-auto-rows: 1fr;">
       
       {destinations.map((dest: any) => {
-        const heroSlides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
-        const firstSlide = heroSlides.length > 0 ? heroSlides[0] : null;
-        const img = firstSlide?.image;
-        const imageUrl = img?.formats?.medium?.url
-          ? `${STRAPI_PUBLIC_URL}${img.formats.medium.url}`
-          : img?.url
-          ? `${STRAPI_PUBLIC_URL}${img.url}`
-          : null;
-
+        const row = normalizeRow(dest);
+        const title = row.title;
+        const slug = row.slug;
+        const ogImage = toAbsoluteMediaUrl(row.galleryThumbnail);
+        const tours = Array.isArray(row.tours?.data) ? row.tours.data : [];
         return (
-          <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} class="group relative overflow-hidden cursor-pointer block">
-            {imageUrl && (
-              <img 
-                src={imageUrl}
-                alt={dest.title} 
-                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-              />
-            )}
+          <a href={`/${currentLang}/destinos/${slug}`} class="relative group block w-full overflow-hidden h-60 md:h-full">
+            <img
+              src={ogImage}
+              alt={title}
+              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
             <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
             <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white">
-              <h3 class="text-md  transition-transform duration-300 group-hover:-translate-y-3 font-s['Roboto' ,sans-serif] ">{dest.title}</h3>
-              <div class="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col space-y-2 md:space-y-3 items-center w-full bottom-0 left-0 right-0 p-4">
-                <p class="text-xs sm:text-sm md:text-base leading-relaxed hidden sm:block max-w-xs">
-                  {dest.description}
-                </p>
+              <h3 class="text-md transition-transform duration-300 group-hover:-translate-y-3 font-s['Roboto',sans-serif]">{title}</h3>
+              <div class="absolute opacity-0 group-hover:opacity-100 group-hover:scale-105 transition-opacity duration-300 flex flex-col space-y-2 md:space-y-3 items-center w-full bottom-0 left-0 right-0 p-4">
+                <ul>
+                  {tours.map((tour: any) => {
+                    const tourRow = normalizeRow(tour);
+                    const tourTitle = tourRow.title;
+                    const tourSlug = tourRow.slug;
+                    const heroSlideImage = toAbsoluteMediaUrl(tourRow.heroSlideImages);
+                    return (
+                      <li key={tourSlug}>
+                        <a href={`/${currentLang}/tours/${tourSlug}`} class="flex items-center space-x-2">
+                          <img src={heroSlideImage} alt={tourTitle} class="w-8 h-8 object-cover rounded" />
+                          <span>{tourTitle}</span>
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
                 <span class="px-3 py-1.5 sm:px-4 sm:py-2 border border-white text-white text-xs sm:text-sm font-semibold hover:bg-white hover:border-white hover:text-gray-900 transition">
                   {t.buttons.explore}
                 </span>

@@ -116,6 +116,11 @@ export default factories.createCoreController(
   "api::destino-detalle.destino-detalle",
   () => ({
     async find(ctx) {
+      ctx.query = {
+        ...ctx.query,
+        sort: ctx.query?.sort ?? ["displayOrder:asc", "title:asc"]
+      };
+
       const response = await super.find(ctx);
       if (!response) return response;
       return {

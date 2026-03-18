@@ -460,10 +460,11 @@ export interface ApiDestinoDetalleDestinoDetalle
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
+    displayOrder: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<100>;
     galleryThumbnail: Schema.Attribute.Media<'images'> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: true;
+          localized: false;
         };
       }>;
     heroDescription1: Schema.Attribute.Text &
@@ -487,7 +488,7 @@ export interface ApiDestinoDetalleDestinoDetalle
     heroSlideImages: Schema.Attribute.Media<'images', true> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: true;
+          localized: false;
         };
       }>;
     heroTitle1: Schema.Attribute.String &
@@ -506,6 +507,12 @@ export interface ApiDestinoDetalleDestinoDetalle
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
+        };
+      }>;
+    iconCatalog: Schema.Attribute.Component<'destinos.shared-icon', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
         };
       }>;
     iconItems: Schema.Attribute.Component<'destinos.icon-item', true> &
@@ -535,7 +542,7 @@ export interface ApiDestinoDetalleDestinoDetalle
     ogImage: Schema.Attribute.Media<'images'> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: true;
+          localized: false;
         };
       }>;
     ogTitle: Schema.Attribute.String &
@@ -580,6 +587,15 @@ export interface ApiDestinoDetalleDestinoDetalle
       }>;
     slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
     title: Schema.Attribute.String & Schema.Attribute.Required;
+    tours: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::tour-detalle.tour-detalle'
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     twitterDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -589,7 +605,7 @@ export interface ApiDestinoDetalleDestinoDetalle
     twitterImage: Schema.Attribute.Media<'images'> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: true;
+          localized: false;
         };
       }>;
     twitterTitle: Schema.Attribute.String &
@@ -842,6 +858,15 @@ export interface ApiStyleTripStyleTrip extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    tours: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::tour-detalle.tour-detalle'
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1020,6 +1045,15 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
         },
         number
       >;
+    estilos: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::style-trip.style-trip'
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     featuredImages: Schema.Attribute.Component<
       'tours.featured-image-item',
       true
@@ -1183,15 +1217,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
     showInStyles: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     slug: Schema.Attribute.UID<'title'> &
       Schema.Attribute.Required &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    styleTrips: Schema.Attribute.Relation<
-      'manyToMany',
-      'api::style-trip.style-trip'
-    > &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
