@@ -195,15 +195,27 @@ try {
 
                 <!-- Column 3: Image and Destination Name -->
                 <div class="w-1/3 bg-gray-100 overflow-hidden relative">
-                  <img
-                    id="megamenu-image"
-                    src="https://images.unsplash.com/photo-1587595431973-160550652147?w=400&h=400&fit=crop"
-                    alt="Destination"
-                    class="w-full h-full object-cover"
-                  />
+                  {/**
+                   * La imagen se actualizará por JS al hacer hover/click en un destino,
+                   * pero el src inicial debe ser ogImage del primer destino (si existe)
+                   */}
+                  {(() => {
+                    let imgUrl = '';
+                    if (navDestinations.length > 0 && navDestinations[0].ogImage && navDestinations[0].ogImage.url) {
+                      imgUrl = `${STRAPI_PUBLIC_URL}${navDestinations[0].ogImage.url}`;
+                    }
+                    return (
+                      <img
+                        id="megamenu-image"
+                        src={imgUrl || "https://images.unsplash.com/photo-1587595431973-160550652147?w=400&h=400&fit=crop"}
+                        alt="Destination"
+                        class="w-full h-full object-cover"
+                      />
+                    );
+                  })()}
                   <div class="absolute inset-0 bg-black/30"></div>
                   <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
-                    <p id="megamenu-dest-name" class="text-white font-bold text-lg">CHACHAPOYAS</p>
+                    <p id="megamenu-dest-name" class="text-white font-bold text-lg">{navDestinations.length > 0 ? getDestTitle(navDestinations[0]) : 'CHACHAPOYAS'}</p>
                   </div>
                 </div>
               </div>
@@ -404,10 +416,16 @@ try {
           <div id="mobile-destinations-list" class="flex flex-col">
             <div class="flex flex-col gap-1 p-1">
               {navDestinations.slice(0, 6).map((dest: any) => {
-                const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
-                const imgUrl = slides.length > 0 && slides[0]?.image?.url
-                  ? `${STRAPI_PUBLIC_URL}${slides[0].image.url}`
-                  : '';
+                // Usar ogImage como principal, fallback a heroSlides
+                let imgUrl = '';
+                if (dest.ogImage && dest.ogImage.url) {
+                  imgUrl = `${STRAPI_PUBLIC_URL}${dest.ogImage.url}`;
+                } else {
+                  const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
+                  if (slides.length > 0 && slides[0]?.image?.url) {
+                    imgUrl = `${STRAPI_PUBLIC_URL}${slides[0].image.url}`;
+                  }
+                }
                 return (
                   <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} class="mobile-destination-item relative h-16 overflow-hidden rounded block">
                     {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
@@ -420,10 +438,16 @@ try {
             <!-- Hidden remaining destinations -->
             <div id="mobile-destinations-extra" class="hidden flex flex-col gap-1 px-1 pb-1">
               {navDestinations.slice(6).map((dest: any) => {
-                const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
-                const imgUrl = slides.length > 0 && slides[0]?.image?.url
-                  ? `${STRAPI_PUBLIC_URL}${slides[0].image.url}`
-                  : '';
+                // Usar ogImage como principal, fallback a heroSlides
+                let imgUrl = '';
+                if (dest.ogImage && dest.ogImage.url) {
+                  imgUrl = `${STRAPI_PUBLIC_URL}${dest.ogImage.url}`;
+                } else {
+                  const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
+                  if (slides.length > 0 && slides[0]?.image?.url) {
+                    imgUrl = `${STRAPI_PUBLIC_URL}${slides[0].image.url}`;
+                  }
+                }
                 return (
                   <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} class="mobile-destination-item relative h-16 overflow-hidden rounded block">
                     {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
@@ -456,17 +480,25 @@ try {
         <div id="mobile-styles-menu" class="hidden rounded mt-1 max-h-72 overflow-y-auto">
           <!-- Main Menu Options -->
           <div id="mobile-styles-list" class="flex flex-col gap-1 p-1">
-            {Object.entries(t.stylesMenu).map(([key, item]: [string, any]) => {
-              const itemObj = item as { name: string; image: string };
+            {navStyleTrips.map((item: any) => {
+              let imgUrl = '';
+              if (item.image) {
+                const navImg = Array.isArray(item.image) ? item.image[0] : item.image;
+                if (navImg?.formats?.medium?.url) {
+                  imgUrl = `${STRAPI_PUBLIC_URL}${navImg.formats.medium.url}`;
+                } else if (navImg?.url) {
+                  imgUrl = `${STRAPI_PUBLIC_URL}${navImg.url}`;
+                }
+              }
               return (
-                <button class="mobile-styles-option relative h-16 overflow-hidden rounded" data-option={key} data-name={itemObj.name}>
-                  {itemObj.image ? (
-                    <img src={itemObj.image.startsWith('landing page images') ? `/${itemObj.image}` : itemObj.image} alt={itemObj.name} class="w-full h-full object-cover" />
+                <button class="mobile-styles-option relative h-16 overflow-hidden rounded" data-option={item.slug || toSlug(item.name)} data-name={item.name}>
+                  {imgUrl ? (
+                    <img src={imgUrl} alt={item.name} class="w-full h-full object-cover" />
                   ) : (
                     <div class="w-full h-full bg-gray-400"></div>
                   )}
                   <div class="absolute inset-0 bg-black/50"></div>
-                  <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{itemObj.name}</span>
+                  <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{item.name}</span>
                 </button>
               );
             })}

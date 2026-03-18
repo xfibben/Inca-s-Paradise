@@ -353,11 +353,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const lang = window.__currentLang || 'es';
         const pubUrl = window.__strapiPublicUrl || 'http://localhost:1337';
         subitemsContainer.innerHTML = `<div class="flex flex-col gap-1">${window.__navbarStyleTrips.map(item => {
-          const imgObj = Array.isArray(item.image) ? item.image[0] : item.image;
-          const imgSrc = imgObj?.formats?.medium?.url
-            ? pubUrl + imgObj.formats.medium.url
-            : imgObj?.url
-            ? pubUrl + imgObj.url
+          const ogImgObj = Array.isArray(item.ogImage) ? item.ogImage[0] : item.ogImage;
+          const imgSrc = ogImgObj?.formats?.medium?.url
+            ? pubUrl + ogImgObj.formats.medium.url
+            : ogImgObj?.url
+            ? pubUrl + ogImgObj.url
             : '';
           const slug = toSlug(item.name);
           return `

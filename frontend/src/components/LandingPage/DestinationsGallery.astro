@@ -6,7 +6,12 @@ interface Props {
 
 const { t, currentLang = 'es' } = Astro.props;
 
-const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
+const strapiLocale =
+  currentLang === 'pt' ? 'pt'
+  : currentLang === 'es' ? 'es-PE'
+  : currentLang === 'it' ? 'it'
+  : currentLang === 'fr' ? 'fr'
+  : currentLang;
 const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
 const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
@@ -68,14 +73,12 @@ function getCardImageUrl(destination: any) {
 
 let destinations: any[] = [];
 try {
-  const url =
-    `${STRAPI_URL}/api/destino-detalles?locale=${strapiLocale}&status=published&` +
-    `populate[galleryThumbnail][fields][0]=url&` +
-    `populate[galleryThumbnail][fields][1]=alternativeText&` +
-    `populate[galleryThumbnail][fields][2]=formats&` +
-    `populate[heroSlideImages][fields][0]=url&` +
-    `populate[heroSlideImages][fields][1]=alternativeText&` +
-    `populate[heroSlideImages][fields][2]=formats`;
+  console.log('[DestinationsGallery] STRAPI_URL:', STRAPI_URL);
+  console.log('[DestinationsGallery] strapiLocale:', strapiLocale);
+  
+  const url = `${STRAPI_URL}/api/destino-detalles?populate=heroSlides.image&locale=${strapiLocale}`;
+  console.log('[DestinationsGallery] Full URL:', url);
+  
   const res = await fetch(url);
   if (res.ok) {
     const json = await res.json();
@@ -104,11 +107,25 @@ try {
     <div class="destinations-grid grid gap-px grid-cols-1 md:grid-cols-3 lg:grid-cols-4 w-screen" style="grid-auto-rows: 1fr;">
       
       {destinations.map((dest: any) => {
-        const row = normalizeRow(dest) ?? {};
-        const imageUrl = getCardImageUrl(row) || null;
-        const title = row.title;
-        const slug = row.slug || toSlug(title || '');
-        const description = row.description;
+        const heroSlides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
+        const firstSlide = heroSlides.length > 0 ? heroSlides[0] : null;
+        const img = firstSlide?.image;
+          let imageUrl = null;
+          if (img) {
+            imageUrl = img?.formats?.medium?.url
+              ? `${STRAPI_PUBLIC_URL}${img.formats.medium.url}`
+              : img?.url
+              ? `${STRAPI_PUBLIC_URL}${img.url}`
+              : null;
+          }
+          // Fallback to ogImage if heroSlides is empty or imageUrl is null
+          if (!imageUrl && dest.ogImage) {
+            imageUrl = dest.ogImage.formats?.medium?.url
+              ? `${STRAPI_PUBLIC_URL}${dest.ogImage.formats.medium.url}`
+              : dest.ogImage.url
+              ? `${STRAPI_PUBLIC_URL}${dest.ogImage.url}`
+              : null;
+          }
 
         return (
           <a href={`/${currentLang}/destinos/${slug}`} class="group relative overflow-hidden cursor-pointer block">

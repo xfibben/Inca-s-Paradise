@@ -69,12 +69,12 @@
     },
     "seoNoIndex": {
       "type": "boolean",
-      "default": false,
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
-      }
+      },
+      "default": false
     },
     "ogTitle": {
       "type": "string",
@@ -94,15 +94,15 @@
     },
     "ogImage": {
       "type": "media",
-      "multiple": false,
-      "allowedTypes": [
-        "images"
-      ],
       "pluginOptions": {
         "i18n": {
           "localized": false
         }
-      }
+      },
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
     },
     "twitterTitle": {
       "type": "string",
@@ -122,15 +122,15 @@
     },
     "twitterImage": {
       "type": "media",
-      "multiple": false,
-      "allowedTypes": [
-        "images"
-      ],
       "pluginOptions": {
         "i18n": {
           "localized": false
         }
-      }
+      },
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
     },
     "heroTitle1": {
       "type": "string",
@@ -182,27 +182,27 @@
     },
     "heroSlideImages": {
       "type": "media",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      },
       "multiple": true,
       "allowedTypes": [
         "images"
-      ],
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
+      ]
     },
     "galleryThumbnail": {
       "type": "media",
-      "multiple": false,
-      "allowedTypes": [
-        "images"
-      ],
       "pluginOptions": {
         "i18n": {
           "localized": false
         }
-      }
+      },
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
     },
     "introTitle": {
       "type": "string"
@@ -217,23 +217,23 @@
     },
     "iconCatalog": {
       "type": "component",
-      "repeatable": true,
-      "component": "destinos.shared-icon",
       "pluginOptions": {
         "i18n": {
           "localized": false
         }
-      }
+      },
+      "component": "destinos.shared-icon",
+      "repeatable": true
     },
     "iconItems": {
       "type": "component",
-      "repeatable": true,
-      "component": "destinos.icon-item",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
-      }
+      },
+      "component": "destinos.icon-item",
+      "repeatable": true
     },
     "primaryRibbon": {
       "type": "string"
@@ -255,6 +255,17 @@
     },
     "catalogInitialVisibleCount": {
       "type": "integer"
+    },
+    "tours": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tour-detalle.tour-detalle",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "inversedBy": "destinos"
     }
   }
 }

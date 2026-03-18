@@ -587,6 +587,15 @@ export interface ApiDestinoDetalleDestinoDetalle
       }>;
     slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
     title: Schema.Attribute.String & Schema.Attribute.Required;
+    tours: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::tour-detalle.tour-detalle'
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     twitterDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -849,6 +858,15 @@ export interface ApiStyleTripStyleTrip extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    tours: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::tour-detalle.tour-detalle'
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1027,6 +1045,15 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
         },
         number
       >;
+    estilos: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::style-trip.style-trip'
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     featuredImages: Schema.Attribute.Component<
       'tours.featured-image-item',
       true
@@ -1190,15 +1217,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
     showInStyles: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     slug: Schema.Attribute.UID<'title'> &
       Schema.Attribute.Required &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    styleTrips: Schema.Attribute.Relation<
-      'manyToMany',
-      'api::style-trip.style-trip'
-    > &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
