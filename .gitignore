@@ -21,3 +21,5 @@ build/
 .cache/
 .tmp/
 public/uploads/
+
+.CLAUDE.md

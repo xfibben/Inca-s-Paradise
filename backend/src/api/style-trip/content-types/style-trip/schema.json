@@ -15,6 +15,15 @@
     }
   },
   "attributes": {
+    "displayOrder": {
+      "type": "integer",
+      "default": 100,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
     "name": {
       "type": "string",
       "pluginOptions": {

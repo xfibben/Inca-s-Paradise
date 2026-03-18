@@ -174,8 +174,10 @@ try {
                     {(() => {
                       // Mostrar tours relacionados del destino activo
                       const activeDest = navDestinations.length > 0 ? navDestinations[0] : null;
-                      if (!activeDest || !activeDest.tours || !Array.isArray(activeDest.tours.data)) return null;
-                      return activeDest.tours.data.map((tour: any) => {
+                      if (!activeDest) return null;
+                      const toursRaw = activeDest.tours;
+                      const initialTours = Array.isArray(toursRaw?.data) ? toursRaw.data : Array.isArray(toursRaw) ? toursRaw : [];
+                      return initialTours.map((tour: any) => {
                         const attrs = tour.attributes || tour;
                         return (
                           <div class="pb-3 border-b border-gray-100 last:border-0">

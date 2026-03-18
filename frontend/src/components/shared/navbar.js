@@ -164,22 +164,27 @@ document.addEventListener('DOMContentLoaded', function () {
     const destination = destinations.find(d => d.slug === destSlug);
     if (!destination) return;
 
-    // Mostrar tours relacionados
-    const relatedTours = destination.relatedTours || [];
+    // Mostrar tours relacionados (Strapi v5: array directo; v4: { data: [] })
+    const toursRaw = destination.tours;
+    const relatedTours = Array.isArray(toursRaw?.data) ? toursRaw.data : Array.isArray(toursRaw) ? toursRaw : [];
     const currentLang = window.__currentLang || 'es';
-    document.getElementById('megamenu-tours').innerHTML = relatedTours.map(tour => `
-      <div class="pb-3 border-b border-gray-100 last:border-0">
-        <a href="/${currentLang}/tours/${tour.slug || toSlug(tour.title)}" class="font-semibold text-gray-800 text-sm hover:text-blue-600 transition">
-          ${tour.title}
-        </a>
-      </div>
-    `).join('');
+    document.getElementById('megamenu-tours').innerHTML = relatedTours.length
+      ? relatedTours.map(tour => {
+          const t = tour.attributes || tour;
+          return `<div class="pb-3 border-b border-gray-100 last:border-0">
+            <a href="/${currentLang}/tours/${t.slug || toSlug(t.title)}" class="font-semibold text-gray-800 text-sm hover:text-blue-600 transition">
+              ${t.title}
+            </a>
+          </div>`;
+        }).join('')
+      : '<p class="text-sm text-gray-400 italic">Sin tours disponibles</p>';
 
-    // Mostrar imagen del destino desde heroSlides
+    // Mostrar imagen desde galleryThumbnail
     const img = document.getElementById('megamenu-image');
-    const slides = destination.heroSlides && Array.isArray(destination.heroSlides) ? destination.heroSlides : [];
-    if (slides.length > 0 && slides[0]?.image?.url) {
-      img.src = `${window.__strapiPublicUrl}${slides[0].image.url}`;
+    const thumb = destination.galleryThumbnail;
+    const thumbUrl = thumb?.url || thumb?.data?.attributes?.url || thumb?.data?.url;
+    if (thumbUrl) {
+      img.src = thumbUrl.startsWith('http') ? thumbUrl : `${window.__strapiPublicUrl}${thumbUrl}`;
     }
     
     // Mostrar nombre del destino
@@ -317,14 +322,16 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('mobile-dest-name').textContent = destination.title || '';
       
       const currentLang = window.__currentLang || 'es';
-      const relatedTours = destination.relatedTours || [];
-      const toursHtml = relatedTours.map(tour => `
-        <div class="pb-2 border-b border-gray-300 last:border-0">
-          <a href="/${currentLang}/tours/${tour.slug || toSlug(tour.title)}" class="font-semibold text-gray-800 text-sm hover:text-blue-600 transition">
-            ${tour.title}
+      const toursRawMobile = destination.tours;
+      const relatedTours = Array.isArray(toursRawMobile?.data) ? toursRawMobile.data : Array.isArray(toursRawMobile) ? toursRawMobile : [];
+      const toursHtml = relatedTours.map(tour => {
+        const tr = tour.attributes || tour;
+        return `<div class="pb-2 border-b border-gray-300 last:border-0">
+          <a href="/${currentLang}/tours/${tr.slug || toSlug(tr.title)}" class="font-semibold text-gray-800 text-sm hover:text-blue-600 transition">
+            ${tr.title}
           </a>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
       document.getElementById('mobile-dest-tours').innerHTML = toursHtml;
     });
   });

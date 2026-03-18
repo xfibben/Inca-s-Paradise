@@ -10,9 +10,10 @@ export default factories.createCoreController('api::style-trip.style-trip', ({ s
 
     const entries = await strapi.documents('api::style-trip.style-trip').findMany({
       locale: (locale as string) || 'es-PE',
+      sort: ['displayOrder:asc', 'name:asc'],
       populate: {
         image: true,
-        tours: true // Trae los tours relacionados
+        tours: true
       } as any,
     });
 
