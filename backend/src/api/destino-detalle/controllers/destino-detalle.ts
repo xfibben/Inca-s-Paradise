@@ -114,7 +114,7 @@ function decorateResponseData(input: any) {
 
 export default factories.createCoreController(
   "api::destino-detalle.destino-detalle",
-  () => ({
+  ({ strapi }) => ({
     async find(ctx) {
       ctx.query = {
         ...ctx.query,
@@ -123,9 +123,45 @@ export default factories.createCoreController(
 
       const response = await super.find(ctx);
       if (!response) return response;
+
+      const data: any[] = Array.isArray((response as any).data) ? (response as any).data : [];
+
+      if (data.length > 0) {
+        const locale = (ctx.query as any)?.locale ?? undefined;
+        const destinoDocumentIds = data.map((d: any) => d.documentId).filter(Boolean);
+
+        const tours = await strapi.documents("api::tour-detalle.tour-detalle").findMany({
+          filters: { destinos: { documentId: { $in: destinoDocumentIds } } } as any,
+          fields: ["title", "slug"],
+          populate: {
+            heroSlideImages: { fields: ["url", "alternativeText"] },
+            destinos: { fields: ["documentId"] }
+          } as any,
+          status: "published",
+          ...(locale ? { locale } : {})
+        });
+
+        const toursByDestino: Record<string, any[]> = {};
+        for (const tour of (tours as any[])) {
+          const destinos: any[] = Array.isArray(tour.destinos) ? tour.destinos : [];
+          for (const d of destinos) {
+            const did = d.documentId;
+            if (!toursByDestino[did]) toursByDestino[did] = [];
+            toursByDestino[did].push({ title: tour.title, slug: tour.slug, heroSlideImages: tour.heroSlideImages });
+          }
+        }
+
+        const decorated = decorateResponseData(data).map((item: any) => ({
+          ...item,
+          tours: toursByDestino[item.documentId] ?? []
+        }));
+
+        return { ...response, data: decorated };
+      }
+
       return {
         ...response,
-        data: decorateResponseData((response as any).data)
+        data: decorateResponseData(data)
       };
     },
 
