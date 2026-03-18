@@ -73,12 +73,15 @@ function getCardImageUrl(destination: any) {
 
 let destinations: any[] = [];
 try {
-  console.log('[DestinationsGallery] STRAPI_URL:', STRAPI_URL);
-  console.log('[DestinationsGallery] strapiLocale:', strapiLocale);
-  
-  const url = `${STRAPI_URL}/api/destino-detalles?populate=heroSlides.image&locale=${strapiLocale}`;
-  console.log('[DestinationsGallery] Full URL:', url);
-  
+  const url = `${STRAPI_URL}/api/destino-detalles?locale=${strapiLocale}` +
+    `&fields[0]=title` +
+    `&fields[1]=slug` +
+    `&populate[ogImage][fields][0]=url` +
+    `&populate[ogImage][fields][1]=alternativeText` +
+    `&populate[tours][fields][0]=title` +
+    `&populate[tours][fields][1]=slug` +
+    `&populate[tours][populate][heroSlideImages][fields][0]=url` +
+    `&populate[tours][populate][heroSlideImages][fields][1]=alternativeText`;
   const res = await fetch(url);
   if (res.ok) {
     const json = await res.json();
@@ -107,46 +110,38 @@ try {
     <div class="destinations-grid grid gap-px grid-cols-1 md:grid-cols-3 lg:grid-cols-4 w-screen" style="grid-auto-rows: 1fr;">
       
       {destinations.map((dest: any) => {
-        const heroSlides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
-        const firstSlide = heroSlides.length > 0 ? heroSlides[0] : null;
-        const img = firstSlide?.image;
-          let imageUrl = null;
-          if (img) {
-            imageUrl = img?.formats?.medium?.url
-              ? `${STRAPI_PUBLIC_URL}${img.formats.medium.url}`
-              : img?.url
-              ? `${STRAPI_PUBLIC_URL}${img.url}`
-              : null;
-          }
-          // Fallback to ogImage if heroSlides is empty or imageUrl is null
-          if (!imageUrl && dest.ogImage) {
-            imageUrl = dest.ogImage.formats?.medium?.url
-              ? `${STRAPI_PUBLIC_URL}${dest.ogImage.formats.medium.url}`
-              : dest.ogImage.url
-              ? `${STRAPI_PUBLIC_URL}${dest.ogImage.url}`
-              : null;
-          }
-
-        // Obtener slug seguro
-        const slug = dest.slug || toSlug(dest.title || dest.name || '');
-        const title = dest.title || dest.name || '';
-        const description = dest.description || '';
+        const row = normalizeRow(dest);
+        const title = row.title;
+        const slug = row.slug;
+        const ogImage = toAbsoluteMediaUrl(row.ogImage);
+        const tours = Array.isArray(row.tours?.data) ? row.tours.data : [];
         return (
-          <a href={`/${currentLang}/destinos/${slug}`} class="group relative overflow-hidden cursor-pointer block">
-            {imageUrl && (
-              <img 
-                src={imageUrl}
-                alt={title} 
-                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-              />
-            )}
+          <a href={`/${currentLang}/destinos/${slug}`} class="relative group block h-full w-full">
+            <img
+              src={ogImage}
+              alt={title}
+              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+            />
             <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
             <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white">
-              <h3 class="text-md  transition-transform duration-300 group-hover:-translate-y-3 font-s['Roboto' ,sans-serif] ">{title}</h3>
+              <h3 class="text-md transition-transform duration-300 group-hover:-translate-y-3 font-s['Roboto',sans-serif]">{title}</h3>
               <div class="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col space-y-2 md:space-y-3 items-center w-full bottom-0 left-0 right-0 p-4">
-                <p class="text-xs sm:text-sm md:text-base leading-relaxed hidden sm:block max-w-xs">
-                  {description}
-                </p>
+                <ul>
+                  {tours.map((tour: any) => {
+                    const tourRow = normalizeRow(tour);
+                    const tourTitle = tourRow.title;
+                    const tourSlug = tourRow.slug;
+                    const heroSlideImage = toAbsoluteMediaUrl(tourRow.heroSlideImages);
+                    return (
+                      <li key={tourSlug}>
+                        <a href={`/${currentLang}/tours/${tourSlug}`} class="flex items-center space-x-2">
+                          <img src={heroSlideImage} alt={tourTitle} class="w-8 h-8 object-cover rounded" />
+                          <span>{tourTitle}</span>
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
                 <span class="px-3 py-1.5 sm:px-4 sm:py-2 border border-white text-white text-xs sm:text-sm font-semibold hover:bg-white hover:border-white hover:text-gray-900 transition">
                   {t.buttons.explore}
                 </span>

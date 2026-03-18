@@ -25,52 +25,34 @@ let navStyleTrips: any[] = [];
 let navDestinations: any[] = [];
 try {
   const styleUrl = `${STRAPI_URL}/api/style-trips?populate=*&locale=${strapiLocale}&status=published`;
-  const destUrl = `${STRAPI_URL}/api/destino-detalles?populate=*&locale=${strapiLocale}&status=published`;
-  const toursUrl = `${STRAPI_URL}/api/tour-detalles?populate=*&locale=${strapiLocale}&status=published`;
-  
-  console.log('[Navbar] Fetching:', { styleUrl, destUrl, toursUrl });
-  
-  const [styleRes, destRes, toursRes] = await Promise.all([
+  const destUrl = `${STRAPI_URL}/api/destino-detalles?locale=${strapiLocale}` +
+    `&fields[0]=title` +
+    `&fields[1]=slug` +
+    `&populate[ogImage][fields][0]=url` +
+    `&populate[ogImage][fields][1]=alternativeText` +
+    `&populate[tours][fields][0]=title` +
+    `&populate[tours][fields][1]=slug` +
+    `&populate[tours][populate][heroSlideImages][fields][0]=url` +
+    `&populate[tours][populate][heroSlideImages][fields][1]=alternativeText`;
+  console.log('[Navbar] Fetching:', { styleUrl, destUrl });
+  const [styleRes, destRes] = await Promise.all([
     fetch(styleUrl),
-    fetch(destUrl),
-    fetch(toursUrl)
+    fetch(destUrl)
   ]);
-  
   console.log('[Navbar] Style Response:', styleRes.status);
   console.log('[Navbar] Dest Response:', destRes.status);
-  console.log('[Navbar] Tours Response:', toursRes.status);
-  
   if (styleRes.ok) {
     const json = await styleRes.json();
     navStyleTrips = json.data ?? [];
     console.log('[Navbar] Style Trips Count:', navStyleTrips.length);
     console.log('[Navbar] Style Trips Data:', navStyleTrips);
   }
-  
   if (destRes.ok) {
     const json = await destRes.json();
     navDestinations = json.data ?? [];
     console.log('[Navbar] Destinations Count:', navDestinations.length);
     console.log('[Navbar] Destinations Data:', navDestinations);
   }
-  
-  let navTours: any[] = [];
-  if (toursRes.ok) {
-    const json = await toursRes.json();
-    navTours = json.data ?? [];
-    console.log('[Navbar] Tours Count:', navTours.length);
-    console.log('[Navbar] Tours Data:', navTours);
-  }
-  
-  // Agregar tours relacionados a cada destino
-  navDestinations = navDestinations.map((dest: any) => ({
-    ...dest,
-    relatedTours: navTours.filter((tour: any) => 
-      tour.destinos && tour.destinos.some((d: any) => d.id === dest.id)
-    )
-  }));
-  
-  console.log('[Navbar] Final Destinations with Tours:', navDestinations);
 } catch (e) {
   console.error('[Navbar] Fetch error:', e);
 }
@@ -189,7 +171,21 @@ try {
                 <!-- Column 2: Tours -->
                 <div class="w-1/3 bg-white p-6 border-r border-gray-200 overflow-y-auto">
                   <div id="megamenu-tours" class="space-y-3">
-                    <!-- Tours will be inserted here via JavaScript -->
+                    {(() => {
+                      // Mostrar tours relacionados del destino activo
+                      const activeDest = navDestinations.length > 0 ? navDestinations[0] : null;
+                      if (!activeDest || !activeDest.tours || !Array.isArray(activeDest.tours.data)) return null;
+                      return activeDest.tours.data.map((tour: any) => {
+                        const attrs = tour.attributes || tour;
+                        return (
+                          <div class="pb-3 border-b border-gray-100 last:border-0">
+                            <a href={`/${currentLang}/tours/${attrs.slug}`} class="font-semibold text-gray-800 text-sm hover:text-blue-600 transition">
+                              {attrs.title}
+                            </a>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
 
