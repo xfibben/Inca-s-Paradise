@@ -89,7 +89,7 @@ export async function getStaticPaths() {
         const localePart = locale ? `locale=${encodeURIComponent(locale)}&` : "";
         const url =
           `${baseUrl}${strapiEndpoint}?${localePart}` +
-          "fields[0]=slug&pagination[pageSize]=200";
+          "status=published&fields[0]=slug&pagination[pageSize]=200";
 
         try {
           const res = await fetch(url);
@@ -152,6 +152,7 @@ for (const baseUrl of STRAPI_BASE_URLS) {
     const localePart = localePrefix(locale);
     const url =
       `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
+      "status=published&" +
       `filters[slug][$eq]=${encodeURIComponent(tourSlug)}&` +
       "pagination[pageSize]=1&" +
       "populate[heroSlideImages][fields][0]=url&" +
@@ -176,7 +177,13 @@ for (const baseUrl of STRAPI_BASE_URLS) {
       "populate[itineraryItems][populate][image][fields][1]=alternativeText&" +
       "populate[itineraryItems][populate][image][fields][2]=formats&" +
       "populate[itineraryItems][populate][includes][fields][0]=text&" +
-      "populate[reviewsBandItems][fields][0]=label";
+      "populate[reviewsBandItems][fields][0]=label&" +
+      "populate[includedItems][fields][0]=text&" +
+      "populate[includedItems][fields][1]=icon&" +
+      "populate[excludedItems][fields][0]=text&" +
+      "populate[excludedItems][fields][1]=icon&" +
+      "populate[faqItems][fields][0]=question&" +
+      "populate[faqItems][fields][1]=answer";
 
     try {
       const res = await fetch(url);
@@ -184,7 +191,9 @@ for (const baseUrl of STRAPI_BASE_URLS) {
 
       const json = await res.json();
       const rows = Array.isArray(json?.data) ? json.data : [];
-      const first = rows[0];
+      const first =
+        rows.find((row: any) => Boolean(normalizeRow(row)?.publishedAt)) ??
+        rows[0];
       const attrs = normalizeRow(first);
       if (attrs) {
         strapiTourRaw = { ...attrs, __fetchedBaseUrl: baseUrl };
@@ -255,17 +264,105 @@ const tourReviewsBand = {
         ? legacyReviewsBand.brands
         : []
 };
-const itineraryRibbon =
+const finishRibbon =
+  sourceTour.finishRibbon ??
   sourceTour.itineraryRibbon ??
   fallbackTour?.itineraryRibbon ??
   (lang === "en" ? "Sample Itinerary" : "Sample Itinerary");
+
+const includedTitle =
+  sourceTour.includedTitle ??
+  (lang === "en" ? "Included" : "Incluido");
+const includedItemsRaw = Array.isArray(sourceTour.includedItems)
+  ? sourceTour.includedItems
+      .map((entry: any) => normalizeRow(entry))
+      .filter(Boolean)
+      .map((item: any) => ({
+        text: String(item?.text ?? "").trim(),
+        icon: String(item?.icon ?? "").trim()
+      }))
+      .filter((item: any) => item.text)
+  : [];
+const includedItems =
+  includedItemsRaw.length > 0
+    ? includedItemsRaw
+    : lang === "en"
+      ? [
+          { text: "Airport transfers with local support", icon: "✓" },
+          { text: "Guided excursions listed in the itinerary", icon: "✓" },
+          { text: "Entrance fees for scheduled activities", icon: "✓" }
+        ]
+      : [
+          { text: "Traslados al aeropuerto con acompanamiento local", icon: "✓" },
+          { text: "Excursiones guiadas indicadas en el itinerario", icon: "✓" },
+          { text: "Entradas para actividades programadas", icon: "✓" }
+        ];
+const excludedTitle =
+  sourceTour.excludedTitle ??
+  (lang === "en" ? "Not included" : "No incluido");
+const excludedItemsRaw = Array.isArray(sourceTour.excludedItems)
+  ? sourceTour.excludedItems
+      .map((entry: any) => normalizeRow(entry))
+      .filter(Boolean)
+      .map((item: any) => ({
+        text: String(item?.text ?? "").trim(),
+        icon: String(item?.icon ?? "").trim()
+      }))
+      .filter((item: any) => item.text)
+  : [];
+const excludedItems =
+  excludedItemsRaw.length > 0
+    ? excludedItemsRaw
+    : lang === "en"
+      ? [{ text: "International and domestic flights", icon: "✕" }]
+      : [{ text: "Vuelos nacionales e internacionales", icon: "✕" }];
+
+const faqTitle = sourceTour.faqTitle ?? (lang === "en" ? "FAQ" : "Preguntas frecuentes");
+const faqItemsRaw = Array.isArray(sourceTour.faqItems)
+  ? sourceTour.faqItems
+      .map((entry: any) => normalizeRow(entry))
+      .filter(Boolean)
+      .map((item: any) => ({
+        question: String(item?.question ?? "").trim(),
+        answer: String(item?.answer ?? "").trim()
+      }))
+      .filter((item: any) => item.question && item.answer)
+  : [];
+const faqItems =
+  faqItemsRaw.length > 0
+    ? faqItemsRaw
+    : lang === "en"
+      ? [
+          {
+            question: "Can this itinerary be customized?",
+            answer:
+              "Yes, we adapt activities, pace and services according to your travel profile."
+          },
+          {
+            question: "Is this tour suitable for families?",
+            answer:
+              "Yes, we can adapt logistics and activities for families with children."
+          }
+        ]
+      : [
+          {
+            question: "Se puede personalizar este itinerario?",
+            answer:
+              "Si, adaptamos actividades, ritmo y servicios segun tu perfil de viaje."
+          },
+          {
+            question: "Este tour es apto para familias?",
+            answer:
+              "Si, podemos ajustar la logistica y actividades para familias con ninos."
+          }
+        ];
 
 const tourData = {
   ...sourceTour,
   meta: tourMeta,
   hero: tourHero,
   reviewsBand: tourReviewsBand,
-  itineraryRibbon
+  finishRibbon
 };
 
 const pageTitle =
@@ -562,7 +659,10 @@ const itineraryTitle =
   sourceTour.itineraryTitle ??
   legacyItinerarySection.title ??
   (lang === "en" ? "Detailed Itinerary" : "Itinerario detallado");
-const itineraryDayLabel = lang === "en" ? "Day" : "Dia";
+const itineraryDayLabel =
+  sourceTour.itineraryItemLabel ??
+  fallbackTour?.itineraryItemLabel ??
+  (lang === "en" ? "Day" : "Dia");
 const itineraryExpandLabel =
   sourceTour.itineraryExpandLabel ??
   legacyItinerarySection.expandLabel ??
@@ -1156,13 +1256,69 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
       </section>
 
       <Ribbon
-        text={itineraryRibbon}
+        text={finishRibbon}
         backgroundClass="bg-[#032b43]"
         maxWidthClass="max-w-7xl"
         paddingClass="py-12"
         textClass="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight italic"
         textStyle="font-family: 'Playfair Display', serif;"
       />
+
+      <section class="bg-[#f3f4f6] py-10 md:py-12">
+        <div class="mx-auto w-full max-w-7xl px-6">
+          <div class="grid gap-6 lg:grid-cols-2">
+            <article class="border border-[#e2e8f0] bg-white p-6 md:p-8">
+              <h3 class="mb-6 text-3xl font-semibold text-[#111827]">
+                <span class="mr-3 text-[#f65f2c]">✓</span>{includedTitle}
+              </h3>
+              <div class="divide-y divide-[#e5e7eb]">
+                {includedItems.map((item) => (
+                  <div class="flex items-start gap-3 py-4">
+                    <span class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#f65f2c] text-sm text-[#f65f2c]">
+                      {item.icon || "✓"}
+                    </span>
+                    <p class="text-lg leading-snug text-[#374151]">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
+
+            <article class="border border-[#e2e8f0] bg-white p-6 md:p-8">
+              <h3 class="mb-6 text-3xl font-semibold text-[#111827]">
+                <span class="mr-3 text-[#6b7280]">✕</span>{excludedTitle}
+              </h3>
+              <div class="divide-y divide-[#e5e7eb]">
+                {excludedItems.map((item) => (
+                  <div class="flex items-start gap-3 py-4">
+                    <span class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#9ca3af] text-sm text-[#6b7280]">
+                      {item.icon || "✕"}
+                    </span>
+                    <p class="text-lg leading-snug text-[#374151]">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-white py-10 md:py-12">
+        <div class="mx-auto w-full max-w-7xl px-6">
+          <h3 class="mb-6 text-4xl font-semibold text-[#111827]">{faqTitle}</h3>
+          <div class="divide-y divide-[#e5e7eb] border-y border-[#e5e7eb]">
+            {faqItems.map((item) => (
+              <details class="group py-4">
+                <summary class="flex cursor-pointer list-none items-center gap-4 text-2xl font-medium text-[#374151] marker:hidden">
+                  <span class="text-3xl leading-none text-[#f65f2c] group-open:hidden">+</span>
+                  <span class="hidden text-3xl leading-none text-[#f65f2c] group-open:inline">-</span>
+                  <span>{item.question}</span>
+                </summary>
+                <p class="pl-10 pt-3 text-lg leading-relaxed text-[#4b5563]">{item.answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
     </main>
     <Footer currentLang={lang} {t} />
 

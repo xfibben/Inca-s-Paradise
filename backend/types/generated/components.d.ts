@@ -40,6 +40,18 @@ export interface ToursDescriptionDetailItem extends Struct.ComponentSchema {
   };
 }
 
+export interface ToursFaqItem extends Struct.ComponentSchema {
+  collectionName: 'components_tours_faq_items';
+  info: {
+    description: 'Pregunta y respuesta para FAQ del tour';
+    displayName: 'FAQ Item';
+  };
+  attributes: {
+    answer: Schema.Attribute.Text & Schema.Attribute.Required;
+    question: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 export interface ToursFeaturedImageItem extends Struct.ComponentSchema {
   collectionName: 'components_tours_featured_image_items';
   info: {
@@ -67,6 +79,18 @@ export interface ToursHighlightItem extends Struct.ComponentSchema {
   attributes: {
     description: Schema.Attribute.Text;
     title: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface ToursInclusionItem extends Struct.ComponentSchema {
+  collectionName: 'components_tours_inclusion_items';
+  info: {
+    description: 'Item para seccion incluido/no incluido';
+    displayName: 'Inclusion Item';
+  };
+  attributes: {
+    icon: Schema.Attribute.String;
+    text: Schema.Attribute.Text & Schema.Attribute.Required;
   };
 }
 
@@ -120,8 +144,10 @@ declare module '@strapi/strapi' {
       'destinos.icon-item': DestinosIconItem;
       'destinos.shared-icon': DestinosSharedIcon;
       'tours.description-detail-item': ToursDescriptionDetailItem;
+      'tours.faq-item': ToursFaqItem;
       'tours.featured-image-item': ToursFeaturedImageItem;
       'tours.highlight-item': ToursHighlightItem;
+      'tours.inclusion-item': ToursInclusionItem;
       'tours.itinerary-include-item': ToursItineraryIncludeItem;
       'tours.itinerary-item': ToursItineraryItem;
       'tours.review-brand-item': ToursReviewBrandItem;
