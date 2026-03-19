@@ -17,22 +17,22 @@
   "attributes": {
     "title": {
       "type": "string",
+      "required": true,
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
-      },
-      "required": true
+      }
     },
     "slug": {
       "type": "uid",
+      "targetField": "title",
+      "required": true,
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
-      },
-      "targetField": "title",
-      "required": true
+      }
     },
     "destinationSlug": {
       "type": "string",
@@ -46,23 +46,23 @@
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::destino-detalle.destino-detalle",
+      "mappedBy": "tours",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
-      },
-      "mappedBy": "tours"
+      }
     },
     "estilos": {
       "type": "relation",
       "relation": "manyToMany",
       "target": "api::style-trip.style-trip",
+      "mappedBy": "tours",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
-      },
-      "mappedBy": "tours"
+      }
     },
     "metaTitle": {
       "type": "string",
@@ -98,125 +98,13 @@
     },
     "heroSlideImages": {
       "type": "media",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
       "multiple": true,
       "allowedTypes": [
         "images"
-      ]
-    },
-    "summaryTitle": {
-      "type": "string",
+      ],
       "pluginOptions": {
         "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryMetaLine": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryParagraph": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryBullet1": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryBullet2": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryBullet3": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryCtaLabel": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryCtaUrl": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryContactTitle": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryContactDescription": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryContactPhone": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryContactButtonLabel": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryContactReviewsTitle": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "summaryContactReviewsDescription": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
+          "localized": false
         }
       }
     },
@@ -246,15 +134,15 @@
     },
     "highlightsImage": {
       "type": "media",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
       "multiple": false,
       "allowedTypes": [
         "images"
-      ]
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "highlightsImageAlt": {
       "type": "string",
@@ -272,15 +160,23 @@
         }
       }
     },
-    "highlightsItems": {
-      "type": "component",
+    "highlightsCtaUrl": {
+      "type": "string",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
-      },
+      }
+    },
+    "highlightsItems": {
+      "type": "component",
+      "repeatable": true,
       "component": "tours.highlight-item",
-      "repeatable": true
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "descriptionTitle": {
       "type": "string",
@@ -316,13 +212,13 @@
     },
     "descriptionDetails": {
       "type": "component",
+      "repeatable": true,
+      "component": "tours.description-detail-item",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
-      },
-      "component": "tours.description-detail-item",
-      "repeatable": true
+      }
     },
     "featuredTitle": {
       "type": "string",
@@ -334,15 +230,23 @@
     },
     "featuredImages": {
       "type": "component",
+      "repeatable": true,
+      "component": "tours.featured-image-item",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
-      },
-      "component": "tours.featured-image-item",
-      "repeatable": true
+      }
     },
     "itineraryTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "itineraryItemLabel": {
       "type": "string",
       "pluginOptions": {
         "i18n": {
@@ -368,127 +272,13 @@
     },
     "itineraryItems": {
       "type": "component",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
+      "repeatable": true,
       "component": "tours.itinerary-item",
-      "repeatable": true
-    },
-    "bookingTitle": {
-      "type": "string",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
       }
-    },
-    "bookingPrice": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "bookingDuration": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "bookingButtonLabel": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "bookingAvailabilityLabel": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "bookingMonthLabel": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "bookingCalendarStart": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "bookingWeekdays": {
-      "type": "component",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
-      "component": "tours.calendar-weekday-item",
-      "repeatable": true
-    },
-    "bookingAvailableDays": {
-      "type": "component",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
-      "component": "tours.calendar-available-day-item",
-      "repeatable": true
-    },
-    "atGlanceTitle": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "atGlanceFootnote": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "atGlanceMapImage": {
-      "type": "media",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
-      "multiple": false,
-      "allowedTypes": [
-        "images"
-      ]
-    },
-    "atGlanceItems": {
-      "type": "component",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      },
-      "component": "tours.at-glance-item",
-      "repeatable": true
     },
     "reviewsBandTitle": {
       "type": "string",
@@ -508,16 +298,70 @@
     },
     "reviewsBandItems": {
       "type": "component",
+      "repeatable": true,
+      "component": "tours.review-brand-item",
       "pluginOptions": {
         "i18n": {
           "localized": true
         }
-      },
-      "component": "tours.review-brand-item",
-      "repeatable": true
+      }
     },
-    "itineraryRibbon": {
+    "finishRibbon": {
       "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "includedTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "includedItems": {
+      "type": "component",
+      "repeatable": true,
+      "component": "tours.inclusion-item",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "excludedTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "excludedItems": {
+      "type": "component",
+      "repeatable": true,
+      "component": "tours.inclusion-item",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "faqTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "faqItems": {
+      "type": "component",
+      "repeatable": true,
+      "component": "tours.faq-item",
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -526,16 +370,21 @@
     },
     "showInStyles": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "tourType": {
       "type": "enumeration",
-      "default": "tour",
       "enum": [
         "tour",
         "small_trip",
         "package"
-      ]
+      ],
+      "default": "tour"
     },
     "adultUnitPrice": {
       "type": "decimal",
@@ -549,13 +398,11 @@
     },
     "discount": {
       "type": "decimal",
-      "required": false,
       "default": 0,
       "min": 0
     },
     "durationDays": {
       "type": "integer",
-      "required": false,
       "min": 1
     },
     "startDate": {

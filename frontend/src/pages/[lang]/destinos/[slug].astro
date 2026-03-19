@@ -237,34 +237,29 @@ async function fetchStrapiToursByDestination(
   destinationSlug: string,
   locales: readonly (string | null)[]
 ) {
-  const filters = [
-    `filters[destinos][slug][$eq]=${encodeURIComponent(destinationSlug)}`,
-    `filters[destinationSlug][$eq]=${encodeURIComponent(destinationSlug)}`
-  ];
+  const relationFilter = `filters[destinos][slug][$eq]=${encodeURIComponent(destinationSlug)}`;
 
-  for (const filterQuery of filters) {
-    for (const baseUrl of STRAPI_BASE_URLS) {
-      for (const locale of locales) {
-        const localePart = localePrefix(locale);
-        const url =
-          `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
-          `${filterQuery}&pagination[pageSize]=100&` +
-          `populate[heroSlideImages][fields][0]=url&` +
-          `populate[heroSlideImages][fields][1]=alternativeText&` +
-          `populate[heroSlideImages][fields][2]=formats`;
+  for (const baseUrl of STRAPI_BASE_URLS) {
+    for (const locale of locales) {
+      const localePart = localePrefix(locale);
+      const url =
+        `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
+        `${relationFilter}&pagination[pageSize]=100&` +
+        `populate[heroSlideImages][fields][0]=url&` +
+        `populate[heroSlideImages][fields][1]=alternativeText&` +
+        `populate[heroSlideImages][fields][2]=formats`;
 
-        try {
-          const res = await fetch(url);
-          if (!res.ok) continue;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) continue;
 
-          const json = await res.json();
-          const rows = Array.isArray(json?.data)
-            ? json.data.map((entry: any) => normalizeRow(entry)).filter(Boolean)
-            : [];
-          if (rows.length > 0) return rows;
-        } catch {
-          // Try next locale / URL.
-        }
+        const json = await res.json();
+        const rows = Array.isArray(json?.data)
+          ? json.data.map((entry: any) => normalizeRow(entry)).filter(Boolean)
+          : [];
+        if (rows.length > 0) return rows;
+      } catch {
+        // Try next locale / URL.
       }
     }
   }
@@ -748,7 +743,7 @@ const smallStepCount = smallRowsPerLoad * 3;
 		<script is:inline src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
 		<Navbar {t} currentLang={lang} />
 		<main>
-			<section class="relative w-full bg-black overflow-hidden h-screen min-h-screen">
+			<section class="relative w-full bg-black overflow-hidden h-[91vw] min-h-80 md:h-screen md:min-h-screen">
 				<div id="destino-carousel" class="relative h-full w-full">
 					<div class="relative h-full w-full overflow-hidden">
 						{resolvedSlides.map((slide, index) => (
