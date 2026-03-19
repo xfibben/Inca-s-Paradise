@@ -1,0 +1,128 @@
+---
+import Navbar from '../../../components/shared/Navbar.astro';
+import Footer from '../../../components/shared/Footer.astro';
+import { getTranslation, languages } from '../../../i18n';
+import '../../../styles/global.css';
+
+const { lang } = Astro.params;
+const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
+const t = getTranslation(currentLang);
+
+const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
+const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const strapiLocale =
+  currentLang === 'pt' ? 'pt'
+  : currentLang === 'es' ? 'es-PE'
+  : currentLang === 'it' ? 'it'
+  : currentLang === 'fr' ? 'fr'
+  : currentLang;
+
+let data: any = null;
+try {
+  const res = await fetch(
+    `${STRAPI_URL}/api/terminos-condiciones?populate[sections]=*&locale=${strapiLocale}&status=published`
+  );
+  if (res.ok) {
+    const json = await res.json();
+    data = json.data ?? null;
+  }
+} catch (e) {
+  // no-op
+}
+
+const title = data?.title ?? (currentLang === 'es' ? 'Términos y Condiciones' : 'Terms & Conditions');
+const description = data?.description ?? '';
+const seoTitle = data?.seoTitle ?? title;
+const seoDescription = data?.seoDescription ?? description;
+const sections: Array<{ title: string; text: string }> = Array.isArray(data?.sections) ? data.sections : [];
+
+function renderRichText(value: any): string {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  // Strapi richtext as blocks array
+  if (Array.isArray(value)) {
+    return value.map((block: any) => {
+      if (block.type === 'paragraph') {
+        const text = (block.children ?? []).map((c: any) => {
+          let t = c.text ?? '';
+          if (c.bold) t = `<strong>${t}</strong>`;
+          if (c.italic) t = `<em>${t}</em>`;
+          if (c.underline) t = `<u>${t}</u>`;
+          return t;
+        }).join('');
+        return `<p>${text}</p>`;
+      }
+      if (block.type === 'heading') {
+        const level = block.level ?? 2;
+        const text = (block.children ?? []).map((c: any) => c.text ?? '').join('');
+        return `<h${level}>${text}</h${level}>`;
+      }
+      if (block.type === 'list') {
+        const tag = block.format === 'ordered' ? 'ol' : 'ul';
+        const items = (block.children ?? []).map((item: any) =>
+          `<li>${(item.children ?? []).map((c: any) => c.text ?? '').join('')}</li>`
+        ).join('');
+        return `<${tag}>${items}</${tag}>`;
+      }
+      return '';
+    }).join('');
+  }
+  return '';
+}
+---
+
+<!DOCTYPE html>
+<html lang={currentLang}>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{seoTitle} — Inca's Paradise</title>
+    <meta name="description" content={seoDescription} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
+  </head>
+  <body class="min-h-screen bg-white text-gray-900">
+    <Navbar {t} currentLang={currentLang} />
+
+    <main class="pt-24 pb-16">
+      <div class="mx-auto max-w-3xl px-6">
+
+        <!-- Header -->
+        <div class="mb-10 border-b border-gray-200 pb-8">
+          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4 italic" style="font-family: 'Playfair Display', serif;">
+            {title}
+          </h1>
+          {description && (
+            <p class="text-base text-gray-600 leading-relaxed">{description}</p>
+          )}
+        </div>
+
+        <!-- Sections -->
+        {sections.length > 0 ? (
+          <div class="space-y-10">
+            {sections.map((section, i) => (
+              <div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-3">
+                  {i + 1}. {section.title}
+                </h2>
+                <div
+                  class="prose prose-gray max-w-none text-gray-700 leading-relaxed"
+                  set:html={renderRichText(section.text)}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p class="text-gray-400 italic">
+            {currentLang === 'es' ? 'Contenido próximamente.' : 'Content coming soon.'}
+          </p>
+        )}
+
+      </div>
+    </main>
+
+    <Footer {t} currentLang={currentLang} />
+  </body>
+</html>

@@ -865,6 +865,13 @@ export interface ApiStyleTripStyleTrip extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    slug: Schema.Attribute.UID<'name'> &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     tours: Schema.Attribute.Relation<
       'manyToMany',
       'api::tour-detalle.tour-detalle'
@@ -883,6 +890,76 @@ export interface ApiStyleTripStyleTrip extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+  };
+}
+
+export interface ApiTerminosCondicionesTerminosCondiciones
+  extends Struct.SingleTypeSchema {
+  collectionName: 'terminos_condiciones';
+  info: {
+    displayName: 'T\u00E9rminos y Condiciones';
+    pluralName: 'terminos-condiciones-list';
+    singularName: 'terminos-condiciones';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::terminos-condiciones.terminos-condiciones'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    sections: Schema.Attribute.Component<'legal.terms-section', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    seoDescription: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    seoTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    slug: Schema.Attribute.UID &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    title: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -1209,6 +1286,11 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
         };
       }>;
     tourType: Schema.Attribute.Enumeration<['tour', 'small_trip', 'package']> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
       Schema.Attribute.DefaultTo<'tour'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1731,6 +1813,7 @@ declare module '@strapi/strapi' {
       'api::destino.destino': ApiDestinoDestino;
       'api::reserva.reserva': ApiReservaReserva;
       'api::style-trip.style-trip': ApiStyleTripStyleTrip;
+      'api::terminos-condiciones.terminos-condiciones': ApiTerminosCondicionesTerminosCondiciones;
       'api::tour-detalle.tour-detalle': ApiTourDetalleTourDetalle;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

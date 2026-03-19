@@ -35,8 +35,8 @@ function toAbsoluteMediaUrl(value: any) {
   const url =
     typeof value === "string"
       ? value
-      : value?.formats?.large?.url ??
-        value?.formats?.medium?.url ??
+      : value?.formats?.medium?.url ??
+        value?.formats?.large?.url ??
         value?.formats?.small?.url ??
         value?.url ??
         "";
@@ -394,8 +394,8 @@ const heroSlidesFromMedia = heroSlidesMediaRaw
   .map((item: any, index: number) => {
     const media = item?.attributes ?? item ?? {};
     const mediaUrl =
-      media?.formats?.large?.url ??
       media?.formats?.medium?.url ??
+      media?.formats?.large?.url ??
       media?.formats?.small?.url ??
       media?.url ??
       "";

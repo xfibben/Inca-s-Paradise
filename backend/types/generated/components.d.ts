@@ -28,6 +28,18 @@ export interface DestinosSharedIcon extends Struct.ComponentSchema {
   };
 }
 
+export interface LegalTermsSection extends Struct.ComponentSchema {
+  collectionName: 'components_legal_terms_sections';
+  info: {
+    description: 'Secci\u00F3n de t\u00E9rminos con t\u00EDtulo y texto';
+    displayName: 'Terms Section';
+  };
+  attributes: {
+    text: Schema.Attribute.RichText & Schema.Attribute.Required;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 export interface ToursDescriptionDetailItem extends Struct.ComponentSchema {
   collectionName: 'components_tours_description_detail_items';
   info: {
@@ -143,6 +155,7 @@ declare module '@strapi/strapi' {
     export interface ComponentSchemas {
       'destinos.icon-item': DestinosIconItem;
       'destinos.shared-icon': DestinosSharedIcon;
+      'legal.terms-section': LegalTermsSection;
       'tours.description-detail-item': ToursDescriptionDetailItem;
       'tours.faq-item': ToursFaqItem;
       'tours.featured-image-item': ToursFeaturedImageItem;

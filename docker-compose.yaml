@@ -16,6 +16,11 @@ services:
       - ./docker-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   # -----------------------------------------------------------
   # 2. BACKEND Y CMS (Strapi)
@@ -30,7 +35,8 @@ services:
     ports:
       - "1337:1337"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       DATABASE_CLIENT: postgres
       DATABASE_HOST: postgres
@@ -47,6 +53,7 @@ services:
     command: >
       sh -c "
       rm -f .DS_Store;
+      rm -rf dist;
       if [ ! -f package.json ]; then
         npx create-strapi-app@latest . --dbclient=postgres --dbhost=postgres --dbport=5432 --dbname=${DB_NAME} --dbusername=${DB_USER} --dbpassword=${DB_PASSWORD} --no-run --skip-cloud;
       fi;
