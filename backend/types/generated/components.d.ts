@@ -28,49 +28,6 @@ export interface DestinosSharedIcon extends Struct.ComponentSchema {
   };
 }
 
-export interface ToursAtGlanceItem extends Struct.ComponentSchema {
-  collectionName: 'components_tours_at_glance_items';
-  info: {
-    description: 'Fila de resumen de ubicacion del tour';
-    displayName: 'At Glance Item';
-  };
-  attributes: {
-    location: Schema.Attribute.String & Schema.Attribute.Required;
-    nights: Schema.Attribute.String;
-    summary: Schema.Attribute.Text;
-  };
-}
-
-export interface ToursCalendarAvailableDayItem extends Struct.ComponentSchema {
-  collectionName: 'components_tours_calendar_available_day_items';
-  info: {
-    description: 'Dia disponible para calendario del CTA';
-    displayName: 'Calendar Available Day Item';
-  };
-  attributes: {
-    day: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          max: 31;
-          min: 1;
-        },
-        number
-      >;
-  };
-}
-
-export interface ToursCalendarWeekdayItem extends Struct.ComponentSchema {
-  collectionName: 'components_tours_calendar_weekday_items';
-  info: {
-    description: 'Etiqueta de dia de semana para calendario del CTA';
-    displayName: 'Calendar Weekday Item';
-  };
-  attributes: {
-    label: Schema.Attribute.String & Schema.Attribute.Required;
-  };
-}
-
 export interface ToursDescriptionDetailItem extends Struct.ComponentSchema {
   collectionName: 'components_tours_description_detail_items';
   info: {
@@ -83,6 +40,18 @@ export interface ToursDescriptionDetailItem extends Struct.ComponentSchema {
   };
 }
 
+export interface ToursFaqItem extends Struct.ComponentSchema {
+  collectionName: 'components_tours_faq_items';
+  info: {
+    description: 'Pregunta y respuesta para FAQ del tour';
+    displayName: 'FAQ Item';
+  };
+  attributes: {
+    answer: Schema.Attribute.Text & Schema.Attribute.Required;
+    question: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 export interface ToursFeaturedImageItem extends Struct.ComponentSchema {
   collectionName: 'components_tours_featured_image_items';
   info: {
@@ -91,7 +60,13 @@ export interface ToursFeaturedImageItem extends Struct.ComponentSchema {
   };
   attributes: {
     alt: Schema.Attribute.String;
-    image: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
+    image: Schema.Attribute.Media<'images'> &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
   };
 }
 
@@ -104,6 +79,18 @@ export interface ToursHighlightItem extends Struct.ComponentSchema {
   attributes: {
     description: Schema.Attribute.Text;
     title: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface ToursInclusionItem extends Struct.ComponentSchema {
+  collectionName: 'components_tours_inclusion_items';
+  info: {
+    description: 'Item para seccion incluido/no incluido';
+    displayName: 'Inclusion Item';
+  };
+  attributes: {
+    icon: Schema.Attribute.String;
+    text: Schema.Attribute.Text & Schema.Attribute.Required;
   };
 }
 
@@ -127,7 +114,12 @@ export interface ToursItineraryItem extends Struct.ComponentSchema {
   attributes: {
     description: Schema.Attribute.Text;
     highlight: Schema.Attribute.Text;
-    image: Schema.Attribute.Media<'images'>;
+    image: Schema.Attribute.Media<'images'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     imageAlt: Schema.Attribute.String;
     includes: Schema.Attribute.Component<'tours.itinerary-include-item', true>;
     optional: Schema.Attribute.Text;
@@ -151,12 +143,11 @@ declare module '@strapi/strapi' {
     export interface ComponentSchemas {
       'destinos.icon-item': DestinosIconItem;
       'destinos.shared-icon': DestinosSharedIcon;
-      'tours.at-glance-item': ToursAtGlanceItem;
-      'tours.calendar-available-day-item': ToursCalendarAvailableDayItem;
-      'tours.calendar-weekday-item': ToursCalendarWeekdayItem;
       'tours.description-detail-item': ToursDescriptionDetailItem;
+      'tours.faq-item': ToursFaqItem;
       'tours.featured-image-item': ToursFeaturedImageItem;
       'tours.highlight-item': ToursHighlightItem;
+      'tours.inclusion-item': ToursInclusionItem;
       'tours.itinerary-include-item': ToursItineraryIncludeItem;
       'tours.itinerary-item': ToursItineraryItem;
       'tours.review-brand-item': ToursReviewBrandItem;

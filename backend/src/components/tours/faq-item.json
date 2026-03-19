@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_tours_faq_items",
+  "info": {
+    "displayName": "FAQ Item",
+    "description": "Pregunta y respuesta para FAQ del tour"
+  },
+  "options": {},
+  "attributes": {
+    "question": {
+      "type": "string",
+      "required": true
+    },
+    "answer": {
+      "type": "text",
+      "required": true
+    }
+  }
+}
+

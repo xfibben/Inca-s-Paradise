@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_tours_inclusion_items",
+  "info": {
+    "displayName": "Inclusion Item",
+    "description": "Item para seccion incluido/no incluido"
+  },
+  "options": {},
+  "attributes": {
+    "text": {
+      "type": "text",
+      "required": true
+    },
+    "icon": {
+      "type": "string"
+    }
+  }
+}
+
