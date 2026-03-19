@@ -384,7 +384,12 @@
         "small_trip",
         "package"
       ],
-      "default": "tour"
+      "default": "tour",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "adultUnitPrice": {
       "type": "decimal",

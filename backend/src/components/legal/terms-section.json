@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_legal_terms_sections",
+  "info": {
+    "displayName": "Terms Section",
+    "description": "Sección de términos con título y texto"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "text": {
+      "type": "richtext",
+      "required": true
+    }
+  }
+}

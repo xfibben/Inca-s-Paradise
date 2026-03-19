@@ -36,49 +36,33 @@ let relatedTours: any[] = [];
 let carouselTours: any[] = [];
 
 try {
-  const fetchUrl = `${STRAPI_URL}/api/style-trips?populate=*&locale=${strapiLocale}&status=published`;
-  console.log('Fetching from:', fetchUrl);
-  
+  const fetchUrl = `${STRAPI_URL}/api/style-trips?filters[slug][$eq]=${slug}` +
+    `&populate[image]=*&populate[wallpaper]=*` +
+    `&populate[tours][fields][0]=title&populate[tours][fields][1]=slug` +
+    `&populate[tours][fields][2]=tourType&populate[tours][fields][3]=showInStyles` +
+    `&populate[tours][populate][heroSlideImages][fields][0]=url` +
+    `&populate[tours][populate][heroSlideImages][fields][1]=formats` +
+    `&locale=${strapiLocale}&status=published`;
+
   const res = await fetch(fetchUrl);
-  console.log('Response status:', res.status);
-  
   if (res.ok) {
     const json = await res.json();
-    const allTrips = json.data ?? [];
-    console.log('Total trips:', allTrips.length);
-    
-    const slugsAvailable = allTrips.map((t: any) => toSlug(t.name));
-    console.log('Available slugs:', slugsAvailable);
-    console.log('Looking for:', slug);
-    
-    trip = allTrips.find((item: any) => toSlug(item.name) === slug) ?? null;
-    console.log('Found trip:', trip?.name);
-    
-    if (trip) {
-      const toursUrl = `${STRAPI_URL}/api/tour-detalles?populate=*&locale=${strapiLocale}&status=published`;
-      const toursRes = await fetch(toursUrl);
-      
-      if (toursRes.ok) {
-        const toursJson = await toursRes.json();
-        const allTours = toursJson.data ?? [];
-        
-        const relatedToThisStyle = allTours.filter((tour: any) => 
-          tour.estilos && tour.estilos.some((st: any) => st.id === trip.id)
-        );
-        
-        // Related tours: solo los que son small_trip y showInStyles true
-        relatedTours = relatedToThisStyle.filter((tour: any) => 
-          tour.tourType === 'small_trip' && tour.showInStyles === true
-        );
+    trip = json.data?.[0] ?? null;
 
-        // Carousel tours: solo los que son tour o package
-        carouselTours = relatedToThisStyle.filter((tour: any) => 
-          tour.tourType === 'tour' || tour.tourType === 'package'
-        );
-        
-        console.log('Related tours:', relatedTours.length);
-        console.log('Carousel tours:', carouselTours.length);
-      }
+    if (trip) {
+      const allTours = Array.isArray(trip.tours?.data)
+        ? trip.tours.data.map((t: any) => t.attributes ?? t)
+        : Array.isArray(trip.tours)
+        ? trip.tours
+        : [];
+
+      relatedTours = allTours.filter((tour: any) =>
+        tour.tourType === 'small_trip' && tour.showInStyles === true
+      );
+
+      carouselTours = allTours.filter((tour: any) =>
+        tour.tourType === 'tour' || tour.tourType === 'package'
+      );
     }
   }
 } catch (e) {
@@ -91,7 +75,9 @@ const heroImage = trip ? (() => {
   if (wp) return wp;
   return Array.isArray(trip.image) ? trip.image[0] : trip.image;
 })() : null;
-const heroImageUrl = heroImage?.formats?.large?.url
+const heroImageUrl = heroImage?.formats?.medium?.url
+  ? `${STRAPI_PUBLIC_URL}${heroImage.formats.medium.url}`
+  : heroImage?.formats?.large?.url
   ? `${STRAPI_PUBLIC_URL}${heroImage.formats.large.url}`
   : heroImage?.url
   ? `${STRAPI_PUBLIC_URL}${heroImage.url}`
@@ -208,10 +194,10 @@ const heroImageUrl = heroImage?.formats?.large?.url
         const heroImg = Array.isArray(tour.heroSlideImages) && tour.heroSlideImages.length > 0
           ? tour.heroSlideImages[0]
           : tour.heroSlideImages;
-        const tourImageUrl = heroImg?.formats?.large?.url
-          ? `${STRAPI_PUBLIC_URL}${heroImg.formats.large.url}`
-          : heroImg?.formats?.medium?.url
+        const tourImageUrl = heroImg?.formats?.medium?.url
           ? `${STRAPI_PUBLIC_URL}${heroImg.formats.medium.url}`
+          : heroImg?.formats?.large?.url
+          ? `${STRAPI_PUBLIC_URL}${heroImg.formats.large.url}`
           : heroImg?.url
           ? `${STRAPI_PUBLIC_URL}${heroImg.url}`
           : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop';

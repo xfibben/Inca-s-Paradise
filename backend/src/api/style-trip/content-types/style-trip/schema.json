@@ -32,6 +32,16 @@
         }
       }
     },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
     "image": {
       "type": "media",
       "pluginOptions": {

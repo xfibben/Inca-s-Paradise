@@ -237,26 +237,53 @@ async function fetchStrapiToursByDestination(
   destinationSlug: string,
   locales: readonly (string | null)[]
 ) {
-  const relationFilter = `filters[destinos][slug][$eq]=${encodeURIComponent(destinationSlug)}`;
-
   for (const baseUrl of STRAPI_BASE_URLS) {
     for (const locale of locales) {
       const localePart = localePrefix(locale);
-      const url =
-        `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
-        `${relationFilter}&pagination[pageSize]=100&` +
-        `populate[heroSlideImages][fields][0]=url&` +
-        `populate[heroSlideImages][fields][1]=alternativeText&` +
-        `populate[heroSlideImages][fields][2]=formats`;
+
+      // Step 1: get tour slugs from destino-detalle
+      const destUrl =
+        `${baseUrl}${STRAPI_DETAIL_ENDPOINT}?${localePart}` +
+        `filters[slug][$eq]=${encodeURIComponent(destinationSlug)}&pagination[pageSize]=1&` +
+        `populate[tours][fields][0]=slug`;
 
       try {
-        const res = await fetch(url);
-        if (!res.ok) continue;
+        const destRes = await fetch(destUrl);
+        if (!destRes.ok) continue;
 
-        const json = await res.json();
-        const rows = Array.isArray(json?.data)
-          ? json.data.map((entry: any) => normalizeRow(entry)).filter(Boolean)
+        const destJson = await destRes.json();
+        const first = normalizeRow(destJson?.data?.[0] ?? destJson?.data ?? null);
+        if (!first) continue;
+
+        const tourSlugs: string[] = (
+          Array.isArray(first?.tours?.data)
+            ? first.tours.data.map((t: any) => normalizeRow(t)?.slug)
+            : Array.isArray(first?.tours)
+            ? first.tours.map((t: any) => t?.slug)
+            : []
+        ).filter(Boolean);
+
+        if (tourSlugs.length === 0) continue;
+
+        // Step 2: fetch full tour data by slugs
+        const slugFilters = tourSlugs
+          .map((s, i) => `filters[slug][$in][${i}]=${encodeURIComponent(s)}`)
+          .join('&');
+        const toursUrl =
+          `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
+          `${slugFilters}&pagination[pageSize]=100&` +
+          `populate[heroSlideImages][fields][0]=url&` +
+          `populate[heroSlideImages][fields][1]=alternativeText&` +
+          `populate[heroSlideImages][fields][2]=formats`;
+
+        const toursRes = await fetch(toursUrl);
+        if (!toursRes.ok) continue;
+
+        const toursJson = await toursRes.json();
+        const rows = Array.isArray(toursJson?.data)
+          ? toursJson.data.map((t: any) => normalizeRow(t)).filter(Boolean)
           : [];
+
         if (rows.length > 0) return rows;
       } catch {
         // Try next locale / URL.
@@ -640,15 +667,15 @@ const normalizeCatalogItems = (value: any) =>
 const strapiCatalogCards = strapiToursForCatalog
   .map((tour: any) => ({
     ...toCatalogCardFromTour(tour, lang),
-    tourType: String(tour?.tourType ?? "tour").toLowerCase()
+    tourType: String(tour?.tourType ?? "").toLowerCase()
   }))
   .filter((item) => item.title && item.image);
 const strapiSmallTripItems = strapiCatalogCards
   .filter((item) => item.tourType === "small_trip")
-  .map(({ tourType: _tourType, ...item }) => item);
+  .map(({ tourType: _t, ...item }) => item);
 const strapiPackageItems = strapiCatalogCards
-  .filter((item) => item.tourType === "package" || item.tourType === "tour")
-  .map(({ tourType: _tourType, ...item }) => item);
+  .filter((item) => item.tourType !== "small_trip")
+  .map(({ tourType: _t, ...item }) => item);
 
 const fallbackSmallTripItems = normalizeCatalogItems(smallTrips ?? []);
 const fallbackPackageItems = Array.isArray(packageTours ?? packages ?? [])
