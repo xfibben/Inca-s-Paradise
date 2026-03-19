@@ -902,6 +902,14 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
+    adultUnitPrice: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
     atGlanceFootnote: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -986,6 +994,14 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    childUnitPrice: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1022,14 +1038,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    descuento: Schema.Attribute.Decimal &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
     destinationSlug: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1045,13 +1053,22 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    duracion_dias: Schema.Attribute.Integer &
+    discount: Schema.Attribute.Decimal &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    durationDays: Schema.Attribute.Integer &
       Schema.Attribute.SetMinMax<
         {
           min: 1;
         },
         number
       >;
+    endDate: Schema.Attribute.Date;
     estilos: Schema.Attribute.Relation<
       'manyToMany',
       'api::style-trip.style-trip'
@@ -1183,22 +1200,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    precio_unitario_adulto: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      >;
-    precio_unitario_nino: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      >;
     publishedAt: Schema.Attribute.DateTime;
     reviewsBandDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
@@ -1229,6 +1230,7 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    startDate: Schema.Attribute.Date;
     summaryBullet1: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {

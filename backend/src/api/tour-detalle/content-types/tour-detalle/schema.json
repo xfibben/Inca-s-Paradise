@@ -537,26 +537,32 @@
         "package"
       ]
     },
-    "precio_unitario_adulto": {
+    "adultUnitPrice": {
       "type": "decimal",
       "required": true,
       "min": 0
     },
-    "precio_unitario_nino": {
+    "childUnitPrice": {
       "type": "decimal",
       "required": true,
       "min": 0
     },
-    "descuento": {
+    "discount": {
       "type": "decimal",
       "required": false,
       "default": 0,
       "min": 0
     },
-    "duracion_dias": {
+    "durationDays": {
       "type": "integer",
       "required": false,
       "min": 1
+    },
+    "startDate": {
+      "type": "date"
+    },
+    "endDate": {
+      "type": "date"
     }
   }
 }

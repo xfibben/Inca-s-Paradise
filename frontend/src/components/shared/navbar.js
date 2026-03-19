@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.scrollY > 50) {
       navbar.classList.remove('bg-transparent');
       navbar.classList.add('bg-white', 'shadow-md');
-      document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+      document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
         el.classList.remove('text-white', 'hover:text-gray-300');
         el.classList.add('text-gray-900', 'hover:text-gray-600');
       });
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
       navbar.classList.remove('bg-white', 'shadow-md');
       navbar.classList.add('bg-transparent');
-      document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+      document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
         el.classList.remove('text-gray-900', 'hover:text-gray-600');
         el.classList.add('text-white', 'hover:text-gray-300');
       });
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!mobileMenu?.classList.contains('hidden')) {
       navbar?.classList.add('bg-white', 'shadow-md', 'menu-open');
       navbar?.classList.remove('bg-transparent');
-      document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+      document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
         el.classList.remove('text-white', 'hover:text-gray-300');
         el.classList.add('text-gray-900', 'hover:text-gray-600');
       });
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } else if (window.scrollY <= 50) {
       navbar?.classList.remove('bg-white', 'shadow-md', 'menu-open');
       navbar?.classList.add('bg-transparent');
-      document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+      document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
         el.classList.remove('text-gray-900', 'hover:text-gray-600');
         el.classList.add('text-white', 'hover:text-gray-300');
       });
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
       dropdown.classList.remove('hidden');
       navbar.classList.add('bg-white', 'shadow-md');
       navbar.classList.remove('bg-transparent');
-      document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+      document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
         el.classList.remove('text-white', 'hover:text-gray-300');
         el.classList.add('text-gray-900', 'hover:text-gray-600');
       });
@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!isAnyDropdownOpen() && window.scrollY <= 50) {
           navbar.classList.remove('bg-white', 'shadow-md');
           navbar.classList.add('bg-transparent');
-          document.querySelectorAll('#navbar a, #navbar button').forEach(el => {
+          document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
             el.classList.remove('text-gray-900', 'hover:text-gray-600');
             el.classList.add('text-white', 'hover:text-gray-300');
           });
