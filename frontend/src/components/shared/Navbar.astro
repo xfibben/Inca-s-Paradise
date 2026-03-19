@@ -647,6 +647,8 @@ try {
       // Clear dropdown completely
       dropdown.innerHTML = '';
 
+      const flagMap: Record<string, string> = { es: 'es', en: 'us', pt: 'br', fr: 'fr', it: 'it' };
+
       // Add all language links with event listeners
       for (const [code, name] of Object.entries(languages)) {
         if (code === currentLangCode) {
@@ -654,10 +656,18 @@ try {
           continue;
         }
 
+        const flagCode = flagMap[code] || code;
         const link = document.createElement('a');
-        link.className = 'flex items-center space-x-3 px-4 py-3 hover:bg-white/10 transition text-white text-sm cursor-pointer';
-        
+        link.className = 'relative flex items-center gap-3 px-4 py-3 transition text-white text-sm cursor-pointer whitespace-nowrap overflow-hidden';
+        link.style.cssText = `background-image: url(https://flagcdn.com/w80/${flagCode}.png); background-size: cover; background-position: center;`;
+
+        const overlay = document.createElement('div');
+        overlay.className = 'absolute inset-0 bg-black/50';
+        overlay.style.pointerEvents = 'none';
+        link.appendChild(overlay);
+
         const span = document.createElement('span');
+        span.className = 'relative z-10 font-semibold';
         span.textContent = name;
         link.appendChild(span);
 

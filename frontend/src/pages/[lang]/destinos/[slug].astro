@@ -730,6 +730,9 @@ const smallStepCount = smallRowsPerLoad * 3;
 		{seoKeywords ? <meta name="keywords" content={seoKeywords} /> : null}
 		<meta name="robots" content={seoNoIndex ? "noindex,nofollow" : "index,follow"} />
 		<link rel="canonical" href={canonical} />
+		{resolvedSlides[0]?.image && (
+			<link rel="preload" as="image" href={resolvedSlides[0].image} fetchpriority="high" />
+		)}
 		<meta property="og:type" content="website" />
 		<meta property="og:locale" content={ogLocale} />
 		<meta property="og:title" content={ogTitle} />
@@ -760,6 +763,9 @@ const smallStepCount = smallRowsPerLoad * 3;
 									src={slide.image}
 									alt={slide.alt || slide.title || pageTitle}
 									class="absolute inset-0 h-full w-full object-cover object-center scale-[1.02]"
+									loading={index === 0 ? "eager" : "lazy"}
+									fetchpriority={index === 0 ? "high" : "auto"}
+									decoding={index === 0 ? "sync" : "async"}
 								/>
 								<div class="absolute inset-0 bg-black/40"></div>
 								<div class="absolute inset-0 z-10 flex h-full w-full items-center justify-center px-6 text-center">
@@ -835,14 +841,14 @@ const smallStepCount = smallRowsPerLoad * 3;
 			</section>
 
 			<section class="bg-[#f5f0e9]">
-				<div class="mx-auto grid w-full max-w-6xl gap-14 px-6 py-16 md:grid-cols-[1.2fr_1fr] md:py-24 lg:py-28">
-					<div class="max-w-xl">
+				<div class="mx-auto grid w-full max-w-6xl gap-8 px-6 py-10 md:grid-cols-[2fr_1fr] md:items-center md:py-14 lg:py-16">
+					<div class="min-w-0">
 						<h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic">
 							{introTitle}
 						</h2>
 						{introParagraphs[0] ? (
 							<p
-								class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed mb-3 md:mb-4 lg:mb-6"
+								class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed mb-3 md:mb-4 lg:mb-6 wrap-break-word text-justify"
 								set:html={introParagraphs[0]}
 							></p>
 						) : null}
@@ -854,7 +860,7 @@ const smallStepCount = smallRowsPerLoad * 3;
 						) : null}
 					</div>
 					<div class="mx-auto w-full max-w-md">
-						<div class="grid grid-cols-3 gap-x-8 gap-y-10 text-center">
+						<div class="grid grid-cols-2 gap-x-8 gap-y-10 text-center">
 							{iconItems.map((item) => (
 								<div class="flex flex-col items-center gap-2">
 									{item.iconUrl ? (

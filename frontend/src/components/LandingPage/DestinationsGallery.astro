@@ -101,7 +101,7 @@ try {
 <!-- Destinations Gallery Section -->
 <section class="bg-white w-screen px-0 py-0 flex items-center justify-center min-h-screen">
   <div class="w-screen">
-    <div class="destinations-grid grid gap-px grid-cols-1 md:grid-cols-3 lg:grid-cols-4 w-screen" style="grid-auto-rows: 1fr;">
+    <div class="destinations-grid grid gap-px grid-cols-1 md:grid-cols-3 lg:grid-cols-4 w-screen" >
       
       {destinations.map((dest: any) => {
         const row = normalizeRow(dest);
@@ -110,7 +110,7 @@ try {
         const ogImage = toAbsoluteMediaUrl(row.galleryThumbnail);
         const tours = Array.isArray(row.tours?.data) ? row.tours.data : [];
         return (
-          <a href={`/${currentLang}/destinos/${slug}`} class="relative group block w-full overflow-hidden h-60 md:h-full">
+          <a href={`/${currentLang}/destinos/${slug}`} class="relative group block w-full overflow-hidden h-60 md:h-auto md:aspect-square">
             <img
               src={ogImage}
               alt={title}
