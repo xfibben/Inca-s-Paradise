@@ -13,6 +13,7 @@ export default factories.createCoreController('api::style-trip.style-trip', ({ s
       sort: ['displayOrder:asc', 'name:asc'],
       populate: {
         image: true,
+        wallpaper: true,
         tours: true
       } as any,
     });

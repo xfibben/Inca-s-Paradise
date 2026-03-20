@@ -20,7 +20,7 @@ const languages = [
     <a
       href={`/${lang.code}/`}
       data-lang-code={lang.code}
-      class={`lang-mobile-btn relative h-12 min-w-13 flex items-center justify-center rounded-md overflow-hidden transition border-2 ${
+      class={`lang-mobile-btn relative w-12 h-12 flex items-center justify-center rounded-full overflow-hidden transition border-2 ${
         lang.code === currentLang ? 'border-white scale-110' : 'border-transparent opacity-80 hover:opacity-100'
       }`}
       style={`background-image: url(https://flagcdn.com/w80/${lang.flag}.png); background-size: cover; background-position: center;`}
