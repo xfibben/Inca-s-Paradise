@@ -17,10 +17,10 @@ const t = translations[lang];
 // Configuración de altura para las imágenes certificaciondoc
 // El ancho se ajusta automáticamente
 const imageSizes: Record<number, string> = {
-  1: '400px',   // certificaciondoc1.jpg
-  2: '400px',   // certificaciondoc2.jpg
-  3: '400px',   // certificaciondoc3.jpg
-  4: '400px',   // certificaciondoc4.jpg
+  1: '400px',   // certificaciondoc1.webp
+  2: '400px',   // certificaciondoc2.webp
+  3: '400px',   // certificaciondoc3.webp
+  4: '400px',   // certificaciondoc4.webp
 };
 
 function getImageHeight(docNumber: number): string {
@@ -170,7 +170,7 @@ const certifications = t.certifications;
         >
           <div class="slide-image">
             <img 
-              src={`/landing page images/certifications/certificaciondoc${cert.number}.jpg`}
+              src={`/landing page images/certifications/certificaciondoc${cert.number}.webp`}
               alt={cert.title}
               width="200" height="120"
               style={`height: ${getImageHeight(cert.number)}; width: auto;`}
