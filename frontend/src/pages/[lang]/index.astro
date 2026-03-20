@@ -103,9 +103,6 @@ const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Re
 		<title>{titles[currentLang]}</title>
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
     
 		<!-- SEO Meta Tags -->
 		<SEOHead
@@ -120,16 +117,13 @@ const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Re
 		/>
 		
 		<!-- Performance: Preload hero image for faster LCP -->
-		<link rel="preload" as="image" href="/landing page images/Imagen2.jpg" />
+		<link rel="preload" as="image" href="/landing page images/Imagen2.webp" type="image/webp" />
 		<!-- Prefetch carousel images -->
-		<link rel="prefetch" as="image" href="/landing page images/Imagen3.jpg" />
-		<link rel="prefetch" as="image" href="/landing page images/ubicacion-choquequirao-full.jpg" />
-		<!-- Prefetch reviews images -->
-		<link rel="prefetch" as="image" href="/landing page images/reviews/2017.jpg" />
-		<link rel="prefetch" as="image" href="/landing page images/reviews/2020.jpg" />
+		<link rel="prefetch" as="image" href="/landing page images/Imagen3.webp" type="image/webp" />
+		<link rel="prefetch" as="image" href="/landing page images/ubicacion-choquequirao-full.webp" type="image/webp" />
 		<!-- Prefetch sustainability images -->
-		<link rel="prefetch" as="image" href="/landing page images/sostenibilidad/Turismo justo.jpg" />
-		<link rel="prefetch" as="image" href="/landing page images/sostenibilidad/Sostenibilidad.jpg" />
+		<link rel="prefetch" as="image" href="/landing page images/sostenibilidad/Turismo justo.webp" />
+		<link rel="prefetch" as="image" href="/landing page images/sostenibilidad/Sostenibilidad.webp" />
 		
 		<style>
 			h1, h2 {
@@ -167,7 +161,7 @@ const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Re
 		</style>
 	</head>
 	<body>
-		<script is:inline src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
+		<script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
 		
 		<Navbar {t} {currentLang} />
 		<Hero {t} />

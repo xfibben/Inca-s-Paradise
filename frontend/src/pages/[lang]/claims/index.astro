@@ -158,13 +158,10 @@ const L = labels[currentLang];
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
     <title>{titles[currentLang]}</title>
   </head>
   <body>
-    <script is:inline src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
+    <script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
 
     <Navbar {t} {currentLang} />
 
@@ -174,7 +171,7 @@ const L = labels[currentLang];
 
         <!-- Cabecera roja -->
         <div class="bg-red-700 rounded-t-2xl px-8 py-6 flex items-center gap-6">
-          <img src="/landing page images/incasparadiselogo.png" alt="Inca's Paradise" class="h-14 object-contain drop-shadow-lg" />
+          <img src="/landing page images/incasparadiselogo.webp" alt="Inca's Paradise" class="h-14 object-contain drop-shadow-lg" />
           <div>
             <h1 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">{L.title}</h1>
             <p class="text-red-200 text-sm mt-0.5">Inca's Paradise S.A.C. &nbsp;|&nbsp; RUC: 20601022207</p>

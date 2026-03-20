@@ -1,5 +1,6 @@
 ---
 import LanguageSwitcher from './LanguageSwitcher.astro';
+import { languages } from '../../i18n';
 
 interface Props {
   t: any;
@@ -122,7 +123,7 @@ try {
       <!-- Logo -->
       <div class="flex-shrink-0">
         <a href={`/${currentLang}/`}>
-          <img src="/landing page images/incasparadiselogo.png" alt="Inca's Paradise Logo" class="h-20 w-auto" />
+          <img src="/landing page images/incasparadiselogo.webp" alt="Inca's Paradise Logo" class="h-20 w-auto" />
         </a>
       </div>
 
@@ -562,12 +563,13 @@ try {
 <div id="mobile-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onclick="document.getElementById('mobile-menu-btn').click()"></div>
 
 <!-- Exponer traducciones al script externo -->
-<script is:inline define:vars={{ translations: t, navStyleTrips, navDestinations, STRAPI_PUBLIC_URL, currentLang }}>
+<script is:inline define:vars={{ translations: t, navStyleTrips, navDestinations, STRAPI_PUBLIC_URL, currentLang, languages }}>
   window.__navbarT = translations;
   window.__navbarStyleTrips = navStyleTrips;
   window.__navbarDestinations = navDestinations;
   window.__strapiPublicUrl = STRAPI_PUBLIC_URL;
   window.__currentLang = currentLang;
+  window.__navbarLanguages = languages;
 </script>
 
 <!-- Lógica del navbar en archivo separado -->
@@ -575,8 +577,6 @@ try {
 
 <!-- Initialize dynamic languages -->
 <script>
-  console.log('Navbar: Language script loaded');
-
   function buildLanguageUrl(languageCode) {
     const currentPath = window.location.pathname;
     const pathMatch = currentPath.match(/^\/[a-z]{2}(.*)/);
@@ -584,33 +584,13 @@ try {
     return `/${languageCode}${relativePath}`;
   }
 
-  async function initializeLanguages() {
-    try {
-      const backendUrl = (import.meta.env.PUBLIC_BACKEND_URL);
-      console.log('Navbar: Fetching languages from', backendUrl);
-      
-      const response = await fetch(`${backendUrl}/api/locales`);
-      const data = await response.json();
-      
-      if (data.success && Array.isArray(data.data)) {
-        console.log('Navbar: Languages from backend:', data.data);
-        
-        const languages = {};
-        data.data.forEach((locale) => {
-          const shortCode = locale.code.split('-')[0];
-          languages[shortCode] = locale.name;
-        });
-        
-        console.log('Navbar: Mapped languages:', languages);
-        window.__navbarLanguages = languages;
-        updateLanguageSwitchers(languages);
-        // Llamar a updateLanguageSwitcherDesktop si existe (para actualizar dropdown)
-        if (window.updateLanguageSwitcherDesktop) {
-          window.updateLanguageSwitcherDesktop(languages);
-        }
+  function initializeLanguages() {
+    const languages = window.__navbarLanguages;
+    if (languages) {
+      updateLanguageSwitchers(languages);
+      if (window.updateLanguageSwitcherDesktop) {
+        window.updateLanguageSwitcherDesktop(languages);
       }
-    } catch (error) {
-      console.warn('Navbar: Failed to fetch languages:', error);
     }
   }
 

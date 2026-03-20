@@ -9,8 +9,9 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.2.1",
     "@astrojs/node": "^9.5.0",
+    "@fontsource/playfair-display": "^5.2.8",
+    "@tailwindcss/vite": "^4.2.1",
     "astro": "^5.17.1",
     "flowbite": "^4.0.1",
     "tailwindcss": "^4.2.1"
