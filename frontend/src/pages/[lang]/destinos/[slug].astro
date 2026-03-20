@@ -5,8 +5,6 @@ import DestinationsGallery from "../../../components/LandingPage/DestinationsGal
 import Ribbon from "../../../components/shared/Ribbon.astro";
 import Navbar from "../../../components/shared/Navbar.astro";
 import Footer from "../../../components/shared/Footer.astro";
-import destinosDetailEs from "../../../data/destinos.detail.es.json";
-import destinosDetailEn from "../../../data/destinos.detail.en.json";
 
 type SupportedLang = "es" | "en" | "pt" | "it" | "fr";
 
@@ -308,10 +306,6 @@ export async function getStaticPaths() {
   const langs: SupportedLang[] = ["es", "en", "pt", "it", "fr"];
 
   for (const lang of langs) {
-    const fallbackData = lang === "en" ? destinosDetailEn : destinosDetailEs;
-    const fallbackSlugs = fallbackData.destinations.map((destination) =>
-      String(destination.slug).toLowerCase()
-    );
     const strapiSlugs = new Set<string>();
 
     for (const baseUrl of strapiBaseUrls) {
@@ -340,10 +334,7 @@ export async function getStaticPaths() {
       if (strapiSlugs.size > 0) break;
     }
 
-    const merged = Array.from(
-      new Set([...fallbackSlugs, ...Array.from(strapiSlugs)])
-    );
-    merged.forEach((value) => {
+    Array.from(strapiSlugs).forEach((value) => {
       allPaths.push({ params: { lang, slug: value } });
     });
   }
@@ -361,31 +352,6 @@ if (!supportedLangs.includes(rawLang)) {
 }
 
 const t = getTranslation(lang);
-const fallbackData = lang === "en" ? destinosDetailEn : destinosDetailEs;
-const fallbackDestination =
-  fallbackData.destinations.find(
-    (item) => String(item.slug).toLowerCase() === slugKey
-  ) ?? null;
-
-const {
-  meta,
-  hero,
-  intro,
-  ribbons,
-  packages,
-  packageTours,
-  smallTrips,
-  catalogTabs,
-  seeMore,
-  catalogViewMoreLabel,
-  catalogViewLessLabel,
-  packageInitialVisibleCount,
-  smallTripsInitialRows,
-  smallTripsRowsPerLoad,
-  blogCta,
-  initialVisibleCount = 8,
-  catalogInitialVisibleCount
-} = fallbackDestination ?? {};
 
 const strapiDetail = await fetchStrapiDetailBySlug(slugKey, getLocales(lang));
 const strapiToursForCatalog = await fetchStrapiToursByDestination(
@@ -397,18 +363,12 @@ const sharedIconSourceDetail =
     ? strapiDetail
     : await fetchStrapiDetailBySlug(slugKey, ["es-PE", "es", null]);
 
-if (!fallbackDestination && !strapiDetail) {
+if (!strapiDetail) {
   return Astro.redirect(`/${lang}/destinos`);
 }
 
-const pageTitle =
-  strapiDetail?.title ?? meta?.title ?? (lang === "en" ? "Destination" : "Destino");
-const pageDescription =
-  strapiDetail?.description ??
-  meta?.description ??
-  (lang === "en"
-    ? "Destination page placeholder."
-    : "Vista de destino en construccion.");
+const pageTitle = strapiDetail?.title ?? slugKey;
+const pageDescription = strapiDetail?.description ?? "";
 const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(
   /\/$/,
   ""
@@ -497,49 +457,17 @@ const slides =
     ? strapiFixedSlides
     : strapiSlidesFromMedia.length > 0
     ? strapiSlidesFromMedia
-    : strapiSlidesFromJson.length > 0
-      ? strapiSlidesFromJson
-      : hero?.slides ?? [];
-const fallbackHeroImage =
-  toAbsoluteMediaUrl(hero?.slides?.[0]?.image) ||
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2000&q=80";
-const resolvedSlides =
-  slides.length > 0
-    ? slides
-    : [
-        {
-          image: fallbackHeroImage,
-          title: pageTitle,
-          description: pageDescription,
-          alt: pageTitle
-        }
-      ];
+    : strapiSlidesFromJson;
+const resolvedSlides = slides;
 const ogImage =
   toAbsoluteMediaUrl(toMediaObject(strapiDetail?.ogImage)) ||
   resolvedSlides[0]?.image ||
   "";
 const twitterImage =
   toAbsoluteMediaUrl(toMediaObject(strapiDetail?.twitterImage)) || ogImage;
-const introTitle =
-  strapiDetail?.introTitle ??
-  intro?.title ??
-  (lang === "en" ? "Explore the destination" : "Explora el destino");
+const introTitle = strapiDetail?.introTitle ?? "";
 const introParagraphsFromEditor = paragraphsFromRichText(strapiDetail?.introContent);
-const introParagraphs =
-  introParagraphsFromEditor.length > 0
-    ? introParagraphsFromEditor
-    : intro?.paragraphs ?? [];
-const fallbackIconItemsFromIntro = Array.isArray(intro?.iconLabels)
-  ? intro.iconLabels
-      .map((label: any) => String(label ?? "").trim())
-      .filter(Boolean)
-      .map((label: string) => ({
-        label,
-        description: "",
-        iconUrl: "",
-        iconAlt: label
-      }))
-  : [];
+const introParagraphs = introParagraphsFromEditor;
 const strapiIconCatalogRaw = Array.isArray(strapiDetail?.iconCatalog)
   ? strapiDetail.iconCatalog
   : [];
@@ -629,40 +557,15 @@ const iconItems =
     ? hydratedIconItems
     : sharedIconItems.length > 0
       ? sharedIconItems
-      : fallbackIconItemsFromIntro;
-const primaryRibbon =
-  strapiDetail?.primaryRibbon ??
-  ribbons?.primary ??
-  (lang === "en"
-    ? `Best-selling tours in ${pageTitle}`
-    : `Mejores ventas en tours de ${pageTitle}`);
-const secondaryRibbon =
-  strapiDetail?.secondaryRibbon ??
-  ribbons?.secondary ??
-  (lang === "en" ? `Destination of ${pageTitle}` : `Destino de ${pageTitle}`);
-const blogTitle =
-  strapiDetail?.blogTitle ??
-  blogCta?.title ??
-  (lang === "en"
-    ? "Why travel with Incas Paradise"
-    : "Por que viajar con Incas Paradise");
-const blogButton =
-  strapiDetail?.blogButton ??
-  blogCta?.button ??
-  (lang === "en"
-    ? "10 reasons to travel with Incas Paradise"
-    : "10 razones para viajar con Incas Paradise");
+      : [];
+const primaryRibbon = String(strapiDetail?.primaryRibbon ?? "").trim();
+const secondaryRibbon = String(strapiDetail?.secondaryRibbon ?? "").trim();
+const blogTitle = String(strapiDetail?.blogTitle ?? "").trim();
+const blogButton = String(strapiDetail?.blogButton ?? "").trim();
 const prevLabel = lang === "en" ? "Previous" : "Anterior";
 const nextLabel = lang === "en" ? "Next" : "Siguiente";
 const itineraryLabel = lang === "en" ? "See itinerary" : "Ver itinerario";
 const tabReadMoreLabel = lang === "en" ? "See more" : "Ver mas";
-
-const normalizeCatalogItems = (value: any) =>
-  Array.isArray(value)
-    ? value.filter(
-        (item) => item && typeof item === "object" && item.type !== "quote"
-      )
-    : [];
 
 const strapiCatalogCards = strapiToursForCatalog
   .map((tour: any) => ({
@@ -676,65 +579,51 @@ const strapiSmallTripItems = strapiCatalogCards
 const strapiPackageItems = strapiCatalogCards
   .filter((item) => item.tourType !== "small_trip")
   .map(({ tourType: _t, ...item }) => item);
-
-const fallbackSmallTripItems = normalizeCatalogItems(smallTrips ?? []);
-const fallbackPackageItems = Array.isArray(packageTours ?? packages ?? [])
-  ? (packageTours ?? packages ?? [])
-  : [];
-const hasStrapiCatalog =
-  strapiSmallTripItems.length > 0 || strapiPackageItems.length > 0;
-const smallTripItems = hasStrapiCatalog
-  ? strapiSmallTripItems
-  : fallbackSmallTripItems;
-const packageItemsFlat = hasStrapiCatalog
-  ? strapiPackageItems
-  : fallbackPackageItems;
+const smallTripItems = strapiSmallTripItems;
+const packageItemsFlat = strapiPackageItems;
 const smallTripRows: Array<any[]> = [];
 for (let i = 0; i < smallTripItems.length; i += 3) {
   smallTripRows.push(smallTripItems.slice(i, i + 3));
 }
 
-const tabLabels = catalogTabs ?? {};
-const packagesTabLabel =
-  tabLabels?.packages ?? (lang === "en" ? "Packages" : "Paquetes");
-const smallTripsTabLabel = tabLabels?.smallTrips ?? "Small Trips";
+const packagesTabLabel = lang === "en" ? "Packages" : "Paquetes";
+const smallTripsTabLabel = "Small Trips";
 const catalogMoreLabel =
-  catalogViewMoreLabel ??
-  seeMore?.label ??
-  (lang === "en" ? "View more destination tours" : "Ver más tours de destino");
+  strapiDetail?.catalogViewMoreLabel ??
+  (lang === "en" ? "View more destination tours" : "Ver mas tours de destino");
 const catalogLessLabel =
-  catalogViewLessLabel ??
-  seeMore?.collapseLabel ??
+  strapiDetail?.catalogViewLessLabel ??
   (lang === "en"
     ? "View fewer destination tours"
     : "Ver menos tours de destino");
 
-const rawPackageInitialVisibleCount =
-  packageInitialVisibleCount ??
-  initialVisibleCount;
+const rawPackageInitialVisibleCount = 8;
 const packageInitialCount = Number.isFinite(Number(rawPackageInitialVisibleCount))
   ? Math.max(1, Number(rawPackageInitialVisibleCount))
   : 8;
 
-const rawSmallInitialRows =
-  smallTripsInitialRows ??
-  2;
+const rawSmallInitialRows = 2;
 const smallInitialRows = Number.isFinite(Number(rawSmallInitialRows))
   ? Math.max(1, Number(rawSmallInitialRows))
   : 2;
 
-const rawSmallRowsPerLoad =
-  smallTripsRowsPerLoad ??
-  2;
+const rawSmallRowsPerLoad = 2;
 const smallRowsPerLoad = Number.isFinite(Number(rawSmallRowsPerLoad))
   ? Math.max(1, Number(rawSmallRowsPerLoad))
   : 2;
 
 const smallInitialCount =
-  Number.isFinite(Number(catalogInitialVisibleCount))
-    ? Math.max(1, Number(catalogInitialVisibleCount))
+  Number.isFinite(Number(strapiDetail?.catalogInitialVisibleCount))
+    ? Math.max(1, Number(strapiDetail?.catalogInitialVisibleCount))
     : smallInitialRows * 3;
 const smallStepCount = smallRowsPerLoad * 3;
+const hasIntroSection = Boolean(
+  introTitle || introParagraphs.length > 0 || iconItems.length > 0
+);
+const hasCatalogSection = Boolean(
+  packageItemsFlat.length > 0 || smallTripItems.length > 0
+);
+const hasBlogSection = Boolean(blogTitle || blogButton);
 ---
 
 <html lang={lang}>
@@ -767,6 +656,7 @@ const smallStepCount = smallRowsPerLoad * 3;
 		<script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
 		<Navbar {t} currentLang={lang} />
 		<main>
+			{resolvedSlides.length > 0 ? (
 			<section class="relative w-full bg-black overflow-hidden h-[91vw] min-h-80 md:h-screen md:min-h-screen">
 				<div id="destino-carousel" class="relative h-full w-full">
 					<div class="relative h-full w-full overflow-hidden">
@@ -858,7 +748,9 @@ const smallStepCount = smallRowsPerLoad * 3;
 					</button>
 				</div>
 			</section>
+			) : null}
 
+			{hasIntroSection ? (
 			<section class="bg-[#f5f0e9]">
 				<div class="mx-auto grid w-full max-w-6xl gap-8 px-6 py-10 md:grid-cols-[2fr_1fr] md:items-center md:py-14 lg:py-16">
 					<div class="min-w-0">
@@ -903,9 +795,11 @@ const smallStepCount = smallRowsPerLoad * 3;
 					</div>
 				</div>
 			</section>
+			) : null}
 
-			<Ribbon text={primaryRibbon} maxWidthClass="max-w-6xl" />
+			{primaryRibbon ? <Ribbon text={primaryRibbon} maxWidthClass="max-w-6xl" /> : null}
 
+			{hasCatalogSection ? (
 			<section class="bg-white">
 				<div class="mx-auto w-full max-w-7xl px-6 pb-14 md:pb-18 lg:pb-20">
 					<div class="mb-8 flex flex-wrap items-center gap-3 border-b border-gray-200 pb-4">
@@ -1080,15 +974,19 @@ const smallStepCount = smallRowsPerLoad * 3;
 					</div>
 				</div>
 			</section>
+			) : null}
 
+			{secondaryRibbon ? (
 			<Ribbon
 				text={secondaryRibbon}
 				backgroundClass="bg-[#f5f0e9]"
 				maxWidthClass="max-w-6xl"
 			/>
+			) : null}
 
 			<DestinationsGallery t={t} currentLang={lang} />
 
+			{hasBlogSection ? (
 			<section class="bg-white">
 				<div class="mx-auto w-full max-w-6xl px-6 py-12 md:py-14 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
 					<h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-gray-800 leading-snug italic">
@@ -1102,6 +1000,7 @@ const smallStepCount = smallRowsPerLoad * 3;
 					</button>
 				</div>
 			</section>
+			) : null}
 		</main>
 		<Footer currentLang={lang} {t} />
 		<script is:inline>
@@ -1269,3 +1168,4 @@ const smallStepCount = smallRowsPerLoad * 3;
 		</script>
 	</body>
 </html>
+

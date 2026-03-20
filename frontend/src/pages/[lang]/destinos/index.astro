@@ -5,8 +5,6 @@ import DestinationsGallery from "../../../components/LandingPage/DestinationsGal
 import Ribbon from "../../../components/shared/Ribbon.astro";
 import Navbar from "../../../components/shared/Navbar.astro";
 import Footer from "../../../components/shared/Footer.astro";
-import fallbackEs from "../../../data/destinos.json";
-import fallbackEn from "../../../data/destinos.en.json";
 
 type SupportedLang = "es" | "en";
 
@@ -23,7 +21,6 @@ if (rawLang !== lang) {
 }
 
 const t = getTranslation(lang);
-const fallback = isEnglish ? fallbackEn : fallbackEs;
 
 const STRAPI_URLS = Array.from(
   new Set([
@@ -39,15 +36,13 @@ const STRAPI_LOCALES = isEnglish
   : (["es-PE", "es", null] as const);
 
 let title =
-  fallback.data?.attributes?.title ?? (isEnglish ? "Destinations" : "Destinos");
-let description = fallback.data?.attributes?.description ?? "";
-let ribbonText = fallback.data?.attributes?.ribbonText ?? "";
-let contactBandText = fallback.data?.attributes?.contactBandText ?? "";
-let contactBandPhone = fallback.data?.attributes?.contactBandPhone ?? "";
-let contactBandButtonLabel =
-  fallback.data?.attributes?.contactBandButtonLabel ?? "";
-let contactBandButtonUrl =
-  fallback.data?.attributes?.contactBandButtonUrl ?? "#";
+  isEnglish ? "Destinations" : "Destinos";
+let description = "";
+let ribbonText = "";
+let contactBandText = "";
+let contactBandPhone = "";
+let contactBandButtonLabel = "";
+let contactBandButtonUrl = "";
 
 for (const baseUrl of STRAPI_URLS) {
   let loadedFromStrapi = false;
@@ -92,6 +87,10 @@ const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(
   ""
 );
 const canonical = `${siteOrigin}/${lang}/destinos`;
+const hasHeroContent = Boolean(title || description);
+const hasContactBandContent = Boolean(
+  contactBandText || contactBandPhone || contactBandButtonLabel
+);
 ---
 
 <html lang={lang}>
@@ -109,35 +108,51 @@ const canonical = `${siteOrigin}/${lang}/destinos`;
 		<script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
 		<Navbar {t} currentLang={lang} />
 		<main>
-			<section class="bg-[#f5f0e9]">
-				<div class="mx-auto w-full max-w-5xl px-6 py-16 md:py-24 lg:py-28">
-					<h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic" style="font-family: 'Playfair Display', serif;">
-						{title}
-					</h1>
-					<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed mb-3 md:mb-4 lg:mb-6">
-						{description}
-					</p>
-				</div>
-			</section>
-			<Ribbon text={ribbonText} maxWidthClass="max-w-5xl" />
+			{
+				hasHeroContent && (		
+					<section class="bg-[#f5f0e9]">
+						<div class="mx-auto w-full max-w-5xl px-6 py-16 md:py-24 lg:py-28">
+							{title ? (
+								<h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic" style="font-family: 'Playfair Display', serif;">
+									{title}
+								</h1>
+							) : null}
+							{description ? (
+								<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed mb-3 md:mb-4 lg:mb-6">
+									{description}
+								</p>
+							) : null}
+						</div>
+					</section>
+				)
+			}
+			{ribbonText ? <Ribbon text={ribbonText} maxWidthClass="max-w-5xl" /> : null}
 			<DestinationsGallery t={t} currentLang={lang} />
-			<section class="bg-[#db3f24] mt-8 mb-8 md:mt-12 md:mb-12">
-				<div class="mx-auto w-full max-w-7xl px-6 py-10 md:py-12">
-					<div class="grid gap-6 text-white md:grid-cols-[1.5fr_auto_auto] md:items-center md:gap-8">
-						<p class="flex items-center gap-3 text-lg md:text-xl leading-snug">
-							<span class="inline-block h-2 w-2 rounded-sm bg-white"></span>
-							<span>{contactBandText}</span>
-						</p>
-						<p class="text-lg md:text-xl">{contactBandPhone}</p>
-						<a
-							href={contactBandButtonUrl || "#"}
-							class="inline-flex w-fit items-center justify-center border border-white px-5 py-2 text-sm font-semibold text-white transition hover:bg-white hover:text-[#db3f24]"
-						>
-							{contactBandButtonLabel}
-						</a>
-					</div>
-				</div>
-			</section>
+			{
+				hasContactBandContent && (
+					<section class="bg-[#db3f24] mt-8 mb-8 md:mt-12 md:mb-12">
+						<div class="mx-auto w-full max-w-7xl px-6 py-10 md:py-12">
+							<div class="grid gap-6 text-white md:grid-cols-[1.5fr_auto_auto] md:items-center md:gap-8">
+								{contactBandText ? (
+									<p class="flex items-center gap-3 text-lg md:text-xl leading-snug">
+										<span class="inline-block h-2 w-2 rounded-sm bg-white"></span>
+										<span>{contactBandText}</span>
+									</p>
+								) : null}
+								{contactBandPhone ? <p class="text-lg md:text-xl">{contactBandPhone}</p> : null}
+								{contactBandButtonLabel ? (
+									<a
+										href={contactBandButtonUrl || "#"}
+										class="inline-flex w-fit items-center justify-center border border-white px-5 py-2 text-sm font-semibold text-white transition hover:bg-white hover:text-[#db3f24]"
+									>
+										{contactBandButtonLabel}
+									</a>
+								) : null}
+							</div>
+						</div>
+					</section>
+				)
+			}
 		</main>
 		<Footer currentLang={lang} {t} />
 	</body>

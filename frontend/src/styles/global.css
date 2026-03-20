@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "@fontsource/playfair-display/500-italic.css";
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,500;1,700&display=swap");
 @import "flowbite/src/themes/default";
 @plugin "flowbite/plugin";
 @source "../**/*.{astro,html,js,jsx,ts,tsx,md,mdx}";
