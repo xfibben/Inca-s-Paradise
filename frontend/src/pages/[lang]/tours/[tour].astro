@@ -1,7 +1,6 @@
 ---
 import { getTranslation } from "../../../i18n";
 import "../../../styles/global.css";
-import fallbackToursData from "../../../data/tours.detail.es.json";
 import Ribbon from "../../../components/shared/Ribbon.astro";
 import Navbar from "../../../components/shared/Navbar.astro";
 import Footer from "../../../components/shared/Footer.astro";
@@ -62,21 +61,6 @@ export async function getStaticPaths() {
   );
   const strapiEndpoint = "/api/tour-detalles";
 
-  const fallbackPaths = fallbackToursData.tours.flatMap((item) => [
-    {
-      params: {
-        lang: "es",
-        tour: String(item.slug).toLowerCase()
-      }
-    },
-    {
-      params: {
-        lang: "en",
-        tour: String(item.slug).toLowerCase()
-      }
-    }
-  ]);
-
   const strapiPaths: Array<{
     params: { lang: SupportedLang; tour: string };
   }> = [];
@@ -118,19 +102,7 @@ export async function getStaticPaths() {
     }
   }
 
-  const merged: Array<{
-    params: { lang: SupportedLang; tour: string };
-  }> = [];
-  const mergedSeen = new Set<string>();
-  [...fallbackPaths, ...strapiPaths].forEach((entry) => {
-    const key = `${entry.params.lang}::${entry.params.tour}`;
-    if (!mergedSeen.has(key)) {
-      mergedSeen.add(key);
-      merged.push(entry);
-    }
-  });
-
-  return merged;
+  return strapiPaths;
 }
 
 const rawLang = (Astro.params.lang ?? "es").toLowerCase();
@@ -141,10 +113,6 @@ const t = getTranslation(lang);
 if (rawLang !== lang) {
   return Astro.redirect(`/${lang}/tours/${tourSlug}`);
 }
-
-const fallbackTour = fallbackToursData.tours.find(
-  (item) => String(item.slug).toLowerCase() === tourSlug
-);
 
 let strapiTourRaw: Record<string, any> | null = null;
 for (const baseUrl of STRAPI_BASE_URLS) {
@@ -207,613 +175,269 @@ for (const baseUrl of STRAPI_BASE_URLS) {
   if (strapiTourRaw) break;
 }
 
-if (!fallbackTour && !strapiTourRaw) {
+if (!strapiTourRaw) {
   return Astro.redirect(`/${lang}/destinos`);
 }
 
-const sourceTour = strapiTourRaw ?? fallbackTour ?? {};
-const fallbackMeta = fallbackTour?.meta ?? fallbackTour?.metatitle ?? {};
-const tourMeta = {
-  title:
-    sourceTour.metaTitle ??
-    sourceTour.meta?.title ??
-    sourceTour.metatitle?.title ??
-    fallbackMeta?.title,
-  description:
-    sourceTour.metaDescription ??
-    sourceTour.meta?.description ??
-    sourceTour.metatitle?.description ??
-    fallbackMeta?.description
-};
-const fallbackHero = fallbackTour?.hero ?? {};
-const tourHero = {
-  title:
-    sourceTour.heroTitle ??
-    sourceTour.hero?.title ??
-    fallbackHero?.title,
-  description:
-    sourceTour.heroDescription ??
-    sourceTour.hero?.description ??
-    fallbackHero?.description,
-  slides: sourceTour.hero?.slides ?? fallbackHero?.slides ?? []
-};
-const fallbackSummary = fallbackTour?.summary ?? {};
-
-const legacyReviewsBand =
-  sourceTour.reviewsBand ??
-  sourceTour.reviwesBand ??
-  fallbackTour?.reviewsBand ??
-  {};
-const reviewsBandItemsFromFields = Array.isArray(sourceTour.reviewsBandItems)
-  ? sourceTour.reviewsBandItems
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any) =>
-        typeof item?.label === "string" ? item.label.trim() : ""
-      )
-      .filter(Boolean)
-  : [];
-const tourReviewsBand = {
-  title: sourceTour.reviewsBandTitle ?? legacyReviewsBand?.title,
-  description:
-    sourceTour.reviewsBandDescription ?? legacyReviewsBand?.description,
-  brands:
-    reviewsBandItemsFromFields.length > 0
-      ? reviewsBandItemsFromFields
-      : Array.isArray(legacyReviewsBand?.brands)
-        ? legacyReviewsBand.brands
-        : []
-};
-const finishRibbon =
-  sourceTour.finishRibbon ??
-  sourceTour.itineraryRibbon ??
-  fallbackTour?.itineraryRibbon ??
-  (lang === "en" ? "Sample Itinerary" : "Sample Itinerary");
-
-const includedTitle =
-  sourceTour.includedTitle ??
-  (lang === "en" ? "Included" : "Incluido");
-const includedItemsRaw = Array.isArray(sourceTour.includedItems)
-  ? sourceTour.includedItems
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any) => ({
-        text: String(item?.text ?? "").trim(),
-        icon: String(item?.icon ?? "").trim()
-      }))
-      .filter((item: any) => item.text)
-  : [];
-const includedItems =
-  includedItemsRaw.length > 0
-    ? includedItemsRaw
-    : lang === "en"
-      ? [
-          { text: "Airport transfers with local support", icon: "✓" },
-          { text: "Guided excursions listed in the itinerary", icon: "✓" },
-          { text: "Entrance fees for scheduled activities", icon: "✓" }
-        ]
-      : [
-          { text: "Traslados al aeropuerto con acompanamiento local", icon: "✓" },
-          { text: "Excursiones guiadas indicadas en el itinerario", icon: "✓" },
-          { text: "Entradas para actividades programadas", icon: "✓" }
-        ];
-const excludedTitle =
-  sourceTour.excludedTitle ??
-  (lang === "en" ? "Not included" : "No incluido");
-const excludedItemsRaw = Array.isArray(sourceTour.excludedItems)
-  ? sourceTour.excludedItems
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any) => ({
-        text: String(item?.text ?? "").trim(),
-        icon: String(item?.icon ?? "").trim()
-      }))
-      .filter((item: any) => item.text)
-  : [];
-const excludedItems =
-  excludedItemsRaw.length > 0
-    ? excludedItemsRaw
-    : lang === "en"
-      ? [{ text: "International and domestic flights", icon: "✕" }]
-      : [{ text: "Vuelos nacionales e internacionales", icon: "✕" }];
-
-const faqTitle = sourceTour.faqTitle ?? (lang === "en" ? "FAQ" : "Preguntas frecuentes");
-const faqItemsRaw = Array.isArray(sourceTour.faqItems)
-  ? sourceTour.faqItems
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any) => ({
-        question: String(item?.question ?? "").trim(),
-        answer: String(item?.answer ?? "").trim()
-      }))
-      .filter((item: any) => item.question && item.answer)
-  : [];
-const faqItems =
-  faqItemsRaw.length > 0
-    ? faqItemsRaw
-    : lang === "en"
-      ? [
-          {
-            question: "Can this itinerary be customized?",
-            answer:
-              "Yes, we adapt activities, pace and services according to your travel profile."
-          },
-          {
-            question: "Is this tour suitable for families?",
-            answer:
-              "Yes, we can adapt logistics and activities for families with children."
-          }
-        ]
-      : [
-          {
-            question: "Se puede personalizar este itinerario?",
-            answer:
-              "Si, adaptamos actividades, ritmo y servicios segun tu perfil de viaje."
-          },
-          {
-            question: "Este tour es apto para familias?",
-            answer:
-              "Si, podemos ajustar la logistica y actividades para familias con ninos."
-          }
-        ];
-
-const tourData = {
-  ...sourceTour,
-  meta: tourMeta,
-  hero: tourHero,
-  reviewsBand: tourReviewsBand,
-  finishRibbon
+const sourceTour = strapiTourRaw;
+const cleanText = (value: any) =>
+  typeof value === "string" ? value.trim() : "";
+const toNumber = (value: any) => {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 };
 
 const pageTitle =
-  tourData.meta?.title ??
-  tourData.title ??
-  (lang === "en" ? "Tour Details" : "Detalle de tour");
-const pageDescription =
-  tourData.meta?.description ??
-  tourData.description ??
-  (lang === "en"
-    ? "Tour detail placeholder."
-    : "Detalle del tour en construccion.");
-const heroTitle = tourData.meta?.title ?? tourData.hero?.title ?? pageTitle;
-const canonical = `${Astro.url.origin}/${lang}/tours/${tourSlug}`;
-const heroSlidesFromJson = Array.isArray(tourData.hero?.slides)
-  ? tourData.hero.slides
-      .map((slide: any) => ({
-        ...slide,
-        image: toAbsoluteMediaUrl(slide?.image)
-      }))
-      .filter((slide: any) => Boolean(slide?.image))
-  : [];
-const heroSlidesMediaRaw = Array.isArray(strapiTourRaw?.heroSlideImages?.data)
-  ? strapiTourRaw.heroSlideImages.data
-  : Array.isArray(strapiTourRaw?.heroSlideImages)
-    ? strapiTourRaw.heroSlideImages
+  cleanText(sourceTour.metaTitle) ||
+  cleanText(sourceTour.title) ||
+  (lang === "en" ? "Tour details" : "Detalle del tour");
+const pageDescription = cleanText(sourceTour.metaDescription);
+const heroTitle = cleanText(sourceTour.heroTitle) || pageTitle;
+const heroDescription = cleanText(sourceTour.heroDescription);
+
+const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(
+  /\/$/,
+  ""
+);
+const canonical = `${siteOrigin}/${lang}/tours/${tourSlug}`;
+
+const heroSlidesMediaRaw = Array.isArray(sourceTour?.heroSlideImages?.data)
+  ? sourceTour.heroSlideImages.data
+  : Array.isArray(sourceTour?.heroSlideImages)
+    ? sourceTour.heroSlideImages
     : [];
-const heroSlidesFromMedia = heroSlidesMediaRaw
-  .map((item: any, index: number) => {
+const heroSlides = heroSlidesMediaRaw
+  .map((item: any) => {
     const media = item?.attributes ?? item ?? {};
-    const mediaUrl =
-      media?.formats?.medium?.url ??
-      media?.formats?.large?.url ??
-      media?.formats?.small?.url ??
-      media?.url ??
-      "";
-    const image = toAbsoluteMediaUrl(mediaUrl);
+    const image = toAbsoluteMediaUrl(media);
     if (!image) return null;
+
     return {
       image,
-      title: heroSlidesFromJson[index]?.title ?? heroTitle,
-      description:
-        heroSlidesFromJson[index]?.description ?? tourData.hero?.description ?? "",
-      alt:
-        media?.alternativeText ??
-        heroSlidesFromJson[index]?.title ??
-        heroTitle
+      title: heroTitle,
+      description: heroDescription,
+      alt: cleanText(media?.alternativeText) || heroTitle
     };
   })
   .filter(Boolean);
-const heroSlides =
-  heroSlidesFromMedia.length > 0 ? heroSlidesFromMedia : heroSlidesFromJson;
-const defaultFeatureTitles =
-  lang === "en"
-    ? ["Avoid the crowds", "Authentic experiences", "Total flexibility"]
-    : ["Eviten las multitudes", "Experiencias autenticas", "Flexibilidad total"];
-const defaultFeatureDescriptions =
-  lang === "en"
-    ? [
-        "Optimized routes so you can explore beyond the typical tourist spots.",
-        "Connect with local culture and hidden treasures.",
-        "Customize your trip to match your style, budget and dates."
-      ]
-    : [
-        "Itinerarios optimizados para explorar mas alla de los lugares tipicos.",
-        "Conecten con la cultura local y los tesoros escondidos.",
-        "Personalicen su viaje para ajustarlo a su estilo, presupuesto y fechas."
-      ];
-const summaryFeatureItems = defaultFeatureTitles.map((title, index) => ({
-  title,
-  description: defaultFeatureDescriptions[index]
-}));
-const legacyHighlightsPanel =
-  sourceTour.highlightsPanel ?? fallbackTour?.highlightsPanel ?? {};
-const highlightsItemsFromFields = Array.isArray(sourceTour.highlightsItems)
+const hasHeroSection = heroSlides.length > 0;
+
+const highlightsItems = Array.isArray(sourceTour.highlightsItems)
   ? sourceTour.highlightsItems
       .map((entry: any) => normalizeRow(entry))
       .filter(Boolean)
       .map((item: any) => ({
-        title: String(item?.title ?? "").trim(),
-        description: String(item?.description ?? "").trim()
+        title: cleanText(item?.title),
+        description: cleanText(item?.description)
       }))
       .filter((item: any) => item.title || item.description)
   : [];
-const highlightsTitle =
-  sourceTour.highlightsTitle ??
-  legacyHighlightsPanel.title ??
-  (lang === "en"
-    ? "Experts in personalized city tours"
-    : "Expertos en tours personalizados por Peru");
-const highlightsLead =
-  sourceTour.highlightsLead ??
-  legacyHighlightsPanel.lead ??
-  (lang === "en"
-    ? "Travel at your own pace with a tour designed by local experts, ideal for discovering culture, history and landscapes without complications."
-    : "Vive el destino a tu manera con un tour disenado por expertos locales, ideal para descubrir cultura, historia y paisajes sin complicaciones.");
-const highlightsQuestion =
-  sourceTour.highlightsQuestion ??
-  legacyHighlightsPanel.question ??
-  (lang === "en" ? "Why choose this tour?" : "Por que elegir este tour?");
-const rawHighlightsItems = highlightsItemsFromFields.length > 0
-  ? highlightsItemsFromFields
-  : Array.isArray(legacyHighlightsPanel.items)
-    ? legacyHighlightsPanel.items
-  : [];
-const highlightsItems =
-  rawHighlightsItems.length > 0
-    ? rawHighlightsItems
-    : summaryFeatureItems.slice(0, 3).map((item) => ({
-        title: item.title,
-        description: item.description
-      }));
-const highlightsImageFromField = toAbsoluteMediaUrl(
+const highlightsTitle = cleanText(sourceTour.highlightsTitle);
+const highlightsLead = cleanText(sourceTour.highlightsLead);
+const highlightsQuestion = cleanText(sourceTour.highlightsQuestion);
+const highlightsImage = toAbsoluteMediaUrl(
   sourceTour.highlightsImage?.data ?? sourceTour.highlightsImage
 );
-const highlightsImage =
-  highlightsImageFromField ||
-  legacyHighlightsPanel.image ||
-  fallbackSummary?.image ||
-  "https://images.unsplash.com/photo-1531968455001-5c5272a41129?auto=format&fit=crop&w=900&q=80";
 const highlightsImageAlt =
-  sourceTour.highlightsImageAlt ??
-  legacyHighlightsPanel.imageAlt ??
-  (lang === "en" ? "City tour experience" : "Experiencia de tour personalizado");
-const highlightsCtaLabel =
-  sourceTour.highlightsCtaLabel ??
-  legacyHighlightsPanel.ctaLabel ??
-  fallbackSummary?.ctaLabel ??
-  (lang === "en" ? "Customize your trip" : "Personalicen su viaje");
-const summaryCtaUrl =
-  sourceTour.highlightsCtaUrl ??
-  legacyHighlightsPanel.ctaUrl ??
-  fallbackSummary?.ctaUrl ??
-  "#";
-const legacyStickyBooking = sourceTour.bookingCta ?? fallbackTour?.bookingCta ?? {};
-const stickyBookingTitle =
-  sourceTour.bookingTitle ??
-  legacyStickyBooking.title ??
-  (lang === "en" ? "BOOK NOW" : "RESERVA AHORA");
-const stickyBookingPrice =
-  sourceTour.bookingPrice ??
-  legacyStickyBooking.price ??
-  fallbackSummary?.metaLine ??
-  (lang === "en" ? "From USD 320 per person" : "Desde USD 320 por persona");
-const stickyBookingDuration =
-  sourceTour.bookingDuration ??
-  legacyStickyBooking.duration ??
-  (lang === "en" ? "Duration: 6 days" : "Duracion: 6 dias");
-const stickyBookingButton =
-  sourceTour.bookingButtonLabel ??
-  legacyStickyBooking.buttonLabel ??
-  (lang === "en" ? "Reserve online" : "Reservar online");
-const stickyBookingAvailability =
-  sourceTour.bookingAvailabilityLabel ??
-  legacyStickyBooking.availabilityLabel ??
-  (lang === "en" ? "Real-time availability" : "Disponibilidad en tiempo real");
-const stickyBookingMonth =
-  legacyStickyBooking.monthLabel ??
-  (lang === "en" ? "March 2026" : "Marzo 2026");
-const stickyCalendarLocale = lang === "en" ? "en-US" : "es-PE";
-const stickyCalendarStart =
-  legacyStickyBooking.calendarStart ??
-  "2026-03";
-const stickyCalendarWeekdays = Array.isArray(legacyStickyBooking.weekdays)
-    ? legacyStickyBooking.weekdays
-  : lang === "en"
-    ? ["M", "T", "W", "Th", "F", "S", "S"]
-    : ["L", "M", "X", "Ju", "V", "S", "D"];
-const stickyCalendarAvailableDays = Array.isArray(legacyStickyBooking.availableDays)
-    ? legacyStickyBooking.availableDays
-  : [1, 2, 4, 6, 7, 8, 9, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29];
-const legacyDescriptionSection =
-  sourceTour.descriptionSection ??
-  fallbackSummary?.descriptionSection ??
-  {};
-const descriptionTitle =
-  sourceTour.descriptionTitle ??
-  legacyDescriptionSection.title ??
-  (lang === "en" ? "Description" : "Descripcion");
-const descriptionLead =
-  sourceTour.descriptionLead ??
-  legacyDescriptionSection.lead ??
-  (lang === "en"
-    ? "Discover the soul of the Andes with our authentic Peru tour in 8 days. This itinerary is crafted for travelers looking for deep cultural experiences and real local encounters."
-    : "Descubran el alma verdadera de los Andes con nuestro tour autentico por Peru en 8 dias. Este itinerario esta disenado para viajeros que buscan experiencias culturales profundas y vivencias locales reales.");
-const descriptionDetailsFromFields = Array.isArray(sourceTour.descriptionDetails)
+  cleanText(sourceTour.highlightsImageAlt) || highlightsTitle || pageTitle;
+const highlightsCtaLabel = cleanText(sourceTour.highlightsCtaLabel);
+const highlightsCtaUrl = cleanText(sourceTour.highlightsCtaUrl);
+const hasHighlightsCta = Boolean(highlightsCtaLabel && highlightsCtaUrl);
+const hasHighlightsSection = Boolean(
+  highlightsTitle ||
+    highlightsLead ||
+    highlightsQuestion ||
+    highlightsItems.length ||
+    highlightsImage ||
+    hasHighlightsCta
+);
+
+const descriptionTitle = cleanText(sourceTour.descriptionTitle);
+const descriptionLead = cleanText(sourceTour.descriptionLead);
+const descriptionReadMoreLabel =
+  cleanText(sourceTour.descriptionReadMoreLabel) ||
+  (lang === "en" ? "Read more" : "Leer mas");
+const descriptionReadLessLabel =
+  cleanText(sourceTour.descriptionReadLessLabel) ||
+  (lang === "en" ? "Show less" : "Ver menos");
+const descriptionDetails = Array.isArray(sourceTour.descriptionDetails)
   ? sourceTour.descriptionDetails
       .map((entry: any) => normalizeRow(entry))
       .filter(Boolean)
       .map((item: any) => ({
-        title: String(item?.title ?? "").trim(),
-        text: String(item?.text ?? "").trim()
+        title: cleanText(item?.title),
+        text: cleanText(item?.text)
       }))
       .filter((item: any) => item.title || item.text)
   : [];
-const descriptionDetails = descriptionDetailsFromFields.length > 0
-  ? descriptionDetailsFromFields
-  : Array.isArray(legacyDescriptionSection.details)
-    ? legacyDescriptionSection.details
-  : [
-      {
-        title: "Experiencia autentica en Lima y Cusco",
-        text: "El viaje comienza en Lima, donde la herencia colonial se fusiona con la gastronomia contemporanea. En Cusco, priorizamos inmersion cultural y una adecuada aclimatacion."
-      },
-      {
-        title: "Valle Sagrado y Machu Picchu",
-        text: "El corazon del tour se encuentra en el Valle Sagrado. Visitamos Moray y Maras en horarios estrategicos para evitar multitudes, y continuamos con una visita guiada a Machu Picchu."
-      },
-      {
-        title: "Lago Titicaca y comunidades locales",
-        text: "Desde los Andes viajamos al Lago Titicaca para una experiencia unica de homestay en islas Uros y Taquile, compartiendo tradiciones ancestrales."
-      },
-      {
-        title: "Viaje sostenible por Peru",
-        text: "Disenamos itinerarios que minimizan impacto ambiental y benefician directamente a comunidades locales para un viaje autentico y seguro."
-      }
-    ];
-const descriptionReadMoreLabel =
-  sourceTour.descriptionReadMoreLabel ??
-  legacyDescriptionSection.readMoreLabel ??
-  (lang === "en" ? "Read more" : "Leer mas");
-const descriptionReadLessLabel =
-  sourceTour.descriptionReadLessLabel ??
-  legacyDescriptionSection.readLessLabel ??
-  (lang === "en" ? "See less" : "Ver menos");
-const legacyFeaturedSection =
-  sourceTour.featuredSection ??
-  fallbackSummary?.featuredSection ??
-  {};
-const featuredTitle =
-  sourceTour.featuredTitle ??
-  legacyFeaturedSection.title ??
-  (lang === "en" ? "Featured" : "Destacado");
-const fallbackFeaturedImages = [
-  {
-    src: "https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=1200&q=80",
-    alt: "Moray"
-  },
-  {
-    src: "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=1200&q=80",
-    alt: "Salineras"
-  },
-  {
-    src: "https://images.unsplash.com/photo-1531065208531-4036c0dba3ca?auto=format&fit=crop&w=1200&q=80",
-    alt: "Mercado local"
-  },
-  {
-    src: "https://images.unsplash.com/photo-1535868463750-c78d9543614f?auto=format&fit=crop&w=1200&q=80",
-    alt: "Llama"
-  },
-  {
-    src: "https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=1200&q=80",
-    alt: "Machu Picchu"
-  }
-];
-const featuredImagesFromFields = Array.isArray(sourceTour.featuredImages)
+const hasDescriptionSection = Boolean(
+  descriptionTitle || descriptionLead || descriptionDetails.length
+);
+
+const featuredTitle = cleanText(sourceTour.featuredTitle);
+const featuredImages = Array.isArray(sourceTour.featuredImages)
   ? sourceTour.featuredImages
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any, index: number) => {
+      .map((entry: any, index: number) => {
+        const item = normalizeRow(entry);
+        if (!item) return null;
         const src = toAbsoluteMediaUrl(item?.image?.data ?? item?.image);
         if (!src) return null;
         return {
           src,
-          alt:
-            String(item?.alt ?? "").trim() ||
-            `Featured ${index + 1}`
+          alt: cleanText(item?.alt) || `Featured ${index + 1}`
         };
       })
       .filter(Boolean)
   : [];
-const featuredImagesRaw = featuredImagesFromFields.length > 0
-  ? featuredImagesFromFields
-  : Array.isArray(legacyFeaturedSection.images)
-    ? legacyFeaturedSection.images
-      .map((item: any, index: number) => {
-        if (typeof item === "string") {
-          return { src: item, alt: `Featured ${index + 1}` };
-        }
-        if (item?.src || item?.image || item?.url) {
-          return {
-            src: item.src ?? item.image ?? item.url,
-            alt: item.alt ?? item.title ?? `Featured ${index + 1}`
-          };
-        }
-        return null;
-      })
-      .filter(Boolean)
-    : [];
-const featuredImages =
-  featuredImagesRaw.length > 0 ? featuredImagesRaw : fallbackFeaturedImages;
-const legacyItinerarySection = sourceTour.itinerary ?? fallbackTour?.itinerary ?? {};
-const itineraryTitle =
-  sourceTour.itineraryTitle ??
-  legacyItinerarySection.title ??
-  (lang === "en" ? "Detailed Itinerary" : "Itinerario detallado");
+const hasFeaturedSection = Boolean(featuredTitle || featuredImages.length);
+
+const itineraryTitle = cleanText(sourceTour.itineraryTitle);
 const itineraryDayLabel =
-  sourceTour.itineraryItemLabel ??
-  fallbackTour?.itineraryItemLabel ??
-  (lang === "en" ? "Day" : "Dia");
+  cleanText(sourceTour.itineraryItemLabel) || (lang === "en" ? "Day" : "Dia");
 const itineraryExpandLabel =
-  sourceTour.itineraryExpandLabel ??
-  legacyItinerarySection.expandLabel ??
+  cleanText(sourceTour.itineraryExpandLabel) ||
   (lang === "en" ? "View full itinerary" : "Ver itinerario completo");
 const itineraryCollapseLabel =
-  sourceTour.itineraryCollapseLabel ??
-  legacyItinerarySection.collapseLabel ??
+  cleanText(sourceTour.itineraryCollapseLabel) ||
   (lang === "en" ? "Show less" : "Ver menos");
-const itineraryImagePool =
-  heroSlides.length > 0
-    ? heroSlides
-        .map((slide: any) => slide?.image)
-        .filter((value: any) => Boolean(value))
-    : [
-        "https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1526392060635-9d6019884377?auto=format&fit=crop&w=1200&q=80",
-        "https://images.unsplash.com/photo-1531065208531-4036c0dba3ca?auto=format&fit=crop&w=1200&q=80"
-      ];
-const defaultItineraryItems =
-  lang === "en"
-    ? [
-        {
-          title: "Arrival in Puno and optional city visit",
-          highlight: "Today highlight: city viewpoints and local gastronomy.",
-          description:
-            "We receive you at your hotel and begin with a soft introduction to Puno, including scenic stops and local culture.",
-          includes: ["Dinner included", "Night in Puno"]
-        },
-        {
-          title: "Uros floating islands and transfer to Amantani",
-          highlight: "Today highlight: first contact with Titicaca communities.",
-          description:
-            "Navigate Lake Titicaca, visit Uros and continue to Amantani for a cultural immersion with local families.",
-          includes: ["Boat transfer", "Night in Amantani"]
-        },
-        {
-          title: "Sunrise in Amantani and visit to Taquile",
-          highlight: "Today highlight: Andean textile traditions and panoramic views.",
-          description:
-            "After sunrise over the lake, continue to Taquile Island to learn about local weaving culture and lifestyle.",
-          includes: ["Breakfast and lunch", "Night in Puno"]
-        },
-        {
-          title: "Sillustani route and highland landscapes",
-          highlight: "Today highlight: pre-Inca funerary towers and Umayo lagoon.",
-          description:
-            "Explore Sillustani archaeological complex and surrounding landscapes before returning to Puno.",
-          includes: ["Guided visit", "Night in Puno"]
-        }
-      ]
-    : [
-        {
-          title: "Llegada a Puno y recorrido opcional por la ciudad",
-          highlight:
-            "El destacado de hoy: miradores, centro historico y gastronomia local.",
-          description:
-            "Te recibimos en Puno y empezamos con un recorrido suave por la ciudad para conocer su historia, plazas y mejores vistas.",
-          includes: ["Cena incluida", "Noche en Puno"]
-        },
-        {
-          title: "Islas flotantes de Uros y traslado a Amantani",
-          highlight:
-            "El destacado de hoy: primer contacto con las comunidades del Titicaca.",
-          description:
-            "Navegamos por el Lago Titicaca, visitamos Uros y continuamos hacia Amantani para una experiencia cultural con familias locales.",
-          includes: ["Traslado en bote", "Noche en Amantani"]
-        },
-        {
-          title: "Amanecer en Amantani y visita a Taquile",
-          highlight:
-            "El destacado de hoy: tradiciones textiles andinas y vistas panoramicas.",
-          description:
-            "Luego del amanecer en el lago, visitamos la isla Taquile para conocer su cultura textil y su forma de vida comunitaria.",
-          includes: ["Desayuno y almuerzo", "Noche en Puno"]
-        },
-        {
-          title: "Ruta Sillustani y paisajes del altiplano",
-          highlight:
-            "El destacado de hoy: chullpas preincas y laguna Umayo.",
-          description:
-            "Recorremos el complejo arqueologico de Sillustani y sus alrededores antes de regresar a Puno.",
-          includes: ["Visita guiada", "Noche en Puno"]
-        }
-      ];
-const itineraryItemsFromFields = Array.isArray(sourceTour.itineraryItems)
+const itineraryItems = Array.isArray(sourceTour.itineraryItems)
   ? sourceTour.itineraryItems
       .map((entry: any) => normalizeRow(entry))
       .filter(Boolean)
-      .map((item: any) => ({
-        title: item?.title ?? "",
-        highlight: item?.highlight ?? "",
-        description: item?.description ?? "",
-        optional: item?.optional ?? "",
+      .map((item: any, index: number) => ({
+        title: cleanText(item?.title),
+        highlight: cleanText(item?.highlight),
+        description: cleanText(item?.description),
+        optional: cleanText(item?.optional),
         image: toAbsoluteMediaUrl(item?.image?.data ?? item?.image),
-        imageAlt: item?.imageAlt ?? item?.title ?? "",
+        imageAlt:
+          cleanText(item?.imageAlt) ||
+          cleanText(item?.title) ||
+          `${itineraryDayLabel} ${index + 1}`,
         includes: Array.isArray(item?.includes)
           ? item.includes
               .map((includeEntry: any) => normalizeRow(includeEntry))
               .filter(Boolean)
-              .map((includeItem: any) =>
-                String(includeItem?.text ?? "").trim()
-              )
+              .map((includeItem: any) => cleanText(includeItem?.text))
               .filter(Boolean)
           : []
       }))
-      .filter((item: any) => item.title || item.description || item.highlight)
+      .filter(
+        (item: any) =>
+          item.title || item.highlight || item.description || item.image
+      )
   : [];
-const rawItineraryItems = itineraryItemsFromFields.length > 0
-  ? itineraryItemsFromFields
-  : Array.isArray(legacyItinerarySection.items)
-    ? legacyItinerarySection.items
+const hasItinerarySection = itineraryItems.length > 0;
+
+const reviewBrands = Array.isArray(sourceTour.reviewsBandItems)
+  ? sourceTour.reviewsBandItems
+      .map((entry: any) => normalizeRow(entry))
+      .filter(Boolean)
+      .map((item: any) => cleanText(item?.label))
+      .filter(Boolean)
   : [];
-const itineraryBaseItems =
-  rawItineraryItems.length > 0
-    ? rawItineraryItems
-    : defaultItineraryItems;
-const itineraryItems = itineraryBaseItems.map((item: any, index: number) => ({
-  title:
-    item?.title ??
-    item?.name ??
-    (lang === "en" ? `Itinerary day ${index + 1}` : `Actividad del dia ${index + 1}`),
-  highlight:
-    item?.highlight ??
-    item?.subtitle ??
-    (lang === "en" ? "Personalized activity schedule." : "Actividad personalizada del dia."),
-  description:
-    item?.description ??
-    item?.detail ??
-    item?.summary ??
-    (lang === "en"
-      ? "Private activities and logistics coordinated for your travel rhythm."
-      : "Actividades privadas y logistica coordinada segun tu ritmo de viaje."),
-  includes: Array.isArray(item?.includes)
-    ? item.includes
-    : item?.includes
-      ? [String(item.includes)]
-      : [],
-  optional: item?.optional ?? "",
-  image:
-    item?.image ??
-    item?.imageUrl ??
-    item?.photo ??
-    itineraryImagePool[index % itineraryImagePool.length],
-  imageAlt:
-    item?.imageAlt ??
-    item?.title ??
-    (lang === "en" ? `Day ${index + 1}` : `Dia ${index + 1}`)
-}));
-const reviewBrands = Array.isArray(tourData.reviewsBand?.brands)
-  ? tourData.reviewsBand.brands
-  : ["Trustpilot", "Google Reviews", "Yelp"];
+const reviewsBandTitle = cleanText(sourceTour.reviewsBandTitle);
+const reviewsBandDescription = cleanText(sourceTour.reviewsBandDescription);
+const hasReviewsSection = Boolean(
+  reviewsBandTitle || reviewsBandDescription || reviewBrands.length
+);
+
+const finishRibbon = cleanText(sourceTour.finishRibbon);
+const hasFinishRibbon = Boolean(finishRibbon);
+
+const includedTitle = cleanText(sourceTour.includedTitle);
+const includedItems = Array.isArray(sourceTour.includedItems)
+  ? sourceTour.includedItems
+      .map((entry: any) => normalizeRow(entry))
+      .filter(Boolean)
+      .map((item: any) => ({
+        text: cleanText(item?.text),
+        icon: cleanText(item?.icon)
+      }))
+      .filter((item: any) => item.text)
+  : [];
+const excludedTitle = cleanText(sourceTour.excludedTitle);
+const excludedItems = Array.isArray(sourceTour.excludedItems)
+  ? sourceTour.excludedItems
+      .map((entry: any) => normalizeRow(entry))
+      .filter(Boolean)
+      .map((item: any) => ({
+        text: cleanText(item?.text),
+        icon: cleanText(item?.icon)
+      }))
+      .filter((item: any) => item.text)
+  : [];
+const hasInclusionsSection = Boolean(
+  includedTitle || excludedTitle || includedItems.length || excludedItems.length
+);
+const hasIncludedBlock = Boolean(includedTitle || includedItems.length);
+const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
+
+const faqTitle = cleanText(sourceTour.faqTitle);
+const faqItems = Array.isArray(sourceTour.faqItems)
+  ? sourceTour.faqItems
+      .map((entry: any) => normalizeRow(entry))
+      .filter(Boolean)
+      .map((item: any) => ({
+        question: cleanText(item?.question),
+        answer: cleanText(item?.answer)
+      }))
+      .filter((item: any) => item.question && item.answer)
+  : [];
+const hasFaqSection = faqItems.length > 0;
+
+const tourData = {
+  meta: {
+    title: pageTitle,
+    description: pageDescription
+  },
+  hero: {
+    title: heroTitle,
+    description: heroDescription
+  },
+  reviewsBand: {
+    title: reviewsBandTitle,
+    description: reviewsBandDescription,
+    brands: reviewBrands
+  },
+  finishRibbon
+};
+
+const stickyBookingTitle = lang === "en" ? "BOOK NOW" : "RESERVA AHORA";
+const stickyBookingPrice = (() => {
+  const value = toNumber(sourceTour.adultUnitPrice);
+  if (value === null) return "";
+  const formatted = value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
+  return lang === "en"
+    ? `From USD ${formatted} per person`
+    : `Desde USD ${formatted} por persona`;
+})();
+const stickyBookingDuration = (() => {
+  const days = toNumber(sourceTour.durationDays);
+  if (days === null) return "";
+  return lang === "en" ? `Duration: ${days} days` : `Duracion: ${days} dias`;
+})();
+const stickyBookingButton =
+  cleanText(sourceTour.highlightsCtaLabel) ||
+  (lang === "en" ? "Reserve online" : "Reservar online");
+const stickyBookingUrl = cleanText(sourceTour.highlightsCtaUrl);
+const stickyBookingAvailability =
+  lang === "en" ? "Real-time availability" : "Disponibilidad en tiempo real";
+const stickyBookingMonth = lang === "en" ? "March 2026" : "Marzo 2026";
+const stickyCalendarLocale = lang === "en" ? "en-US" : "es-PE";
+const stickyCalendarStart = "2026-03";
+const stickyCalendarWeekdays =
+  lang === "en"
+    ? ["M", "T", "W", "Th", "F", "S", "S"]
+    : ["L", "M", "X", "Ju", "V", "S", "D"];
+const stickyCalendarAvailableDays = [
+  1, 2, 4, 6, 7, 8, 9, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 25, 26,
+  27, 28, 29
+];
+const hasBookingCard = Boolean(
+  stickyBookingPrice || stickyBookingDuration || stickyBookingUrl
+);
+
 const prevLabel = lang === "en" ? "Previous" : "Anterior";
 const nextLabel = lang === "en" ? "Next" : "Siguiente";
 ---
@@ -845,6 +469,7 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
     <script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
     <Navbar {t} currentLang={lang} />
     <main>
+      {hasHeroSection ? (
       <section class="relative w-full bg-black overflow-hidden min-h-[70vh]">
         <div id="tour-carousel" class="relative h-[70vh] min-h-[520px] w-full">
           <div class="relative h-full w-full overflow-hidden">
@@ -924,31 +549,41 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
           </button>
         </div>
       </section>
+      ) : null}
 
       <section class="bg-[#f5f0e9]">
-        <div class="mx-auto grid w-full max-w-7xl gap-10 px-6 pb-16 pt-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-8">
+        <div class={`mx-auto grid w-full max-w-7xl gap-10 px-6 pb-16 pt-6 lg:items-start lg:gap-8 ${hasBookingCard ? "lg:grid-cols-[minmax(0,1fr)_300px]" : "lg:grid-cols-1"}`}>
           <div class="min-w-0">
+            {hasHighlightsSection ? (
             <section class="pb-12 md:pb-14">
               <div class="grid gap-6 border border-[#e2e8f0] bg-white p-4 shadow-sm md:grid-cols-[240px_1fr] md:gap-8 md:p-6">
-                <div class="overflow-hidden">
-                  <img
-                    src={highlightsImage}
-                    alt={highlightsImageAlt}
-                    class="h-full min-h-[280px] w-full object-cover"
-                  />
-                </div>
+                {highlightsImage ? (
+                  <div class="overflow-hidden">
+                    <img
+                      src={highlightsImage}
+                      alt={highlightsImageAlt}
+                      class="h-full min-h-[280px] w-full object-cover"
+                    />
+                  </div>
+                ) : null}
 
                 <div>
-                  <h2 class="text-3xl leading-tight text-[#1f2937] md:text-4xl">
-                    {highlightsTitle}
-                  </h2>
-                  <p class="mt-3 text-sm leading-relaxed text-[#4b5563] md:text-base">
-                    {highlightsLead}
-                  </p>
+                  {highlightsTitle ? (
+                    <h2 class="text-3xl leading-tight text-[#1f2937] md:text-4xl">
+                      {highlightsTitle}
+                    </h2>
+                  ) : null}
+                  {highlightsLead ? (
+                    <p class="mt-3 text-sm leading-relaxed text-[#4b5563] md:text-base">
+                      {highlightsLead}
+                    </p>
+                  ) : null}
 
-                  <h3 class="mt-5 text-xl uppercase tracking-wide text-[#1f2937] md:text-2xl">
-                    {highlightsQuestion}
-                  </h3>
+                  {highlightsQuestion ? (
+                    <h3 class="mt-5 text-xl uppercase tracking-wide text-[#1f2937] md:text-2xl">
+                      {highlightsQuestion}
+                    </h3>
+                  ) : null}
 
                   <div class="mt-4 space-y-4">
                     {
@@ -970,24 +605,32 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
                     }
                   </div>
 
-                  <a
-                    href={summaryCtaUrl}
-                    class="mt-6 inline-flex items-center justify-center bg-orange-600 px-5 py-2.5 text-sm text-white transition hover:bg-orange-700"
-                  >
-                    {highlightsCtaLabel}
-                  </a>
+                  {hasHighlightsCta ? (
+                    <a
+                      href={highlightsCtaUrl}
+                      class="mt-6 inline-flex items-center justify-center bg-orange-600 px-5 py-2.5 text-sm text-white transition hover:bg-orange-700"
+                    >
+                      {highlightsCtaLabel}
+                    </a>
+                  ) : null}
                 </div>
               </div>
             </section>
+            ) : null}
 
+            {hasDescriptionSection ? (
             <section class="pb-16 md:pb-20">
               <div class="mx-auto max-w-4xl text-center">
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-900">
-                  {descriptionTitle}
-                </h2>
-                <p class="mx-auto mt-5 max-w-3xl text-base md:text-xl leading-relaxed text-gray-800">
-                  {descriptionLead}
-                </p>
+                {descriptionTitle ? (
+                  <h2 class="text-4xl md:text-5xl font-bold text-gray-900">
+                    {descriptionTitle}
+                  </h2>
+                ) : null}
+                {descriptionLead ? (
+                  <p class="mx-auto mt-5 max-w-3xl text-base md:text-xl leading-relaxed text-gray-800">
+                    {descriptionLead}
+                  </p>
+                ) : null}
 
                 <div
                   class="mt-12 hidden space-y-10"
@@ -1008,23 +651,29 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
                   }
                 </div>
 
-                <button
-                  type="button"
-                  class="mt-6 inline-flex items-center justify-center text-lg font-medium text-orange-500 transition hover:text-orange-600"
-                  data-description-toggle
-                  data-label-more={descriptionReadMoreLabel}
-                  data-label-less={descriptionReadLessLabel}
-                  aria-expanded="false"
-                >
-                  {descriptionReadMoreLabel}
-                </button>
+                {descriptionDetails.length > 0 ? (
+                  <button
+                    type="button"
+                    class="mt-6 inline-flex items-center justify-center text-lg font-medium text-orange-500 transition hover:text-orange-600"
+                    data-description-toggle
+                    data-label-more={descriptionReadMoreLabel}
+                    data-label-less={descriptionReadLessLabel}
+                    aria-expanded="false"
+                  >
+                    {descriptionReadMoreLabel}
+                  </button>
+                ) : null}
               </div>
             </section>
+            ) : null}
 
+            {hasFeaturedSection && featuredImages.length > 0 ? (
             <section class="pb-14 md:pb-20">
-              <h2 class="mb-6 text-center text-4xl md:text-5xl font-bold text-gray-900">
-                {featuredTitle}
-              </h2>
+              {featuredTitle ? (
+                <h2 class="mb-6 text-center text-4xl md:text-5xl font-bold text-gray-900">
+                  {featuredTitle}
+                </h2>
+              ) : null}
 
               <div class="space-y-2">
                 <div class="grid gap-2 sm:grid-cols-2">
@@ -1049,11 +698,15 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
                 </div>
               </div>
             </section>
+            ) : null}
 
+            {hasItinerarySection ? (
             <section class="pb-16 md:pb-20">
-              <h2 class="text-3xl md:text-4xl font-bold text-gray-900">
-                {itineraryTitle}
-              </h2>
+              {itineraryTitle ? (
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900">
+                  {itineraryTitle}
+                </h2>
+              ) : null}
 
               <div class="mt-8 border-t border-gray-300">
                 {
@@ -1079,17 +732,23 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
 
                       <div class={`${index === 0 ? "mt-4" : "mt-4 hidden"}`} data-itinerary-panel>
                         <div class="pl-0 md:pl-24">
-                          <img
-                            src={item.image}
-                            alt={item.imageAlt}
-                            class="h-44 w-full max-w-lg object-cover md:h-52"
-                          />
-                          <p class="mt-4 text-sm md:text-base font-semibold text-gray-900">
-                            {item.highlight}
-                          </p>
-                          <p class="mt-3 text-sm md:text-base leading-relaxed text-gray-700">
-                            {item.description}
-                          </p>
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.imageAlt}
+                              class="h-44 w-full max-w-lg object-cover md:h-52"
+                            />
+                          ) : null}
+                          {item.highlight ? (
+                            <p class="mt-4 text-sm md:text-base font-semibold text-gray-900">
+                              {item.highlight}
+                            </p>
+                          ) : null}
+                          {item.description ? (
+                            <p class="mt-3 text-sm md:text-base leading-relaxed text-gray-700">
+                              {item.description}
+                            </p>
+                          ) : null}
 
                           {
                             item.includes.length > 0 && (
@@ -1135,24 +794,27 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
                 )
               }
             </section>
+            ) : null}
 
+            {hasReviewsSection ? (
             <section>
               <div class="grid gap-10 lg:grid-cols-[1.2fr_1fr] lg:py-6">
                 <div>
-                  <h2
-                    class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic"
-                    style="font-family: 'Playfair Display', serif;"
-                  >
-                    {tourData.reviewsBand?.title ?? "5-Star Reviews"}
-                  </h2>
-                  <p
-                    class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed max-w-2xl"
-                  >
-                    {tourData.reviewsBand?.description ??
-                      (lang === "en"
-                        ? "Find out why our travelers consistently rate us with 5 stars."
-                        : "Conoce por que nuestros viajeros nos califican consistentemente con 5 estrellas.")}
-                  </p>
+                  {tourData.reviewsBand?.title ? (
+                    <h2
+                      class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic"
+                      style="font-family: 'Playfair Display', serif;"
+                    >
+                      {tourData.reviewsBand.title}
+                    </h2>
+                  ) : null}
+                  {tourData.reviewsBand?.description ? (
+                    <p
+                      class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed max-w-2xl"
+                    >
+                      {tourData.reviewsBand.description}
+                    </p>
+                  ) : null}
                 </div>
                 <div
                   class="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-center sm:justify-items-center"
@@ -1172,8 +834,10 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
                 </div>
               </div>
             </section>
+            ) : null}
           </div>
 
+          {hasBookingCard ? (
           <aside class="mt-6 lg:mt-0 lg:sticky lg:top-24" data-booking-card>
             <div class="mx-auto w-full max-w-sm overflow-hidden border border-[#d8dde4] bg-white shadow-[0_16px_32px_rgba(15,23,42,0.12)]">
               <div class="border-b border-[#d8dde4] bg-[#f6f8fb] px-5 py-3">
@@ -1190,12 +854,14 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
                 </p>
 
                 <div class="mt-2 flex items-center justify-between gap-3">
-                  <a
-                    href={summaryCtaUrl}
-                    class="inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#08263a] px-4 text-[0.86rem] font-medium leading-tight tracking-normal text-white transition hover:bg-[#0d3148]"
-                  >
-                    {stickyBookingButton}
-                  </a>
+                  {stickyBookingUrl ? (
+                    <a
+                      href={stickyBookingUrl}
+                      class="inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-full bg-[#08263a] px-4 text-[0.86rem] font-medium leading-tight tracking-normal text-white transition hover:bg-[#0d3148]"
+                    >
+                      {stickyBookingButton}
+                    </a>
+                  ) : null}
                   <div class="flex max-w-[132px] items-center gap-1 text-[0.84rem] leading-[1.1] text-[#16a34a]">
                     <span class="mt-0.5 text-base">&#10003;</span>
                     <span>{stickyBookingAvailability}</span>
@@ -1246,9 +912,11 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
               </div>
             </div>
           </aside>
+          ) : null}
         </div>
       </section>
 
+      {hasFinishRibbon ? (
       <Ribbon
         text={finishRibbon}
         backgroundClass="bg-[#032b43]"
@@ -1257,14 +925,19 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
         textClass="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight italic"
         textStyle="font-family: 'Playfair Display', serif;"
       />
+      ) : null}
 
+      {hasInclusionsSection ? (
       <section class="bg-[#f3f4f6] py-10 md:py-12">
         <div class="mx-auto w-full max-w-7xl px-6">
           <div class="grid gap-6 lg:grid-cols-2">
+            {hasIncludedBlock ? (
             <article class="border border-[#e2e8f0] bg-white p-6 md:p-8">
-              <h3 class="mb-6 text-3xl font-semibold text-[#111827]">
-                <span class="mr-3 text-[#f65f2c]">✓</span>{includedTitle}
-              </h3>
+              {includedTitle ? (
+                <h3 class="mb-6 text-3xl font-semibold text-[#111827]">
+                  <span class="mr-3 text-[#f65f2c]">✓</span>{includedTitle}
+                </h3>
+              ) : null}
               <div class="divide-y divide-[#e5e7eb]">
                 {includedItems.map((item) => (
                   <div class="flex items-start gap-3 py-4">
@@ -1276,11 +949,15 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
                 ))}
               </div>
             </article>
+            ) : null}
 
+            {hasExcludedBlock ? (
             <article class="border border-[#e2e8f0] bg-white p-6 md:p-8">
-              <h3 class="mb-6 text-3xl font-semibold text-[#111827]">
-                <span class="mr-3 text-[#6b7280]">✕</span>{excludedTitle}
-              </h3>
+              {excludedTitle ? (
+                <h3 class="mb-6 text-3xl font-semibold text-[#111827]">
+                  <span class="mr-3 text-[#6b7280]">✕</span>{excludedTitle}
+                </h3>
+              ) : null}
               <div class="divide-y divide-[#e5e7eb]">
                 {excludedItems.map((item) => (
                   <div class="flex items-start gap-3 py-4">
@@ -1292,13 +969,18 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
                 ))}
               </div>
             </article>
+            ) : null}
           </div>
         </div>
       </section>
+      ) : null}
 
+      {hasFaqSection ? (
       <section class="bg-white py-10 md:py-12">
         <div class="mx-auto w-full max-w-7xl px-6">
-          <h3 class="mb-6 text-4xl font-semibold text-[#111827]">{faqTitle}</h3>
+          {faqTitle ? (
+            <h3 class="mb-6 text-4xl font-semibold text-[#111827]">{faqTitle}</h3>
+          ) : null}
           <div class="divide-y divide-[#e5e7eb] border-y border-[#e5e7eb]">
             {faqItems.map((item) => (
               <details class="group py-4">
@@ -1313,6 +995,7 @@ const nextLabel = lang === "en" ? "Next" : "Siguiente";
           </div>
         </div>
       </section>
+      ) : null}
     </main>
     <Footer currentLang={lang} {t} />
 

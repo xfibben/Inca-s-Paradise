@@ -585,7 +585,13 @@ export interface ApiDestinoDetalleDestinoDetalle
           localized: true;
         };
       }>;
-    slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
+    slug: Schema.Attribute.UID<'title'> &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     title: Schema.Attribute.String & Schema.Attribute.Required;
     tours: Schema.Attribute.Relation<
       'manyToMany',
