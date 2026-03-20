@@ -22,4 +22,5 @@ build/
 .tmp/
 public/uploads/
 
-.CLAUDE.md
+CLAUDE.md
+frontend/package-lock.json

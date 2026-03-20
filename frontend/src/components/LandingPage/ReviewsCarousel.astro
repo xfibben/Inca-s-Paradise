@@ -37,7 +37,7 @@ function getImageSizeClass(year: number): string {
       <div
         class="absolute inset-0 w-full h-full bg-cover bg-center"
         style={{
-          backgroundImage: `url(/landing%20page%20images/reviews/${review.year}.jpg)`
+          backgroundImage: `url('/landing page images/reviews/${review.year}.jpg')`
         }}
       >
         <div class="absolute inset-0 bg-black/60"></div>
@@ -48,7 +48,7 @@ function getImageSizeClass(year: number): string {
         <!-- Left Side - Logo (mobile 1/3, desktop 1/2) -->
         <div class="w-1/3 md:w-1/2 h-full flex items-center justify-center">
           <img 
-            src={`/landing%20page%20images/reviews/${review.year}trip.webp`}
+            src={`/landing page images/reviews/${review.year}trip.webp`}
             alt="Trip Logo"
             width="120" height="120"
             class={`w-auto brightness-0 invert ${getImageSizeClass(review.year)}`}

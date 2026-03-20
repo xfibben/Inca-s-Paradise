@@ -490,7 +490,7 @@ try {
                 }
               }
               return (
-                <button class="mobile-styles-option relative h-16 overflow-hidden rounded" data-option={item.slug || toSlug(item.name)} data-name={item.name}>
+                <a href={`/${currentLang}/style-trips/${item.slug || toSlug(item.name)}`} class="relative h-16 overflow-hidden rounded block">
                   {imgUrl ? (
                     <img src={imgUrl} alt={item.name} class="w-full h-full object-cover" />
                   ) : (
@@ -498,7 +498,7 @@ try {
                   )}
                   <div class="absolute inset-0 bg-black/50"></div>
                   <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{item.name}</span>
-                </button>
+                </a>
               );
             })}
           </div>

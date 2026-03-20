@@ -37,7 +37,7 @@ let carouselTours: any[] = [];
 
 try {
   const fetchUrl = `${STRAPI_URL}/api/style-trips?filters[slug][$eq]=${slug}` +
-    `&populate[image]=*&populate[wallpaper]=*` +
+    `&populate[wallpaper]=*` +
     `&populate[tours][fields][0]=title&populate[tours][fields][1]=slug` +
     `&populate[tours][fields][2]=tourType&populate[tours][fields][3]=showInStyles` +
     `&populate[tours][populate][heroSlideImages][fields][0]=url` +
@@ -69,12 +69,9 @@ try {
   console.error('Error:', e);
 }
 
-// Usar wallpaper si existe, sino fallback a image
-const heroImage = trip ? (() => {
-  const wp = Array.isArray(trip.wallpaper) ? trip.wallpaper[0] : trip.wallpaper;
-  if (wp) return wp;
-  return Array.isArray(trip.image) ? trip.image[0] : trip.image;
-})() : null;
+const heroImage = trip
+  ? (Array.isArray(trip.wallpaper) ? trip.wallpaper[0] : trip.wallpaper) ?? null
+  : null;
 const heroImageUrl = heroImage?.formats?.medium?.url
   ? `${STRAPI_PUBLIC_URL}${heroImage.formats.medium.url}`
   : heroImage?.formats?.large?.url
