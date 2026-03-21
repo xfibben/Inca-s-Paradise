@@ -998,6 +998,11 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
   attributes: {
     adultUnitPrice: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
       Schema.Attribute.SetMinMax<
         {
           min: 0;
@@ -1006,6 +1011,11 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
       >;
     childUnitPrice: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
       Schema.Attribute.SetMinMax<
         {
           min: 0;
@@ -1031,6 +1041,11 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
         };
       }>;
     discount: Schema.Attribute.Decimal &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
       Schema.Attribute.SetMinMax<
         {
           min: 0;
@@ -1039,6 +1054,11 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
       > &
       Schema.Attribute.DefaultTo<0>;
     durationDays: Schema.Attribute.Integer &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
       Schema.Attribute.SetMinMax<
         {
           min: 1;
@@ -1120,7 +1140,7 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
     highlightsCtaUrl: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
-          localized: true;
+          localized: false;
         };
       }>;
     highlightsItems: Schema.Attribute.Component<'tours.highlight-item', true> &
