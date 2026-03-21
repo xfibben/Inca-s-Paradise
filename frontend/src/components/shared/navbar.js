@@ -23,6 +23,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (!navbar) return;
 
+  // Si la página no tiene hero, el navbar arranca sólido
+  const navbarSolid = document.body.hasAttribute('data-navbar-solid');
+  if (navbarSolid) {
+    navbar.classList.remove('bg-transparent');
+    navbar.classList.add('bg-white', 'shadow-md');
+    document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
+      el.classList.remove('text-white', 'hover:text-gray-300');
+      el.classList.add('text-gray-900', 'hover:text-gray-600');
+    });
+    setContactBtn(true);
+  }
+
   // ── Scroll: cambiar fondo del navbar ──────────────────────────────────────
   const contactBtn = document.getElementById('contact-btn');
 
@@ -39,9 +51,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateNavbarStyle() {
     if (!navbar) return;
-    // Don't update if a dropdown is open
-    if (isAnyDropdownOpen()) return;
-    
+    // No actualizar si hay un dropdown o el menú móvil abierto
+    if (isAnyDropdownOpen() || navbar.classList.contains('menu-open')) return;
+    // En páginas sin hero siempre sólido
+    if (navbarSolid) return;
+
     if (window.scrollY > 50) {
       navbar.classList.remove('bg-transparent');
       navbar.classList.add('bg-white', 'shadow-md');
