@@ -95,6 +95,20 @@
       "required": true,
       "unique": true,
       "description": "Número de ticket generado automáticamente para seguimiento"
+    },
+    "tipo_documento": {
+      "type": "enumeration",
+      "enum": ["dni", "rut", "pasaporte"],
+      "required": true,
+      "default": "dni"
+    },
+    "numero_documento": {
+      "type": "string",
+      "required": true
+    },
+    "nacionalidad": {
+      "type": "string",
+      "required": true
     }
   }
 }

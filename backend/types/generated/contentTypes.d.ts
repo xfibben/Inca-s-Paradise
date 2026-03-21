@@ -691,7 +691,13 @@ export interface ApiDestinoDestino extends Struct.SingleTypeSchema {
           localized: true;
         };
       }>;
-    slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
+    slug: Schema.Attribute.UID<'title'> &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -776,12 +782,17 @@ export interface ApiReservaReserva extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     monto_final: Schema.Attribute.Decimal;
     monto_subtotal: Schema.Attribute.Decimal;
+    nacionalidad: Schema.Attribute.String & Schema.Attribute.Required;
     notas: Schema.Attribute.Text;
+    numero_documento: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     telefono: Schema.Attribute.String & Schema.Attribute.Required;
     ticket: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
+    tipo_documento: Schema.Attribute.Enumeration<['dni', 'rut', 'pasaporte']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'dni'>;
     tour: Schema.Attribute.Relation<
       'manyToOne',
       'api::tour-detalle.tour-detalle'
@@ -1004,39 +1015,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    descriptionDetails: Schema.Attribute.Component<
-      'tours.description-detail-item',
-      true
-    > &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    descriptionLead: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    descriptionReadLessLabel: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    descriptionReadMoreLabel: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    descriptionTitle: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
     destinationSlug: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1067,7 +1045,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
         },
         number
       >;
-    endDate: Schema.Attribute.Date;
     estilos: Schema.Attribute.Relation<
       'manyToMany',
       'api::style-trip.style-trip'
@@ -1116,12 +1093,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    finishRibbon: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
     heroDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1147,18 +1118,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
         };
       }>;
     highlightsCtaUrl: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    highlightsImage: Schema.Attribute.Media<'images'> &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }>;
-    highlightsImageAlt: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -1248,27 +1207,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
         };
       }>;
     publishedAt: Schema.Attribute.DateTime;
-    reviewsBandDescription: Schema.Attribute.Text &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    reviewsBandItems: Schema.Attribute.Component<
-      'tours.review-brand-item',
-      true
-    > &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
-    reviewsBandTitle: Schema.Attribute.String &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: true;
-        };
-      }>;
     showInStyles: Schema.Attribute.Boolean &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1283,7 +1221,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
-    startDate: Schema.Attribute.Date;
     title: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{

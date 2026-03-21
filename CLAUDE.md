@@ -20,6 +20,7 @@ frontend/src/
     shared/           # Navbar, Footer, LanguageSwitcher
     stylestrips/      # Style-trips UI
     tours/            # Tour UI
+    terminos/         # Terminos y condiciones 
   data/               # Static destination/tour data (es/en)
   i18n/               # Translation files + UBIGEO JSON
 
@@ -28,6 +29,7 @@ backend/src/api/
   destino-detalle/    # Destination details
   reserva/            # Reservations
   style-trip/         # Style trips
+  terminos/condiciones/ #Terminos y condiciones
   tour-detalle/       # Tour details
 ```
 
@@ -48,3 +50,4 @@ Siempre responder en español.
 - Don't add comments, docstrings, or type annotations to unchanged code.
 - Don't refactor beyond what's asked.
 - Prefer editing existing files over creating new ones.
+- Always coment my code in Spanish

@@ -132,26 +132,6 @@
         }
       }
     },
-    "highlightsImage": {
-      "type": "media",
-      "multiple": false,
-      "allowedTypes": [
-        "images"
-      ],
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
-    },
-    "highlightsImageAlt": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
     "highlightsCtaLabel": {
       "type": "string",
       "pluginOptions": {
@@ -172,48 +152,6 @@
       "type": "component",
       "repeatable": true,
       "component": "tours.highlight-item",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "descriptionTitle": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "descriptionLead": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "descriptionReadMoreLabel": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "descriptionReadLessLabel": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "descriptionDetails": {
-      "type": "component",
-      "repeatable": true,
-      "component": "tours.description-detail-item",
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -274,40 +212,6 @@
       "type": "component",
       "repeatable": true,
       "component": "tours.itinerary-item",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "reviewsBandTitle": {
-      "type": "string",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "reviewsBandDescription": {
-      "type": "text",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "reviewsBandItems": {
-      "type": "component",
-      "repeatable": true,
-      "component": "tours.review-brand-item",
-      "pluginOptions": {
-        "i18n": {
-          "localized": true
-        }
-      }
-    },
-    "finishRibbon": {
-      "type": "string",
       "pluginOptions": {
         "i18n": {
           "localized": true
@@ -410,11 +314,5 @@
       "type": "integer",
       "min": 1
     },
-    "startDate": {
-      "type": "date"
-    },
-    "endDate": {
-      "type": "date"
-    }
   }
 }
