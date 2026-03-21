@@ -1,0 +1,476 @@
+---
+interface Props {
+  lang: "es" | "en";
+  tourTitle: string;
+  tourSlug: string;
+}
+
+const { lang, tourTitle } = Astro.props;
+
+const t = lang === "en"
+  ? {
+      title: "Book Tour",
+      name: "Full Name",
+      email: "Email Address",
+      phone: "Phone Number",
+      adults: "Adults",
+      children: "Children",
+      startDate: "Start Date",
+      endDate: "End Date",
+      pricePerAdult: "Price per Adult",
+      pricePerChild: "Price per Child",
+      total: "Total",
+      reserve: "Confirm Booking",
+      close: "Close",
+      notes: "Special notes",
+      terms: "I accept the terms and conditions",
+      noDate: "No date selected",
+      docType: "Document type",
+      docNumber: "Document number",
+      nationality: "Nationality",
+      docDni: "DNI",
+      docRut: "RUT",
+      docPassport: "Passport",
+    }
+  : {
+      title: "Reservar Tour",
+      name: "Nombre Completo",
+      email: "Correo Electrónico",
+      phone: "Teléfono",
+      adults: "Adultos",
+      children: "Niños",
+      startDate: "Fecha de Inicio",
+      endDate: "Fecha de Fin",
+      pricePerAdult: "Precio por Adulto",
+      pricePerChild: "Precio por Niño",
+      total: "Total",
+      reserve: "Confirmar Reserva",
+      close: "Cerrar",
+      notes: "Notas especiales",
+      terms: "Acepto los términos y condiciones",
+      noDate: "Sin fecha seleccionada",
+      docType: "Tipo de documento",
+      docNumber: "Número de documento",
+      nationality: "Nacionalidad",
+      docDni: "DNI",
+      docRut: "RUT",
+      docPassport: "Pasaporte",
+    };
+---
+
+<!-- Modal de reserva -->
+<div
+  id="booking-modal"
+  class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+  data-booking-modal
+>
+  <div class="w-full max-w-2xl bg-white rounded-lg shadow-2xl max-h-[90vh] overflow-y-auto">
+
+    <!-- Header -->
+    <div class="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-[#f6f8fb] px-6 py-4">
+      <h2 class="text-2xl font-bold text-gray-900">{t.title}</h2>
+      <button type="button" class="text-gray-500 hover:text-gray-700 transition" data-close-modal aria-label={t.close}>
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Formulario -->
+    <form id="booking-form" class="p-6 space-y-6" data-booking-form>
+
+      <!-- Info del tour -->
+      <div class="bg-[#f5f0e9] p-4 rounded border border-[#e2e8f0]">
+        <p class="text-sm font-semibold text-gray-800">{tourTitle}</p>
+        <div class="mt-1 flex gap-4 text-sm text-gray-600">
+          <span>{t.startDate}: <strong data-modal-fecha-inicio-label>{t.noDate}</strong></span>
+          <span>{t.endDate}: <strong data-modal-fecha-fin-label>{t.noDate}</strong></span>
+        </div>
+        <!-- Inputs ocultos para las fechas (vienen del calendario) -->
+        <input type="hidden" name="fecha_inicio" data-modal-fecha-inicio />
+        <input type="hidden" name="fecha_fin" data-modal-fecha-fin />
+      </div>
+
+      <!-- Datos personales -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            {t.name} <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="nombre"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1AA093] focus:border-transparent"
+            placeholder="John Doe"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            {t.email} <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            name="email"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1AA093] focus:border-transparent"
+            placeholder="john@example.com"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            {t.phone} <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="tel"
+            name="telefono"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1AA093] focus:border-transparent"
+            placeholder="+51 987 654 321"
+          />
+        </div>
+      </div>
+
+      <!-- Documento e identidad -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            {t.docType} <span class="text-red-500">*</span>
+          </label>
+          <select
+            name="tipo_documento"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1AA093] focus:border-transparent bg-white"
+            data-doc-type
+          >
+            <option value="dni">{t.docDni}</option>
+            <option value="rut">{t.docRut}</option>
+            <option value="pasaporte">{t.docPassport}</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            {t.docNumber} <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="numero_documento"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1AA093] focus:border-transparent"
+            placeholder="12345678"
+            data-doc-number
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            {t.nationality} <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="nacionalidad"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1AA093] focus:border-transparent"
+            placeholder={lang === "en" ? "Peruvian" : "Peruana"}
+          />
+        </div>
+      </div>
+
+      <!-- Pasajeros (solo lectura, vienen del BookingCard) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{t.adults}</label>
+          <div class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 font-semibold" data-modal-adultos-label>1</div>
+          <input type="hidden" name="cantidad_adultos" data-modal-adultos value="1" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{t.children}</label>
+          <div class="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-900 font-semibold" data-modal-ninos-label>0</div>
+          <input type="hidden" name="cantidad_ninos" data-modal-ninos value="0" />
+        </div>
+      </div>
+
+      <!-- Notas -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{t.notes}</label>
+        <textarea
+          name="notas"
+          rows="3"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1AA093] focus:border-transparent resize-none"
+          placeholder={lang === "en" ? "Allergies, special preferences, etc." : "Alergias, preferencias especiales, etc."}
+        ></textarea>
+      </div>
+
+      <!-- Desglose de precios (dinámico, viene del BookingCard) -->
+      <div class="bg-[#f5f0e9] p-4 rounded border border-[#e2e8f0] space-y-2">
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-700">{t.pricePerAdult}:</span>
+          <span class="font-medium text-gray-900" data-modal-precio-adulto>—</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-gray-700">{t.pricePerChild}:</span>
+          <span class="font-medium text-gray-900" data-modal-precio-nino>—</span>
+        </div>
+        <div class="border-t border-gray-300 pt-2 flex justify-between">
+          <span class="text-gray-700 font-medium">{t.total}:</span>
+          <span class="text-xl font-bold text-[#1AA093]" data-modal-total>—</span>
+        </div>
+      </div>
+
+      <!-- Términos -->
+      <div class="flex items-start gap-3">
+        <input
+          type="checkbox"
+          id="booking-terms"
+          name="terms"
+          required
+          class="mt-1 h-4 w-4 rounded border-gray-300 text-[#1AA093] focus:ring-[#1AA093]"
+        />
+        <label for="booking-terms" class="text-sm text-gray-700">{t.terms}</label>
+      </div>
+
+      <!-- Acciones -->
+      <div class="flex gap-3 pt-4 border-t border-gray-200">
+        <button
+          type="button"
+          data-close-modal
+          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+        >
+          {t.close}
+        </button>
+        <button
+          type="submit"
+          class="flex-1 px-4 py-2 bg-[#1AA093] rounded-lg text-white font-medium hover:bg-[#1AA093] transition"
+          data-submit-btn
+        >
+          {t.reserve}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de éxito -->
+<div
+  id="success-modal"
+  class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+  data-success-modal
+>
+  <div class="w-full max-w-md bg-white rounded-lg shadow-2xl p-6 text-center">
+    <div class="mb-4 flex justify-center">
+      <div class="h-16 w-16 rounded-full bg-[#e0f7f5] flex items-center justify-center">
+        <svg class="h-8 w-8 text-[#1AA093]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+    </div>
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">
+      {lang === "es" ? "¡Felicidades!" : "Congratulations!"}
+    </h2>
+    <p class="text-gray-600 mb-6">
+      {lang === "es" ? "Tu reserva ha sido creada exitosamente." : "Your booking has been created successfully."}
+    </p>
+    <div class="bg-[#f5f0e9] p-4 rounded-lg border-2 border-[#1AA093] mb-6">
+      <p class="text-sm text-gray-600 mb-2">
+        {lang === "es" ? "Número de Ticket:" : "Ticket Number:"}
+      </p>
+      <p class="text-2xl font-bold text-[#1AA093] font-mono break-all" data-ticket-number>
+        TICKET-00000000-00000
+      </p>
+    </div>
+    <p class="text-sm text-gray-700 mb-6">
+      {lang === "es"
+        ? "Guarda este número para hacer tu seguimiento. Nos contactaremos pronto con los detalles de tu reserva."
+        : "Save this number to track your booking. We will contact you soon with booking details."}
+    </p>
+    <div class="flex gap-3">
+      <button
+        type="button"
+        onclick="document.querySelector('[data-success-modal]').classList.add('hidden')"
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+      >
+        {lang === "es" ? "Cerrar" : "Close"}
+      </button>
+      <button
+        type="button"
+        data-copy-ticket
+        class="flex-1 px-4 py-2 bg-[#1AA093] rounded-lg text-white font-medium hover:bg-[#1AA093] transition"
+      >
+        {lang === "es" ? "Copiar Ticket" : "Copy Ticket"}
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  interface BookingData {
+    adultos?: number;
+    ninos?: number;
+    precioAdultoUsd?: number;
+    precioNinoUsd?: number;
+    precioAdultoLabel?: string;
+    precioNinoLabel?: string;
+    tasaCambio?: number;
+    simboloMoneda?: string;
+    decimalesMoneda?: number;
+    descuento?: number;
+    fechaInicio?: string | null;
+    fechaFin?: string | null;
+  }
+
+  declare global {
+    interface Window {
+      __tourData?: { numericId: number };
+      openBookingModal?: (data?: BookingData) => void;
+    }
+  }
+
+  (() => {
+    const modal = document.querySelector("[data-booking-modal]");
+    const form = document.querySelector("[data-booking-form]") as HTMLFormElement | null;
+    const closeButtons = document.querySelectorAll("[data-close-modal]");
+
+    // Cierra al hacer click fuera
+    modal?.addEventListener("click", (e) => {
+      if (e.target === modal) modal.classList.add("hidden");
+    });
+    closeButtons.forEach((btn) => btn.addEventListener("click", () => modal?.classList.add("hidden")));
+
+    // Envío del formulario
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const raw = Object.fromEntries(new FormData(form));
+      const str = (v: FormDataEntryValue) => (typeof v === "string" ? v : "");
+
+      const tourData = window.__tourData;
+      if (!tourData?.numericId) {
+        alert("Error: Tour no encontrado. Recarga la página.");
+        return;
+      }
+
+      const reservaData = {
+        data: {
+          email: str(raw.email),
+          telefono: str(raw.telefono),
+          cantidad_adultos: parseInt(str(raw.cantidad_adultos)),
+          cantidad_ninos: parseInt(str(raw.cantidad_ninos)),
+          fecha_inicio: str(raw.fecha_inicio) || null,
+          fecha_fin: str(raw.fecha_fin) || null,
+          notas: str(raw.notas) || null,
+          tipo_documento: str(raw.tipo_documento),
+          numero_documento: str(raw.numero_documento),
+          nacionalidad: str(raw.nacionalidad),
+          tour: tourData.numericId,
+          descuento: 0,
+          igv_porcentaje: 18,
+          estado: "pendiente",
+        },
+      };
+
+      const submitBtn = form.querySelector("[data-submit-btn]") as HTMLButtonElement | null;
+      try {
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Enviando..."; }
+
+        const response = await fetch("http://localhost:1337/api/reservas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(reservaData),
+        });
+
+        const responseText = await response.text();
+        if (!response.ok) {
+          let errorMsg = "Error al crear la reserva";
+          try { errorMsg = JSON.parse(responseText).error?.message || errorMsg; } catch {}
+          throw new Error(errorMsg);
+        }
+
+        const ticket = JSON.parse(responseText)?.data?.ticket || "TICKET-00000000-00000";
+        const successModal = document.querySelector("[data-success-modal]");
+        const ticketEl = successModal?.querySelector("[data-ticket-number]");
+        if (ticketEl) ticketEl.textContent = ticket;
+        successModal?.classList.remove("hidden");
+        modal?.classList.add("hidden");
+        form.reset();
+      } catch (err) {
+        alert("Error al crear la reserva:\n" + (err instanceof Error ? err.message : String(err)));
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Confirmar Reserva"; }
+      }
+    });
+
+    // Copiar ticket
+    const successModal = document.querySelector("[data-success-modal]");
+    const copyBtn = successModal?.querySelector("[data-copy-ticket]") as HTMLButtonElement | null;
+    copyBtn?.addEventListener("click", () => {
+      const text = successModal?.querySelector("[data-ticket-number]")?.textContent || "";
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = copyBtn.textContent || "";
+        copyBtn.textContent = "✓ Copiado";
+        setTimeout(() => { copyBtn.textContent = orig; }, 2000);
+      }).catch(() => alert("Error al copiar"));
+    });
+    successModal?.addEventListener("click", (e) => {
+      if (e.target === successModal) successModal.classList.add("hidden");
+    });
+
+    // Cambia el placeholder del número de documento según el tipo seleccionado
+    const docTypeSelect = form?.querySelector("[data-doc-type]") as HTMLSelectElement | null;
+    const docNumberInput = form?.querySelector("[data-doc-number]") as HTMLInputElement | null;
+    const placeholders: Record<string, string> = {
+      dni: "12345678",
+      rut: "12.345.678-9",
+      pasaporte: "AB123456",
+    };
+    docTypeSelect?.addEventListener("change", (e) => {
+      const val = (e.target as HTMLSelectElement).value;
+      if (docNumberInput) docNumberInput.placeholder = placeholders[val] || "";
+    });
+
+    // Función global que llama BookingCard al abrir el modal
+    window.openBookingModal = ({
+      adultos = 1,
+      ninos = 0,
+      precioAdultoUsd = 0,
+      precioNinoUsd = 0,
+      precioAdultoLabel = "",
+      precioNinoLabel = "",
+      tasaCambio = 1,
+      simboloMoneda = "$",
+      decimalesMoneda = 0,
+      descuento = 0,
+      fechaInicio = null,
+      fechaFin = null,
+    }: BookingData = {}) => {
+      // Pasajeros
+      const adultoHidden = form?.querySelector("[data-modal-adultos]") as HTMLInputElement | null;
+      const ninoHidden = form?.querySelector("[data-modal-ninos]") as HTMLInputElement | null;
+      const adultoLabel = form?.querySelector("[data-modal-adultos-label]");
+      const ninoLabel = form?.querySelector("[data-modal-ninos-label]");
+      if (adultoHidden) adultoHidden.value = String(adultos);
+      if (ninoHidden) ninoHidden.value = String(ninos);
+      if (adultoLabel) adultoLabel.textContent = String(adultos);
+      if (ninoLabel) ninoLabel.textContent = String(ninos);
+
+      // Fechas
+      const fechaInicioHidden = form?.querySelector("[data-modal-fecha-inicio]") as HTMLInputElement | null;
+      const fechaFinHidden = form?.querySelector("[data-modal-fecha-fin]") as HTMLInputElement | null;
+      const fechaInicioLabel = form?.querySelector("[data-modal-fecha-inicio-label]");
+      const fechaFinLabel = form?.querySelector("[data-modal-fecha-fin-label]");
+      if (fechaInicioHidden) fechaInicioHidden.value = fechaInicio || "";
+      if (fechaFinHidden) fechaFinHidden.value = fechaFin || "";
+      if (fechaInicioLabel) fechaInicioLabel.textContent = fechaInicio || "—";
+      if (fechaFinLabel) fechaFinLabel.textContent = fechaFin || "—";
+
+      // Precios — usa la tasa y símbolo de la moneda seleccionada en BookingCard
+      const totalConvertido = (adultos * precioAdultoUsd + ninos * precioNinoUsd - descuento) * tasaCambio;
+      const totalFormateado = `${simboloMoneda}${totalConvertido.toFixed(decimalesMoneda)}`;
+      const precioAdultoEl = form?.querySelector("[data-modal-precio-adulto]");
+      const precioNinoEl = form?.querySelector("[data-modal-precio-nino]");
+      const totalEl = form?.querySelector("[data-modal-total]");
+      if (precioAdultoEl) precioAdultoEl.textContent = precioAdultoLabel || `$${precioAdultoUsd.toFixed(0)}`;
+      if (precioNinoEl) precioNinoEl.textContent = precioNinoLabel || `$${precioNinoUsd.toFixed(0)}`;
+      if (totalEl) totalEl.textContent = totalFormateado;
+
+      modal?.classList.remove("hidden");
+    };
+  })();
+</script>
