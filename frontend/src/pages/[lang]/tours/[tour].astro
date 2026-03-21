@@ -381,7 +381,7 @@ const hasBookingCard = Boolean(
     <meta name="description" content={pageDescription} />
     <link rel="canonical" href={canonical} />
   </head>
-  <body class="tour-detail min-h-screen bg-white text-gray-900">
+  <body class="tour-detail min-h-screen bg-white text-gray-900" data-navbar-solid>
     <script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
     <Navbar {t} currentLang={lang} />
     <main>
@@ -551,21 +551,21 @@ const hasBookingCard = Boolean(
 
             {hasInclusionsSection ? (
             <section class="pb-16 md:pb-20">
-              <div class="grid gap-6 lg:grid-cols-2">
+              <div class="grid grid-cols-2 gap-3 lg:gap-6">
                 {hasIncludedBlock ? (
-                <article class="border border-[#e2e8f0] bg-white p-6 md:p-8">
+                <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
                   {includedTitle ? (
-                    <h3 class="mb-6 text-2xl md:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
-                      <span class="mr-3 text-green-700">✓</span>{includedTitle}
+                    <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
+                      <span class="mr-2 text-green-700">✓</span>{includedTitle}
                     </h3>
                   ) : null}
                   <div class="divide-y divide-[#e5e7eb]">
                     {includedItems.map((item) => (
-                      <div class="flex items-start gap-3 py-4">
-                        <span class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-green-700 text-sm text-green-700">
+                      <div class="flex items-start gap-2 py-2 md:py-4">
+                        <span class="mt-0.5 inline-flex h-5 w-5 md:h-6 md:w-6 shrink-0 items-center justify-center rounded-full border border-green-700 text-xs md:text-sm text-green-700">
                           {item.icon || "✓"}
                         </span>
-                        <p class="text-lg leading-snug text-[#374151]">{item.text}</p>
+                        <p class="text-xs md:text-lg leading-snug text-[#374151]">{item.text}</p>
                       </div>
                     ))}
                   </div>
@@ -573,19 +573,19 @@ const hasBookingCard = Boolean(
                 ) : null}
 
                 {hasExcludedBlock ? (
-                <article class="border border-[#e2e8f0] bg-white p-6 md:p-8">
+                <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
                   {excludedTitle ? (
-                    <h3 class="mb-6 text-2xl md:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
-                      <span class="mr-3 text-[#6b7280]">✕</span>{excludedTitle}
+                    <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
+                      <span class="mr-2 text-[#6b7280]">✕</span>{excludedTitle}
                     </h3>
                   ) : null}
                   <div class="divide-y divide-[#e5e7eb]">
                     {excludedItems.map((item) => (
-                      <div class="flex items-start gap-3 py-4">
-                        <span class="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#9ca3af] text-sm text-[#6b7280]">
+                      <div class="flex items-start gap-2 py-2 md:py-4">
+                        <span class="mt-0.5 inline-flex h-5 w-5 md:h-6 md:w-6 shrink-0 items-center justify-center rounded-full border border-[#9ca3af] text-xs md:text-sm text-[#6b7280]">
                           {item.icon || "✕"}
                         </span>
-                        <p class="text-lg leading-snug text-[#374151]">{item.text}</p>
+                        <p class="text-xs md:text-lg leading-snug text-[#374151]">{item.text}</p>
                       </div>
                     ))}
                   </div>
