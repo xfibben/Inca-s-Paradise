@@ -1,0 +1,472 @@
+---
+interface Props {
+  lang: "es" | "en";
+  titulo: string;
+  duracion: string;
+  disponibilidad: string;
+  precioAdultoUsd: number;
+  precioNinoUsd: number;
+  duracionDias: number;
+  calendarLocale: string;
+  calendarStart: string;
+  calendarMonth: string;
+  weekdays: string[];
+}
+
+const {
+  lang,
+  titulo,
+  duracion,
+  disponibilidad,
+  precioAdultoUsd,
+  precioNinoUsd,
+  duracionDias,
+  calendarLocale,
+  calendarStart,
+  calendarMonth,
+  weekdays,
+} = Astro.props;
+---
+
+<aside class="mt-6 lg:mt-0" data-booking-card>
+  <div class="mx-auto w-full max-w-sm overflow-hidden border border-[#d8dde4] bg-white shadow-[0_16px_32px_rgba(15,23,42,0.12)] lg:fixed lg:top-24 lg:w-75 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+
+    <!-- Encabezado -->
+    <div class="border-b border-[#d8dde4] bg-[#f6f8fb] px-5 py-3">
+      <p class="text-[1.05rem] font-semibold uppercase tracking-[0.08em] text-[#1f2937]">
+        {titulo}
+      </p>
+      <div class="mt-2 h-[2px] w-20 bg-[#bcc6d3]"></div>
+    </div>
+
+    <!-- Precios + moneda -->
+    <div
+      class="space-y-3 px-5 py-4 text-slate-900"
+      data-price-adult-usd={precioAdultoUsd}
+      data-price-child-usd={precioNinoUsd}
+    >
+      <!-- Selector de moneda -->
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-xs font-medium uppercase tracking-wide text-[#64748b]">
+          {lang === "en" ? "Currency" : "Moneda"}
+        </span>
+        <select
+          data-currency-select
+          class="rounded border border-[#cbd5e1] bg-white px-2 py-1 text-xs font-semibold text-[#1f2937] focus:outline-none focus:ring-1 focus:ring-[#1AA093]"
+        >
+          <option value="USD">USD ($)</option>
+          <option value="PEN">PEN (S/)</option>
+          <option value="EUR">EUR (€)</option>
+        </select>
+      </div>
+
+      <!-- Precios por persona -->
+      <div class="space-y-1">
+        <div class="flex items-center justify-between text-sm text-[#374151]">
+          <span>{lang === "en" ? "Adult" : "Adulto"}</span>
+          <span class="font-semibold text-[#111827]" data-price-adult-display>
+            ${precioAdultoUsd.toFixed(0)}
+          </span>
+        </div>
+        <div class="flex items-center justify-between text-sm text-[#374151]">
+          <span>{lang === "en" ? "Child" : "Niño"}</span>
+          <span class="font-semibold text-[#111827]" data-price-child-display>
+            ${precioNinoUsd.toFixed(0)}
+          </span>
+        </div>
+      </div>
+
+      <p class="text-[1.5rem] leading-[0.95] tracking-tight text-[#111827]">
+        {duracion}
+      </p>
+
+      <div class="flex items-center gap-1 text-[0.84rem] leading-[1.1] text-[#1AA093]">
+        <span class="mt-0.5 text-base">&#10003;</span>
+        <span>{disponibilidad}</span>
+      </div>
+    </div>
+
+    <!-- Contadores de pasajeros -->
+    <div class="border-t border-[#d8dde4] px-5 py-4 space-y-3">
+      <div class="flex items-center justify-between gap-3">
+        <label class="text-sm font-medium text-[#374151]">
+          {lang === "en" ? "Adults" : "Adultos"}
+        </label>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            data-adults-dec
+            class="inline-flex h-7 w-7 items-center justify-center rounded border border-[#cbd5e1] text-base text-[#334155] transition hover:bg-slate-100 select-none"
+          >−</button>
+          <span class="w-6 text-center text-sm font-semibold text-[#111827]" data-adults-count>1</span>
+          <button
+            type="button"
+            data-adults-inc
+            class="inline-flex h-7 w-7 items-center justify-center rounded border border-[#cbd5e1] text-base text-[#334155] transition hover:bg-slate-100 select-none"
+          >+</button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-3">
+        <label class="text-sm font-medium text-[#374151]">
+          {lang === "en" ? "Children" : "Niños"}
+        </label>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            data-children-dec
+            class="inline-flex h-7 w-7 items-center justify-center rounded border border-[#cbd5e1] text-base text-[#334155] transition hover:bg-slate-100 select-none"
+          >−</button>
+          <span class="w-6 text-center text-sm font-semibold text-[#111827]" data-children-count>0</span>
+          <button
+            type="button"
+            data-children-inc
+            class="inline-flex h-7 w-7 items-center justify-center rounded border border-[#cbd5e1] text-base text-[#334155] transition hover:bg-slate-100 select-none"
+          >+</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendario -->
+    <div
+      class="border-t border-[#d8dde4] px-5 py-4"
+      data-booking-calendar
+      data-locale={calendarLocale}
+      data-start={calendarStart}
+      data-duration={duracionDias}
+    >
+      <div class="flex items-center justify-between border-y border-[#e2e8f0] py-3">
+        <p class="text-[1.1rem] text-[#1f2937]" data-calendar-title>
+          {calendarMonth}
+        </p>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="inline-flex h-7 w-7 items-center justify-center rounded border border-[#cbd5e1] text-base leading-none text-[#334155] transition hover:bg-slate-100"
+            data-calendar-prev
+            aria-label={lang === "en" ? "Previous month" : "Mes anterior"}
+          >&#8249;</button>
+          <button
+            type="button"
+            class="inline-flex h-7 w-7 items-center justify-center rounded border border-[#cbd5e1] text-base leading-none text-[#334155] transition hover:bg-slate-100"
+            data-calendar-next
+            aria-label={lang === "en" ? "Next month" : "Mes siguiente"}
+          >&#8250;</button>
+        </div>
+      </div>
+
+      <!-- Cabecera días de la semana -->
+      <div class="mt-3 grid grid-cols-7 gap-1 text-center text-[11px] uppercase tracking-wide text-[#64748b]">
+        {weekdays.map((d) => <span>{d}</span>)}
+      </div>
+
+      <!-- Grilla del calendario (se rellena por JS) -->
+      <div class="mt-2 grid grid-cols-7 gap-1 text-center text-xs" data-calendar-grid></div>
+
+      <!-- Botón reservar -->
+      <div class="mt-4">
+        <button
+          type="button"
+          data-open-reserva
+          disabled
+          class="w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition bg-gray-300 cursor-not-allowed"
+        >
+          <span>{lang === "en" ? "Book now" : "Reservar ahora"}</span>
+          <span data-btn-total-price></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="h-4"></div>
+  </div>
+</aside>
+
+<script>
+  // Declara openBookingModal en el tipo Window para evitar error TS
+  declare global {
+    interface Window {
+      openBookingModal?: (data?: {
+        adultos?: number;
+        ninos?: number;
+        precioAdultoUsd?: number;
+        precioNinoUsd?: number;
+        precioAdultoLabel?: string;
+        precioNinoLabel?: string;
+        tasaCambio?: number;
+        simboloMoneda?: string;
+        decimalesMoneda?: number;
+        descuento?: number;
+        fechaInicio?: string | null;
+        fechaFin?: string | null;
+      }) => void;
+    }
+  }
+
+  (() => {
+    const calendarRoot = document.querySelector("[data-booking-calendar]");
+    if (!calendarRoot) return;
+
+    const titleEl = calendarRoot.querySelector("[data-calendar-title]");
+    const gridEl = calendarRoot.querySelector("[data-calendar-grid]");
+    const prevBtn = calendarRoot.querySelector("[data-calendar-prev]");
+    const nextBtn = calendarRoot.querySelector("[data-calendar-next]");
+    const locale = calendarRoot.getAttribute("data-locale") || "es-PE";
+    const startValue = calendarRoot.getAttribute("data-start") || "";
+    const duration = Math.max(1, Number(calendarRoot.getAttribute("data-duration")) || 1);
+    const [startYearRaw, startMonthRaw] = startValue.split("-");
+    const startYear = Number(startYearRaw) || new Date().getFullYear();
+    const startMonth = Number(startMonthRaw) || new Date().getMonth() + 1;
+    let viewDate = new Date(startYear, startMonth - 1, 1);
+    let selectedDate: Date | null = null;
+
+    // Fecha actual en hora peruana (UTC-5, sin DST)
+    const getTodayPeru = () => {
+      const peru = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Lima" }));
+      return { year: peru.getFullYear(), month: peru.getMonth(), day: peru.getDate() };
+    };
+
+    const toMonthTitle = (date: Date) => {
+      const monthName = date.toLocaleDateString(locale, { month: "long" });
+      return monthName.charAt(0).toUpperCase() + monthName.slice(1) + " " + date.getFullYear();
+    };
+
+    const renderCalendar = () => {
+      if (!titleEl || !gridEl) return;
+
+      const year = viewDate.getFullYear();
+      const month = viewDate.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const prevMonthDays = new Date(year, month, 0).getDate();
+      const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+      const today = getTodayPeru();
+
+      // Fecha fin del rango seleccionado
+      const rangeEnd = selectedDate
+        ? new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + duration - 1)
+        : null;
+
+      titleEl.textContent = toMonthTitle(viewDate);
+      gridEl.innerHTML = "";
+
+      // Relleno días del mes anterior
+      for (let i = 0; i < firstWeekday; i++) {
+        const span = document.createElement("span");
+        span.textContent = String(prevMonthDays - firstWeekday + i + 1);
+        span.className = "inline-flex h-8 items-center justify-center rounded text-xs text-[#94a3b8] bg-[#f1f5f9]";
+        gridEl.appendChild(span);
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const isPast =
+          year < today.year ||
+          (year === today.year && month < today.month) ||
+          (year === today.year && month === today.month && day < today.day);
+
+        const isToday = year === today.year && month === today.month && day === today.day;
+        const thisDay = new Date(year, month, day);
+        const isInRange = selectedDate && rangeEnd && thisDay >= selectedDate && thisDay <= rangeEnd;
+        const isRangeStart = selectedDate && selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === day;
+        const isRangeEnd = rangeEnd && rangeEnd.getFullYear() === year && rangeEnd.getMonth() === month && rangeEnd.getDate() === day;
+
+        if (isPast) {
+          const span = document.createElement("span");
+          span.textContent = String(day);
+          span.className = "inline-flex h-8 items-center justify-center rounded text-xs text-[#c0c9d4] bg-[#f1f5f9] line-through cursor-not-allowed";
+          gridEl.appendChild(span);
+        } else {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.textContent = String(day);
+
+          if (isInRange) {
+            btn.className = "inline-flex h-8 items-center justify-center text-xs font-bold transition bg-[#1AA093] text-white";
+            if (isRangeStart) btn.classList.add("rounded-l-lg", "ring-2", "ring-[#032b43]");
+            else if (isRangeEnd) btn.classList.add("rounded-r-lg", "ring-2", "ring-[#032b43]");
+          } else {
+            btn.className = "inline-flex h-8 items-center justify-center rounded text-xs font-medium transition bg-[#e0f7f5] text-[#1AA093] hover:bg-[#1AA093] hover:text-white";
+            if (isToday) btn.classList.add("ring-2", "ring-[#032b43]");
+          }
+
+          btn.addEventListener("click", () => {
+            selectedDate = new Date(year, month, day);
+            renderCalendar();
+            // Habilita el botón de reservar al seleccionar una fecha
+            const reservaBtn = document.querySelector("[data-open-reserva]") as HTMLButtonElement | null;
+            if (reservaBtn) {
+              reservaBtn.disabled = false;
+              reservaBtn.className = "w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition bg-[#1AA093] hover:bg-[#1AA093] cursor-pointer";
+            }
+          });
+          gridEl.appendChild(btn);
+        }
+      }
+
+      // Relleno días del mes siguiente
+      const trailingCells = (7 - ((firstWeekday + daysInMonth) % 7)) % 7;
+      for (let i = 1; i <= trailingCells; i++) {
+        const span = document.createElement("span");
+        span.textContent = String(i);
+        span.className = "inline-flex h-8 items-center justify-center rounded text-xs text-[#94a3b8] bg-[#f1f5f9]";
+        gridEl.appendChild(span);
+      }
+    };
+
+    // Bloquear navegación a meses pasados
+    prevBtn?.addEventListener("click", () => {
+      const today = getTodayPeru();
+      const prev = new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1);
+      if (prev.getFullYear() > today.year || (prev.getFullYear() === today.year && prev.getMonth() >= today.month)) {
+        viewDate = prev;
+        renderCalendar();
+      }
+    });
+
+    nextBtn?.addEventListener("click", () => {
+      viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
+      renderCalendar();
+    });
+
+    renderCalendar();
+
+    // Conversión de moneda — open.er-api.com soporta PEN
+    const priceSection = document.querySelector("[data-price-adult-usd]");
+    const adultUsdBase = parseFloat(priceSection?.getAttribute("data-price-adult-usd") || "0");
+    const childUsdBase = parseFloat(priceSection?.getAttribute("data-price-child-usd") || "0");
+    const adultDisplayEl = document.querySelector("[data-price-adult-display]");
+    const childDisplayEl = document.querySelector("[data-price-child-display]");
+    const currencySelect = document.querySelector("[data-currency-select]") as HTMLSelectElement | null;
+
+    type CurrencyKey = "USD" | "PEN" | "EUR";
+    let rates: Record<CurrencyKey, number> = { USD: 1, PEN: 1, EUR: 1 };
+    const currencySymbol: Record<CurrencyKey, string> = { USD: "$", PEN: "S/", EUR: "€" };
+    const currencyDecimals: Record<CurrencyKey, number> = { USD: 0, PEN: 0, EUR: 2 };
+
+    const isCurrencyKey = (v: string): v is CurrencyKey => v in rates;
+
+    const formatPrice = (amount: number, currency: CurrencyKey) =>
+      `${currencySymbol[currency]}${amount.toFixed(currencyDecimals[currency])}`;
+
+    // Contadores de pasajeros (declarados antes para que updateBtnTotal los capture)
+    let adultos = 1;
+    let ninos = 0;
+
+    const btnTotalEl = document.querySelector("[data-btn-total-price]");
+
+    const updateBtnTotal = (currency: CurrencyKey) => {
+      const rate = rates[currency];
+      const total = (adultos * adultUsdBase + ninos * childUsdBase) * rate;
+      if (btnTotalEl) btnTotalEl.textContent = ` — ${formatPrice(total, currency)}`;
+    };
+
+    const updatePrices = (currency: CurrencyKey) => {
+      const rate = rates[currency];
+      if (adultDisplayEl) adultDisplayEl.textContent = formatPrice(adultUsdBase * rate, currency);
+      if (childDisplayEl) childDisplayEl.textContent = formatPrice(childUsdBase * rate, currency);
+      updateBtnTotal(currency);
+    };
+
+    fetch("https://open.er-api.com/v6/latest/USD")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.rates) {
+          rates.PEN = data.rates.PEN ?? 1;
+          rates.EUR = data.rates.EUR ?? 1;
+        }
+        const val = currencySelect?.value || "USD";
+        updatePrices(isCurrencyKey(val) ? val : "USD");
+      })
+      .catch(() => updatePrices("USD"));
+
+    currencySelect?.addEventListener("change", (e) => {
+      const val = (e.target as HTMLSelectElement).value;
+      updatePrices(isCurrencyKey(val) ? val : "USD");
+    });
+    const adultosCountEl = document.querySelector("[data-adults-count]");
+    const ninosCountEl = document.querySelector("[data-children-count]");
+
+    const getCurrentCurrency = (): CurrencyKey => {
+      const val = currencySelect?.value || "USD";
+      return isCurrencyKey(val) ? val : "USD";
+    };
+
+    document.querySelector("[data-adults-inc]")?.addEventListener("click", () => {
+      adultos++;
+      if (adultosCountEl) adultosCountEl.textContent = String(adultos);
+      updateBtnTotal(getCurrentCurrency());
+    });
+    document.querySelector("[data-adults-dec]")?.addEventListener("click", () => {
+      if (adultos > 1) { adultos--; if (adultosCountEl) adultosCountEl.textContent = String(adultos); }
+      updateBtnTotal(getCurrentCurrency());
+    });
+    document.querySelector("[data-children-inc]")?.addEventListener("click", () => {
+      ninos++;
+      if (ninosCountEl) ninosCountEl.textContent = String(ninos);
+      updateBtnTotal(getCurrentCurrency());
+    });
+    document.querySelector("[data-children-dec]")?.addEventListener("click", () => {
+      if (ninos > 0) { ninos--; if (ninosCountEl) ninosCountEl.textContent = String(ninos); }
+      updateBtnTotal(getCurrentCurrency());
+    });
+
+    // Botón reservar: envía todos los datos actuales al BookingModal
+    document.querySelector("[data-open-reserva]")?.addEventListener("click", () => {
+      // Formatea la fecha ISO como "YYYY-MM-DD"
+      const toIso = (date: Date): string => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      };
+
+      const fechaInicio: string | null = selectedDate ? toIso(selectedDate) : null;
+      const fechaFin: string | null = selectedDate
+        ? toIso(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate() + duration - 1))
+        : null;
+
+      const rawCurrency = currencySelect?.value || "USD";
+      const currency: CurrencyKey = isCurrencyKey(rawCurrency) ? rawCurrency : "USD";
+      const rate = rates[currency];
+      const sym = currencySymbol[currency];
+      const dec = currencyDecimals[currency];
+
+      window.openBookingModal?.({
+        adultos,
+        ninos,
+        precioAdultoUsd: adultUsdBase,
+        precioNinoUsd: childUsdBase,
+        precioAdultoLabel: adultDisplayEl?.textContent || `$${adultUsdBase.toFixed(0)}`,
+        precioNinoLabel: childDisplayEl?.textContent || `$${childUsdBase.toFixed(0)}`,
+        tasaCambio: rate,
+        simboloMoneda: sym,
+        decimalesMoneda: dec,
+        descuento: 0,
+        fechaInicio,
+        fechaFin,
+      });
+    });
+  })();
+
+  // Limita el card fixed para que no sobrepase el footer
+  (() => {
+    const cardEl = document.querySelector("[data-booking-card] > div") as HTMLElement | null;
+    const footer = document.querySelector("footer") as HTMLElement | null;
+    if (!cardEl || !footer) return;
+
+    const navH = 96; // 6rem = top-24 (margen superior del card)
+
+    const updateCardTop = () => {
+      if (window.innerWidth < 1024) {
+        cardEl.style.top = "";
+        return;
+      }
+      const footerTop = footer.getBoundingClientRect().top;
+      const cardH = cardEl.offsetHeight;
+      const overlap = navH + cardH - footerTop;
+      cardEl.style.top = overlap > 0 ? `${navH - overlap}px` : `${navH}px`;
+    };
+
+    window.addEventListener("scroll", updateCardTop, { passive: true });
+    window.addEventListener("resize", updateCardTop, { passive: true });
+    updateCardTop();
+  })();
+</script>
