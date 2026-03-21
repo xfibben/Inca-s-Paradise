@@ -144,7 +144,7 @@
       "type": "string",
       "pluginOptions": {
         "i18n": {
-          "localized": true
+          "localized": false
         }
       }
     },
@@ -298,21 +298,41 @@
     "adultUnitPrice": {
       "type": "decimal",
       "required": true,
-      "min": 0
+      "min": 0,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "childUnitPrice": {
       "type": "decimal",
       "required": true,
-      "min": 0
+      "min": 0,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "discount": {
       "type": "decimal",
       "default": 0,
-      "min": 0
+      "min": 0,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     },
     "durationDays": {
       "type": "integer",
-      "min": 1
-    },
+      "min": 1,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    }
   }
 }
