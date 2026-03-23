@@ -359,6 +359,33 @@ if (lang !== "es") {
 }
 
 const sourceTour = strapiTourRaw;
+
+// Obtiene los slugs de todos los idiomas usando el documentId
+const strapiLocaleMap: Record<string, string> = {
+  es: "es-PE", en: "en", pt: "pt-BR", fr: "fr", it: "it",
+};
+const allSupportedLangs = ["es", "en", "pt", "fr", "it"] as const;
+const tourSlugs: Record<string, string> = { [lang]: tourSlug };
+
+if (sourceTour.documentId) {
+  const baseUrl = sourceTour.__fetchedBaseUrl ?? STRAPI_BASE_URLS[0];
+  await Promise.all(
+    allSupportedLangs
+      .filter((l) => l !== lang)
+      .map(async (targetLang) => {
+        const locale = strapiLocaleMap[targetLang];
+        const url = `${baseUrl}${STRAPI_TOUR_ENDPOINT}/${sourceTour.documentId}?locale=${locale}&fields[0]=slug`;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) return;
+          const json = await res.json();
+          const attrs = normalizeRow(json?.data ?? json);
+          if (attrs?.slug) tourSlugs[targetLang] = String(attrs.slug).toLowerCase();
+        } catch {}
+      })
+  );
+}
+
 const cleanText = (value: any) =>
   typeof value === "string" ? value.trim() : "";
 const toNumber = (value: any) => {
@@ -1098,6 +1125,12 @@ const hasBookingCard = Boolean(
         }
 
       })();
+    </script>
+
+    <!-- Inyecta el ID numérico del tour para que BookingModal pueda crear la reserva -->
+    <script is:inline define:vars={{ tourNumericId: sourceTour.id ?? null, tourDocumentId: sourceTour.documentId ?? null, tourSlugs }}>
+      window.__tourData = { numericId: tourNumericId, documentId: tourDocumentId };
+      window.__tourSlugs = tourSlugs;
     </script>
   </body>
 </html>
