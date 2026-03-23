@@ -721,11 +721,6 @@ export interface ApiReservaReserva extends Struct.CollectionTypeSchema {
   options: {
     draftAndPublish: true;
   };
-  pluginOptions: {
-    i18n: {
-      localized: false;
-    };
-  };
   attributes: {
     cantidad_adultos: Schema.Attribute.Integer &
       Schema.Attribute.Required &
@@ -796,8 +791,7 @@ export interface ApiReservaReserva extends Struct.CollectionTypeSchema {
     tour: Schema.Attribute.Relation<
       'manyToOne',
       'api::tour-detalle.tour-detalle'
-    > &
-      Schema.Attribute.Required;
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1245,6 +1239,10 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
         };
       }>;
     publishedAt: Schema.Attribute.DateTime;
+    reservations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::reserva.reserva'
+    >;
     seoCanonicalUrl: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
