@@ -128,6 +128,12 @@ for (const baseUrl of STRAPI_BASE_URLS) {
       "populate[heroSlideImages][fields][0]=url&" +
       "populate[heroSlideImages][fields][1]=alternativeText&" +
       "populate[heroSlideImages][fields][2]=formats&" +
+      "populate[ogImage][fields][0]=url&" +
+      "populate[ogImage][fields][1]=alternativeText&" +
+      "populate[ogImage][fields][2]=formats&" +
+      "populate[twitterImage][fields][0]=url&" +
+      "populate[twitterImage][fields][1]=alternativeText&" +
+      "populate[twitterImage][fields][2]=formats&" +
       "populate[featuredImages][populate][image][fields][0]=url&" +
       "populate[featuredImages][populate][image][fields][1]=alternativeText&" +
       "populate[featuredImages][populate][image][fields][2]=formats&" +
@@ -183,17 +189,23 @@ const toNumber = (value: any) => {
   return Number.isFinite(number) ? number : null;
 };
 
-const pageTitle =
+const seoTitle =
+  cleanText(sourceTour.seoTitle) ||
   cleanText(sourceTour.metaTitle) ||
   cleanText(sourceTour.title) ||
   (lang === "en" ? "Tour details" : "Detalle del tour");
-const pageDescription = cleanText(sourceTour.metaDescription);
+const pageDescription =
+  cleanText(sourceTour.seoDescription) || cleanText(sourceTour.metaDescription);
+const seoKeywords = cleanText(sourceTour.seoKeywords);
+const seoNoIndex = Boolean(sourceTour.seoNoIndex);
 
 const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(
   /\/$/,
   ""
 );
-const canonical = `${siteOrigin}/${lang}/tours/${tourSlug}`;
+const canonical =
+  cleanText(sourceTour.seoCanonicalUrl) ||
+  `${siteOrigin}/${lang}/tours/${tourSlug}`;
 
 
 const highlightsItems = Array.isArray(sourceTour.highlightsItems)
@@ -216,7 +228,18 @@ const heroSlides = Array.isArray(sourceTour.heroSlideImages?.data)
   : [];
 const firstHeroSlide = heroSlides[0];
 const highlightsImage = toAbsoluteMediaUrl(firstHeroSlide);
-const highlightsImageAlt = cleanText(firstHeroSlide?.alternativeText) || highlightsTitle || pageTitle;
+const highlightsImageAlt = cleanText(firstHeroSlide?.alternativeText) || highlightsTitle || seoTitle;
+const ogTitle = cleanText(sourceTour.ogTitle) || seoTitle;
+const ogDescription = cleanText(sourceTour.ogDescription) || pageDescription;
+const ogImage =
+  toAbsoluteMediaUrl(sourceTour.ogImage?.data ?? sourceTour.ogImage) ||
+  highlightsImage;
+const twitterTitle = cleanText(sourceTour.twitterTitle) || ogTitle;
+const twitterDescription =
+  cleanText(sourceTour.twitterDescription) || ogDescription;
+const twitterImage =
+  toAbsoluteMediaUrl(sourceTour.twitterImage?.data ?? sourceTour.twitterImage) ||
+  ogImage;
 const highlightsCtaLabel = cleanText(sourceTour.highlightsCtaLabel);
 const highlightsCtaUrl = cleanText(sourceTour.highlightsCtaUrl);
 const hasHighlightsCta = Boolean(highlightsCtaLabel && highlightsCtaUrl);
@@ -377,9 +400,20 @@ const hasBookingCard = Boolean(
         font-style: italic;
       }
     </style>
-    <title>{pageTitle}</title>
+    <title>{seoTitle}</title>
     <meta name="description" content={pageDescription} />
+    {seoKeywords ? <meta name="keywords" content={seoKeywords} /> : null}
+    {seoNoIndex ? <meta name="robots" content="noindex,nofollow" /> : null}
     <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={ogTitle} />
+    <meta property="og:description" content={ogDescription} />
+    <meta property="og:url" content={canonical} />
+    {ogImage ? <meta property="og:image" content={ogImage} /> : null}
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={twitterTitle} />
+    <meta name="twitter:description" content={twitterDescription} />
+    {twitterImage ? <meta name="twitter:image" content={twitterImage} /> : null}
   </head>
   <body class="tour-detail min-h-screen bg-white text-gray-900" data-navbar-solid>
     <script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
