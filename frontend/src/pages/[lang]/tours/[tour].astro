@@ -32,6 +32,19 @@ function normalizeRow(row: any) {
   return row?.attributes ?? row ?? null;
 }
 
+function hasNonEmptyComponentRows(value: any) {
+  if (!Array.isArray(value)) return false;
+  return value.some((entry) => Boolean(normalizeRow(entry)));
+}
+
+function hasMediaValue(value: any) {
+  return Boolean(toAbsoluteMediaUrl(value?.data ?? value));
+}
+
+function pickLocalizedText(current: any, fallback: any) {
+  return typeof current === "string" && current.trim() ? current : fallback;
+}
+
 function toAbsoluteMediaUrl(value: any) {
   const url =
     typeof value === "string"
@@ -179,6 +192,170 @@ for (const baseUrl of STRAPI_BASE_URLS) {
 
 if (!strapiTourRaw) {
   return Astro.redirect(`/${lang}/destinos`);
+}
+
+if (lang !== "es") {
+  let spanishTourRaw: Record<string, any> | null = null;
+
+  for (const baseUrl of STRAPI_BASE_URLS) {
+    for (const locale of getLocales("es")) {
+      const localePart = localePrefix(locale);
+      const url =
+        `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
+        "status=published&" +
+        `filters[slug][$eq]=${encodeURIComponent(tourSlug)}&` +
+        "pagination[pageSize]=1&" +
+        "populate[featuredImages][populate][image][fields][0]=url&" +
+        "populate[featuredImages][populate][image][fields][1]=alternativeText&" +
+        "populate[featuredImages][populate][image][fields][2]=formats&" +
+        "populate[itineraryItems][fields][0]=title&" +
+        "populate[itineraryItems][fields][1]=highlight&" +
+        "populate[itineraryItems][fields][2]=description&" +
+        "populate[itineraryItems][fields][3]=optional&" +
+        "populate[itineraryItems][fields][4]=imageAlt&" +
+        "populate[itineraryItems][populate][image][fields][0]=url&" +
+        "populate[itineraryItems][populate][image][fields][1]=alternativeText&" +
+        "populate[itineraryItems][populate][image][fields][2]=formats&" +
+        "populate[itineraryItems][populate][includes][fields][0]=text";
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) continue;
+
+        const json = await res.json();
+        const rows = Array.isArray(json?.data) ? json.data : [];
+        const first =
+          rows.find((row: any) => Boolean(normalizeRow(row)?.publishedAt)) ??
+          rows[0];
+        const attrs = normalizeRow(first);
+        if (attrs) {
+          spanishTourRaw = attrs;
+          break;
+        }
+      } catch {
+        // Try next locale / URL.
+      }
+    }
+
+    if (spanishTourRaw) break;
+  }
+
+  if (spanishTourRaw) {
+    const currentFeaturedRows = Array.isArray(strapiTourRaw.featuredImages)
+      ? strapiTourRaw.featuredImages.map((entry: any) => normalizeRow(entry))
+      : [];
+    const spanishFeaturedRows = Array.isArray(spanishTourRaw.featuredImages)
+      ? spanishTourRaw.featuredImages.map((entry: any) => normalizeRow(entry))
+      : [];
+
+    // Reglas de negocio:
+    // - cantidad/orden e imagenes compartidas desde ES
+    // - texto (alt) puede traducirse por locale
+    if (spanishFeaturedRows.length > 0) {
+      strapiTourRaw.featuredImages = spanishFeaturedRows
+        .map((spanishItem: any, index: number) => {
+          const currentItem = currentFeaturedRows[index];
+          if (!spanishItem && !currentItem) return null;
+
+          const currentImage = currentItem?.image?.data ?? currentItem?.image;
+          const spanishImage = spanishItem?.image?.data ?? spanishItem?.image;
+
+          return {
+            ...(spanishItem ?? {}),
+            ...(currentItem ?? {}),
+            image: hasMediaValue(currentImage) ? currentImage : spanishImage,
+            alt: pickLocalizedText(currentItem?.alt, spanishItem?.alt),
+          };
+        })
+        .filter(Boolean);
+    }
+
+    const currentItineraryRows = Array.isArray(strapiTourRaw.itineraryItems)
+      ? strapiTourRaw.itineraryItems.map((entry: any) => normalizeRow(entry))
+      : [];
+    const spanishItineraryRows = Array.isArray(spanishTourRaw.itineraryItems)
+      ? spanishTourRaw.itineraryItems.map((entry: any) => normalizeRow(entry))
+      : [];
+
+    // Reglas de negocio:
+    // - cantidad/orden e imagenes compartidas desde ES
+    // - textos localizables por idioma (si faltan, cae a ES)
+    if (spanishItineraryRows.length > 0) {
+      strapiTourRaw.itineraryItems = spanishItineraryRows
+        .map((spanishItem: any, index: number) => {
+          const currentItem = currentItineraryRows[index];
+          if (!spanishItem && !currentItem) return null;
+
+          const currentImage = currentItem?.image?.data ?? currentItem?.image;
+          const spanishImage = spanishItem?.image?.data ?? spanishItem?.image;
+
+          const currentIncludes = Array.isArray(currentItem?.includes)
+            ? currentItem.includes
+            : [];
+          const spanishIncludes = Array.isArray(spanishItem?.includes)
+            ? spanishItem.includes
+            : [];
+
+          return {
+            ...(spanishItem ?? {}),
+            ...(currentItem ?? {}),
+            title: pickLocalizedText(currentItem?.title, spanishItem?.title),
+            highlight: pickLocalizedText(
+              currentItem?.highlight,
+              spanishItem?.highlight
+            ),
+            description: pickLocalizedText(
+              currentItem?.description,
+              spanishItem?.description
+            ),
+            optional: pickLocalizedText(
+              currentItem?.optional,
+              spanishItem?.optional
+            ),
+            imageAlt: pickLocalizedText(
+              currentItem?.imageAlt,
+              spanishItem?.imageAlt
+            ),
+            image: hasMediaValue(currentImage) ? currentImage : spanishImage,
+            includes:
+              currentIncludes.length > 0 ? currentIncludes : spanishIncludes,
+          };
+        })
+        .filter(Boolean);
+    }
+
+    const currentFeaturedTitle =
+      typeof strapiTourRaw.featuredTitle === "string"
+        ? strapiTourRaw.featuredTitle.trim()
+        : "";
+    const spanishFeaturedTitle =
+      typeof spanishTourRaw.featuredTitle === "string"
+        ? spanishTourRaw.featuredTitle.trim()
+        : "";
+    if (!currentFeaturedTitle && spanishFeaturedTitle) {
+      strapiTourRaw.featuredTitle = spanishTourRaw.featuredTitle;
+    }
+
+    const itineraryTextFields = [
+      "itineraryTitle",
+      "itineraryItemLabel",
+      "itineraryExpandLabel",
+      "itineraryCollapseLabel",
+    ];
+    itineraryTextFields.forEach((fieldName) => {
+      const current =
+        typeof strapiTourRaw?.[fieldName] === "string"
+          ? strapiTourRaw[fieldName].trim()
+          : "";
+      const fallback =
+        typeof spanishTourRaw?.[fieldName] === "string"
+          ? spanishTourRaw[fieldName].trim()
+          : "";
+      if (!current && fallback) {
+        strapiTourRaw[fieldName] = spanishTourRaw[fieldName];
+      }
+    });
+  }
 }
 
 const sourceTour = strapiTourRaw;
