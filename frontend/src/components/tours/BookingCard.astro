@@ -1,6 +1,8 @@
 ---
+type SupportedLang = "es" | "en" | "pt" | "fr" | "it";
+
 interface Props {
-  lang: "es" | "en";
+  lang: SupportedLang;
   titulo: string;
   duracion: string;
   disponibilidad: string;
@@ -26,10 +28,93 @@ const {
   calendarMonth,
   weekdays,
 } = Astro.props;
+
+const t: Record<SupportedLang, Record<string, string>> = {
+  es: {
+    bookNow: "Reservar ahora",
+    currency: "Moneda",
+    adult: "Adulto",
+    child: "Niño",
+    adults: "Adultos",
+    children: "Niños",
+    prevMonth: "Mes anterior",
+    nextMonth: "Mes siguiente",
+  },
+  en: {
+    bookNow: "Book now",
+    currency: "Currency",
+    adult: "Adult",
+    child: "Child",
+    adults: "Adults",
+    children: "Children",
+    prevMonth: "Previous month",
+    nextMonth: "Next month",
+  },
+  pt: {
+    bookNow: "Reservar agora",
+    currency: "Moeda",
+    adult: "Adulto",
+    child: "Criança",
+    adults: "Adultos",
+    children: "Crianças",
+    prevMonth: "Mês anterior",
+    nextMonth: "Próximo mês",
+  },
+  fr: {
+    bookNow: "Réserver maintenant",
+    currency: "Devise",
+    adult: "Adulte",
+    child: "Enfant",
+    adults: "Adultes",
+    children: "Enfants",
+    prevMonth: "Mois précédent",
+    nextMonth: "Mois suivant",
+  },
+  it: {
+    bookNow: "Prenota ora",
+    currency: "Valuta",
+    adult: "Adulto",
+    child: "Bambino",
+    adults: "Adulti",
+    children: "Bambini",
+    prevMonth: "Mese precedente",
+    nextMonth: "Mese successivo",
+  },
+};
+
+const c = t[lang] ?? t.es;
 ---
 
 <aside class="mt-6 lg:mt-0" data-booking-card>
-  <div class="mx-auto w-full max-w-sm overflow-hidden border border-[#d8dde4] bg-white shadow-[0_16px_32px_rgba(15,23,42,0.12)] lg:fixed lg:top-24 lg:w-75 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
+
+  <!-- Botón trigger fijo abajo a la derecha (solo móvil) -->
+  <button
+    type="button"
+    id="mobile-booking-open"
+    class="lg:hidden fixed bottom-5 right-5 z-50 rounded-full px-5 py-3 text-sm font-semibold text-white bg-[#1AA093] hover:bg-[#0e8a7e] shadow-lg transition text-center leading-snug"
+  >
+    {c.bookNow}<br />
+    <span data-mobile-btn-price class="text-xs font-normal opacity-90"></span>
+  </button>
+
+  <!-- Backdrop oscuro (móvil) -->
+  <div id="mobile-booking-backdrop" class="fixed inset-0 bg-black/40 z-40 hidden lg:hidden!"></div>
+
+  <!-- Card completo: oculto en móvil por defecto, visible en desktop -->
+  <div
+    id="booking-card-content"
+    class="hidden lg:block mx-auto w-full max-w-sm overflow-hidden border border-[#d8dde4] bg-white shadow-[0_16px_32px_rgba(15,23,42,0.12)] lg:fixed lg:top-24 lg:w-75 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto max-lg:fixed max-lg:bottom-4 max-lg:left-3 max-lg:right-3 max-lg:z-50 max-lg:max-h-[75vh] max-lg:overflow-y-auto max-lg:rounded-2xl"
+  >
+
+    <!-- Botón cerrar (solo móvil) -->
+    <div class="lg:hidden flex justify-end px-4 pt-3 pb-1">
+      <button
+        type="button"
+        id="mobile-booking-close"
+        class="text-[#64748b] hover:text-[#1f2937] text-2xl leading-none"
+        aria-label="Cerrar"
+      >&#10005;</button>
+    </div>
 
     <!-- Encabezado -->
     <div class="border-b border-[#d8dde4] bg-[#f6f8fb] px-5 py-3">
@@ -48,7 +133,7 @@ const {
       <!-- Selector de moneda -->
       <div class="flex items-center justify-between gap-2">
         <span class="text-xs font-medium uppercase tracking-wide text-[#64748b]">
-          {lang === "en" ? "Currency" : "Moneda"}
+          {c.currency}
         </span>
         <select
           data-currency-select
@@ -63,13 +148,13 @@ const {
       <!-- Precios por persona -->
       <div class="space-y-1">
         <div class="flex items-center justify-between text-sm text-[#374151]">
-          <span>{lang === "en" ? "Adult" : "Adulto"}</span>
+          <span>{c.adult}</span>
           <span class="font-semibold text-[#111827]" data-price-adult-display>
             ${precioAdultoUsd.toFixed(0)}
           </span>
         </div>
         <div class="flex items-center justify-between text-sm text-[#374151]">
-          <span>{lang === "en" ? "Child" : "Niño"}</span>
+          <span>{c.child}</span>
           <span class="font-semibold text-[#111827]" data-price-child-display>
             ${precioNinoUsd.toFixed(0)}
           </span>
@@ -90,7 +175,7 @@ const {
     <div class="border-t border-[#d8dde4] px-5 py-4 space-y-3">
       <div class="flex items-center justify-between gap-3">
         <label class="text-sm font-medium text-[#374151]">
-          {lang === "en" ? "Adults" : "Adultos"}
+          {c.adults}
         </label>
         <div class="flex items-center gap-2">
           <button
@@ -109,7 +194,7 @@ const {
 
       <div class="flex items-center justify-between gap-3">
         <label class="text-sm font-medium text-[#374151]">
-          {lang === "en" ? "Children" : "Niños"}
+          {c.children}
         </label>
         <div class="flex items-center gap-2">
           <button
@@ -144,13 +229,13 @@ const {
             type="button"
             class="inline-flex h-7 w-7 items-center justify-center rounded border border-[#cbd5e1] text-base leading-none text-[#334155] transition hover:bg-slate-100"
             data-calendar-prev
-            aria-label={lang === "en" ? "Previous month" : "Mes anterior"}
+            aria-label={c.prevMonth}
           >&#8249;</button>
           <button
             type="button"
             class="inline-flex h-7 w-7 items-center justify-center rounded border border-[#cbd5e1] text-base leading-none text-[#334155] transition hover:bg-slate-100"
             data-calendar-next
-            aria-label={lang === "en" ? "Next month" : "Mes siguiente"}
+            aria-label={c.nextMonth}
           >&#8250;</button>
         </div>
       </div>
@@ -171,7 +256,7 @@ const {
           disabled
           class="w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition bg-gray-300 cursor-not-allowed"
         >
-          <span>{lang === "en" ? "Book now" : "Reservar ahora"}</span>
+          <span>{c.bookNow}</span>
           <span data-btn-total-price></span>
         </button>
       </div>
@@ -351,11 +436,13 @@ const {
     let ninos = 0;
 
     const btnTotalEl = document.querySelector("[data-btn-total-price]");
+    const mobileBtnPriceEl = document.querySelector("[data-mobile-btn-price]");
 
     const updateBtnTotal = (currency: CurrencyKey) => {
       const rate = rates[currency];
       const total = (adultos * adultUsdBase + ninos * childUsdBase) * rate;
       if (btnTotalEl) btnTotalEl.textContent = ` — ${formatPrice(total, currency)}`;
+      if (mobileBtnPriceEl) mobileBtnPriceEl.textContent = formatPrice(total, currency);
     };
 
     const updatePrices = (currency: CurrencyKey) => {
@@ -468,5 +555,29 @@ const {
     window.addEventListener("scroll", updateCardTop, { passive: true });
     window.addEventListener("resize", updateCardTop, { passive: true });
     updateCardTop();
+  })();
+
+  // Abrir/cerrar card en móvil
+  (() => {
+    const openBtn = document.getElementById("mobile-booking-open");
+    const closeBtn = document.getElementById("mobile-booking-close");
+    const content = document.getElementById("booking-card-content");
+    const backdrop = document.getElementById("mobile-booking-backdrop");
+
+    const openCard = () => {
+      content?.classList.remove("hidden");
+      backdrop?.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    };
+
+    const closeCard = () => {
+      content?.classList.add("hidden");
+      backdrop?.classList.add("hidden");
+      document.body.style.overflow = "";
+    };
+
+    openBtn?.addEventListener("click", openCard);
+    closeBtn?.addEventListener("click", closeCard);
+    backdrop?.addEventListener("click", closeCard);
   })();
 </script>

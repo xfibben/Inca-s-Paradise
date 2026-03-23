@@ -9,23 +9,18 @@
   "options": {
     "draftAndPublish": true
   },
-  "pluginOptions": {
-    "i18n": {
-      "localized": false
-    }
-  },
+  "pluginOptions": {},
   "attributes": {
     "usuario": {
       "type": "relation",
       "relation": "manyToOne",
-      "target": "plugin::users-permissions.user",
-      "required": false
+      "target": "plugin::users-permissions.user"
     },
     "tour": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::tour-detalle.tour-detalle",
-      "required": true
+      "inversedBy": "reservations"
     },
     "email": {
       "type": "email",
@@ -78,13 +73,13 @@
     },
     "estado": {
       "type": "enumeration",
+      "required": true,
+      "default": "pendiente",
       "enum": [
         "pendiente",
         "confirmada",
         "cancelada"
-      ],
-      "default": "pendiente",
-      "required": true
+      ]
     },
     "notas": {
       "type": "text",
@@ -93,14 +88,17 @@
     "ticket": {
       "type": "string",
       "required": true,
-      "unique": true,
-      "description": "Número de ticket generado automáticamente para seguimiento"
+      "unique": true
     },
     "tipo_documento": {
       "type": "enumeration",
-      "enum": ["dni", "rut", "pasaporte"],
       "required": true,
-      "default": "dni"
+      "default": "dni",
+      "enum": [
+        "dni",
+        "rut",
+        "pasaporte"
+      ]
     },
     "numero_documento": {
       "type": "string",

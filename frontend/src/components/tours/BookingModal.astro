@@ -1,61 +1,178 @@
 ---
+type SupportedLang = "es" | "en" | "pt" | "fr" | "it";
+
 interface Props {
-  lang: "es" | "en";
+  lang: SupportedLang;
   tourTitle: string;
   tourSlug: string;
 }
 
 const { lang, tourTitle } = Astro.props;
 
-const t = lang === "en"
-  ? {
-      title: "Book Tour",
-      name: "Full Name",
-      email: "Email Address",
-      phone: "Phone Number",
-      adults: "Adults",
-      children: "Children",
-      startDate: "Start Date",
-      endDate: "End Date",
-      pricePerAdult: "Price per Adult",
-      pricePerChild: "Price per Child",
-      total: "Total",
-      reserve: "Confirm Booking",
-      close: "Close",
-      notes: "Special notes",
-      terms: "I accept the terms and conditions",
-      noDate: "No date selected",
-      docType: "Document type",
-      docNumber: "Document number",
-      nationality: "Nationality",
-      docDni: "DNI",
-      docRut: "RUT",
-      docPassport: "Passport",
-    }
-  : {
-      title: "Reservar Tour",
-      name: "Nombre Completo",
-      email: "Correo Electrónico",
-      phone: "Teléfono",
-      adults: "Adultos",
-      children: "Niños",
-      startDate: "Fecha de Inicio",
-      endDate: "Fecha de Fin",
-      pricePerAdult: "Precio por Adulto",
-      pricePerChild: "Precio por Niño",
-      total: "Total",
-      reserve: "Confirmar Reserva",
-      close: "Cerrar",
-      notes: "Notas especiales",
-      terms: "Acepto los términos y condiciones",
-      noDate: "Sin fecha seleccionada",
-      docType: "Tipo de documento",
-      docNumber: "Número de documento",
-      nationality: "Nacionalidad",
-      docDni: "DNI",
-      docRut: "RUT",
-      docPassport: "Pasaporte",
-    };
+const translations: Record<SupportedLang, Record<string, string>> = {
+  es: {
+    title: "Reservar Tour",
+    name: "Nombre Completo",
+    email: "Correo Electrónico",
+    phone: "Teléfono",
+    adults: "Adultos",
+    children: "Niños",
+    startDate: "Fecha de Inicio",
+    endDate: "Fecha de Fin",
+    pricePerAdult: "Precio por Adulto",
+    pricePerChild: "Precio por Niño",
+    total: "Total",
+    reserve: "Confirmar Reserva",
+    close: "Cerrar",
+    notes: "Notas especiales",
+    terms: "Acepto los términos y condiciones",
+    noDate: "Sin fecha seleccionada",
+    docType: "Tipo de documento",
+    docNumber: "Número de documento",
+    nationality: "Nacionalidad",
+    docDni: "DNI",
+    docRut: "RUT",
+    docPassport: "Pasaporte",
+    nationalityPlaceholder: "Peruana",
+    notesPlaceholder: "Alergias, preferencias especiales, etc.",
+    successTitle: "¡Felicidades!",
+    successMsg: "Tu reserva ha sido creada exitosamente.",
+    ticketLabel: "Número de Ticket:",
+    ticketInfo: "Guarda este número para hacer tu seguimiento. Nos contactaremos pronto con los detalles de tu reserva.",
+    copyTicket: "Copiar Ticket",
+    sending: "Enviando...",
+  },
+  en: {
+    title: "Book Tour",
+    name: "Full Name",
+    email: "Email Address",
+    phone: "Phone Number",
+    adults: "Adults",
+    children: "Children",
+    startDate: "Start Date",
+    endDate: "End Date",
+    pricePerAdult: "Price per Adult",
+    pricePerChild: "Price per Child",
+    total: "Total",
+    reserve: "Confirm Booking",
+    close: "Close",
+    notes: "Special notes",
+    terms: "I accept the terms and conditions",
+    noDate: "No date selected",
+    docType: "Document type",
+    docNumber: "Document number",
+    nationality: "Nationality",
+    docDni: "DNI",
+    docRut: "RUT",
+    docPassport: "Passport",
+    nationalityPlaceholder: "Peruvian",
+    notesPlaceholder: "Allergies, special preferences, etc.",
+    successTitle: "Congratulations!",
+    successMsg: "Your booking has been created successfully.",
+    ticketLabel: "Ticket Number:",
+    ticketInfo: "Save this number to track your booking. We will contact you soon with booking details.",
+    copyTicket: "Copy Ticket",
+    sending: "Sending...",
+  },
+  pt: {
+    title: "Reservar Tour",
+    name: "Nome Completo",
+    email: "Endereço de Email",
+    phone: "Telefone",
+    adults: "Adultos",
+    children: "Crianças",
+    startDate: "Data de Início",
+    endDate: "Data de Fim",
+    pricePerAdult: "Preço por Adulto",
+    pricePerChild: "Preço por Criança",
+    total: "Total",
+    reserve: "Confirmar Reserva",
+    close: "Fechar",
+    notes: "Notas especiais",
+    terms: "Aceito os termos e condições",
+    noDate: "Sem data selecionada",
+    docType: "Tipo de documento",
+    docNumber: "Número de documento",
+    nationality: "Nacionalidade",
+    docDni: "DNI",
+    docRut: "RUT",
+    docPassport: "Passaporte",
+    nationalityPlaceholder: "Peruana",
+    notesPlaceholder: "Alergias, preferências especiais, etc.",
+    successTitle: "Parabéns!",
+    successMsg: "Sua reserva foi criada com sucesso.",
+    ticketLabel: "Número do Ticket:",
+    ticketInfo: "Guarde este número para acompanhar sua reserva. Entraremos em contato em breve com os detalhes.",
+    copyTicket: "Copiar Ticket",
+    sending: "Enviando...",
+  },
+  fr: {
+    title: "Réserver le Tour",
+    name: "Nom Complet",
+    email: "Adresse Email",
+    phone: "Téléphone",
+    adults: "Adultes",
+    children: "Enfants",
+    startDate: "Date de Début",
+    endDate: "Date de Fin",
+    pricePerAdult: "Prix par Adulte",
+    pricePerChild: "Prix par Enfant",
+    total: "Total",
+    reserve: "Confirmer la Réservation",
+    close: "Fermer",
+    notes: "Notes spéciales",
+    terms: "J'accepte les termes et conditions",
+    noDate: "Aucune date sélectionnée",
+    docType: "Type de document",
+    docNumber: "Numéro de document",
+    nationality: "Nationalité",
+    docDni: "CNI",
+    docRut: "RUT",
+    docPassport: "Passeport",
+    nationalityPlaceholder: "Péruvienne",
+    notesPlaceholder: "Allergies, préférences spéciales, etc.",
+    successTitle: "Félicitations !",
+    successMsg: "Votre réservation a été créée avec succès.",
+    ticketLabel: "Numéro de Ticket :",
+    ticketInfo: "Conservez ce numéro pour suivre votre réservation. Nous vous contacterons bientôt avec les détails.",
+    copyTicket: "Copier le Ticket",
+    sending: "Envoi en cours...",
+  },
+  it: {
+    title: "Prenota il Tour",
+    name: "Nome Completo",
+    email: "Indirizzo Email",
+    phone: "Telefono",
+    adults: "Adulti",
+    children: "Bambini",
+    startDate: "Data di Inizio",
+    endDate: "Data di Fine",
+    pricePerAdult: "Prezzo per Adulto",
+    pricePerChild: "Prezzo per Bambino",
+    total: "Totale",
+    reserve: "Conferma Prenotazione",
+    close: "Chiudi",
+    notes: "Note speciali",
+    terms: "Accetto i termini e condizioni",
+    noDate: "Nessuna data selezionata",
+    docType: "Tipo di documento",
+    docNumber: "Numero di documento",
+    nationality: "Nazionalità",
+    docDni: "CI",
+    docRut: "Codice Fiscale",
+    docPassport: "Passaporto",
+    nationalityPlaceholder: "Peruviana",
+    notesPlaceholder: "Allergie, preferenze speciali, ecc.",
+    successTitle: "Congratulazioni!",
+    successMsg: "La tua prenotazione è stata creata con successo.",
+    ticketLabel: "Numero di Ticket:",
+    ticketInfo: "Salva questo numero per seguire la tua prenotazione. Ti contatteremo presto con i dettagli.",
+    copyTicket: "Copia Ticket",
+    sending: "Invio in corso...",
+  },
+};
+
+const t = translations[lang] ?? translations.es;
 ---
 
 <!-- Modal de reserva -->
@@ -170,7 +287,7 @@ const t = lang === "en"
             name="nacionalidad"
             required
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1AA093] focus:border-transparent"
-            placeholder={lang === "en" ? "Peruvian" : "Peruana"}
+            placeholder={t.nationalityPlaceholder}
           />
         </div>
       </div>
@@ -196,7 +313,7 @@ const t = lang === "en"
           name="notas"
           rows="3"
           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1AA093] focus:border-transparent resize-none"
-          placeholder={lang === "en" ? "Allergies, special preferences, etc." : "Alergias, preferencias especiales, etc."}
+          placeholder={t.notesPlaceholder}
         ></textarea>
       </div>
 
@@ -263,43 +380,37 @@ const t = lang === "en"
         </svg>
       </div>
     </div>
-    <h2 class="text-2xl font-bold text-gray-900 mb-2">
-      {lang === "es" ? "¡Felicidades!" : "Congratulations!"}
-    </h2>
-    <p class="text-gray-600 mb-6">
-      {lang === "es" ? "Tu reserva ha sido creada exitosamente." : "Your booking has been created successfully."}
-    </p>
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">{t.successTitle}</h2>
+    <p class="text-gray-600 mb-6">{t.successMsg}</p>
     <div class="bg-[#f5f0e9] p-4 rounded-lg border-2 border-[#1AA093] mb-6">
-      <p class="text-sm text-gray-600 mb-2">
-        {lang === "es" ? "Número de Ticket:" : "Ticket Number:"}
-      </p>
+      <p class="text-sm text-gray-600 mb-2">{t.ticketLabel}</p>
       <p class="text-2xl font-bold text-[#1AA093] font-mono break-all" data-ticket-number>
         TICKET-00000000-00000
       </p>
     </div>
-    <p class="text-sm text-gray-700 mb-6">
-      {lang === "es"
-        ? "Guarda este número para hacer tu seguimiento. Nos contactaremos pronto con los detalles de tu reserva."
-        : "Save this number to track your booking. We will contact you soon with booking details."}
-    </p>
+    <p class="text-sm text-gray-700 mb-6">{t.ticketInfo}</p>
     <div class="flex gap-3">
       <button
         type="button"
-        onclick="document.querySelector('[data-success-modal]').classList.add('hidden')"
+        data-close-success
         class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
       >
-        {lang === "es" ? "Cerrar" : "Close"}
+        {t.close}
       </button>
       <button
         type="button"
         data-copy-ticket
         class="flex-1 px-4 py-2 bg-[#1AA093] rounded-lg text-white font-medium hover:bg-[#1AA093] transition"
       >
-        {lang === "es" ? "Copiar Ticket" : "Copy Ticket"}
+        {t.copyTicket}
       </button>
     </div>
   </div>
 </div>
+
+<script is:inline define:vars={{ tSending: t.sending, tReserve: t.reserve }}>
+  window.__bookingTexts = { sending: tSending, reserve: tReserve };
+</script>
 
 <script>
   interface BookingData {
@@ -319,7 +430,8 @@ const t = lang === "en"
 
   declare global {
     interface Window {
-      __tourData?: { numericId: number };
+      __tourData?: { numericId: number | null; documentId: string | null };
+      __bookingTexts?: { sending: string; reserve: string };
       openBookingModal?: (data?: BookingData) => void;
     }
   }
@@ -342,10 +454,16 @@ const t = lang === "en"
       const str = (v: FormDataEntryValue) => (typeof v === "string" ? v : "");
 
       const tourData = window.__tourData;
-      if (!tourData?.numericId) {
+      if (!tourData?.documentId && !tourData?.numericId) {
         alert("Error: Tour no encontrado. Recarga la página.");
         return;
       }
+
+      const toDatetime = (val: string) => val ? `${val}T00:00:00.000Z` : null;
+      // Strapi 5 usa documentId para relaciones; fallback a numeric id
+      const tourConnect = tourData.documentId
+        ? { connect: [tourData.documentId] }
+        : { connect: [{ id: tourData.numericId }] };
 
       const reservaData = {
         data: {
@@ -353,13 +471,13 @@ const t = lang === "en"
           telefono: str(raw.telefono),
           cantidad_adultos: parseInt(str(raw.cantidad_adultos)),
           cantidad_ninos: parseInt(str(raw.cantidad_ninos)),
-          fecha_inicio: str(raw.fecha_inicio) || null,
-          fecha_fin: str(raw.fecha_fin) || null,
+          fecha_inicio: toDatetime(str(raw.fecha_inicio)),
+          fecha_fin: toDatetime(str(raw.fecha_fin)),
           notas: str(raw.notas) || null,
           tipo_documento: str(raw.tipo_documento),
           numero_documento: str(raw.numero_documento),
           nacionalidad: str(raw.nacionalidad),
-          tour: tourData.numericId,
+          tour: tourConnect,
           descuento: 0,
           igv_porcentaje: 18,
           estado: "pendiente",
@@ -368,7 +486,7 @@ const t = lang === "en"
 
       const submitBtn = form.querySelector("[data-submit-btn]") as HTMLButtonElement | null;
       try {
-        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Enviando..."; }
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = window.__bookingTexts?.sending ?? "Enviando..."; }
 
         const response = await fetch("http://localhost:1337/api/reservas", {
           method: "POST",
@@ -393,12 +511,26 @@ const t = lang === "en"
       } catch (err) {
         alert("Error al crear la reserva:\n" + (err instanceof Error ? err.message : String(err)));
       } finally {
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Confirmar Reserva"; }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = window.__bookingTexts?.reserve ?? "Confirmar Reserva"; }
       }
     });
 
-    // Copiar ticket
+    // Cerrar todos los modales al hacer click en "Cerrar" del modal de éxito
     const successModal = document.querySelector("[data-success-modal]");
+    const closeAllModals = () => {
+      successModal?.classList.add("hidden");
+      modal?.classList.add("hidden");
+      // Cierra también el card mobile si estaba abierto
+      const mobileCard = document.getElementById("booking-card-content");
+      const mobileBackdrop = document.getElementById("mobile-booking-backdrop");
+      mobileCard?.classList.add("hidden");
+      mobileBackdrop?.classList.add("hidden");
+      document.body.style.overflow = "";
+    };
+    successModal?.querySelector("[data-close-success]")?.addEventListener("click", closeAllModals);
+    successModal?.addEventListener("click", (e) => { if (e.target === successModal) closeAllModals(); });
+
+    // Copiar ticket
     const copyBtn = successModal?.querySelector("[data-copy-ticket]") as HTMLButtonElement | null;
     copyBtn?.addEventListener("click", () => {
       const text = successModal?.querySelector("[data-ticket-number]")?.textContent || "";
@@ -408,10 +540,6 @@ const t = lang === "en"
         setTimeout(() => { copyBtn.textContent = orig; }, 2000);
       }).catch(() => alert("Error al copiar"));
     });
-    successModal?.addEventListener("click", (e) => {
-      if (e.target === successModal) successModal.classList.add("hidden");
-    });
-
     // Cambia el placeholder del número de documento según el tipo seleccionado
     const docTypeSelect = form?.querySelector("[data-doc-type]") as HTMLSelectElement | null;
     const docNumberInput = form?.querySelector("[data-doc-number]") as HTMLInputElement | null;
