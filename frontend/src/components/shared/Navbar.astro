@@ -66,6 +66,17 @@ try {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
   }
 
+  /* Hamburger oscuro en páginas sin hero (data-navbar-solid) o con navbar blanco */
+  body[data-navbar-solid] #mobile-menu-btn,
+  #navbar:not(.bg-transparent) #mobile-menu-btn {
+    color: #111827 !important;
+  }
+
+  /* Hamburger blanco solo cuando navbar es transparente en páginas con hero */
+  body:not([data-navbar-solid]) #navbar.bg-transparent #mobile-menu-btn {
+    color: white !important;
+  }
+
   /* Force black text in all dropdowns by default */
   #megamenu-dropdown,
   #styles-dropdown,
