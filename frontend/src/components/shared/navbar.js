@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (!navbar) return;
 
+  // ── Scroll: cambiar fondo del navbar ──────────────────────────────────────
+  // contactBtn debe declararse ANTES del bloque navbarSolid para evitar ReferenceError
+  const contactBtn = document.getElementById('contact-btn');
+
   // Si la página no tiene hero, el navbar arranca sólido
   const navbarSolid = document.body.hasAttribute('data-navbar-solid');
   if (navbarSolid) {
@@ -34,9 +38,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     setContactBtn(true);
   }
-
-  // ── Scroll: cambiar fondo del navbar ──────────────────────────────────────
-  const contactBtn = document.getElementById('contact-btn');
 
   function setContactBtn(scrolled) {
     if (!contactBtn) return;
@@ -90,13 +91,18 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       setContactBtn(true);
     } else if (window.scrollY <= 50) {
-      navbar?.classList.remove('bg-white', 'shadow-md', 'menu-open');
-      navbar?.classList.add('bg-transparent');
-      document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
-        el.classList.remove('text-gray-900', 'hover:text-gray-600');
-        el.classList.add('text-white', 'hover:text-gray-300');
-      });
-      setContactBtn(false);
+      if (!navbarSolid) {
+        navbar?.classList.remove('bg-white', 'shadow-md', 'menu-open');
+        navbar?.classList.add('bg-transparent');
+        document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
+          el.classList.remove('text-gray-900', 'hover:text-gray-600');
+          el.classList.add('text-white', 'hover:text-gray-300');
+        });
+        setContactBtn(false);
+      } else {
+        // En páginas de fondo sólido solo quitar menu-open, mantener estilos oscuros
+        navbar?.classList.remove('menu-open');
+      }
     }
   });
 
