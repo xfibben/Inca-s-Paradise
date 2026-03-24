@@ -124,7 +124,7 @@ export interface ToursItineraryItem extends Struct.ComponentSchema {
     displayName: 'Itinerary Item';
   };
   attributes: {
-    description: Schema.Attribute.Text;
+    description: Schema.Attribute.RichText;
     highlight: Schema.Attribute.Text;
     image: Schema.Attribute.Media<'images'> &
       Schema.Attribute.SetPluginOptions<{

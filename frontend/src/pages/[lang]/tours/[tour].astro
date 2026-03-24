@@ -388,6 +388,26 @@ if (sourceTour.documentId) {
 
 const cleanText = (value: any) =>
   typeof value === "string" ? value.trim() : "";
+const toRichHtml = (value: any) => {
+  if (typeof value !== "string") return "";
+  const raw = value.trim();
+  if (!raw) return "";
+
+  // Si viene de rich text de Strapi, ya llega como HTML.
+  if (/<[a-z][\s\S]*>/i.test(raw)) return raw;
+
+  // Compatibilidad con contenido antiguo en texto plano.
+  return raw
+    .split(/\n{2,}/)
+    .map((paragraph) =>
+      `<p>${paragraph
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\n/g, "<br />")}</p>`
+    )
+    .join("");
+};
 const toNumber = (value: any) => {
   const number = Number(value);
   return Number.isFinite(number) ? number : null;
@@ -489,7 +509,7 @@ const itineraryItems = Array.isArray(sourceTour.itineraryItems)
       .map((item: any, index: number) => ({
         title: cleanText(item?.title),
         highlight: cleanText(item?.highlight),
-        description: cleanText(item?.description),
+        descriptionHtml: toRichHtml(item?.description),
         optional: cleanText(item?.optional),
         image: toAbsoluteMediaUrl(item?.image?.data ?? item?.image),
         imageAlt:
@@ -506,7 +526,7 @@ const itineraryItems = Array.isArray(sourceTour.itineraryItems)
       }))
       .filter(
         (item: any) =>
-          item.title || item.highlight || item.description || item.image
+          item.title || item.highlight || item.descriptionHtml || item.image
       )
   : [];
 const hasItinerarySection = itineraryItems.length > 0;
@@ -735,10 +755,11 @@ const hasBookingCard = Boolean(
                               {item.highlight}
                             </p>
                           ) : null}
-                          {item.description ? (
-                            <p class="mt-3 text-sm md:text-base leading-relaxed text-gray-700">
-                              {item.description}
-                            </p>
+                          {item.descriptionHtml ? (
+                            <div
+                              class="mt-3 text-sm md:text-base leading-relaxed text-gray-700 [&_p]:mb-3 [&_p:last-child]:mb-0"
+                              set:html={item.descriptionHtml}
+                            />
                           ) : null}
 
                           {
