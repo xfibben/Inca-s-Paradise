@@ -2,27 +2,28 @@
 interface Props {
     image: string;
     alt: string;
-    days: string;
-    location: string;
     title: string;
-    description: string;
+    metaTitle: string;
+    durationDays: number;
+    adultUnitPrice: number;
+    href?: string;
 }
 
-const { image, alt, days, location, title, description } = Astro.props;
+const { image, alt, title, metaTitle, durationDays, adultUnitPrice, href = '#' } = Astro.props;
 ---
 
-<div class="flex-shrink-0 w-72 h-[450px] relative overflow-hidden cursor-pointer group snap-start">
+<a href={href} class="flex-shrink-0 w-72 h-[450px] relative overflow-hidden cursor-pointer group snap-start">
     <img
         src={image}
         alt={alt}
         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
     />
     <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/65 flex flex-col justify-between p-6 text-white">
-        <span class="text-xs font-semibold uppercase tracking-wider">{days}</span>
+        <span class="text-xs font-semibold uppercase tracking-wider">{durationDays} days</span>
         <div class="flex flex-col gap-2">
-            <span class="text-xs font-semibold uppercase tracking-widest opacity-90">{location}</span>
             <p class="text-lg font-bold leading-tight" style="font-family: 'Playfair Display', serif;">{title}</p>
-            <p class="text-sm opacity-85 leading-relaxed">{description}</p>
+            <p class="text-sm opacity-85 leading-relaxed">{metaTitle}</p>
+            <span class="text-sm font-semibold"> $/ {adultUnitPrice}</span>
         </div>
     </div>
-</div>
+</a>

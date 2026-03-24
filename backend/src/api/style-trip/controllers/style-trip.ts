@@ -14,7 +14,11 @@ export default factories.createCoreController('api::style-trip.style-trip', ({ s
       populate: {
         image: true,
         wallpaper: true,
-        tours: true
+        tours: {
+          populate: {
+            heroSlideImages: true
+          }
+        }
       } as any,
     });
 
