@@ -399,7 +399,6 @@
           "localized": false
         }
       },
-      "required": true,
       "min": 0
     },
     "childUnitPrice": {
@@ -409,7 +408,6 @@
           "localized": false
         }
       },
-      "required": true,
       "min": 0
     },
     "discount": {

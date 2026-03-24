@@ -991,7 +991,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
   };
   attributes: {
     adultUnitPrice: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: false;
@@ -1004,7 +1003,6 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
         number
       >;
     childUnitPrice: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: false;

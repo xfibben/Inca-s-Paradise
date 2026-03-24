@@ -17,9 +17,7 @@ const strapiLocale =
   : currentLang === 'it' ? 'it'
   : currentLang === 'fr' ? 'fr'
   : currentLang;
-console.log('=== STYLE-TRIPS PAGE ===');
-console.log('Slug:', slug);
-console.log('STRAPI_URL:', STRAPI_URL);
+
 
 function toSlug(name: string): string {
   return name
@@ -38,10 +36,9 @@ let carouselTours: any[] = [];
 try {
   const fetchUrl = `${STRAPI_URL}/api/style-trips?filters[slug][$eq]=${slug}` +
     `&populate[wallpaper]=*` +
-    `&populate[tours][fields][0]=title&populate[tours][fields][1]=slug` +
-    `&populate[tours][fields][2]=tourType&populate[tours][fields][3]=showInStyles` +
     `&populate[tours][populate][heroSlideImages][fields][0]=url` +
     `&populate[tours][populate][heroSlideImages][fields][1]=formats` +
+    `&populate[tours][populate][heroSlideImages][fields][2]=alternativeText` +
     `&locale=${strapiLocale}&status=published`;
 
   const res = await fetch(fetchUrl);
@@ -204,7 +201,7 @@ const heroImageUrl = heroImage?.formats?.medium?.url
         else if (index === 4) gridConfig = 'grid-column: 10 / 13; grid-row: 2 / 3;';
 
         return (
-          <a href="#" class="relative overflow-hidden cursor-pointer group" style={gridConfig}>
+          <a href={`/${currentLang}/tours/${tour.slug}`} class="relative overflow-hidden cursor-pointer group" style={gridConfig}>
             <span class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={`background-image: url('${tourImageUrl}');`}></span>
             <span class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60 flex flex-col justify-end p-6 text-white">
               <div class="text-2xl font-bold leading-tight" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</div>
@@ -240,13 +237,13 @@ const heroImageUrl = heroImage?.formats?.medium?.url
             ? `${STRAPI_PUBLIC_URL}${heroImg.url}`
             : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=400&fit=crop';
           return (
-            <div class="group relative overflow-hidden aspect-video cursor-pointer">
+            <a href={`/${currentLang}/tours/${tour.slug}`} class="group relative overflow-hidden aspect-video cursor-pointer">
               <img src={tourImageUrl} alt={tour.title} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
               <div class="absolute inset-0 bg-black/40 group-hover:bg-black/55 transition-colors duration-300"></div>
               <div class="absolute inset-0 flex flex-col justify-end p-4 text-white">
                 <p class="font-bold text-sm leading-tight" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</p>
               </div>
-            </div>
+            </a>
           );
         })}
       </div>
@@ -335,10 +332,11 @@ const heroImageUrl = heroImage?.formats?.medium?.url
             <CarouselCard
               image={tourImageUrl}
               alt={tour.title}
-              days={tour.slug}
-              location={tour.slug}
               title={tour.title}
-              description={tour.slug}
+              metaTitle={tour.metaTitle ?? ''}
+              durationDays={tour.durationDays ?? 0}
+              adultUnitPrice={tour.adultUnitPrice ?? 0}
+              href={`/${currentLang}/tours/${tour.slug}`}
             />
           );
         })}
