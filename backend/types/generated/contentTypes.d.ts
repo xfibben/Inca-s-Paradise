@@ -451,11 +451,31 @@ export interface ApiDestinoDetalleDestinoDetalle
     };
   };
   attributes: {
-    blogButton: Schema.Attribute.String;
-    blogTitle: Schema.Attribute.String;
+    blogButton: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    blogTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     catalogInitialVisibleCount: Schema.Attribute.Integer;
-    catalogViewLessLabel: Schema.Attribute.String;
-    catalogViewMoreLabel: Schema.Attribute.String;
+    catalogViewLessLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    catalogViewMoreLabel: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -527,7 +547,12 @@ export interface ApiDestinoDetalleDestinoDetalle
           localized: true;
         };
       }>;
-    introTitle: Schema.Attribute.String;
+    introTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -551,9 +576,19 @@ export interface ApiDestinoDetalleDestinoDetalle
           localized: true;
         };
       }>;
-    primaryRibbon: Schema.Attribute.String;
+    primaryRibbon: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
-    secondaryRibbon: Schema.Attribute.String;
+    secondaryRibbon: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     seoCanonicalUrl: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
