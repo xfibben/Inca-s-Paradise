@@ -24,6 +24,18 @@ function toSlug(name: string): string {
 
 let navStyleTrips: any[] = [];
 let navDestinations: any[] = [];
+let navTipoTransportes: any[] = [];
+try {
+  const tipoTransporteUrl = `${STRAPI_URL}/api/tipo-transportes?locale=${strapiLocale}&status=published` +
+    `&fields[0]=nombre&fields[1]=slug&populate[image][fields][0]=url&populate[image][fields][1]=formats`;
+  const tipoRes = await fetch(tipoTransporteUrl);
+  if (tipoRes.ok) {
+    const json = await tipoRes.json();
+    navTipoTransportes = json.data ?? [];
+  }
+} catch (e) {
+  console.error('[Navbar] Error tipo-transportes:', e);
+}
 try {
   const styleUrl = `${STRAPI_URL}/api/style-trips?populate=*&locale=${strapiLocale}&status=published`;
   const destUrl = `${STRAPI_URL}/api/destino-detalles?locale=${strapiLocale}` +
@@ -123,6 +135,15 @@ try {
 
   /* White text for styles menu footer - OVERRIDE ALL */
   #styles-menu-footer {
+    color: #ffffff !important;
+  }
+
+  /* Transporte dropdown — texto negro por defecto */
+  #transport-dropdown {
+    color: #000 !important;
+  }
+  /* Texto blanco sobre las cards de imagen */
+  #transport-dropdown .transport-item-grid h3 {
     color: #ffffff !important;
   }
 </style>
@@ -386,7 +407,53 @@ try {
           </div>
         </div>
 
-        <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.transport}</a>
+        <!-- Transporte con Megamenu -->
+        <div class="relative h-full flex items-center" id="transport-container">
+          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.transport}</a>
+
+          <!-- Dropdown transporte — grid de 4 (igual a estilos de viaje) -->
+          <div id="transport-dropdown" class="fixed left-0 right-0 top-24 pt-0 hidden z-50 w-full">
+            <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
+              <div class="grid grid-cols-4 gap-0 h-full w-full">
+                {navTipoTransportes.map((item: any) => {
+                  const navImg = Array.isArray(item.image) ? item.image[0] : item.image;
+                  const imgUrl = navImg?.formats?.medium?.url
+                    ? `${STRAPI_PUBLIC_URL}${navImg.formats.medium.url}`
+                    : navImg?.url
+                    ? `${STRAPI_PUBLIC_URL}${navImg.url}`
+                    : null;
+                  return (
+                    <a
+                      href={item.slug ? `/${currentLang}/tipo-transporte/${item.slug}` : `/${currentLang}/tipo-transporte/`}
+                      class="transport-item-grid group relative overflow-hidden cursor-pointer transition-all duration-300 hover:z-20"
+                    >
+                      {imgUrl ? (
+                        <img src={imgUrl} alt={item.nombre} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      ) : (
+                        <div class="w-full h-full bg-stone-400" />
+                      )}
+                      <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300" />
+                      <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white border-b-2 border-transparent group-hover:border-white transition-all duration-300">
+                        <h3 class="text-sm lg:text-base font-medium" style="font-family: 'Playfair Display', serif; font-style: italic;">
+                          {item.nombre}
+                        </h3>
+                      </div>
+                    </a>
+                  );
+                })}
+                {/* Placeholders si aún no hay 4 registros */}
+                {Array.from({ length: Math.max(0, 4 - navTipoTransportes.length) }).map(() => (
+                  <div class="relative overflow-hidden bg-stone-200">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                      <span class="text-stone-400 text-sm italic" style="font-family: 'Playfair Display', serif;">Próximamente</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.blog}</a>
       </div>
 
@@ -526,8 +593,40 @@ try {
         </div>
       </div>
 
-      <!-- Other Links -->
-      <a href="#" class="block text-white text-sm hover:text-gray-300 transition px-4 py-2">{t.nav.transport}</a>
+      <!-- Transporte Mobile -->
+      <div class="relative">
+        <button id="mobile-transport-btn" class="block w-full text-left px-4 py-2 text-white text-sm hover:text-gray-300 transition bg-white/10 rounded">
+          {t.nav.transport} ▼
+        </button>
+        <div id="mobile-transport-menu" class="hidden rounded mt-1 max-h-72 overflow-y-auto">
+          <div class="grid grid-cols-2 gap-1 p-1">
+            {navTipoTransportes.map((item: any) => {
+              const navImg = Array.isArray(item.image) ? item.image[0] : item.image;
+              const imgUrl = navImg?.formats?.medium?.url
+                ? `${STRAPI_PUBLIC_URL}${navImg.formats.medium.url}`
+                : navImg?.url
+                ? `${STRAPI_PUBLIC_URL}${navImg.url}`
+                : null;
+              return (
+                <a
+                  href={item.slug ? `/${currentLang}/tipo-transporte/${item.slug}` : `/${currentLang}/tipo-transporte/`}
+                  class="relative h-16 overflow-hidden rounded block"
+                >
+                  {imgUrl ? (
+                    <img src={imgUrl} alt={item.nombre} class="w-full h-full object-cover" />
+                  ) : (
+                    <div class="w-full h-full bg-stone-400" />
+                  )}
+                  <div class="absolute inset-0 bg-black/50" />
+                  <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">
+                    {item.nombre}
+                  </span>
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </div>
       
       <!-- Sustainability Mobile -->
       <div class="relative">
@@ -574,21 +673,25 @@ try {
 <div id="mobile-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onclick="document.getElementById('mobile-menu-btn').click()"></div>
 
 <!-- Exponer traducciones al script externo -->
-<script is:inline define:vars={{ translations: t, navStyleTrips, navDestinations, STRAPI_PUBLIC_URL, currentLang, languages }}>
+<script is:inline define:vars={{ translations: t, navStyleTrips, navDestinations, navTipoTransportes, STRAPI_PUBLIC_URL, currentLang, languages }}>
   window.__navbarT = translations;
   window.__navbarStyleTrips = navStyleTrips;
   window.__navbarDestinations = navDestinations;
+  window.__navbarTipoTransportes = navTipoTransportes;
   window.__strapiPublicUrl = STRAPI_PUBLIC_URL;
   window.__currentLang = currentLang;
   window.__navbarLanguages = languages;
 </script>
+
 
 <!-- Lógica del navbar en archivo separado -->
 <script src="./navbar.js"></script>
 
 <!-- Initialize dynamic languages -->
 <script>
-  function buildLanguageUrl(languageCode) {
+  const _w = window as any;
+
+  function buildLanguageUrl(languageCode: string): string {
     const currentPath = window.location.pathname;
     const pathMatch = currentPath.match(/^\/[a-z]{2}(.*)/);
     const relativePath = pathMatch ? pathMatch[1] : '/';
@@ -596,16 +699,16 @@ try {
   }
 
   function initializeLanguages() {
-    const languages = window.__navbarLanguages;
+    const languages = _w.__navbarLanguages;
     if (languages) {
       updateLanguageSwitchers(languages);
-      if (window.updateLanguageSwitcherDesktop) {
-        window.updateLanguageSwitcherDesktop(languages);
+      if (_w.updateLanguageSwitcherDesktop) {
+        _w.updateLanguageSwitcherDesktop(languages);
       }
     }
   }
 
-  function updateLanguageSwitchers(languages) {
+  function updateLanguageSwitchers(languages: any) {
     // Detect current language from URL
     const pathMatch = window.location.pathname.match(/^\/([a-z]{2})\//);
     const currentLangCode = pathMatch ? pathMatch[1] : 'es';
@@ -659,7 +762,7 @@ try {
 
         const span = document.createElement('span');
         span.className = 'relative z-10 font-semibold';
-        span.textContent = name;
+        span.textContent = name as string;
         link.appendChild(span);
 
         // Attach click handler IMMEDIATELY
@@ -693,16 +796,16 @@ try {
   }
 
   // Fallback: Establecer idiomas por defecto
-  if (!window.__navbarLanguages) {
-    window.__navbarLanguages = {
+  if (!_w.__navbarLanguages) {
+    _w.__navbarLanguages = {
       es: 'Spanish',
       en: 'English',
       pt: 'Portuguese',
       fr: 'French',
       it: 'Italian'
     };
-    if (window.updateLanguageSwitcherDesktop) {
-      window.updateLanguageSwitcherDesktop(window.__navbarLanguages);
+    if (_w.updateLanguageSwitcherDesktop) {
+      _w.updateLanguageSwitcherDesktop(_w.__navbarLanguages);
     }
   }
 </script>

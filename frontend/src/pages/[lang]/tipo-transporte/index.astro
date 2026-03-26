@@ -1,0 +1,78 @@
+---
+import { getTranslation, languages, defaultLanguage, type Language } from '../../../i18n';
+import '../../../styles/global.css';
+import Navbar from '../../../components/shared/Navbar.astro';
+import Footer from '../../../components/shared/Footer.astro';
+import TipoTransporteHero from '../../../components/tipo-transporte/TipoTransporteHero.astro';
+import TipoTransporteGrid from '../../../components/tipo-transporte/TipoTransporteGrid.astro';
+
+export function getStaticPaths() {
+  return Object.keys(languages).map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+
+const currentLang = Object.keys(languages).includes(lang as string)
+  ? (lang as Language)
+  : defaultLanguage;
+
+if (!Object.keys(languages).includes(lang as string)) {
+  return Astro.redirect(`/${currentLang}/tipo-transporte/`);
+}
+
+const t = getTranslation(currentLang);
+
+const STRAPI_URL = import.meta.env.STRAPI_URL;
+const PUBLIC_STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL;
+
+const strapiLocale =
+  currentLang === 'pt' ? 'pt'
+  : currentLang === 'es' ? 'es-PE'
+  : currentLang;
+
+// Fetch de tipos de transporte
+let tiposTransporte: any[] = [];
+
+try {
+  const res = await fetch(
+    `${STRAPI_URL}/api/tipo-transportes?locale=${strapiLocale}&status=published` +
+    `&fields[0]=nombre&fields[1]=slug` +
+    `&populate[image]=*` +
+    `&sort=nombre:asc`
+  );
+  if (res.ok) {
+    const json = await res.json();
+    tiposTransporte = json?.data ?? [];
+  }
+} catch (e) {
+  console.error("Error al obtener tipos de transporte:", e);
+}
+---
+
+<html lang={currentLang}>
+  <head>
+    <meta charset="utf-8" />
+    <title>Tipos de Transporte — Inca's Paradise</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="description" content="Opciones de transporte para explorar los destinos más increíbles del Perú con Inca's Paradise." />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+
+  <body class="bg-white text-stone-800 overflow-x-hidden flex flex-col min-h-screen">
+
+    <Navbar t={t} currentLang={currentLang} />
+
+    <main class="flex-1">
+      <TipoTransporteHero t={t} />
+      <TipoTransporteGrid
+        tipos={tiposTransporte}
+        publicStrapiUrl={PUBLIC_STRAPI_URL}
+        lang={currentLang}
+      />
+    </main>
+
+    <Footer currentLang={currentLang} t={t} />
+
+  </body>
+</html>

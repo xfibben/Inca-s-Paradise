@@ -1,0 +1,14 @@
+---
+// Redirige al listado de tipos de transporte
+export function getStaticPaths() {
+  return [
+    { params: { lang: 'es' } },
+    { params: { lang: 'en' } },
+    { params: { lang: 'pt' } },
+    { params: { lang: 'fr' } },
+    { params: { lang: 'it' } },
+  ];
+}
+
+return Astro.redirect(`/${Astro.params.lang}/tipo-transporte/`, 301);
+---
