@@ -3,6 +3,8 @@ import { getTranslation, languages, defaultLanguage, type Language } from '../..
 import '../../../styles/global.css';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
+import BookingCard from '../../../components/tours/BookingCard.astro';
+import BookingModal from '../../../components/tours/BookingModal.astro';
 
 export function getStaticPaths() {
   // SSR: rutas generadas dinámicamente; retornamos array vacío
@@ -36,7 +38,9 @@ try {
     `&populate[wallpaper]=*` +
     `&populate[destino_origen][fields][0]=title` +
     `&populate[destino_llegada][fields][0]=title` +
-    `&populate[tipos_transporte][fields][0]=nombre&populate[tipos_transporte][fields][1]=slug`
+    `&populate[tipos_transporte][fields][0]=nombre&populate[tipos_transporte][fields][1]=slug` +
+    `&populate[includedItems][fields][0]=text&populate[includedItems][fields][1]=icon` +
+    `&populate[excludedItems][fields][0]=text&populate[excludedItems][fields][1]=icon`
   );
   if (res.ok) {
     const json = await res.json();
@@ -58,16 +62,36 @@ function getImageUrl(media: any): string | null {
   return url.startsWith('http') ? url : `${PUBLIC_STRAPI_URL}${url}`;
 }
 
-const wallpaperUrl = getImageUrl(transporte.wallpaper);
-const imageUrl = getImageUrl(transporte.image);
+// Variables para el BookingCard
+type SupportedLang = "es" | "en" | "pt" | "fr" | "it";
+const bookingLang: SupportedLang = (["es","en","pt","fr","it"].includes(currentLang) ? currentLang : "es") as SupportedLang;
+const nowPeru = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Lima" }));
+const calendarLocale = currentLang === "en" ? "en-US" : "es-PE";
+const calendarStart = `${nowPeru.getFullYear()}-${String(nowPeru.getMonth() + 1).padStart(2, "0")}`;
+const calendarMonth = nowPeru.toLocaleDateString(calendarLocale, { month: "long", year: "numeric", timeZone: "America/Lima" });
+const weekdays = currentLang === "en"
+  ? ["M","T","W","Th","F","S","S"]
+  : ["L","M","X","Ju","V","S","D"];
+const bookingTitle = currentLang === "en" ? "BOOK NOW" : "RESERVA AHORA";
+const availability = currentLang === "en" ? "Real-time availability" : "Disponibilidad en tiempo real";
 
-// Etiquetas de tipo de transporte
-const tipoLabel: Record<string, string> = {
-  privado: "Transporte Privado",
-  publico: "Transporte Público",
-  tren: "Tren",
-  kayak: "Kayak",
-};
+// Precios y descripción
+const adultPrice = transporte.adultUnitPrice ?? 0;
+const childPrice = transporte.childUnitPrice ?? 0;
+const discountPrice = transporte.discount ?? 0;
+const descripcion: string = transporte.descripcion ?? '';
+
+// Incluye / No incluye
+const includedTitle = transporte.includedTitle ?? '';
+const includedItems = Array.isArray(transporte.includedItems)
+  ? transporte.includedItems.map((i: any) => ({ text: i.text ?? '', icon: i.icon ?? '' })).filter((i: any) => i.text)
+  : [];
+const excludedTitle = transporte.excludedTitle ?? '';
+const excludedItems = Array.isArray(transporte.excludedItems)
+  ? transporte.excludedItems.map((i: any) => ({ text: i.text ?? '', icon: i.icon ?? '' })).filter((i: any) => i.text)
+  : [];
+const hasIncludedBlock = Boolean(includedTitle || includedItems.length);
+const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
 ---
 
 <html lang={currentLang}>
@@ -80,82 +104,34 @@ const tipoLabel: Record<string, string> = {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
 
-  <body class="bg-white text-stone-800 overflow-x-hidden flex flex-col min-h-screen">
+  <body class="bg-white text-stone-800 overflow-x-hidden flex flex-col min-h-screen" data-navbar-solid>
 
     <Navbar t={t} currentLang={currentLang} />
 
     <main class="flex-1">
 
-      <!-- Hero con wallpaper -->
-      <section class="relative w-full overflow-hidden" style="height: 50vh;">
-        {wallpaperUrl ? (
-          <img
-            src={wallpaperUrl}
-            alt={transporte.nombre}
-            class="absolute inset-0 w-full h-full object-cover"
-            fetchpriority="high"
-          />
-        ) : (
-          <div class="absolute inset-0 bg-linear-to-br from-stone-600 to-stone-900" />
-        )}
-        <div class="absolute inset-0 bg-black/50" />
-
-        <div class="relative h-full flex flex-col justify-center items-center text-center px-4">
-          <!-- Tipo de transporte -->
-          <span class="text-white/70 uppercase tracking-widest text-xs mb-3">
-            {tipoLabel[transporte.tipo_transporte] ?? transporte.tipo_transporte}
-          </span>
-          <!-- Nombre -->
-          <h1
-            class="text-4xl md:text-6xl text-white leading-tight max-w-3xl"
-            style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;"
-          >
-            {transporte.nombre}
-          </h1>
-          <!-- Ruta origen → llegada -->
-          {(transporte.destino_origen?.length > 0 || transporte.destino_llegada?.length > 0) && (
-            <p class="mt-4 text-white/80 flex items-center gap-2 text-sm md:text-base">
-              <span>{transporte.destino_origen?.[0]?.title ?? "—"}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-              </svg>
-              <span>{transporte.destino_llegada?.[0]?.title ?? "—"}</span>
-            </p>
-          )}
-        </div>
-      </section>
+      <!-- Título -->
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-0">
+        <h1
+          class="text-4xl md:text-6xl text-stone-900 leading-tight max-w-3xl"
+          style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;"
+        >
+          {transporte.nombre}
+        </h1>
+      </div>
 
       <!-- Detalle -->
-      <section class="py-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-
-          <!-- Imagen principal -->
-          {imageUrl && (
-            <div class="rounded-2xl overflow-hidden shadow-lg">
-              <img
-                src={imageUrl}
-                alt={transporte.nombre}
-                class="w-full h-72 md:h-96 object-cover"
-                loading="lazy"
-              />
-            </div>
-          )}
-
-          <!-- Info -->
-          <div class="flex flex-col gap-6">
-            <!-- Tipo -->
-            <div>
-              <p class="text-amber-600 uppercase tracking-widest text-xs mb-1">Categoría</p>
-              <p class="text-stone-700 text-lg">{tipoLabel[transporte.tipo_transporte] ?? transporte.tipo_transporte}</p>
-            </div>
+      <section class="pt-6 pb-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10 lg:items-start">
+        <div class="flex flex-col gap-6">
 
             <!-- Tipos de transporte asociados -->
             {transporte.tipos_transporte?.length > 0 && (
               <div>
-                <p class="text-amber-600 uppercase tracking-widest text-xs mb-2">Tipos</p>
+                <p class="text-[#1AA093] uppercase tracking-widest text-xs mb-2">{t.transporte.tipos}</p>
                 <div class="flex flex-wrap gap-2">
                   {transporte.tipos_transporte.map((tt: any) => (
-                    <span class="px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-sm">
+                    <span class="px-3 py-1 bg-stone-100 text-stone-700  text-sm">
                       {tt.nombre}
                     </span>
                   ))}
@@ -163,47 +139,229 @@ const tipoLabel: Record<string, string> = {
               </div>
             )}
 
-            <!-- Destinos -->
-            {transporte.destino_origen?.length > 0 && (
-              <div>
-                <p class="text-amber-600 uppercase tracking-widest text-xs mb-2">Origen</p>
-                <div class="flex flex-wrap gap-2">
-                  {transporte.destino_origen.map((d: any) => (
-                    <span class="px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-sm">{d.title}</span>
-                  ))}
+            <!-- Datos del vehículo -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {transporte.nro_asientos && (
+                <div class="bg-stone-50  p-4 flex flex-col items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-[#1AA093]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20H7a2 2 0 01-2-2V9a2 2 0 012-2h1V6a3 3 0 016 0v1h1a2 2 0 012 2v9a2 2 0 01-2 2z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6M9 16h6"/>
+                  </svg>
+                  <p class="text-stone-800 font-semibold text-lg leading-none">{transporte.nro_asientos}</p>
+                  <p class="text-[#1AA093] uppercase tracking-widest text-xs text-center">{t.transporte.nroAsientos}</p>
                 </div>
+              )}
+              {transporte.modelo_vehiculo && (
+                <div class="bg-stone-50  p-4 flex flex-col items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-[#1AA093]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 17H5a2 2 0 01-2-2V9a2 2 0 012-2h1l2-3h6l2 3h1a2 2 0 012 2v6a2 2 0 01-2 2h-3"/>
+                    <circle cx="7.5" cy="17.5" r="1.5" stroke-width="1.5"/>
+                    <circle cx="16.5" cy="17.5" r="1.5" stroke-width="1.5"/>
+                  </svg>
+                  <p class="text-stone-800 font-semibold text-lg leading-none">{transporte.modelo_vehiculo}</p>
+                  <p class="text-[#1AA093] uppercase tracking-widest text-xs text-center">{t.transporte.modeloVehiculo}</p>
+                </div>
+              )}
+              {transporte.duracion_viaje && (
+                <div class="bg-stone-50  p-4 flex flex-col items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-[#1AA093]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <circle cx="12" cy="12" r="9" stroke-width="1.5"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 7v5l3 3"/>
+                  </svg>
+                  <p class="text-stone-800 font-semibold text-lg leading-none">{transporte.duracion_viaje}</p>
+                  <p class="text-[#1AA093] uppercase tracking-widest text-xs text-center">{t.transporte.duracionViaje}</p>
+                </div>
+              )}
+              {transporte.distancia && (
+                <div class="bg-stone-50  p-4 flex flex-col items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-[#1AA093]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                  </svg>
+                  <p class="text-stone-800 font-semibold text-lg leading-none">{transporte.distancia}</p>
+                  <p class="text-[#1AA093] uppercase tracking-widest text-xs text-center">{t.transporte.distancia}</p>
+                </div>
+              )}
+            </div>
+
+            <!-- Destinos + imagen -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+              <div class="flex flex-col gap-4">
+                {transporte.destino_origen?.length > 0 && (
+                  <div>
+                    <p class="text-[#1AA093] uppercase tracking-widest text-xs mb-2">{t.transporte.origen}</p>
+                    <div class="flex flex-wrap gap-2">
+                      {transporte.destino_origen.map((d: any) => (
+                        <span class="px-3 py-1 bg-stone-100 text-stone-700  text-sm">
+                          {d.title}{transporte.descripcion_origen ? ` — ${transporte.descripcion_origen}` : ''}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {transporte.destino_llegada?.length > 0 && (
+                  <div>
+                    <p class="text-[#1AA093] uppercase tracking-widest text-xs mb-2">{t.transporte.destino}</p>
+                    <div class="flex flex-wrap gap-2">
+                      {transporte.destino_llegada.map((d: any) => (
+                        <span class="px-3 py-1 bg-stone-100 text-stone-700  text-sm">
+                          {d.title}{transporte.descripcion_llegada ? ` — ${transporte.descripcion_llegada}` : ''}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {getImageUrl(transporte.image) && (
+                <div class=" overflow-hidden shadow-md">
+                  <img
+                    src={getImageUrl(transporte.image)!}
+                    alt={transporte.nombre}
+                    class="w-full h-52 object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              )}
+            </div>
+
+            <!-- Descripción -->
+            {descripcion && (
+              <div
+                class="prose prose-stone max-w-none text-[#374151] markdown-content text-justify"
+                data-markdown={descripcion}
+              />
             )}
 
-            {transporte.destino_llegada?.length > 0 && (
-              <div>
-                <p class="text-amber-600 uppercase tracking-widest text-xs mb-2">Destino</p>
-                <div class="flex flex-wrap gap-2">
-                  {transporte.destino_llegada.map((d: any) => (
-                    <span class="px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-sm">{d.title}</span>
-                  ))}
+            <!-- Incluye / No incluye -->
+            {(hasIncludedBlock || hasExcludedBlock) && (
+              <section class="pb-16 md:pb-20">
+                <div class="grid grid-cols-2 gap-3 lg:gap-6">
+                  {hasIncludedBlock && (
+                    <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
+                      {includedTitle && (
+                        <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
+                          <span class="mr-2 text-green-700">✓</span>{includedTitle}
+                        </h3>
+                      )}
+                      <div class="divide-y divide-[#e5e7eb]">
+                        {includedItems.map((item: any) => (
+                          <div class="flex items-start gap-2 py-2 md:py-4">
+                            <span class="mt-0.5 inline-flex h-5 w-5 md:h-6 md:w-6 shrink-0 items-center justify-center rounded-full border border-green-700 text-xs md:text-sm text-green-700">
+                              {item.icon || "✓"}
+                            </span>
+                            <p class="text-xs md:text-lg leading-snug text-[#374151]">{item.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  )}
+                  {hasExcludedBlock && (
+                    <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
+                      {excludedTitle && (
+                        <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
+                          <span class="mr-2 text-[#6b7280]">✕</span>{excludedTitle}
+                        </h3>
+                      )}
+                      <div class="divide-y divide-[#e5e7eb]">
+                        {excludedItems.map((item: any) => (
+                          <div class="flex items-start gap-2 py-2 md:py-4">
+                            <span class="mt-0.5 inline-flex h-5 w-5 md:h-6 md:w-6 shrink-0 items-center justify-center rounded-full border border-[#9ca3af] text-xs md:text-sm text-[#6b7280]">
+                              {item.icon || "✕"}
+                            </span>
+                            <p class="text-xs md:text-lg leading-snug text-[#374151]">{item.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  )}
                 </div>
-              </div>
+              </section>
             )}
 
             <!-- Volver al listado -->
             <a
               href={`/${currentLang}/tipo-transporte/`}
-              class="mt-4 inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 text-sm font-medium transition-colors"
+              class="mt-4 inline-flex items-center gap-2 text-[#1AA093] hover:text-[#158a7e] text-sm font-medium transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
               </svg>
-              Ver todos los transportes
+              {t.transporte.verTodos}
             </a>
-          </div>
 
+        </div>
+
+          <div class="mt-6">
+          <BookingCard
+            lang={bookingLang}
+            titulo={bookingTitle}
+            duracion={transporte.duracion_viaje ?? ''}
+            disponibilidad={availability}
+            precioAdultoUsd={adultPrice}
+            precioNinoUsd={childPrice}
+            descuentoUsd={discountPrice}
+            duracionDias={1}
+            calendarLocale={calendarLocale}
+            calendarStart={calendarStart}
+            calendarMonth={calendarMonth}
+            weekdays={weekdays}
+          />
+          </div>
         </div>
       </section>
 
     </main>
 
+    <BookingModal lang={bookingLang} tourTitle={transporte.nombre} tourSlug={transporte.slug} />
     <Footer currentLang={currentLang} t={t} />
+
+    <!-- Inyecta datos del transporte para el BookingModal -->
+    <script is:inline define:vars={{ transporteDocumentId: transporte.documentId, transporteNumericId: transporte.id }}>
+      window.__transporteData = { documentId: transporteDocumentId, numericId: transporteNumericId };
+    </script>
+
+    <!-- Renderiza markdown en la descripción -->
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@10.0.0/dist/markdown-it.min.js"></script>
+    <script>
+      function processMarkdown() {
+        if (typeof (window as any).markdownit !== 'undefined') {
+          const md = (window as any).markdownit();
+          document.querySelectorAll('.markdown-content').forEach((el: Element) => {
+            const raw = el.getAttribute('data-markdown');
+            if (raw) {
+              el.innerHTML = md.render(raw);
+              el.removeAttribute('data-markdown');
+            }
+          });
+        } else {
+          setTimeout(processMarkdown, 50);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', processMarkdown);
+    </script>
+
+    <!-- Fija el BookingCard justo debajo del navbar (top-20 = 80px) -->
+    <script is:inline>
+      (() => {
+        const cardEl = document.querySelector('#booking-card-content');
+        const footer = document.querySelector('footer');
+        if (!cardEl) return;
+
+        const navbarH = 80;
+
+        const updateTop = () => {
+          if (window.innerWidth < 1024) { cardEl.style.top = ''; return; }
+          const footerTop = footer ? footer.getBoundingClientRect().top : Infinity;
+          const cardH = cardEl.offsetHeight;
+          const maxTop = footerTop - cardH;
+          cardEl.style.top = `${Math.min(navbarH, maxTop)}px`;
+        };
+
+        window.addEventListener('scroll', updateTop, { passive: true });
+        window.addEventListener('resize', updateTop, { passive: true });
+        updateTop();
+      })();
+    </script>
 
   </body>
 </html>

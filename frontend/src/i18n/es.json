@@ -1,4 +1,21 @@
 {
+  "transporte": {
+    "tipoLabel": "Tipo de Transporte",
+    "disponibles": "Disponibles",
+    "enCategoria": "Transportes en esta categoría",
+    "verTodosTipos": "Ver todos los tipos de transporte",
+    "categoria": "Categoría",
+    "tipos": "Tipos",
+    "origen": "Origen",
+    "destino": "Destino",
+    "verTodos": "Ver todos los transportes",
+    "nroAsientos": "N° de asientos",
+    "modeloVehiculo": "Modelo de vehículo",
+    "duracionViaje": "Duración del viaje",
+    "distancia": "Distancia",
+    "descripcionOrigen": "Descripción origen",
+    "descripcionLlegada": "Descripción llegada"
+  },
   "nav": {
     "destinations": "Destinos",
     "tripStyles": "Estilos de Viaje",

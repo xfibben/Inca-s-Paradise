@@ -22,6 +22,12 @@
       "target": "api::tour-detalle.tour-detalle",
       "inversedBy": "reservations"
     },
+    "transportes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::transporte.transporte",
+      "inversedBy": "reservas"
+    },
     "email": {
       "type": "email",
       "required": true
@@ -59,13 +65,6 @@
     "monto_subtotal": {
       "type": "decimal",
       "required": false
-    },
-    "igv_porcentaje": {
-      "type": "decimal",
-      "required": true,
-      "default": 18,
-      "min": 0,
-      "max": 100
     },
     "monto_final": {
       "type": "decimal",

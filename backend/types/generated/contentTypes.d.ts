@@ -812,16 +812,6 @@ export interface ApiReservaReserva extends Struct.CollectionTypeSchema {
       Schema.Attribute.DefaultTo<'pendiente'>;
     fecha_fin: Schema.Attribute.DateTime & Schema.Attribute.Required;
     fecha_inicio: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    igv_porcentaje: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          max: 100;
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<18>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -844,6 +834,10 @@ export interface ApiReservaReserva extends Struct.CollectionTypeSchema {
     tour: Schema.Attribute.Relation<
       'manyToOne',
       'api::tour-detalle.tour-detalle'
+    >;
+    transportes: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::transporte.transporte'
     >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1047,7 +1041,7 @@ export interface ApiTipoTransporteTipoTransporte
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    descripcion: Schema.Attribute.Text &
+    descripcion: Schema.Attribute.RichText &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: true;
@@ -1466,9 +1460,51 @@ export interface ApiTransporteTransporte extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
+    adultUnitPrice: Schema.Attribute.Decimal &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    childUnitPrice: Schema.Attribute.Decimal &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    descripcion: Schema.Attribute.RichText &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    descripcion_llegada: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    descripcion_origen: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     destino_llegada: Schema.Attribute.Relation<
       'manyToMany',
       'api::destino-detalle.destino-detalle'
@@ -1487,10 +1523,59 @@ export interface ApiTransporteTransporte extends Struct.CollectionTypeSchema {
           localized: false;
         };
       }>;
+    discount: Schema.Attribute.Decimal &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }> &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      > &
+      Schema.Attribute.DefaultTo<0>;
+    distancia: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    duracion_viaje: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    excludedItems: Schema.Attribute.Component<'tours.inclusion-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    excludedTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     image: Schema.Attribute.Media<'images'> &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
           localized: false;
+        };
+      }>;
+    includedItems: Schema.Attribute.Component<'tours.inclusion-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    includedTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
         };
       }>;
     locale: Schema.Attribute.String;
@@ -1498,6 +1583,12 @@ export interface ApiTransporteTransporte extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::transporte.transporte'
     >;
+    modelo_vehiculo: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     nombre: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
@@ -1505,7 +1596,14 @@ export interface ApiTransporteTransporte extends Struct.CollectionTypeSchema {
           localized: true;
         };
       }>;
+    nro_asientos: Schema.Attribute.Integer &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
+    reservas: Schema.Attribute.Relation<'manyToMany', 'api::reserva.reserva'>;
     slug: Schema.Attribute.UID<'nombre'> &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{

@@ -41,6 +41,7 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     ticketInfo: "Guarda este número para hacer tu seguimiento. Nos contactaremos pronto con los detalles de tu reserva.",
     copyTicket: "Copiar Ticket",
     sending: "Enviando...",
+    discount: "Descuento",
   },
   en: {
     title: "Book Tour",
@@ -73,6 +74,7 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     ticketInfo: "Save this number to track your booking. We will contact you soon with booking details.",
     copyTicket: "Copy Ticket",
     sending: "Sending...",
+    discount: "Discount",
   },
   pt: {
     title: "Reservar Tour",
@@ -105,6 +107,7 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     ticketInfo: "Guarde este número para acompanhar sua reserva. Entraremos em contato em breve com os detalhes.",
     copyTicket: "Copiar Ticket",
     sending: "Enviando...",
+    discount: "Desconto",
   },
   fr: {
     title: "Réserver le Tour",
@@ -137,6 +140,7 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     ticketInfo: "Conservez ce numéro pour suivre votre réservation. Nous vous contacterons bientôt avec les détails.",
     copyTicket: "Copier le Ticket",
     sending: "Envoi en cours...",
+    discount: "Remise",
   },
   it: {
     title: "Prenota il Tour",
@@ -169,6 +173,7 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     ticketInfo: "Salva questo numero per seguire la tua prenotazione. Ti contatteremo presto con i dettagli.",
     copyTicket: "Copia Ticket",
     sending: "Invio in corso...",
+    discount: "Sconto",
   },
 };
 
@@ -203,9 +208,10 @@ const t = translations[lang] ?? translations.es;
           <span>{t.startDate}: <strong data-modal-fecha-inicio-label>{t.noDate}</strong></span>
           <span>{t.endDate}: <strong data-modal-fecha-fin-label>{t.noDate}</strong></span>
         </div>
-        <!-- Inputs ocultos para las fechas (vienen del calendario) -->
+        <!-- Inputs ocultos para las fechas y descuento USD (vienen del calendario/BookingCard) -->
         <input type="hidden" name="fecha_inicio" data-modal-fecha-inicio />
         <input type="hidden" name="fecha_fin" data-modal-fecha-fin />
+        <input type="hidden" name="descuento_usd" data-modal-descuento-usd value="0" />
       </div>
 
       <!-- Datos personales -->
@@ -327,6 +333,10 @@ const t = translations[lang] ?? translations.es;
           <span class="text-gray-700">{t.pricePerChild}:</span>
           <span class="font-medium text-gray-900" data-modal-precio-nino>—</span>
         </div>
+        <div class="hidden justify-between text-sm text-green-700" id="modal-descuento-row">
+          <span>{t.discount}:</span>
+          <span class="font-medium" data-modal-descuento>—</span>
+        </div>
         <div class="border-t border-gray-300 pt-2 flex justify-between">
           <span class="text-gray-700 font-medium">{t.total}:</span>
           <span class="text-xl font-bold text-[#1AA093]" data-modal-total>—</span>
@@ -431,6 +441,7 @@ const t = translations[lang] ?? translations.es;
   declare global {
     interface Window {
       __tourData?: { numericId: number | null; documentId: string | null };
+      __transporteData?: { numericId: number | null; documentId: string | null };
       __bookingTexts?: { sending: string; reserve: string };
       openBookingModal?: (data?: BookingData) => void;
     }
@@ -454,16 +465,24 @@ const t = translations[lang] ?? translations.es;
       const str = (v: FormDataEntryValue) => (typeof v === "string" ? v : "");
 
       const tourData = window.__tourData;
-      if (!tourData?.documentId && !tourData?.numericId) {
-        alert("Error: Tour no encontrado. Recarga la página.");
+      const transporteData = window.__transporteData;
+
+      // Debe existir al menos uno de los dos
+      if (!tourData?.documentId && !tourData?.numericId && !transporteData?.documentId && !transporteData?.numericId) {
+        alert("Error: Servicio no encontrado. Recarga la página.");
         return;
       }
 
       const toDatetime = (val: string) => val ? `${val}T00:00:00.000Z` : null;
-      // Strapi 5 usa documentId para relaciones; fallback a numeric id
-      const tourConnect = tourData.documentId
-        ? { connect: [tourData.documentId] }
-        : { connect: [{ id: tourData.numericId }] };
+
+      // Construir relaciones según tipo de reserva
+      const esTransporte = !tourData?.documentId && !tourData?.numericId;
+      const tourConnect = !esTransporte
+        ? (tourData.documentId ? { connect: [tourData.documentId] } : { connect: [{ id: tourData.numericId }] })
+        : undefined;
+      const transporteConnect = esTransporte && transporteData
+        ? (transporteData.documentId ? { connect: [transporteData.documentId] } : { connect: [{ id: transporteData.numericId }] })
+        : undefined;
 
       const reservaData = {
         data: {
@@ -477,9 +496,8 @@ const t = translations[lang] ?? translations.es;
           tipo_documento: str(raw.tipo_documento),
           numero_documento: str(raw.numero_documento),
           nacionalidad: str(raw.nacionalidad),
-          tour: tourConnect,
-          descuento: 0,
-          igv_porcentaje: 18,
+          ...(tourConnect ? { tour: tourConnect } : {}),
+          ...(transporteConnect ? { transportes: transporteConnect } : {}),
           estado: "pendiente",
         },
       };
@@ -588,17 +606,40 @@ const t = translations[lang] ?? translations.es;
       if (fechaInicioLabel) fechaInicioLabel.textContent = fechaInicio || "—";
       if (fechaFinLabel) fechaFinLabel.textContent = fechaFin || "—";
 
+      // Guardar descuento en USD en el hidden input
+      const descuentoHidden = form?.querySelector("[data-modal-descuento-usd]") as HTMLInputElement | null;
+      if (descuentoHidden) descuentoHidden.value = String(descuento);
+
       // Precios — usa la tasa y símbolo de la moneda seleccionada en BookingCard
-      const totalConvertido = (adultos * precioAdultoUsd + ninos * precioNinoUsd - descuento) * tasaCambio;
+      const bruto = (adultos * precioAdultoUsd + ninos * precioNinoUsd) * tasaCambio;
+      const descuentoConvertido = descuento * tasaCambio;
+      const totalConvertido = Math.max(0, bruto - descuentoConvertido);
       const totalFormateado = `${simboloMoneda}${totalConvertido.toFixed(decimalesMoneda)}`;
+
       const precioAdultoEl = form?.querySelector("[data-modal-precio-adulto]");
       const precioNinoEl = form?.querySelector("[data-modal-precio-nino]");
       const totalEl = form?.querySelector("[data-modal-total]");
+      const descuentoRow = document.getElementById('modal-descuento-row');
+      const descuentoEl = form?.querySelector("[data-modal-descuento]");
+
       if (precioAdultoEl) precioAdultoEl.textContent = precioAdultoLabel || `$${precioAdultoUsd.toFixed(0)}`;
       if (precioNinoEl) precioNinoEl.textContent = precioNinoLabel || `$${precioNinoUsd.toFixed(0)}`;
       if (totalEl) totalEl.textContent = totalFormateado;
 
+      // Mostrar fila de descuento solo si hay descuento
+      if (descuentoRow && descuentoEl) {
+        if (descuento > 0) {
+          descuentoRow.classList.remove('hidden');
+          descuentoRow.classList.add('flex');
+          descuentoEl.textContent = `-${simboloMoneda}${descuentoConvertido.toFixed(decimalesMoneda)}`;
+        } else {
+          descuentoRow.classList.add('hidden');
+          descuentoRow.classList.remove('flex');
+        }
+      }
+
       modal?.classList.remove("hidden");
     };
+
   })();
 </script>
