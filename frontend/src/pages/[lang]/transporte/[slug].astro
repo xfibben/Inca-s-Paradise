@@ -1,0 +1,209 @@
+---
+import { getTranslation, languages, defaultLanguage, type Language } from '../../../i18n';
+import '../../../styles/global.css';
+import Navbar from '../../../components/shared/Navbar.astro';
+import Footer from '../../../components/shared/Footer.astro';
+
+export function getStaticPaths() {
+  // SSR: rutas generadas dinámicamente; retornamos array vacío
+  return [];
+}
+
+const { lang, slug } = Astro.params;
+
+const currentLang = Object.keys(languages).includes(lang as string)
+  ? (lang as Language)
+  : defaultLanguage;
+
+const t = getTranslation(currentLang);
+
+const STRAPI_URL = import.meta.env.STRAPI_URL;
+const PUBLIC_STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL;
+
+const strapiLocale =
+  currentLang === 'pt' ? 'pt'
+  : currentLang === 'es' ? 'es-PE'
+  : currentLang;
+
+// Fetch del transporte por slug
+let transporte: any = null;
+
+try {
+  const res = await fetch(
+    `${STRAPI_URL}/api/transportes?filters[slug][$eq]=${slug}` +
+    `&locale=${strapiLocale}&status=published` +
+    `&populate[image]=*` +
+    `&populate[wallpaper]=*` +
+    `&populate[destino_origen][fields][0]=title` +
+    `&populate[destino_llegada][fields][0]=title` +
+    `&populate[tipos_transporte][fields][0]=nombre&populate[tipos_transporte][fields][1]=slug`
+  );
+  if (res.ok) {
+    const json = await res.json();
+    transporte = json?.data?.[0] ?? null;
+  }
+} catch (e) {
+  console.error("Error al obtener transporte:", e);
+}
+
+// Si no existe el transporte, redirigir al listado
+if (!transporte) {
+  return Astro.redirect(`/${currentLang}/tipo-transporte/`);
+}
+
+function getImageUrl(media: any): string | null {
+  if (!media) return null;
+  const url = media?.formats?.large?.url ?? media?.formats?.medium?.url ?? media?.url;
+  if (!url) return null;
+  return url.startsWith('http') ? url : `${PUBLIC_STRAPI_URL}${url}`;
+}
+
+const wallpaperUrl = getImageUrl(transporte.wallpaper);
+const imageUrl = getImageUrl(transporte.image);
+
+// Etiquetas de tipo de transporte
+const tipoLabel: Record<string, string> = {
+  privado: "Transporte Privado",
+  publico: "Transporte Público",
+  tren: "Tren",
+  kayak: "Kayak",
+};
+---
+
+<html lang={currentLang}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{transporte.nombre} — Inca's Paradise</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="description" content={`Conoce más sobre ${transporte.nombre} con Inca's Paradise.`} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+
+  <body class="bg-white text-stone-800 overflow-x-hidden flex flex-col min-h-screen">
+
+    <Navbar t={t} currentLang={currentLang} />
+
+    <main class="flex-1">
+
+      <!-- Hero con wallpaper -->
+      <section class="relative w-full overflow-hidden" style="height: 50vh;">
+        {wallpaperUrl ? (
+          <img
+            src={wallpaperUrl}
+            alt={transporte.nombre}
+            class="absolute inset-0 w-full h-full object-cover"
+            fetchpriority="high"
+          />
+        ) : (
+          <div class="absolute inset-0 bg-linear-to-br from-stone-600 to-stone-900" />
+        )}
+        <div class="absolute inset-0 bg-black/50" />
+
+        <div class="relative h-full flex flex-col justify-center items-center text-center px-4">
+          <!-- Tipo de transporte -->
+          <span class="text-white/70 uppercase tracking-widest text-xs mb-3">
+            {tipoLabel[transporte.tipo_transporte] ?? transporte.tipo_transporte}
+          </span>
+          <!-- Nombre -->
+          <h1
+            class="text-4xl md:text-6xl text-white leading-tight max-w-3xl"
+            style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;"
+          >
+            {transporte.nombre}
+          </h1>
+          <!-- Ruta origen → llegada -->
+          {(transporte.destino_origen?.length > 0 || transporte.destino_llegada?.length > 0) && (
+            <p class="mt-4 text-white/80 flex items-center gap-2 text-sm md:text-base">
+              <span>{transporte.destino_origen?.[0]?.title ?? "—"}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+              <span>{transporte.destino_llegada?.[0]?.title ?? "—"}</span>
+            </p>
+          )}
+        </div>
+      </section>
+
+      <!-- Detalle -->
+      <section class="py-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+
+          <!-- Imagen principal -->
+          {imageUrl && (
+            <div class="rounded-2xl overflow-hidden shadow-lg">
+              <img
+                src={imageUrl}
+                alt={transporte.nombre}
+                class="w-full h-72 md:h-96 object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
+
+          <!-- Info -->
+          <div class="flex flex-col gap-6">
+            <!-- Tipo -->
+            <div>
+              <p class="text-amber-600 uppercase tracking-widest text-xs mb-1">Categoría</p>
+              <p class="text-stone-700 text-lg">{tipoLabel[transporte.tipo_transporte] ?? transporte.tipo_transporte}</p>
+            </div>
+
+            <!-- Tipos de transporte asociados -->
+            {transporte.tipos_transporte?.length > 0 && (
+              <div>
+                <p class="text-amber-600 uppercase tracking-widest text-xs mb-2">Tipos</p>
+                <div class="flex flex-wrap gap-2">
+                  {transporte.tipos_transporte.map((tt: any) => (
+                    <span class="px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-sm">
+                      {tt.nombre}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <!-- Destinos -->
+            {transporte.destino_origen?.length > 0 && (
+              <div>
+                <p class="text-amber-600 uppercase tracking-widest text-xs mb-2">Origen</p>
+                <div class="flex flex-wrap gap-2">
+                  {transporte.destino_origen.map((d: any) => (
+                    <span class="px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-sm">{d.title}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {transporte.destino_llegada?.length > 0 && (
+              <div>
+                <p class="text-amber-600 uppercase tracking-widest text-xs mb-2">Destino</p>
+                <div class="flex flex-wrap gap-2">
+                  {transporte.destino_llegada.map((d: any) => (
+                    <span class="px-3 py-1 bg-stone-100 text-stone-700 rounded-full text-sm">{d.title}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <!-- Volver al listado -->
+            <a
+              href={`/${currentLang}/tipo-transporte/`}
+              class="mt-4 inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 text-sm font-medium transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+              Ver todos los transportes
+            </a>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <Footer currentLang={currentLang} t={t} />
+
+  </body>
+</html>

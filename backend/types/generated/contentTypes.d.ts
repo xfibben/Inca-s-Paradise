@@ -637,6 +637,24 @@ export interface ApiDestinoDetalleDestinoDetalle
           localized: true;
         };
       }>;
+    transportes_llegada: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::transporte.transporte'
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    transportes_origen: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::transporte.transporte'
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     twitterDescription: Schema.Attribute.Text &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -1009,6 +1027,79 @@ export interface ApiTerminosCondicionesTerminosCondiciones
   };
 }
 
+export interface ApiTipoTransporteTipoTransporte
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'tipo_transportes';
+  info: {
+    displayName: 'Tipo de Transporte';
+    pluralName: 'tipo-transportes';
+    singularName: 'tipo-transporte';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    descripcion: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    image: Schema.Attribute.Media<'images'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::tipo-transporte.tipo-transporte'
+    >;
+    nombre: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'nombre'> &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    transportes: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::transporte.transporte'
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    wallpaper: Schema.Attribute.Media<'images' | 'files'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+  };
+}
+
 export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
   collectionName: 'tour_detalles';
   info: {
@@ -1356,6 +1447,90 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiTransporteTransporte extends Struct.CollectionTypeSchema {
+  collectionName: 'transportes';
+  info: {
+    displayName: 'Transporte';
+    pluralName: 'transportes';
+    singularName: 'transporte';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    destino_llegada: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::destino-detalle.destino-detalle'
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    destino_origen: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::destino-detalle.destino-detalle'
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    image: Schema.Attribute.Media<'images'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::transporte.transporte'
+    >;
+    nombre: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'nombre'> &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    tipos_transporte: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::tipo-transporte.tipo-transporte'
+    > &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    wallpaper: Schema.Attribute.Media<'images' | 'files'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
   };
 }
 
@@ -1875,7 +2050,9 @@ declare module '@strapi/strapi' {
       'api::reserva.reserva': ApiReservaReserva;
       'api::style-trip.style-trip': ApiStyleTripStyleTrip;
       'api::terminos-condiciones.terminos-condiciones': ApiTerminosCondicionesTerminosCondiciones;
+      'api::tipo-transporte.tipo-transporte': ApiTipoTransporteTipoTransporte;
       'api::tour-detalle.tour-detalle': ApiTourDetalleTourDetalle;
+      'api::transporte.transporte': ApiTransporteTransporte;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

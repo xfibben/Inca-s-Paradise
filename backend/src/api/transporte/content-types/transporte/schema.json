@@ -1,0 +1,96 @@
+{
+  "kind": "collectionType",
+  "collectionName": "transportes",
+  "info": {
+    "singularName": "transporte",
+    "pluralName": "transportes",
+    "displayName": "Transporte"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      },
+      "targetField": "nombre",
+      "required": true
+    },
+    "image": {
+      "type": "media",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      },
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "wallpaper": {
+      "type": "media",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      },
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
+    },
+    "destino_origen": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::destino-detalle.destino-detalle",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      },
+      "inversedBy": "transportes_origen"
+    },
+    "destino_llegada": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::destino-detalle.destino-detalle",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      },
+      "inversedBy": "transportes_llegada"
+    },
+    "tipos_transporte": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tipo-transporte.tipo-transporte",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      },
+      "mappedBy": "transportes"
+    }
+  }
+}
