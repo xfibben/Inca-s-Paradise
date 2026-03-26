@@ -163,7 +163,7 @@ try {
       <div class="hidden md:flex items-center space-x-8 h-24">
         <!-- Destinations with Megamenu -->
         <div class="relative h-full flex items-center" id="megamenu-container">
-          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.destinations}</a>
+          <a href={`/${currentLang}/destinos/`} class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.destinations}</a>
           
           <!-- Megamenu -->
           <div id="megamenu-dropdown" class="fixed left-0 right-0 top-24 pt-0 hidden z-50 w-full">
@@ -409,7 +409,7 @@ try {
 
         <!-- Transporte con Megamenu -->
         <div class="relative h-full flex items-center" id="transport-container">
-          <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.transport}</a>
+          <a href={`/${currentLang}/tipo-transporte/`} class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.transport}</a>
 
           <!-- Dropdown transporte — grid de 4 (igual a estilos de viaje) -->
           <div id="transport-dropdown" class="fixed left-0 right-0 top-24 pt-0 hidden z-50 w-full">

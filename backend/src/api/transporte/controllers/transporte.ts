@@ -6,16 +6,21 @@ import { factories } from '@strapi/strapi';
 
 export default factories.createCoreController('api::transporte.transporte', ({ strapi }) => ({
   async find(ctx) {
-    const { locale } = ctx.query;
+    const { locale, filters, sort } = ctx.query;
 
     const entries = await strapi.documents('api::transporte.transporte').findMany({
       locale: (locale as string) || 'es-PE',
-      sort: ['nombre:asc'],
+      filters: filters as any,
+      sort: (sort as any) ?? ['nombre:asc'],
+      fields: ['nombre', 'slug', 'nro_asientos', 'modelo_vehiculo', 'duracion_viaje', 'distancia', 'descripcion_origen', 'descripcion_llegada', 'descripcion', 'adultUnitPrice', 'childUnitPrice', 'discount', 'includedTitle', 'excludedTitle'] as any,
       populate: {
         image: true,
         wallpaper: true,
-        destino_origen: true,
-        destino_llegada: true,
+        destino_origen: { fields: ['title'] },
+        destino_llegada: { fields: ['title'] },
+        tipos_transporte: { fields: ['nombre', 'slug'] },
+        includedItems: true,
+        excludedItems: true,
       } as any,
     });
 

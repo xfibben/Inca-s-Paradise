@@ -1062,6 +1062,7 @@ const hasBookingCard = Boolean(
               disponibilidad={stickyBookingAvailability}
               precioAdultoUsd={toNumber(sourceTour.adultUnitPrice) ?? 0}
               precioNinoUsd={toNumber(sourceTour.childUnitPrice) ?? 0}
+              descuentoUsd={toNumber(sourceTour.discount) ?? 0}
               duracionDias={toNumber(sourceTour.durationDays) ?? 1}
               calendarLocale={stickyCalendarLocale}
               calendarStart={stickyCalendarStart}

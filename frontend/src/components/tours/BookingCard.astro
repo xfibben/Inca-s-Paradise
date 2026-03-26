@@ -8,6 +8,7 @@ interface Props {
   disponibilidad: string;
   precioAdultoUsd: number;
   precioNinoUsd: number;
+  descuentoUsd: number;
   duracionDias: number;
   calendarLocale: string;
   calendarStart: string;
@@ -22,6 +23,7 @@ const {
   disponibilidad,
   precioAdultoUsd,
   precioNinoUsd,
+  descuentoUsd = 0,
   duracionDias,
   calendarLocale,
   calendarStart,
@@ -39,6 +41,7 @@ const t: Record<SupportedLang, Record<string, string>> = {
     children: "Niños",
     prevMonth: "Mes anterior",
     nextMonth: "Mes siguiente",
+    discount: "Descuento",
   },
   en: {
     bookNow: "Book now",
@@ -49,6 +52,7 @@ const t: Record<SupportedLang, Record<string, string>> = {
     children: "Children",
     prevMonth: "Previous month",
     nextMonth: "Next month",
+    discount: "Discount",
   },
   pt: {
     bookNow: "Reservar agora",
@@ -59,6 +63,7 @@ const t: Record<SupportedLang, Record<string, string>> = {
     children: "Crianças",
     prevMonth: "Mês anterior",
     nextMonth: "Próximo mês",
+    discount: "Desconto",
   },
   fr: {
     bookNow: "Réserver maintenant",
@@ -69,6 +74,7 @@ const t: Record<SupportedLang, Record<string, string>> = {
     children: "Enfants",
     prevMonth: "Mois précédent",
     nextMonth: "Mois suivant",
+    discount: "Remise",
   },
   it: {
     bookNow: "Prenota ora",
@@ -79,6 +85,7 @@ const t: Record<SupportedLang, Record<string, string>> = {
     children: "Bambini",
     prevMonth: "Mese precedente",
     nextMonth: "Mese successivo",
+    discount: "Sconto",
   },
 };
 
@@ -129,6 +136,7 @@ const c = t[lang] ?? t.es;
       class="space-y-3 px-5 py-4 text-slate-900"
       data-price-adult-usd={precioAdultoUsd}
       data-price-child-usd={precioNinoUsd}
+      data-discount-usd={descuentoUsd}
     >
       <!-- Selector de moneda -->
       <div class="flex items-center justify-between gap-2">
@@ -159,6 +167,12 @@ const c = t[lang] ?? t.es;
             ${precioNinoUsd.toFixed(0)}
           </span>
         </div>
+        {descuentoUsd > 0 && (
+          <div class="flex items-center justify-between text-sm text-green-700 pt-1 border-t border-dashed border-[#d1fae5]">
+            <span>{c.discount}</span>
+            <span class="font-semibold" data-discount-display>-${descuentoUsd.toFixed(0)}</span>
+          </div>
+        )}
       </div>
 
       <p class="text-[1.5rem] leading-[0.95] tracking-tight text-[#111827]">
@@ -417,8 +431,10 @@ const c = t[lang] ?? t.es;
     const priceSection = document.querySelector("[data-price-adult-usd]");
     const adultUsdBase = parseFloat(priceSection?.getAttribute("data-price-adult-usd") || "0");
     const childUsdBase = parseFloat(priceSection?.getAttribute("data-price-child-usd") || "0");
+    const discountUsdBase = parseFloat(priceSection?.getAttribute("data-discount-usd") || "0");
     const adultDisplayEl = document.querySelector("[data-price-adult-display]");
     const childDisplayEl = document.querySelector("[data-price-child-display]");
+    const discountDisplayEl = document.querySelector("[data-discount-display]");
     const currencySelect = document.querySelector("[data-currency-select]") as HTMLSelectElement | null;
 
     type CurrencyKey = "USD" | "PEN" | "EUR";
@@ -440,7 +456,7 @@ const c = t[lang] ?? t.es;
 
     const updateBtnTotal = (currency: CurrencyKey) => {
       const rate = rates[currency];
-      const total = (adultos * adultUsdBase + ninos * childUsdBase) * rate;
+      const total = Math.max(0, (adultos * adultUsdBase + ninos * childUsdBase - discountUsdBase) * rate);
       if (btnTotalEl) btnTotalEl.textContent = ` — ${formatPrice(total, currency)}`;
       if (mobileBtnPriceEl) mobileBtnPriceEl.textContent = formatPrice(total, currency);
     };
@@ -449,6 +465,8 @@ const c = t[lang] ?? t.es;
       const rate = rates[currency];
       if (adultDisplayEl) adultDisplayEl.textContent = formatPrice(adultUsdBase * rate, currency);
       if (childDisplayEl) childDisplayEl.textContent = formatPrice(childUsdBase * rate, currency);
+      if (discountDisplayEl && discountUsdBase > 0)
+        discountDisplayEl.textContent = `-${formatPrice(discountUsdBase * rate, currency)}`;
       updateBtnTotal(currency);
     };
 
@@ -526,7 +544,7 @@ const c = t[lang] ?? t.es;
         tasaCambio: rate,
         simboloMoneda: sym,
         decimalesMoneda: dec,
-        descuento: 0,
+        descuento: discountUsdBase,
         fechaInicio,
         fechaFin,
       });
