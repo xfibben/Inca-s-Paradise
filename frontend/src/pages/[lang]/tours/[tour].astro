@@ -250,14 +250,22 @@ if (lang !== "es") {
     "es",
     STRAPI_BASE_URLS
   );
+  const sourceDocumentId =
+    typeof strapiTourRaw?.documentId === "string" &&
+    strapiTourRaw.documentId.trim()
+      ? strapiTourRaw.documentId.trim()
+      : "";
 
   for (const baseUrl of STRAPI_BASE_URLS) {
     for (const locale of spanishLocaleCandidates) {
       const localePart = localePrefix(locale);
+      const identityFilter = sourceDocumentId
+        ? `filters[documentId][$eq]=${encodeURIComponent(sourceDocumentId)}&`
+        : `filters[slug][$eq]=${encodeURIComponent(tourSlug)}&`;
       const url =
         `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
         "status=published&" +
-        `filters[slug][$eq]=${encodeURIComponent(tourSlug)}&` +
+        identityFilter +
         "pagination[pageSize]=1&" +
         "populate[featuredImages][populate][image][fields][0]=url&" +
         "populate[featuredImages][populate][image][fields][1]=alternativeText&" +
