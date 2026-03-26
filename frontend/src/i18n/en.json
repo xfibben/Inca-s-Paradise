@@ -1,4 +1,21 @@
 {
+  "transporte": {
+    "tipoLabel": "Transport Type",
+    "disponibles": "Available",
+    "enCategoria": "Transports in this category",
+    "verTodosTipos": "View all transport types",
+    "categoria": "Category",
+    "tipos": "Types",
+    "origen": "Origin",
+    "destino": "Destination",
+    "verTodos": "View all transports",
+    "nroAsientos": "No. of seats",
+    "modeloVehiculo": "Vehicle model",
+    "duracionViaje": "Travel duration",
+    "distancia": "Distance",
+    "descripcionOrigen": "Origin description",
+    "descripcionLlegada": "Destination description"
+  },
   "nav": {
     "destinations": "Destinations",
     "tripStyles": "Trip Styles",

@@ -81,6 +81,100 @@
       },
       "inversedBy": "transportes_llegada"
     },
+    "nro_asientos": {
+      "type": "integer",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "modelo_vehiculo": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "duracion_viaje": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "distancia": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "descripcion_origen": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "descripcion_llegada": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "descripcion": {
+      "type": "richtext",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "adultUnitPrice": {
+      "type": "decimal",
+      "pluginOptions": { "i18n": { "localized": false } },
+      "min": 0
+    },
+    "childUnitPrice": {
+      "type": "decimal",
+      "pluginOptions": { "i18n": { "localized": false } },
+      "min": 0
+    },
+    "discount": {
+      "type": "decimal",
+      "pluginOptions": { "i18n": { "localized": false } },
+      "default": 0,
+      "min": 0
+    },
+    "includedTitle": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "includedItems": {
+      "type": "component",
+      "repeatable": true,
+      "component": "tours.inclusion-item",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "excludedTitle": {
+      "type": "string",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "excludedItems": {
+      "type": "component",
+      "repeatable": true,
+      "component": "tours.inclusion-item",
+      "pluginOptions": { "i18n": { "localized": true } }
+    },
+    "reservas": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::reserva.reserva",
+      "mappedBy": "transportes"
+    },
     "tipos_transporte": {
       "type": "relation",
       "relation": "manyToMany",

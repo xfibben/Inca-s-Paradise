@@ -33,8 +33,7 @@ try {
     `&locale=${strapiLocale}&status=published` +
     `&populate[image]=*` +
     `&populate[wallpaper]=*` +
-    `&populate[transportes][fields][0]=nombre&populate[transportes][fields][1]=slug` +
-    `&populate[transportes][populate][image]=*`
+    `&populate[transportes]=*`
   );
   if (res.ok) {
     const json = await res.json();
@@ -56,14 +55,8 @@ function getImageUrl(media: any): string | null {
 }
 
 const wallpaperUrl = getImageUrl(tipoTransporte.wallpaper);
-const imageUrl    = getImageUrl(tipoTransporte.image);
 
-// Agrupar transportes en filas de 3 para el carrusel estilo small trips
 const transportes: any[] = tipoTransporte.transportes ?? [];
-const transporteRows: Array<any[]> = [];
-for (let i = 0; i < transportes.length; i += 3) {
-  transporteRows.push(transportes.slice(i, i + 3));
-}
 ---
 
 <html lang={currentLang}>
@@ -97,89 +90,76 @@ for (let i = 0; i < transportes.length; i += 3) {
         <div class="absolute inset-0 bg-black/50" />
 
         <div class="relative h-full flex flex-col justify-center items-center text-center px-4">
-          <p class="text-white/70 uppercase tracking-widest text-xs mb-3">Tipo de Transporte</p>
+          <p class="text-white/70 uppercase tracking-widest text-xs mb-3">{t.transporte.tipoLabel}</p>
           <h1
             class="text-4xl md:text-6xl text-white leading-tight max-w-3xl"
             style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;"
           >
             {tipoTransporte.nombre}
           </h1>
-          {tipoTransporte.descripcion && (
-            <p class="mt-4 text-white/80 max-w-xl text-sm md:text-base leading-relaxed">
-              {tipoTransporte.descripcion}
-            </p>
-          )}
         </div>
       </section>
+
+      <!-- Descripción -->
+      {tipoTransporte.descripcion && (
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <div
+            class="prose prose-stone max-w-none text-[#374151] markdown-content text-justify"
+            data-markdown={tipoTransporte.descripcion}
+          />
+        </div>
+      )}
 
       <!-- Contenido principal -->
       <section class="py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <!-- Imagen principal -->
-        {imageUrl && (
-          <div class="rounded-2xl overflow-hidden shadow-lg mb-16 max-w-2xl mx-auto">
-            <img
-              src={imageUrl}
-              alt={tipoTransporte.nombre}
-              class="w-full h-72 md:h-96 object-cover"
-              loading="lazy"
-            />
-          </div>
-        )}
 
-        <!-- Carrusel de transportes estilo small trips -->
-        {transporteRows.length > 0 && (
+        <!-- Carrusel de transportes -->
+        {transportes.length > 0 && (
           <div>
             <div class="text-center mb-10">
-              <p class="text-amber-600 uppercase tracking-widest text-sm font-medium mb-2">Disponibles</p>
+              <p class="text-amber-600 uppercase tracking-widest text-sm font-medium mb-2">{t.transporte.disponibles}</p>
               <h2
                 class="text-3xl md:text-4xl text-stone-800"
                 style="font-family: 'Playfair Display', serif; font-style: italic;"
               >
-                Transportes en esta categoría
+                {t.transporte.enCategoria}
               </h2>
             </div>
 
-            <div class="grid gap-2">
-              {transporteRows.map((row, rowIndex) => (
-                <div
-                  class={`grid grid-cols-1 gap-2 ${
-                    rowIndex % 2 === 0
-                      ? "md:grid-cols-[48%_26%_26%]"
-                      : "md:grid-cols-[26%_26%_48%]"
-                  }`}
-                >
-                  {row.map((tp: any) => {
-                    const tpImg = getImageUrl(tp.image);
-                    return (
-                      <a
-                        href={tp.slug ? `/${currentLang}/transporte/${tp.slug}` : '#'}
-                        class="group relative h-95 overflow-hidden md:h-130"
-                      >
-                        {tpImg ? (
-                          <img
-                            src={tpImg}
-                            alt={tp.nombre}
-                            class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div class="absolute inset-0 bg-linear-to-br from-stone-400 to-stone-700" />
-                        )}
-                        <div class="absolute inset-0 bg-linear-to-t from-black/90 via-black/45 to-black/10" />
-                        <div class="relative z-10 flex h-full flex-col justify-end p-4 text-white">
-                          <h3 class="text-xl md:text-2xl font-semibold leading-tight">
-                            {tp.nombre}
-                          </h3>
-                          <span class="mt-3 inline-flex w-fit items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff8e46]">
-                            Ver más
-                          </span>
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
-              ))}
+            <div class="flex gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4" style="scrollbar-width: none;">
+              {transportes.map((tp: any) => {
+                const tpImg = getImageUrl(tp.image);
+                const origen = tp.destino_origen?.[0]?.title ?? null;
+                const llegada = tp.destino_llegada?.[0]?.title ?? null;
+                return (
+                  <a
+                    href={tp.slug ? `/${currentLang}/transporte/${tp.slug}` : '#'}
+                    class="shrink-0 w-72 h-112.5 relative overflow-hidden cursor-pointer group snap-start"
+                  >
+                    {tpImg ? (
+                      <img
+                        src={tpImg}
+                        alt={tp.nombre}
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div class="w-full h-full bg-stone-400" />
+                    )}
+                    <div class="absolute inset-0 bg-linear-to-b from-black/30 to-black/65 flex flex-col justify-between p-6 text-white">
+                      <span class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider">
+                        {origen ?? '—'}
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                        {llegada ?? '—'}
+                      </span>
+                      <p class="text-lg font-bold leading-tight" style="font-family: 'Playfair Display', serif;">{tp.nombre}</p>
+                    </div>
+                  </a>
+                );
+              })}
             </div>
           </div>
         )}
@@ -193,7 +173,7 @@ for (let i = 0; i < transportes.length; i += 3) {
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
             </svg>
-            Ver todos los tipos de transporte
+            {t.transporte.verTodosTipos}
           </a>
         </div>
 
@@ -202,6 +182,26 @@ for (let i = 0; i < transportes.length; i += 3) {
     </main>
 
     <Footer currentLang={currentLang} t={t} />
+
+    <!-- Renderiza markdown en la descripción -->
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@10.0.0/dist/markdown-it.min.js"></script>
+    <script>
+      function processMarkdown() {
+        if (typeof (window as any).markdownit !== 'undefined') {
+          const md = (window as any).markdownit();
+          document.querySelectorAll('.markdown-content').forEach((el: Element) => {
+            const raw = el.getAttribute('data-markdown');
+            if (raw) {
+              el.innerHTML = md.render(raw);
+              el.removeAttribute('data-markdown');
+            }
+          });
+        } else {
+          setTimeout(processMarkdown, 50);
+        }
+      }
+      document.addEventListener('DOMContentLoaded', processMarkdown);
+    </script>
 
   </body>
 </html>
