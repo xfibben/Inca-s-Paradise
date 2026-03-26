@@ -119,7 +119,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const allDropdowns = [
       document.getElementById('megamenu-dropdown'),
       document.getElementById('styles-dropdown'),
-      document.getElementById('sustainability-dropdown')
+      document.getElementById('sustainability-dropdown'),
+      document.getElementById('transport-dropdown')
     ];
     return allDropdowns.some(dd => dd && !dd.classList.contains('hidden'));
   }
@@ -168,6 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
   makeDropdown('megamenu-container', 'megamenu-dropdown');
   makeDropdown('styles-container', 'styles-dropdown');
   makeDropdown('sustainability-container', 'sustainability-dropdown');
+  makeDropdown('transport-container', 'transport-dropdown');
 
   // ── Destinations megamenu ─────────────────────────────────────────────────
   const scrollAmount = 100;
@@ -302,22 +304,34 @@ document.addEventListener('DOMContentLoaded', function () {
   const mobileSustainabilityList = document.getElementById('mobile-sustainability-list');
   const mobileSustainabilityDetails = document.getElementById('mobile-sustainability-details');
 
+  const mobileTransportMenu = document.getElementById('mobile-transport-menu');
+
   document.getElementById('mobile-destinations-btn')?.addEventListener('click', () => {
     mobileDestinationsMenu?.classList.toggle('hidden');
     mobileStylesMenu?.classList.add('hidden');
     mobileSustainabilityMenu?.classList.add('hidden');
+    mobileTransportMenu?.classList.add('hidden');
   });
 
   document.getElementById('mobile-styles-btn')?.addEventListener('click', () => {
     mobileStylesMenu?.classList.toggle('hidden');
     mobileDestinationsMenu?.classList.add('hidden');
     mobileSustainabilityMenu?.classList.add('hidden');
+    mobileTransportMenu?.classList.add('hidden');
   });
 
   document.getElementById('mobile-sustainability-btn')?.addEventListener('click', () => {
     mobileSustainabilityMenu?.classList.toggle('hidden');
     mobileDestinationsMenu?.classList.add('hidden');
     mobileStylesMenu?.classList.add('hidden');
+    mobileTransportMenu?.classList.add('hidden');
+  });
+
+  document.getElementById('mobile-transport-btn')?.addEventListener('click', () => {
+    mobileTransportMenu?.classList.toggle('hidden');
+    mobileDestinationsMenu?.classList.add('hidden');
+    mobileStylesMenu?.classList.add('hidden');
+    mobileSustainabilityMenu?.classList.add('hidden');
   });
 
   // Ver todos destinos
@@ -460,5 +474,7 @@ document.addEventListener('DOMContentLoaded', function () {
       mobileStylesMenu?.classList.add('hidden');
     if (!e.target?.closest('#mobile-sustainability-btn') && !e.target?.closest('#mobile-sustainability-menu'))
       mobileSustainabilityMenu?.classList.add('hidden');
+    if (!e.target?.closest('#mobile-transport-btn') && !e.target?.closest('#mobile-transport-menu'))
+      mobileTransportMenu?.classList.add('hidden');
   });
 });

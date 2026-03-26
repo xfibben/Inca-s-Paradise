@@ -1,0 +1,207 @@
+---
+import { getTranslation, languages, defaultLanguage, type Language } from '../../../i18n';
+import '../../../styles/global.css';
+import Navbar from '../../../components/shared/Navbar.astro';
+import Footer from '../../../components/shared/Footer.astro';
+
+export function getStaticPaths() {
+  return [];
+}
+
+const { lang, slug } = Astro.params;
+
+const currentLang = Object.keys(languages).includes(lang as string)
+  ? (lang as Language)
+  : defaultLanguage;
+
+const t = getTranslation(currentLang);
+
+const STRAPI_URL = import.meta.env.STRAPI_URL;
+const PUBLIC_STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL;
+
+const strapiLocale =
+  currentLang === 'pt' ? 'pt'
+  : currentLang === 'es' ? 'es-PE'
+  : currentLang;
+
+// Fetch del tipo de transporte por slug
+let tipoTransporte: any = null;
+
+try {
+  const res = await fetch(
+    `${STRAPI_URL}/api/tipo-transportes?filters[slug][$eq]=${slug}` +
+    `&locale=${strapiLocale}&status=published` +
+    `&populate[image]=*` +
+    `&populate[wallpaper]=*` +
+    `&populate[transportes][fields][0]=nombre&populate[transportes][fields][1]=slug` +
+    `&populate[transportes][populate][image]=*`
+  );
+  if (res.ok) {
+    const json = await res.json();
+    tipoTransporte = json?.data?.[0] ?? null;
+  }
+} catch (e) {
+  console.error("Error al obtener tipo de transporte:", e);
+}
+
+if (!tipoTransporte) {
+  return Astro.redirect(`/${currentLang}/tipo-transporte/`);
+}
+
+function getImageUrl(media: any): string | null {
+  if (!media) return null;
+  const url = media?.formats?.large?.url ?? media?.formats?.medium?.url ?? media?.url;
+  if (!url) return null;
+  return url.startsWith('http') ? url : `${PUBLIC_STRAPI_URL}${url}`;
+}
+
+const wallpaperUrl = getImageUrl(tipoTransporte.wallpaper);
+const imageUrl    = getImageUrl(tipoTransporte.image);
+
+// Agrupar transportes en filas de 3 para el carrusel estilo small trips
+const transportes: any[] = tipoTransporte.transportes ?? [];
+const transporteRows: Array<any[]> = [];
+for (let i = 0; i < transportes.length; i += 3) {
+  transporteRows.push(transportes.slice(i, i + 3));
+}
+---
+
+<html lang={currentLang}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{tipoTransporte.nombre} — Inca's Paradise</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="description" content={tipoTransporte.descripcion ?? `Conoce más sobre ${tipoTransporte.nombre} con Inca's Paradise.`} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+
+  <body class="bg-white text-stone-800 overflow-x-hidden flex flex-col min-h-screen">
+
+    <Navbar t={t} currentLang={currentLang} />
+
+    <main class="flex-1">
+
+      <!-- Hero con wallpaper -->
+      <section class="relative w-full overflow-hidden" style="height: 50vh;">
+        {wallpaperUrl ? (
+          <img
+            src={wallpaperUrl}
+            alt={tipoTransporte.nombre}
+            class="absolute inset-0 w-full h-full object-cover"
+            fetchpriority="high"
+          />
+        ) : (
+          <div class="absolute inset-0 bg-linear-to-br from-stone-600 to-stone-900" />
+        )}
+        <div class="absolute inset-0 bg-black/50" />
+
+        <div class="relative h-full flex flex-col justify-center items-center text-center px-4">
+          <p class="text-white/70 uppercase tracking-widest text-xs mb-3">Tipo de Transporte</p>
+          <h1
+            class="text-4xl md:text-6xl text-white leading-tight max-w-3xl"
+            style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;"
+          >
+            {tipoTransporte.nombre}
+          </h1>
+          {tipoTransporte.descripcion && (
+            <p class="mt-4 text-white/80 max-w-xl text-sm md:text-base leading-relaxed">
+              {tipoTransporte.descripcion}
+            </p>
+          )}
+        </div>
+      </section>
+
+      <!-- Contenido principal -->
+      <section class="py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Imagen principal -->
+        {imageUrl && (
+          <div class="rounded-2xl overflow-hidden shadow-lg mb-16 max-w-2xl mx-auto">
+            <img
+              src={imageUrl}
+              alt={tipoTransporte.nombre}
+              class="w-full h-72 md:h-96 object-cover"
+              loading="lazy"
+            />
+          </div>
+        )}
+
+        <!-- Carrusel de transportes estilo small trips -->
+        {transporteRows.length > 0 && (
+          <div>
+            <div class="text-center mb-10">
+              <p class="text-amber-600 uppercase tracking-widest text-sm font-medium mb-2">Disponibles</p>
+              <h2
+                class="text-3xl md:text-4xl text-stone-800"
+                style="font-family: 'Playfair Display', serif; font-style: italic;"
+              >
+                Transportes en esta categoría
+              </h2>
+            </div>
+
+            <div class="grid gap-2">
+              {transporteRows.map((row, rowIndex) => (
+                <div
+                  class={`grid grid-cols-1 gap-2 ${
+                    rowIndex % 2 === 0
+                      ? "md:grid-cols-[48%_26%_26%]"
+                      : "md:grid-cols-[26%_26%_48%]"
+                  }`}
+                >
+                  {row.map((tp: any) => {
+                    const tpImg = getImageUrl(tp.image);
+                    return (
+                      <a
+                        href={tp.slug ? `/${currentLang}/transporte/${tp.slug}` : '#'}
+                        class="group relative h-95 overflow-hidden md:h-130"
+                      >
+                        {tpImg ? (
+                          <img
+                            src={tpImg}
+                            alt={tp.nombre}
+                            class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div class="absolute inset-0 bg-linear-to-br from-stone-400 to-stone-700" />
+                        )}
+                        <div class="absolute inset-0 bg-linear-to-t from-black/90 via-black/45 to-black/10" />
+                        <div class="relative z-10 flex h-full flex-col justify-end p-4 text-white">
+                          <h3 class="text-xl md:text-2xl font-semibold leading-tight">
+                            {tp.nombre}
+                          </h3>
+                          <span class="mt-3 inline-flex w-fit items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff8e46]">
+                            Ver más
+                          </span>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <!-- Volver -->
+        <div class="mt-14 text-center">
+          <a
+            href={`/${currentLang}/tipo-transporte/`}
+            class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 text-sm font-medium transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Ver todos los tipos de transporte
+          </a>
+        </div>
+
+      </section>
+
+    </main>
+
+    <Footer currentLang={currentLang} t={t} />
+
+  </body>
+</html>

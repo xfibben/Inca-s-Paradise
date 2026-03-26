@@ -1,0 +1,82 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tipo_transportes",
+  "info": {
+    "singularName": "tipo-transporte",
+    "pluralName": "tipo-transportes",
+    "displayName": "Tipo de Transporte"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "nombre",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "descripcion": {
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "wallpaper": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files"
+      ],
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
+    "transportes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::transporte.transporte",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      },
+      "inversedBy": "tipos_transporte"
+    }
+  }
+}

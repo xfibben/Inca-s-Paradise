@@ -306,6 +306,28 @@
         }
       },
       "inversedBy": "destinos"
+    },
+    "transportes_origen": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::transporte.transporte",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      },
+      "mappedBy": "destino_origen"
+    },
+    "transportes_llegada": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::transporte.transporte",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      },
+      "mappedBy": "destino_llegada"
     }
   }
 }
