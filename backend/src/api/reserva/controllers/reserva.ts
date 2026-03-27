@@ -94,6 +94,39 @@ async function calcularMontos(data: any, strapi: any): Promise<void> {
 
 export default factories.createCoreController('api::reserva.reserva', ({ strapi }) => {
   return {
+    // Sincroniza todas las reservas existentes con Google Sheets
+    async syncSheets(ctx) {
+      const url = process.env.GOOGLE_APPS_SCRIPT_URL;
+      if (!url) {
+        return ctx.badRequest('GOOGLE_APPS_SCRIPT_URL no configurado en .env');
+      }
+
+      const reservas = await strapi.entityService.findMany('api::reserva.reserva', {
+        populate: ['tour', 'transportes'],
+        limit: -1, // todas
+      });
+
+      let enviadas = 0;
+      let errores = 0;
+
+      for (const reserva of reservas as any[]) {
+        try {
+          await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ entry: reserva }),
+            redirect: 'follow',
+          });
+          enviadas++;
+        } catch (e) {
+          errores++;
+          strapi.log.error(`[Sheets] Error sincronizando reserva ID ${reserva.id}:`, e);
+        }
+      }
+
+      return ctx.send({ ok: true, enviadas, errores, total: (reservas as any[]).length });
+    },
+
     async create(ctx) {
       const { data } = ctx.request.body;
       if (data) {

@@ -24,3 +24,5 @@ public/uploads/
 
 CLAUDE.md
 frontend/package-lock.json
+
+backend/.env.example
