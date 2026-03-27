@@ -315,6 +315,24 @@
       "component": "tours.itinerary-item",
       "repeatable": true
     },
+    "scheduleTitle": {
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "scheduleItems": {
+      "type": "component",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "component": "tours.schedule-item",
+      "repeatable": true
+    },
     "includedTitle": {
       "type": "string",
       "pluginOptions": {

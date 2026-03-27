@@ -150,6 +150,18 @@ export interface ToursReviewBrandItem extends Struct.ComponentSchema {
   };
 }
 
+export interface ToursScheduleItem extends Struct.ComponentSchema {
+  collectionName: 'components_tours_schedule_items';
+  info: {
+    description: 'Bloque de horario/turno del tour';
+    displayName: 'Schedule Item';
+  };
+  attributes: {
+    content: Schema.Attribute.RichText & Schema.Attribute.Required;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
@@ -164,6 +176,7 @@ declare module '@strapi/strapi' {
       'tours.itinerary-include-item': ToursItineraryIncludeItem;
       'tours.itinerary-item': ToursItineraryItem;
       'tours.review-brand-item': ToursReviewBrandItem;
+      'tours.schedule-item': ToursScheduleItem;
     }
   }
 }

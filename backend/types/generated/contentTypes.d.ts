@@ -1361,6 +1361,18 @@ export interface ApiTourDetalleTourDetalle extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::reserva.reserva'
     >;
+    scheduleItems: Schema.Attribute.Component<'tours.schedule-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    scheduleTitle: Schema.Attribute.String &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     seoCanonicalUrl: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
