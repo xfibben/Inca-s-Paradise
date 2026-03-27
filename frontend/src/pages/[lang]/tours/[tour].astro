@@ -211,6 +211,8 @@ for (const baseUrl of STRAPI_BASE_URLS) {
       "populate[itineraryItems][populate][image][fields][1]=alternativeText&" +
       "populate[itineraryItems][populate][image][fields][2]=formats&" +
       "populate[itineraryItems][populate][includes][fields][0]=text&" +
+      "populate[scheduleItems][fields][0]=title&" +
+      "populate[scheduleItems][fields][1]=content&" +
       "populate[includedItems][fields][0]=text&" +
       "populate[includedItems][fields][1]=icon&" +
       "populate[excludedItems][fields][0]=text&" +
@@ -278,7 +280,9 @@ if (lang !== "es") {
         "populate[itineraryItems][populate][image][fields][0]=url&" +
         "populate[itineraryItems][populate][image][fields][1]=alternativeText&" +
         "populate[itineraryItems][populate][image][fields][2]=formats&" +
-        "populate[itineraryItems][populate][includes][fields][0]=text";
+        "populate[itineraryItems][populate][includes][fields][0]=text&" +
+        "populate[scheduleItems][fields][0]=title&" +
+        "populate[scheduleItems][fields][1]=content";
 
       try {
         const res = await fetch(url);
@@ -603,6 +607,19 @@ const itineraryItems = Array.isArray(sourceTour.itineraryItems)
   : [];
 const hasItinerarySection = itineraryItems.length > 0;
 
+const scheduleItems = Array.isArray(sourceTour.scheduleItems)
+  ? sourceTour.scheduleItems
+      .map((entry: any) => normalizeRow(entry))
+      .filter(Boolean)
+      .map((item: any) => ({
+        title: cleanText(item?.title),
+        contentHtml: toRichHtml(item?.content),
+      }))
+      .filter((item: any) => item.title || item.contentHtml)
+  : [];
+const hasScheduleSection = scheduleItems.length > 0;
+const scheduleTitle = cleanText(sourceTour.scheduleTitle);
+
 const includedTitle = cleanText(sourceTour.includedTitle);
 const includedItems = Array.isArray(sourceTour.includedItems)
   ? sourceTour.includedItems
@@ -785,11 +802,27 @@ const hasBookingCard = Boolean(
 
             {hasItinerarySection ? (
             <section class="pb-16 md:pb-20">
-              {itineraryTitle ? (
-                <h2 class="text-2xl md:text-3xl font-bold italic text-gray-900" style="font-family: 'Playfair Display', serif;">
-                  {itineraryTitle}
-                </h2>
-              ) : null}
+              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                {itineraryTitle ? (
+                  <h2 class="text-2xl md:text-3xl font-bold italic text-gray-900" style="font-family: 'Playfair Display', serif;">
+                    {itineraryTitle}
+                  </h2>
+                ) : null}
+                {
+                  itineraryItems.length > 1 && (
+                    <button
+                      type="button"
+                      class="inline-flex items-center justify-center border border-green-600 px-5 py-2 text-sm font-semibold text-green-600 transition hover:bg-green-600 hover:text-white"
+                      data-itinerary-expand
+                      data-label-more={itineraryExpandLabel}
+                      data-label-less={itineraryCollapseLabel}
+                      aria-expanded="false"
+                    >
+                      {itineraryExpandLabel}
+                    </button>
+                  )
+                }
+              </div>
 
               <div class="mt-8 border-t border-gray-300">
                 {
@@ -813,7 +846,12 @@ const hasBookingCard = Boolean(
                         </span>
                       </button>
 
-                      <div class={`${index === 0 ? "mt-4" : "mt-4 hidden"}`} data-itinerary-panel>
+                      <div
+                        class="mt-4 overflow-hidden transition-all duration-300 ease-in-out"
+                        data-itinerary-panel
+                        style={index === 0 ? "max-height:2000px;opacity:1;" : "max-height:0;opacity:0;"}
+                        aria-hidden={index === 0 ? "false" : "true"}
+                      >
                         <div class="pl-0 md:pl-24">
                           {item.image ? (
                             <img
@@ -877,6 +915,32 @@ const hasBookingCard = Boolean(
                   </div>
                 )
               }
+            </section>
+            ) : null}
+
+            {hasScheduleSection ? (
+            <section class="pb-16 md:pb-20">
+              {scheduleTitle ? (
+                <h2 class="mb-6 text-2xl md:text-3xl font-bold italic text-gray-900" style="font-family: 'Playfair Display', serif;">
+                  {scheduleTitle}
+                </h2>
+              ) : null}
+
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {scheduleItems.map((item) => (
+                  <article class="border border-[#e2e8f0] bg-white p-5 md:p-6">
+                    {item.title ? (
+                      <h3 class="mb-3 text-base md:text-lg font-bold text-gray-900">{item.title}</h3>
+                    ) : null}
+                    {item.contentHtml ? (
+                      <div
+                        class="text-sm md:text-base leading-relaxed text-gray-700 [&_p]:mb-3 [&_p:last-child]:mb-0"
+                        set:html={item.contentHtml}
+                      />
+                    ) : null}
+                  </article>
+                ))}
+              </div>
             </section>
             ) : null}
 
@@ -1159,16 +1223,41 @@ const hasBookingCard = Boolean(
         const itineraryEntries = Array.from(
           document.querySelectorAll("[data-itinerary-item]")
         );
-        const itineraryExpand = document.querySelector("[data-itinerary-expand]");
+        const itineraryExpandControls = Array.from(
+          document.querySelectorAll("[data-itinerary-expand]")
+        );
         if (itineraryEntries.length) {
+          const firstExpandControl = itineraryExpandControls[0];
+          const moreLabel =
+            firstExpandControl?.getAttribute("data-label-more") ||
+            "Ver itinerario completo";
+          const lessLabel =
+            firstExpandControl?.getAttribute("data-label-less") || "Ver menos";
+
+          const setExpandControls = (expanded) => {
+            itineraryExpandControls.forEach((control) => {
+              control.setAttribute("aria-expanded", String(expanded));
+              control.textContent = expanded ? lessLabel : moreLabel;
+            });
+          };
+
+          const setPanelState = (panel, isOpen) => {
+            if (!panel) return;
+            panel.classList.toggle("pointer-events-none", !isOpen);
+            panel.setAttribute("aria-hidden", String(!isOpen));
+            panel.style.maxHeight = isOpen ? `${panel.scrollHeight}px` : "0px";
+            panel.style.opacity = isOpen ? "1" : "0";
+          };
+
           const setSingleOpen = (activeIndex) => {
             itineraryEntries.forEach((entry, index) => {
               const panel = entry.querySelector("[data-itinerary-panel]");
               const trigger = entry.querySelector("[data-itinerary-trigger]");
               const isActive = index === activeIndex;
-              panel?.classList.toggle("hidden", !isActive);
+              setPanelState(panel, isActive);
               trigger?.setAttribute("aria-expanded", String(isActive));
             });
+            setExpandControls(false);
           };
 
           setSingleOpen(0);
@@ -1177,43 +1266,28 @@ const hasBookingCard = Boolean(
             const trigger = entry.querySelector("[data-itinerary-trigger]");
             trigger?.addEventListener("click", () => {
               setSingleOpen(index);
-              if (itineraryExpand) {
-                const moreLabel =
-                  itineraryExpand.getAttribute("data-label-more") ||
-                  "Ver itinerario completo";
-                itineraryExpand.setAttribute("aria-expanded", "false");
-                itineraryExpand.textContent = moreLabel;
-              }
             });
           });
 
-          if (itineraryExpand) {
-            const moreLabel =
-              itineraryExpand.getAttribute("data-label-more") ||
-              "Ver itinerario completo";
-            const lessLabel =
-              itineraryExpand.getAttribute("data-label-less") || "Ver menos";
+          if (itineraryExpandControls.length) {
+            itineraryExpandControls.forEach((control) => {
+              control.addEventListener("click", () => {
+                const expanded = control.getAttribute("aria-expanded") === "true";
 
-            itineraryExpand.addEventListener("click", () => {
-              const expanded =
-                itineraryExpand.getAttribute("aria-expanded") === "true";
+                if (expanded) {
+                  setSingleOpen(0);
+                  return;
+                }
 
-              if (expanded) {
-                setSingleOpen(0);
-                itineraryExpand.setAttribute("aria-expanded", "false");
-                itineraryExpand.textContent = moreLabel;
-                return;
-              }
+                itineraryEntries.forEach((entry) => {
+                  const panel = entry.querySelector("[data-itinerary-panel]");
+                  const trigger = entry.querySelector("[data-itinerary-trigger]");
+                  setPanelState(panel, true);
+                  trigger?.setAttribute("aria-expanded", "true");
+                });
 
-              itineraryEntries.forEach((entry) => {
-                const panel = entry.querySelector("[data-itinerary-panel]");
-                const trigger = entry.querySelector("[data-itinerary-trigger]");
-                panel?.classList.remove("hidden");
-                trigger?.setAttribute("aria-expanded", "true");
+                setExpandControls(true);
               });
-
-              itineraryExpand.setAttribute("aria-expanded", "true");
-              itineraryExpand.textContent = lessLabel;
             });
           }
         }
