@@ -49,6 +49,7 @@ services:
       API_TOKEN_SALT: ${API_TOKEN_SALT}
       APP_KEYS: ${APP_KEYS}
       JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_APPS_SCRIPT_URL: ${GOOGLE_APPS_SCRIPT_URL}
     # Auto-instalador con vacuna para Mac (.DS_Store)
     command: >
       sh -c "
