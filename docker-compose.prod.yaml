@@ -56,6 +56,9 @@ services:
       npm run build &&
       npm run start
       "
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     networks:
       - incas_network
     ports:
