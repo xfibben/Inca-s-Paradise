@@ -69,15 +69,21 @@ async function sincronizarConSheets(id: number) {
 
 export default {
   afterCreate(event: any) {
-    // Fire-and-forget: no bloquea la respuesta al cliente
-    sincronizarConSheets(event.result.id).catch((err) =>
-      strapi.log.error('[Sheets] Error en afterCreate:', err)
-    );
+    // setImmediate garantiza que corre fuera de la transacción de Strapi
+    const id = event.result.id;
+    setImmediate(() => {
+      sincronizarConSheets(id).catch((err) =>
+        strapi.log.error('[Sheets] Error en afterCreate:', err)
+      );
+    });
   },
 
   afterUpdate(event: any) {
-    sincronizarConSheets(event.result.id).catch((err) =>
-      strapi.log.error('[Sheets] Error en afterUpdate:', err)
-    );
+    const id = event.result.id;
+    setImmediate(() => {
+      sincronizarConSheets(id).catch((err) =>
+        strapi.log.error('[Sheets] Error en afterUpdate:', err)
+      );
+    });
   },
 };
