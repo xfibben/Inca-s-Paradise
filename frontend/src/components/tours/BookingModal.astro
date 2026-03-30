@@ -5,9 +5,10 @@ interface Props {
   lang: SupportedLang;
   tourTitle: string;
   tourSlug: string;
+  scheduleOptions?: string[];
 }
 
-const { lang, tourTitle } = Astro.props;
+const { lang, tourTitle, scheduleOptions = [] } = Astro.props;
 
 const translations: Record<SupportedLang, Record<string, string>> = {
   es: {
@@ -42,6 +43,8 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     copyTicket: "Copiar Ticket",
     sending: "Enviando...",
     discount: "Descuento",
+    schedule: "Horario",
+    schedulePlaceholder: "Selecciona un horario",
   },
   en: {
     title: "Book Tour",
@@ -75,6 +78,8 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     copyTicket: "Copy Ticket",
     sending: "Sending...",
     discount: "Discount",
+    schedule: "Schedule",
+    schedulePlaceholder: "Select a schedule",
   },
   pt: {
     title: "Reservar Tour",
@@ -108,6 +113,8 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     copyTicket: "Copiar Ticket",
     sending: "Enviando...",
     discount: "Desconto",
+    schedule: "Horário",
+    schedulePlaceholder: "Selecione um horário",
   },
   fr: {
     title: "Réserver le Tour",
@@ -141,6 +148,8 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     copyTicket: "Copier le Ticket",
     sending: "Envoi en cours...",
     discount: "Remise",
+    schedule: "Horaire",
+    schedulePlaceholder: "Sélectionnez un horaire",
   },
   it: {
     title: "Prenota il Tour",
@@ -174,6 +183,8 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     copyTicket: "Copia Ticket",
     sending: "Invio in corso...",
     discount: "Sconto",
+    schedule: "Orario",
+    schedulePlaceholder: "Seleziona un orario",
   },
 };
 
@@ -253,6 +264,24 @@ const t = translations[lang] ?? translations.es;
           />
         </div>
       </div>
+
+      {scheduleOptions.length > 0 ? (
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            {t.schedule} <span class="text-red-500">*</span>
+          </label>
+          <select
+            name="turno"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1AA093] focus:border-transparent bg-white"
+          >
+            <option value="" selected disabled>{t.schedulePlaceholder}</option>
+            {scheduleOptions.map((option) => (
+              <option value={option}>{option}</option>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       <!-- Documento e identidad -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -465,6 +494,8 @@ const t = translations[lang] ?? translations.es;
       e.preventDefault();
       const raw = Object.fromEntries(new FormData(form));
       const str = (v: FormDataEntryValue) => (typeof v === "string" ? v : "");
+      const selectedTurno =
+        typeof raw.turno === "string" ? raw.turno.trim() : "";
 
       const tourData = window.__tourData;
       const transporteData = window.__transporteData;
@@ -499,6 +530,7 @@ const t = translations[lang] ?? translations.es;
           tipo_documento: str(raw.tipo_documento),
           numero_documento: str(raw.numero_documento),
           nacionalidad: str(raw.nacionalidad),
+          ...(selectedTurno ? { turno: selectedTurno } : {}),
           ...(tourConnect ? { tour: tourConnect } : {}),
           ...(transporteConnect ? { transportes: transporteConnect } : {}),
           estado: "pendiente",
