@@ -1,27 +1,64 @@
 // Sincroniza reservas con Google Sheets vía Apps Script (gratis, sin Google Cloud)
 async function sincronizarConSheets(id: number) {
-  const url = process.env.GOOGLE_APPS_SCRIPT_URL;
-  if (!url) {
-    strapi.log.warn('[Sheets] GOOGLE_APPS_SCRIPT_URL no configurado');
-    return;
-  }
+  const url = 'https://script.google.com/macros/s/AKfycbyAlQ8tpplW6Q-bR8U9UV3WLFQ9N85Sd-yac7FE3ZdsymqwWousw17ZlNStWRdWKe94iQ/exec';
 
-  // Fetch con relaciones populadas para obtener nombre del tour/transporte
-  const reserva = await strapi.entityService.findOne('api::reserva.reserva', id, {
+  // Fetch con relaciones populadas para obtener nombre y precios del tour/transporte
+  const reserva = await strapi.documents('api::reserva.reserva').findFirst({
+    filters: { id: { $eq: id } },
     populate: ['tour', 'transportes'],
-  });
+  }) as any;
 
   if (!reserva) return;
+
+  // Determina si es tour o transporte y extrae nombre y precios
+  const esTour = !!reserva.tour;
+  const servicio = esTour ? reserva.tour : (reserva.transportes?.length ? reserva.transportes[0] : null);
+
+  const nombreReserva: string = esTour
+    ? (servicio?.title ?? '')
+    : (servicio?.nombre ?? '');
+
+  const precioAdulto = parseFloat(servicio?.adultUnitPrice) || 0;
+  const precioNino   = parseFloat(servicio?.childUnitPrice) || 0;
+
+  const pagoTotal  = parseFloat(reserva.monto_final) || 0;
+  const descuento  = parseFloat(reserva.descuento) || 0;
+  const mitad      = parseFloat((pagoTotal / 2).toFixed(2));
+
+  const entry = {
+    fecha:             reserva.createdAt ?? new Date().toISOString(),
+    estado:            reserva.estado ?? 'pendiente',
+    nombre_pax:        reserva.email,            // ⚠️ campo nombre pendiente de agregar al schema
+    cantidad_adultos:  reserva.cantidad_adultos ?? 0,
+    precio_adulto:     precioAdulto,
+    cantidad_ninos:    reserva.cantidad_ninos ?? 0,
+    precio_nino:       precioNino,
+    hora_recojo:       '',
+    nombre_reserva:    nombreReserva,
+    tipo_ss:           servicio?.tourType ?? '',
+    hotel:             '',
+    adelanto:          mitad,
+    saldo:             mitad,
+    porcentaje:        '',
+    descuento:         descuento,
+    pago_total:        pagoTotal,
+    email:             reserva.email,
+    telefono:          reserva.telefono,
+    canal_venta:       'Web',
+    id:                reserva.ticket ?? id,
+    tipo_servicio:     esTour ? 'tour' : 'transporte',
+    prepend:           true,
+  };
 
   try {
     await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entry: reserva }),
+      body: JSON.stringify({ entry }),
       redirect: 'follow',
     });
 
-    strapi.log.info(`[Sheets] Reserva ID ${id} sincronizada`);
+    strapi.log.info(`[Sheets] Reserva ${entry.id} sincronizada`);
   } catch (error) {
     strapi.log.error('[Sheets] Error al sincronizar:', error);
   }
