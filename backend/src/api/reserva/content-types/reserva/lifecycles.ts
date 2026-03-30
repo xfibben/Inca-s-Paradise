@@ -68,11 +68,16 @@ async function sincronizarConSheets(id: number) {
 }
 
 export default {
-  async afterCreate(event: any) {
-    await sincronizarConSheets(event.result.id);
+  afterCreate(event: any) {
+    // Fire-and-forget: no bloquea la respuesta al cliente
+    sincronizarConSheets(event.result.id).catch((err) =>
+      strapi.log.error('[Sheets] Error en afterCreate:', err)
+    );
   },
 
-  async afterUpdate(event: any) {
-    await sincronizarConSheets(event.result.id);
+  afterUpdate(event: any) {
+    sincronizarConSheets(event.result.id).catch((err) =>
+      strapi.log.error('[Sheets] Error en afterUpdate:', err)
+    );
   },
 };
