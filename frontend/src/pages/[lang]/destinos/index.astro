@@ -24,6 +24,7 @@ const t = getTranslation(lang);
 
 const STRAPI_URLS = Array.from(
   new Set([
+    import.meta.env.STRAPI_URL,
     import.meta.env.PUBLIC_STRAPI_URL,
   ].filter(Boolean))
 );
