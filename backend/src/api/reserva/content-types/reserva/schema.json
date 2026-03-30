@@ -88,6 +88,10 @@
       "type": "text",
       "required": false
     },
+    "turno": {
+      "type": "string",
+      "required": false
+    },
     "ticket": {
       "type": "string",
       "required": true,
