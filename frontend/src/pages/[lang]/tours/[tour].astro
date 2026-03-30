@@ -632,6 +632,9 @@ const scheduleItems = Array.isArray(sourceTour.scheduleItems)
   : [];
 const hasScheduleSection = scheduleItems.length > 0;
 const scheduleTitle = cleanText(sourceTour.scheduleTitle);
+const scheduleOptionTitles = scheduleItems
+  .map((item: any) => item.title)
+  .filter((value: string) => Boolean(value));
 
 const includedTitle = cleanText(sourceTour.includedTitle);
 const includedItems = Array.isArray(sourceTour.includedItems)
@@ -868,20 +871,25 @@ const hasBookingCard = Boolean(
                         <div class="pl-0 md:pl-24">
                           {item.images.length ? (
                             <div
-                              class="relative w-full max-w-lg"
+                              class="relative mx-auto w-full max-w-2xl"
                               data-itinerary-gallery
                               data-gallery-index={index}
                             >
-                              {item.images.map((media: any, mediaIndex: number) => (
-                                <img
-                                  src={media.src}
-                                  alt={media.alt}
-                                  class={`h-44 w-full object-cover transition-opacity duration-300 md:h-52 ${
-                                    mediaIndex === 0 ? "opacity-100" : "pointer-events-none absolute inset-0 opacity-0"
-                                  }`}
-                                  data-itinerary-gallery-slide
-                                />
-                              ))}
+                              <div class="overflow-hidden" data-itinerary-gallery-viewport>
+                                <div
+                                  class="flex gap-3 transition-transform duration-300 ease-out md:gap-4"
+                                  data-itinerary-gallery-track
+                                >
+                                  {item.images.map((media: any) => (
+                                    <img
+                                      src={media.src}
+                                      alt={media.alt}
+                                      class="h-44 w-full flex-none object-cover md:h-52 md:w-[82%]"
+                                      data-itinerary-gallery-slide
+                                    />
+                                  ))}
+                                </div>
+                              </div>
 
                               {item.images.length > 1 ? (
                                 <>
@@ -891,7 +899,7 @@ const hasBookingCard = Boolean(
                                     data-itinerary-gallery-prev
                                     aria-label="Imagen anterior"
                                   >
-                                    ‹
+                                    &lsaquo;
                                   </button>
                                   <button
                                     type="button"
@@ -899,7 +907,7 @@ const hasBookingCard = Boolean(
                                     data-itinerary-gallery-next
                                     aria-label="Imagen siguiente"
                                   >
-                                    ›
+                                    &rsaquo;
                                   </button>
                                 </>
                               ) : null}
@@ -1341,29 +1349,41 @@ const hasBookingCard = Boolean(
           document.querySelectorAll("[data-itinerary-gallery]")
         );
         galleries.forEach((gallery) => {
+          const track = gallery.querySelector("[data-itinerary-gallery-track]");
           const slides = Array.from(
             gallery.querySelectorAll("[data-itinerary-gallery-slide]")
           );
-          if (slides.length <= 1) return;
+          if (!track || slides.length <= 1) return;
 
           const prev = gallery.querySelector("[data-itinerary-gallery-prev]");
           const next = gallery.querySelector("[data-itinerary-gallery-next]");
           let current = 0;
+          let step = 0;
 
-          const show = (targetIndex) => {
+          const updateStep = () => {
+            const firstSlide = slides[0];
+            if (!firstSlide) return;
+
+            const styles = window.getComputedStyle(track);
+            const gap =
+              parseFloat(styles.columnGap || "0") ||
+              parseFloat(styles.gap || "0") ||
+              0;
+            step = firstSlide.getBoundingClientRect().width + gap;
+          };
+
+          const show = (targetIndex, recalc = false) => {
+            if (recalc || step === 0) updateStep();
             current = (targetIndex + slides.length) % slides.length;
-            slides.forEach((slide, slideIndex) => {
-              const active = slideIndex === current;
-              slide.classList.toggle("opacity-100", active);
-              slide.classList.toggle("opacity-0", !active);
-              slide.classList.toggle("pointer-events-none", !active);
-              slide.classList.toggle("absolute", !active);
-              slide.classList.toggle("inset-0", !active);
-            });
+            track.style.transform = `translateX(-${step * current}px)`;
           };
 
           prev?.addEventListener("click", () => show(current - 1));
           next?.addEventListener("click", () => show(current + 1));
+          window.addEventListener("resize", () => show(current, true), {
+            passive: true,
+          });
+          show(0, true);
         });
 
       })();
@@ -1381,4 +1401,5 @@ const hasBookingCard = Boolean(
   tourTitle={cleanText(sourceTour.title) ?? ""}
   tourSlug={tourSlug}
   lang={lang}
+  scheduleOptions={scheduleOptionTitles}
 />
