@@ -73,7 +73,7 @@ function hasAnySharedImage(row: any): boolean {
   }
 
   if (Array.isArray(row.itineraryItems)) {
-    const hasItinerary = row.itineraryItems.some((item) => hasMediaAssigned(item?.image, false));
+    const hasItinerary = row.itineraryItems.some((item) => hasMediaAssigned(item?.image, true));
     if (hasItinerary) return true;
   }
 
@@ -106,7 +106,8 @@ function preserveComponentImagesByIndex(
   data: Record<string, any>,
   key: string,
   sourceRows: any[],
-  imageField: string
+  imageField: string,
+  options: { multiple: boolean } = { multiple: false }
 ) {
   const targetRows = data[key];
   if (!Array.isArray(targetRows) || !Array.isArray(sourceRows)) return;
@@ -115,10 +116,16 @@ function preserveComponentImagesByIndex(
     if (!row || typeof row !== 'object') return;
 
     const currentImage = row[imageField];
-    if (hasMediaAssigned(currentImage, false)) return;
-    if (!isExplicitlyEmptyMedia(currentImage, false) && currentImage !== undefined) return;
+    if (hasMediaAssigned(currentImage, options.multiple)) return;
+    if (!isExplicitlyEmptyMedia(currentImage, options.multiple) && currentImage !== undefined) return;
 
     const sourceImage = sourceRows[index]?.[imageField];
+    if (options.multiple) {
+      const sourceImageIds = toManyMediaIds(sourceImage);
+      if (sourceImageIds.length > 0) row[imageField] = sourceImageIds;
+      return;
+    }
+
     const sourceImageId = toSingleMediaId(sourceImage);
     if (sourceImageId !== null) row[imageField] = sourceImageId;
   });
@@ -193,13 +200,15 @@ async function preserveSharedImages(event: any, isCreate: boolean) {
     data,
     'featuredImages',
     Array.isArray(source.featuredImages) ? source.featuredImages : [],
-    'image'
+    'image',
+    { multiple: false }
   );
   preserveComponentImagesByIndex(
     data,
     'itineraryItems',
     Array.isArray(source.itineraryItems) ? source.itineraryItems : [],
-    'image'
+    'image',
+    { multiple: true }
   );
 }
 
