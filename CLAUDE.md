@@ -31,6 +31,8 @@ backend/src/api/
   style-trip/         # Style trips
   terminos/condiciones/ #Terminos y condiciones
   tour-detalle/       # Tour details
+  tipo-transporte     # Kind of transport
+  transporte          # transport
 ```
 
 ## Content types (Strapi)
