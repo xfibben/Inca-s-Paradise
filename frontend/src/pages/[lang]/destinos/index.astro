@@ -25,9 +25,6 @@ const t = getTranslation(lang);
 const STRAPI_URLS = Array.from(
   new Set([
     import.meta.env.PUBLIC_STRAPI_URL,
-    import.meta.env.STRAPI_INTERNAL_URL,
-    "http://backend:1337",
-    "http://localhost:1337"
   ].filter(Boolean))
 );
 
