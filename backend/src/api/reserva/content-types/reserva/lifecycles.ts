@@ -1,6 +1,6 @@
 // Sincroniza reservas con Google Sheets vía Apps Script (gratis, sin Google Cloud)
 async function sincronizarConSheets(id: number) {
-  const url = 'https://script.google.com/macros/s/AKfycbyAlQ8tpplW6Q-bR8U9UV3WLFQ9N85Sd-yac7FE3ZdsymqwWousw17ZlNStWRdWKe94iQ/exec';
+  const url = 'https://script.google.com/macros/s/AKfycbyuN1Xel1JaY49sGaybBfwVh0UmmclRu2DKGKUJ6eaJLzrVPlsIlVrOM7EjAy3dqSgISw/exec';
 
   // Fetch con relaciones populadas para obtener nombre y precios del tour/transporte
   const reserva = await strapi.documents('api::reserva.reserva').findFirst({
@@ -28,7 +28,8 @@ async function sincronizarConSheets(id: number) {
   const entry = {
     fecha:             reserva.createdAt ?? new Date().toISOString(),
     estado:            reserva.estado ?? 'pendiente',
-    nombre_pax:        reserva.email,            // ⚠️ campo nombre pendiente de agregar al schema
+    id:                reserva.ticket ?? id,
+    nombre_pax:        reserva.nombre ?? '',
     cantidad_adultos:  reserva.cantidad_adultos ?? 0,
     precio_adulto:     precioAdulto,
     cantidad_ninos:    reserva.cantidad_ninos ?? 0,
@@ -45,8 +46,8 @@ async function sincronizarConSheets(id: number) {
     email:             reserva.email,
     telefono:          reserva.telefono,
     canal_venta:       'Web',
-    id:                reserva.ticket ?? id,
     tipo_servicio:     esTour ? 'tour' : 'transporte',
+    notas:             reserva.notas ?? '',
     prepend:           true,
   };
 

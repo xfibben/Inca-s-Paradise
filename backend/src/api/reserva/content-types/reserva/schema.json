@@ -28,6 +28,10 @@
       "target": "api::transporte.transporte",
       "inversedBy": "reservas"
     },
+    "nombre": {
+      "type": "string",
+      "required": true
+    },
     "email": {
       "type": "email",
       "required": true
