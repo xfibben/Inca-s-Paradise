@@ -144,12 +144,15 @@ export default factories.createCoreController('api::reserva.reserva', ({ strapi 
       });
 
       try {
-        await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ entries }),
-          redirect: 'follow',
-        });
+        const body    = JSON.stringify({ entries });
+        const headers = { 'Content-Type': 'application/json' };
+
+        // Apps Script devuelve 302 — se obtiene el URL redirigido y se re-hace el POST
+        const firstRes    = await fetch(url, { method: 'POST', headers, body, redirect: 'manual' });
+        const redirectUrl = firstRes.headers.get('location') ?? url;
+
+        await fetch(redirectUrl, { method: 'POST', headers, body });
+
         strapi.log.info(`[Sheets] Sync masivo: ${entries.length} reservas enviadas`);
         return ctx.send({ ok: true, total: entries.length });
       } catch (e) {
