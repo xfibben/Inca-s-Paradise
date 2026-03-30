@@ -182,7 +182,8 @@ if (rawLang !== lang) {
 }
 
 let strapiTourRaw: Record<string, any> | null = null;
-const localeCandidates = await resolveLocaleCandidates(lang, STRAPI_BASE_URLS);
+// Usa locales hardcodeados igual que destinos — evita fetches extra a /api/locales
+const localeCandidates = getLocales(lang);
 for (const baseUrl of STRAPI_BASE_URLS) {
   for (const locale of localeCandidates) {
     const localePart = localePrefix(locale);
