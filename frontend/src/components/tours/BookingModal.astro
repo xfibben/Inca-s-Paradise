@@ -486,6 +486,7 @@ const t = translations[lang] ?? translations.es;
 
       const reservaData = {
         data: {
+          nombre: str(raw.nombre),
           email: str(raw.email),
           telefono: str(raw.telefono),
           cantidad_adultos: parseInt(str(raw.cantidad_adultos)),

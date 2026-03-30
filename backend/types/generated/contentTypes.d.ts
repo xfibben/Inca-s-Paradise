@@ -821,6 +821,7 @@ export interface ApiReservaReserva extends Struct.CollectionTypeSchema {
     monto_final: Schema.Attribute.Decimal;
     monto_subtotal: Schema.Attribute.Decimal;
     nacionalidad: Schema.Attribute.String & Schema.Attribute.Required;
+    nombre: Schema.Attribute.String & Schema.Attribute.Required;
     notas: Schema.Attribute.Text;
     numero_documento: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
