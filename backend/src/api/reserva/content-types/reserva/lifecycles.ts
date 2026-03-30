@@ -1,7 +1,6 @@
 // Sincroniza reservas con Google Sheets vía Apps Script (gratis, sin Google Cloud)
 async function sincronizarConSheets(id: number) {
-  const url = 'https://script.google.com/macros/s/AKfycbyB82Zr3xKLnBfQgTA9-8xlCHdN7PfYOxG9k7X4l71FRJsa1xUBb5nLrw8qLQxH_uPN5g/exec';
-
+  const url = 'https://script.google.com/macros/s/AKfycbzolk8iNVCTv435deCW9cA9nceXUhxyX5Gev6E73FnhmRsbl_1cfAzGeLLAoBp272zm_A/exec';
   // Fetch con relaciones populadas para obtener nombre y precios del tour/transporte
   const reserva = await strapi.documents('api::reserva.reserva').findFirst({
     filters: { id: { $eq: id } },
@@ -29,15 +28,14 @@ async function sincronizarConSheets(id: number) {
     fecha:             reserva.createdAt ?? new Date().toISOString(),
     nombre_pax:        reserva.nombre ?? '',
     cantidad_adultos:  reserva.cantidad_adultos ?? 0,
-    precio_adulto:     precioAdulto,
     cantidad_ninos:    reserva.cantidad_ninos ?? 0,
-    precio_nino:       precioNino,
     hora_recojo:       '',
     nombre_reserva:    nombreReserva,
     tipo_ss:           servicio?.tourType ?? '',
-    tipo_servicio:     esTour ? 'tour' : 'transporte',
     hotel:             '',
     estado:            reserva.estado ?? 'pendiente',
+    precio_adulto:     precioAdulto,
+    precio_nino:       precioNino,
     adelanto:          mitad,
     saldo:             mitad,
     porcentaje:        '',
@@ -48,6 +46,7 @@ async function sincronizarConSheets(id: number) {
     canal_venta:       'Web',
     notas:             reserva.notas ?? '',
     id:                reserva.ticket ?? id,
+    tipo_servicio:     esTour ? 'tour' : 'transporte',
     prepend:           true,
   };
 
