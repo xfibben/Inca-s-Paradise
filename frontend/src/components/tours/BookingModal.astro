@@ -418,8 +418,9 @@ const t = translations[lang] ?? translations.es;
   </div>
 </div>
 
-<script is:inline define:vars={{ tSending: t.sending, tReserve: t.reserve }}>
+<script is:inline define:vars={{ tSending: t.sending, tReserve: t.reserve, strapiUrl: import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337' }}>
   window.__bookingTexts = { sending: tSending, reserve: tReserve };
+  window.__strapiUrl = strapiUrl;
 </script>
 
 <script>
@@ -443,6 +444,7 @@ const t = translations[lang] ?? translations.es;
       __tourData?: { numericId: number | null; documentId: string | null };
       __transporteData?: { numericId: number | null; documentId: string | null };
       __bookingTexts?: { sending: string; reserve: string };
+      __strapiUrl?: string;
       openBookingModal?: (data?: BookingData) => void;
     }
   }
@@ -507,7 +509,7 @@ const t = translations[lang] ?? translations.es;
       try {
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = window.__bookingTexts?.sending ?? "Enviando..."; }
 
-        const response = await fetch("http://localhost:1337/api/reservas", {
+        const response = await fetch(`${window.__strapiUrl}/api/reservas`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(reservaData),
