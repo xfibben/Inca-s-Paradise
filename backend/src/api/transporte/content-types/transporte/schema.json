@@ -131,33 +131,47 @@
     },
     "descripcion": {
       "type": "richtext",
-      "pluginOptions": { "i18n": { "localized": true } }
-    },
-    "discount": {
-      "type": "decimal",
-      "pluginOptions": { "i18n": { "localized": false } },
-      "default": 0,
-      "min": 0
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "includedTitle": {
       "type": "string",
-      "pluginOptions": { "i18n": { "localized": true } }
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "includedItems": {
       "type": "component",
-      "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "component": "tours.inclusion-item",
-      "pluginOptions": { "i18n": { "localized": true } }
+      "repeatable": true
     },
     "excludedTitle": {
       "type": "string",
-      "pluginOptions": { "i18n": { "localized": true } }
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "excludedItems": {
       "type": "component",
-      "repeatable": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
       "component": "tours.inclusion-item",
-      "pluginOptions": { "i18n": { "localized": true } }
+      "repeatable": true
     },
     "reservas": {
       "type": "relation",
@@ -178,13 +192,13 @@
     },
     "precios": {
       "type": "component",
-      "repeatable": true,
-      "component": "transporte.precio-vehiculo",
       "pluginOptions": {
         "i18n": {
           "localized": false
         }
-      }
+      },
+      "component": "transporte.precio-vehiculo",
+      "repeatable": true
     }
   }
 }

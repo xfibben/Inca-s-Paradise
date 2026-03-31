@@ -31,7 +31,7 @@ let tiposTransporte: any[] = [];
 
 try {
   const res = await fetch(
-    `${STRAPI_URL}/api/tipo-transportes?locale=${strapiLocale}&status=published` +
+    `${STRAPI_URL}/api/tipo-transportes?locale=${strapiLocale}` +
     `&fields[0]=nombre&fields[1]=slug` +
     `&populate[image]=*` +
     `&sort=nombre:asc`
