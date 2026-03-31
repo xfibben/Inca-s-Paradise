@@ -1,0 +1,240 @@
+---
+interface VehiculoData {
+  nombre: string;
+  descripcion: string;
+  imagenUrl: string | null;
+  features: string[];
+}
+
+interface RutaData {
+  id: string;
+  nombre: string;
+  // Mapa vehiculo.nombre → precio
+  precios: Record<string, { precio: number; original: number | null }>;
+}
+
+interface Props {
+  vehiculos: VehiculoData[];
+  rutas: RutaData[];
+  lang: string;
+  labelReservar: string;
+}
+
+const { vehiculos, rutas, lang, labelReservar } = Astro.props;
+
+// Nombres de columnas en el orden que lleguen
+const COLUMNAS = vehiculos.map((v) => v.nombre);
+
+// Mapa para acceso rápido a detalle por nombre
+const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
+---
+
+<section class="py-20 bg-stone-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Encabezado -->
+    <div class="text-center mb-12">
+      <p class="text-[#1AA093] uppercase tracking-widest text-sm font-medium mb-3">Tarifas</p>
+      <h2
+        class="text-4xl md:text-5xl text-stone-800"
+        style="font-family: 'Playfair Display', serif; font-style: italic;"
+      >
+        Comparar Servicios
+      </h2>
+    </div>
+
+    <!-- Tabla -->
+    <div class="overflow-x-auto rounded-2xl shadow-md border border-stone-200">
+      <table class="w-full text-sm text-stone-700 border-collapse" id="transporte-table">
+
+        <!-- Cabecera -->
+        <thead>
+          <tr class="bg-stone-800 text-white text-left">
+            <th class="px-6 py-4 font-medium text-base w-2/5">Tipo de Transporte</th>
+            {COLUMNAS.map((col) => (
+              <th class="px-6 py-4 font-medium text-base text-center">{col}</th>
+            ))}
+          </tr>
+        </thead>
+
+        <!-- Cuerpo -->
+        <tbody id="transporte-tbody">
+          {rutas.map((ruta, i) => (
+            <>
+              <!-- Fila principal -->
+              <tr
+                class={`ruta-row cursor-pointer transition-colors duration-150 border-b border-stone-100 hover:bg-[#e0f7f5] ${i % 2 === 0 ? 'bg-white' : 'bg-stone-50'}`}
+                data-id={ruta.id}
+              >
+                <!-- Nombre ruta -->
+                <td class="px-6 py-4 font-medium text-stone-800 flex items-center gap-2">
+                  <svg class="chevron w-4 h-4 text-[#1AA093] shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                  {ruta.nombre}
+                </td>
+
+                <!-- Precios por columna -->
+                {COLUMNAS.map((col) => {
+                  const p = ruta.precios[col];
+                  return (
+                    <td class="px-6 py-4 text-center">
+                      {p ? (
+                        <>
+                          <span class="font-semibold text-stone-800">USD {p.precio.toFixed(2)}</span>
+                          {p.original && (
+                            <span class="block text-xs text-stone-400 line-through">USD {p.original.toFixed(2)}</span>
+                          )}
+                        </>
+                      ) : (
+                        <span class="text-stone-300">—</span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+
+              <!-- Fila expandida (oculta por defecto) -->
+              <tr class="expanded-row hidden" data-for={ruta.id}>
+                <td colspan={COLUMNAS.length + 1} class="p-0 border-b border-stone-200">
+                  <div class="expanded-content bg-stone-100">
+
+                    <!-- Tabs de tipo de vehículo -->
+                    <div class="flex border-b border-stone-200 bg-white">
+                      {COLUMNAS.map((col, idx) => (
+                        <button
+                          class={`tren-tab px-6 py-3 text-sm font-medium transition-colors duration-150 border-b-2 ${idx === 0 ? 'border-[#1AA093] text-[#1AA093]' : 'border-transparent text-stone-500 hover:text-stone-800'}`}
+                          data-tren={col}
+                          data-ruta={ruta.id}
+                        >
+                          {col}
+                        </button>
+                      ))}
+                    </div>
+
+                    <!-- Panel de detalle -->
+                    {COLUMNAS.map((col, idx) => {
+                      const detalle = detalleMap[col];
+                      const precio = ruta.precios[col];
+                      return (
+                        <div
+                          class={`tren-panel flex flex-col md:flex-row ${idx === 0 ? '' : 'hidden'}`}
+                          data-tren={col}
+                          data-ruta={ruta.id}
+                        >
+                          <!-- Imagen (mitad izquierda) -->
+                          <div class="md:w-1/2 h-64 md:h-80 shrink-0">
+                            {detalle.imagenUrl ? (
+                              <img
+                                src={detalle.imagenUrl}
+                                alt={col}
+                                class="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div class="w-full h-full bg-stone-300" />
+                            )}
+                          </div>
+
+                          <!-- Descripción (mitad derecha) -->
+                          <div class="md:w-1/2 p-6 flex flex-col justify-center gap-4">
+                            <div>
+                              <h3 class="text-xl font-semibold text-stone-800 mb-1">{col}</h3>
+                              <p class="text-stone-500 text-sm leading-relaxed">{detalle.descripcion}</p>
+                            </div>
+
+                            <!-- Features -->
+                            {detalle.features.length > 0 && (
+                              <ul class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4">
+                                {detalle.features.map((f) => (
+                                  <li class="flex items-start gap-2 text-sm text-stone-700">
+                                    <svg class="w-4 h-4 text-[#1AA093] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    {f}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+
+                            <!-- Precio + botón reservar -->
+                            {precio && (
+                              <div class="flex items-center justify-between gap-3 pt-2 border-t border-stone-200">
+                                <div class="flex items-center gap-3">
+                                  <span class="text-stone-500 text-sm">{ruta.nombre}</span>
+                                  <span class="text-lg font-bold text-stone-800">
+                                    USD {precio.precio.toFixed(2)}
+                                  </span>
+                                </div>
+                                <a
+                                  href={`/${lang}/transporte/${ruta.id}?vehiculo=${encodeURIComponent(col)}`}
+                                  class="reservar-btn inline-flex items-center gap-2 bg-[#1AA093] hover:bg-[#0e8a7e] text-white text-sm font-semibold px-5 py-2 transition-colors duration-150"
+                                >
+                                  {labelReservar}
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </td>
+              </tr>
+            </>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</section>
+
+<script is:inline>
+  // Expande/colapsa fila al hacer click
+  document.querySelectorAll('.ruta-row').forEach(function(row) {
+    row.addEventListener('click', function() {
+      var id = this.getAttribute('data-id');
+      var expandedRow = document.querySelector('.expanded-row[data-for="' + id + '"]');
+      var chevron = this.querySelector('.chevron');
+      var isOpen = !expandedRow.classList.contains('hidden');
+
+      // Cierra todas las demás filas
+      document.querySelectorAll('.expanded-row').forEach(function(r) { r.classList.add('hidden'); });
+      document.querySelectorAll('.chevron').forEach(function(c) { c.classList.remove('rotate-90'); });
+
+      if (!isOpen) {
+        expandedRow.classList.remove('hidden');
+        chevron.classList.add('rotate-90');
+      }
+    });
+  });
+
+  // Evita que el botón reservar propague el click a la fila
+  document.querySelectorAll('.reservar-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) { e.stopPropagation(); });
+  });
+
+  // Cambia el tab de tipo de vehículo
+  document.querySelectorAll('.tren-tab').forEach(function(tab) {
+    tab.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var tren = this.getAttribute('data-tren');
+      var ruta = this.getAttribute('data-ruta');
+
+      // Tabs de esta fila
+      document.querySelectorAll('.tren-tab[data-ruta="' + ruta + '"]').forEach(function(t) {
+        t.classList.remove('border-[#1AA093]', 'text-[#1AA093]');
+        t.classList.add('border-transparent', 'text-stone-500');
+      });
+      this.classList.add('border-[#1AA093]', 'text-[#1AA093]');
+      this.classList.remove('border-transparent', 'text-stone-500');
+
+      // Paneles de esta fila
+      document.querySelectorAll('.tren-panel[data-ruta="' + ruta + '"]').forEach(function(p) {
+        p.classList.add('hidden');
+      });
+      document.querySelector('.tren-panel[data-tren="' + tren + '"][data-ruta="' + ruta + '"]').classList.remove('hidden');
+    });
+  });
+</script>

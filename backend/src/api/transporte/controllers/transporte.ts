@@ -21,6 +21,13 @@ export default factories.createCoreController('api::transporte.transporte', ({ s
         tipos_transporte: { fields: ['nombre', 'slug'] },
         includedItems: true,
         excludedItems: true,
+        precios: {
+          populate: {
+            vehiculo: {
+              populate: { imagen: true },
+            },
+          },
+        },
       } as any,
     });
 

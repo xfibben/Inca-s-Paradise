@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_transporte_precio_vehiculos",
+  "info": {
+    "displayName": "Precio Vehículo",
+    "description": "Precio de un vehículo para una ruta de transporte"
+  },
+  "options": {},
+  "attributes": {
+    "vehiculo": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::vehiculo.vehiculo"
+    },
+    "precioAdulto": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "precioNino": {
+      "type": "decimal",
+      "min": 0
+    }
+  }
+}

@@ -3,6 +3,7 @@ import { getTranslation, languages, defaultLanguage, type Language } from '../..
 import '../../../styles/global.css';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
+import TipoTransporteTable from '../../../components/tipo-transporte/TipoTransporteTable.astro';
 
 export function getStaticPaths() {
   return [];
@@ -24,20 +25,39 @@ const strapiLocale =
   : currentLang === 'es' ? 'es-PE'
   : currentLang;
 
-// Fetch del tipo de transporte por slug
+// Estructuras de datos procesados para la tabla comparativa
+interface VehiculoData {
+  nombre: string;
+  descripcion: string;
+  imagenUrl: string | null;
+  features: string[];
+}
+
+interface RutaData {
+  id: string;
+  nombre: string;
+  precios: Record<string, { precio: number; original: number | null }>;
+}
+
+// Fetch del tipo de transporte por slug con precios y vehículos anidados
 let tipoTransporte: any = null;
 
 try {
-  const res = await fetch(
-    `${STRAPI_URL}/api/tipo-transportes?filters[slug][$eq]=${slug}` +
-    `&locale=${strapiLocale}&status=published` +
+  // Se construye la URL manualmente para evitar que URLSearchParams codifique los corchetes
+  const query =
+    `filters[slug][$eq]=${encodeURIComponent(slug as string)}` +
+    `&locale=${strapiLocale}` +
+    `&status=published` +
     `&populate[image]=*` +
     `&populate[wallpaper]=*` +
-    `&populate[transportes]=*`
-  );
+    `&populate[transportes][populate][precios][populate][vehiculo][populate][imagen]=*` +
+    `&populate[transportes][populate][precios][populate][vehiculo][populate][features]=*`;
+
+  const res = await fetch(`${STRAPI_URL}/api/tipo-transportes?${query}`);
   if (res.ok) {
     const json = await res.json();
     tipoTransporte = json?.data?.[0] ?? null;
+    console.log('DEBUG transportes[0]:', JSON.stringify(tipoTransporte?.transportes?.[0], null, 2));
   }
 } catch (e) {
   console.error("Error al obtener tipo de transporte:", e);
@@ -57,6 +77,40 @@ function getImageUrl(media: any): string | null {
 const wallpaperUrl = getImageUrl(tipoTransporte.wallpaper);
 
 const transportes: any[] = tipoTransporte.transportes ?? [];
+
+// Construir vehículos únicos y rutas para la tabla comparativa
+const vehiculosMap = new Map<string, VehiculoData>();
+
+for (const tp of transportes) {
+  for (const precio of tp.precios ?? []) {
+    for (const veh of precio.vehiculo ?? []) {
+      if (!vehiculosMap.has(veh.nombre)) {
+        vehiculosMap.set(veh.nombre, {
+          nombre: veh.nombre,
+          descripcion: veh.descripcion ?? '',
+          imagenUrl: getImageUrl(veh.imagen),
+          features: (veh.features ?? []).map((f: any) => f.text as string),
+        });
+      }
+    }
+  }
+}
+
+const vehiculos: VehiculoData[] = Array.from(vehiculosMap.values());
+
+const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
+  const preciosMap: Record<string, { precio: number; original: number | null }> = {};
+  for (const precio of tp.precios ?? []) {
+    for (const veh of precio.vehiculo ?? []) {
+      preciosMap[veh.nombre] = { precio: precio.precioAdulto ?? 0, original: null };
+    }
+  }
+  return {
+    id: tp.slug ?? String(tp.id),
+    nombre: tp.nombre,
+    precios: preciosMap,
+  };
+});
 ---
 
 <html lang={currentLang}>
@@ -110,6 +164,11 @@ const transportes: any[] = tipoTransporte.transportes ?? [];
         </div>
       )}
 
+      <!-- Tabla comparativa de precios por vehículo -->
+      {vehiculos.length > 0 && rutas.length > 0 && (
+        <TipoTransporteTable vehiculos={vehiculos} rutas={rutas} lang={currentLang} labelReservar={t.transporte?.reservar ?? 'Reservar'} />
+      )}
+
       <!-- Contenido principal -->
       <section class="py-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -118,7 +177,7 @@ const transportes: any[] = tipoTransporte.transportes ?? [];
         {transportes.length > 0 && (
           <div>
             <div class="text-center mb-10">
-              <p class="text-amber-600 uppercase tracking-widest text-sm font-medium mb-2">{t.transporte.disponibles}</p>
+              <p class="text-[#1AA093] uppercase tracking-widest text-sm font-medium mb-2">{t.transporte.disponibles}</p>
               <h2
                 class="text-3xl md:text-4xl text-stone-800"
                 style="font-family: 'Playfair Display', serif; font-style: italic;"
@@ -168,7 +227,7 @@ const transportes: any[] = tipoTransporte.transportes ?? [];
         <div class="mt-14 text-center">
           <a
             href={`/${currentLang}/tipo-transporte/`}
-            class="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 text-sm font-medium transition-colors"
+            class="inline-flex items-center gap-2 text-[#1AA093] hover:text-[#0e8a7e] text-sm font-medium transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
