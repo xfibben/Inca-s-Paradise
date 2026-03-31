@@ -1616,6 +1616,12 @@ export interface ApiTransporteTransporte extends Struct.CollectionTypeSchema {
           localized: false;
         };
       }>;
+    precios: Schema.Attribute.Component<'transporte.precio-vehiculo', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
     publishedAt: Schema.Attribute.DateTime;
     reservas: Schema.Attribute.Relation<'manyToMany', 'api::reserva.reserva'>;
     slug: Schema.Attribute.UID<'nombre'> &
@@ -1643,6 +1649,62 @@ export interface ApiTransporteTransporte extends Struct.CollectionTypeSchema {
           localized: false;
         };
       }>;
+  };
+}
+
+export interface ApiVehiculoVehiculo extends Struct.CollectionTypeSchema {
+  collectionName: 'vehiculos';
+  info: {
+    displayName: 'Veh\u00EDculo';
+    pluralName: 'vehiculos';
+    singularName: 'vehiculo';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    descripcion: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    features: Schema.Attribute.Component<'tours.inclusion-item', true> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    imagen: Schema.Attribute.Media<'images'> &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: false;
+        };
+      }>;
+    locale: Schema.Attribute.String;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::vehiculo.vehiculo'
+    >;
+    nombre: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -2165,6 +2227,7 @@ declare module '@strapi/strapi' {
       'api::tipo-transporte.tipo-transporte': ApiTipoTransporteTipoTransporte;
       'api::tour-detalle.tour-detalle': ApiTourDetalleTourDetalle;
       'api::transporte.transporte': ApiTransporteTransporte;
+      'api::vehiculo.vehiculo': ApiVehiculoVehiculo;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

@@ -185,6 +185,16 @@
         }
       },
       "mappedBy": "transportes"
+    },
+    "precios": {
+      "type": "component",
+      "repeatable": true,
+      "component": "transporte.precio-vehiculo",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
     }
   }
 }

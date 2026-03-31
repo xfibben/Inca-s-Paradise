@@ -429,8 +429,8 @@ const c = t[lang] ?? t.es;
 
     // Conversión de moneda — open.er-api.com soporta PEN
     const priceSection = document.querySelector("[data-price-adult-usd]");
-    const adultUsdBase = parseFloat(priceSection?.getAttribute("data-price-adult-usd") || "0");
-    const childUsdBase = parseFloat(priceSection?.getAttribute("data-price-child-usd") || "0");
+    let adultUsdBase = parseFloat(priceSection?.getAttribute("data-price-adult-usd") || "0");
+    let childUsdBase = parseFloat(priceSection?.getAttribute("data-price-child-usd") || "0");
     const discountUsdBase = parseFloat(priceSection?.getAttribute("data-discount-usd") || "0");
     const adultDisplayEl = document.querySelector("[data-price-adult-display]");
     const childDisplayEl = document.querySelector("[data-price-child-display]");
@@ -481,6 +481,14 @@ const c = t[lang] ?? t.es;
         updatePrices(isCurrencyKey(val) ? val : "USD");
       })
       .catch(() => updatePrices("USD"));
+
+    // Permite al selector de vehículo actualizar los precios dinámicamente
+    (window as any).updateBookingPrices = (newAdultUsd: number, newChildUsd: number) => {
+      adultUsdBase = newAdultUsd;
+      childUsdBase = newChildUsd;
+      const val = currencySelect?.value || "USD";
+      updatePrices(isCurrencyKey(val) ? val : "USD");
+    };
 
     currencySelect?.addEventListener("change", (e) => {
       const val = (e.target as HTMLSelectElement).value;

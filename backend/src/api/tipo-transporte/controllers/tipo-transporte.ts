@@ -16,11 +16,20 @@ export default factories.createCoreController('api::tipo-transporte.tipo-transpo
         image: true,
         wallpaper: true,
         transportes: {
-          fields: ['nombre', 'slug'],
           populate: {
             image: true,
             destino_origen: { fields: ['title'] },
             destino_llegada: { fields: ['title'] },
+            precios: {
+              populate: {
+                vehiculo: {
+                  populate: {
+                    imagen: true,
+                    features: true,
+                  },
+                },
+              },
+            },
           },
         },
       } as any,

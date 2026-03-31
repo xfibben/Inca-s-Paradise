@@ -31,12 +31,28 @@ backend/src/api/
   style-trip/         # Style trips
   terminos/condiciones/ #Terminos y condiciones
   tour-detalle/       # Tour details
-  tipo-transporte     # Kind of transport
-  transporte          # transport
+  tipo-transporte/    # Kind of transport
+  transporte/         # Transport routes
+  vehiculo/           # Vehicle types (Expedition, Observatory, Vistadome 33)
+
+backend/src/components/
+  tours/              # Tour-related components
+  destinos/           # Destination-related components
+  legal/              # Terms components
+  transporte/         # precio-vehiculo (vehiculo relation + precio)
 ```
 
 ## Content types (Strapi)
-`destino`, `destino-detalle`, `reserva`, `style-trip`, `tour-detalle`
+`destino`, `destino-detalle`, `reserva`, `style-trip`, `tour-detalle`, `transporte`, `tipo-transporte`, `vehiculo`
+
+## Transporte / Vehículo model
+- `vehiculo`: nombre, descripcion, imagen, features (repeatable `tours.inclusion-item`)
+- `transporte` tiene campo `precios` (repeatable component `transporte.precio-vehiculo`)
+  - cada entrada: `vehiculo` (manyToMany → vehiculo) + `precioAdulto` (decimal) + `precioNino` (decimal)
+- La tabla comparativa en `/tipo-transporte` usa estos datos: filas = rutas, columnas = vehículos
+
+## Color scheme
+- **Transporte pages** usan el verde `#1AA093` (hover `#0e8a7e`, fondo suave `#e0f7f5`) — el mismo que BookingCard y BookingModal. No usar amber/naranja en páginas de transporte o tipo-transporte.
 
 ## Conventions
 - Astro components use `.astro`, data files use `.ts` or `.json`
