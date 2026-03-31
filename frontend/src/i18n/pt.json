@@ -14,7 +14,8 @@
     "duracionViaje": "Duração da viagem",
     "distancia": "Distância",
     "descripcionOrigen": "Descrição origem",
-    "descripcionLlegada": "Descrição chegada"
+    "descripcionLlegada": "Descrição chegada",
+    "reservar": "Reservar"
   },
   "nav": {
     "destinations": "Destinos",

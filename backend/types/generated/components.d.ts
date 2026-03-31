@@ -162,6 +162,32 @@ export interface ToursScheduleItem extends Struct.ComponentSchema {
   };
 }
 
+export interface TransportePrecioVehiculo extends Struct.ComponentSchema {
+  collectionName: 'components_transporte_precio_vehiculos';
+  info: {
+    description: 'Precio de un veh\u00EDculo para una ruta de transporte';
+    displayName: 'Precio Veh\u00EDculo';
+  };
+  attributes: {
+    precioAdulto: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    precioNino: Schema.Attribute.Decimal &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    vehiculo: Schema.Attribute.Relation<'manyToMany', 'api::vehiculo.vehiculo'>;
+  };
+}
+
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
@@ -177,6 +203,7 @@ declare module '@strapi/strapi' {
       'tours.itinerary-item': ToursItineraryItem;
       'tours.review-brand-item': ToursReviewBrandItem;
       'tours.schedule-item': ToursScheduleItem;
+      'transporte.precio-vehiculo': TransportePrecioVehiculo;
     }
   }
 }
