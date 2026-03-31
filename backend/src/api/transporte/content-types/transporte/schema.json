@@ -133,16 +133,6 @@
       "type": "richtext",
       "pluginOptions": { "i18n": { "localized": true } }
     },
-    "adultUnitPrice": {
-      "type": "decimal",
-      "pluginOptions": { "i18n": { "localized": false } },
-      "min": 0
-    },
-    "childUnitPrice": {
-      "type": "decimal",
-      "pluginOptions": { "i18n": { "localized": false } },
-      "min": 0
-    },
     "discount": {
       "type": "decimal",
       "pluginOptions": { "i18n": { "localized": false } },
