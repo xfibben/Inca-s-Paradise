@@ -82,6 +82,7 @@ interface PrecioVehiculoData {
   imagenUrl: string | null;
   precioAdulto: number;
   precioNino: number;
+  descuento: number;
 }
 
 const preciosConVehiculo: PrecioVehiculoData[] = [];
@@ -92,6 +93,7 @@ for (const precio of transporte.precios ?? []) {
       imagenUrl: getImageUrl(veh.imagen),
       precioAdulto: precio.precioAdulto ?? 0,
       precioNino: precio.precioNino ?? 0,
+      descuento: precio.descuento ?? 0,
     });
   }
 }
@@ -106,9 +108,9 @@ const selectedVehiculoNombre = selectedPrecio?.nombre ?? null;
 const displayImageUrl = selectedPrecio?.imagenUrl ?? getImageUrl(transporte.image);
 
 // Precios y descripción
-const adultPrice = selectedPrecio?.precioAdulto ?? transporte.adultUnitPrice ?? 0;
-const childPrice = selectedPrecio?.precioNino ?? transporte.childUnitPrice ?? 0;
-const discountPrice = transporte.discount ?? 0;
+const adultPrice = selectedPrecio?.precioAdulto ?? 0;
+const childPrice = selectedPrecio?.precioNino ?? 0;
+const discountPrice = selectedPrecio?.descuento ?? transporte.discount ?? 0;
 const descripcion: string = transporte.descripcion ?? '';
 
 // Incluye / No incluye
@@ -213,65 +215,65 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
               )}
             </div>
 
-            <!-- Destinos + imagen -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
-              <div class="flex flex-col gap-4">
-                {transporte.destino_origen?.length > 0 && (
-                  <div>
-                    <p class="text-[#1AA093] uppercase tracking-widest text-xs mb-2">{t.transporte.origen}</p>
-                    <div class="flex flex-wrap gap-2">
-                      {transporte.destino_origen.map((d: any) => (
-                        <span class="px-3 py-1 bg-stone-100 text-stone-700  text-sm">
-                          {d.title}{transporte.descripcion_origen ? ` — ${transporte.descripcion_origen}` : ''}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {transporte.destino_llegada?.length > 0 && (
-                  <div>
-                    <p class="text-[#1AA093] uppercase tracking-widest text-xs mb-2">{t.transporte.destino}</p>
-                    <div class="flex flex-wrap gap-2">
-                      {transporte.destino_llegada.map((d: any) => (
-                        <span class="px-3 py-1 bg-stone-100 text-stone-700  text-sm">
-                          {d.title}{transporte.descripcion_llegada ? ` — ${transporte.descripcion_llegada}` : ''}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div class="flex flex-col gap-3">
-                {displayImageUrl && (
-                  <div class="overflow-hidden shadow-md">
-                    <img
-                      id="vehiculo-img"
-                      src={displayImageUrl}
-                      alt={selectedVehiculoNombre ?? transporte.nombre}
-                      class="w-full h-52 object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-
-                <!-- Selector de vehículo -->
-                {preciosConVehiculo.length > 1 && (
+            <!-- Destinos -->
+            <div class="flex flex-col sm:flex-row gap-6">
+              {transporte.destino_origen?.length > 0 && (
+                <div>
+                  <p class="text-[#1AA093] uppercase tracking-widest text-xs mb-2">{t.transporte.origen}</p>
                   <div class="flex flex-wrap gap-2">
-                    {preciosConVehiculo.map((pv) => (
-                      <button
-                        class={`vehiculo-selector-btn px-3 py-1.5 text-xs font-medium border transition-colors ${pv.nombre === selectedVehiculoNombre ? 'bg-[#1AA093] text-white border-[#1AA093]' : 'bg-white text-stone-700 border-stone-200 hover:border-[#1AA093]'}`}
-                        data-nombre={pv.nombre}
-                        data-imagen={pv.imagenUrl ?? ''}
-                        data-precio-adulto={pv.precioAdulto}
-                        data-precio-nino={pv.precioNino}
-                      >
-                        {pv.nombre}
-                      </button>
+                    {transporte.destino_origen.map((d: any) => (
+                      <span class="px-3 py-1 bg-stone-100 text-stone-700 text-sm">
+                        {d.title}{transporte.descripcion_origen ? ` — ${transporte.descripcion_origen}` : ''}
+                      </span>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+              {transporte.destino_llegada?.length > 0 && (
+                <div>
+                  <p class="text-[#1AA093] uppercase tracking-widest text-xs mb-2">{t.transporte.destino}</p>
+                  <div class="flex flex-wrap gap-2">
+                    {transporte.destino_llegada.map((d: any) => (
+                      <span class="px-3 py-1 bg-stone-100 text-stone-700 text-sm">
+                        {d.title}{transporte.descripcion_llegada ? ` — ${transporte.descripcion_llegada}` : ''}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <!-- Imagen del vehículo (full width) -->
+            <div class="flex flex-col gap-3">
+              {displayImageUrl && (
+                <div class="overflow-hidden shadow-md">
+                  <img
+                    id="vehiculo-img"
+                    src={displayImageUrl}
+                    alt={selectedVehiculoNombre ?? transporte.nombre}
+                    class="w-full h-72 sm:h-96 object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              )}
+
+              <!-- Selector de vehículo -->
+              {preciosConVehiculo.length > 1 && (
+                <div class="flex flex-wrap gap-2">
+                  {preciosConVehiculo.map((pv) => (
+                    <button
+                      class={`vehiculo-selector-btn px-3 py-1.5 text-xs font-medium border transition-colors ${pv.nombre === selectedVehiculoNombre ? 'bg-[#1AA093] text-white border-[#1AA093]' : 'bg-white text-stone-700 border-stone-200 hover:border-[#1AA093]'}`}
+                      data-nombre={pv.nombre}
+                      data-imagen={pv.imagenUrl ?? ''}
+                      data-precio-adulto={pv.precioAdulto}
+                      data-precio-nino={pv.precioNino}
+                      data-descuento={pv.descuento}
+                    >
+                      {pv.nombre}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <!-- Descripción -->
@@ -409,8 +411,9 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
           // Actualiza precios en BookingCard
           var precioAdulto = parseFloat(this.getAttribute('data-precio-adulto') || '0');
           var precioNino = parseFloat(this.getAttribute('data-precio-nino') || '0');
+          var descuento = parseFloat(this.getAttribute('data-descuento') || '0');
           if (typeof window.updateBookingPrices === 'function') {
-            window.updateBookingPrices(precioAdulto, precioNino);
+            window.updateBookingPrices(precioAdulto, precioNino, descuento);
           }
         });
       });

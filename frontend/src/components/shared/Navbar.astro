@@ -72,6 +72,18 @@ try {
 ---
 
 <style>
+  /* Páginas sin hero: navbar sólido desde el primer render, sin esperar a JS */
+  body[data-navbar-solid] #navbar {
+    background-color: white;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  /* Links oscuros en páginas sin hero */
+  body[data-navbar-solid] #navbar a:not(#lang-dropdown a),
+  body[data-navbar-solid] #navbar button:not(#lang-dropdown button) {
+    color: #111827;
+  }
+
   /* Cuando el menú móvil está abierto, navbar siempre blanco */
   #navbar.menu-open {
     background-color: white !important;

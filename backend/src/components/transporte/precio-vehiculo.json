@@ -19,6 +19,11 @@
     "precioNino": {
       "type": "decimal",
       "min": 0
+    },
+    "descuento": {
+      "type": "decimal",
+      "min": 0,
+      "default": 0
     }
   }
 }

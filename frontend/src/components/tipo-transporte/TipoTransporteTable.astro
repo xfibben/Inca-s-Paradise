@@ -43,8 +43,106 @@ const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
       </h2>
     </div>
 
-    <!-- Tabla -->
-    <div class="overflow-x-auto rounded-2xl shadow-md border border-stone-200">
+    <!-- Vista móvil: tarjetas por ruta -->
+    <div class="md:hidden flex flex-col gap-4" id="mobile-rutas">
+      {rutas.map((ruta) => (
+        <div class="bg-white rounded-2xl shadow border border-stone-200 overflow-hidden">
+
+          <!-- Cabecera de la tarjeta (expandible) -->
+          <button
+            type="button"
+            class="mobile-ruta-toggle w-full flex items-center justify-between px-5 py-4 text-left"
+            data-id={ruta.id}
+          >
+            <span class="font-medium text-stone-800 text-sm">{ruta.nombre}</span>
+            <svg class="mobile-chevron w-4 h-4 text-[#1AA093] shrink-0 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          <!-- Contenido expandido -->
+          <div class="mobile-ruta-content hidden" data-id={ruta.id}>
+
+            <!-- Tabs de vehículo -->
+            <div class="flex border-t border-b border-stone-200 bg-stone-50">
+              {COLUMNAS.map((col, idx) => (
+                <button
+                  type="button"
+                  class={`mobile-tab flex-1 py-2.5 text-xs font-medium transition-colors border-b-2 ${idx === 0 ? 'border-[#1AA093] text-[#1AA093]' : 'border-transparent text-stone-500'}`}
+                  data-col={col}
+                  data-ruta={ruta.id}
+                >
+                  {col}
+                </button>
+              ))}
+            </div>
+
+            <!-- Paneles por vehículo -->
+            {COLUMNAS.map((col, idx) => {
+              const detalle = detalleMap[col];
+              const precio = ruta.precios[col];
+              return (
+                <div
+                  class={`mobile-panel ${idx === 0 ? '' : 'hidden'}`}
+                  data-col={col}
+                  data-ruta={ruta.id}
+                >
+                  {detalle.imagenUrl && (
+                    <img
+                      src={detalle.imagenUrl}
+                      alt={col}
+                      class="w-full h-48 object-cover"
+                      loading="lazy"
+                    />
+                  )}
+                  <div class="px-5 py-4 flex flex-col gap-3">
+                    <div>
+                      <h3 class="text-base font-semibold text-stone-800 mb-1">{col}</h3>
+                      <p class="text-stone-500 text-sm leading-relaxed">{detalle.descripcion}</p>
+                    </div>
+
+                    {detalle.features.length > 0 && (
+                      <ul class="flex flex-col gap-1.5">
+                        {detalle.features.map((f) => (
+                          <li class="flex items-start gap-2 text-sm text-stone-700">
+                            <svg class="w-4 h-4 text-[#1AA093] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {precio ? (
+                      <div class="flex items-center justify-between gap-3 pt-2 border-t border-stone-200">
+                        <div>
+                          <span class="text-lg font-bold text-stone-800">USD {precio.precio.toFixed(2)}</span>
+                          {precio.original && (
+                            <span class="block text-xs text-stone-400 line-through">USD {precio.original.toFixed(2)}</span>
+                          )}
+                        </div>
+                        <a
+                          href={`/${lang}/transporte/${ruta.id}?vehiculo=${encodeURIComponent(col)}`}
+                          class="inline-flex items-center gap-2 bg-[#1AA093] hover:bg-[#0e8a7e] text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+                        >
+                          {labelReservar}
+                        </a>
+                      </div>
+                    ) : (
+                      <p class="text-stone-400 text-sm">—</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Tabla (solo desktop) -->
+    <div class="hidden md:block overflow-x-auto rounded-2xl shadow-md border border-stone-200">
       <table class="w-full text-sm text-stone-700 border-collapse" id="transporte-table">
 
         <!-- Cabecera -->
@@ -186,6 +284,7 @@ const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
         </tbody>
       </table>
     </div>
+    </div>
 
   </div>
 </section>
@@ -214,6 +313,49 @@ const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
   document.querySelectorAll('.reservar-btn').forEach(function(btn) {
     btn.addEventListener('click', function(e) { e.stopPropagation(); });
   });
+
+  // --- Vista móvil ---
+
+  // Expande/colapsa tarjeta de ruta en móvil
+  document.querySelectorAll('.mobile-ruta-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = this.getAttribute('data-id');
+      var content = document.querySelector('.mobile-ruta-content[data-id="' + id + '"]');
+      var chevron = this.querySelector('.mobile-chevron');
+      var isOpen = !content.classList.contains('hidden');
+
+      // Cierra todas
+      document.querySelectorAll('.mobile-ruta-content').forEach(function(c) { c.classList.add('hidden'); });
+      document.querySelectorAll('.mobile-chevron').forEach(function(c) { c.classList.remove('rotate-90'); });
+
+      if (!isOpen) {
+        content.classList.remove('hidden');
+        chevron.classList.add('rotate-90');
+      }
+    });
+  });
+
+  // Cambia tab de vehículo en vista móvil
+  document.querySelectorAll('.mobile-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var col = this.getAttribute('data-col');
+      var ruta = this.getAttribute('data-ruta');
+
+      document.querySelectorAll('.mobile-tab[data-ruta="' + ruta + '"]').forEach(function(t) {
+        t.classList.remove('border-[#1AA093]', 'text-[#1AA093]');
+        t.classList.add('border-transparent', 'text-stone-500');
+      });
+      this.classList.add('border-[#1AA093]', 'text-[#1AA093]');
+      this.classList.remove('border-transparent', 'text-stone-500');
+
+      document.querySelectorAll('.mobile-panel[data-ruta="' + ruta + '"]').forEach(function(p) {
+        p.classList.add('hidden');
+      });
+      document.querySelector('.mobile-panel[data-col="' + col + '"][data-ruta="' + ruta + '"]').classList.remove('hidden');
+    });
+  });
+
+  // --- Desktop ---
 
   // Cambia el tab de tipo de vehículo
   document.querySelectorAll('.tren-tab').forEach(function(tab) {
