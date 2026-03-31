@@ -47,9 +47,13 @@ try {
   const query =
     `filters[slug][$eq]=${encodeURIComponent(slug as string)}` +
     `&locale=${strapiLocale}` +
-    `&status=published` +
     `&populate[image]=*` +
     `&populate[wallpaper]=*` +
+    `&populate[transportes][fields][0]=slug` +
+    `&populate[transportes][fields][1]=nombre` +
+    `&populate[transportes][populate][image]=*` +
+    `&populate[transportes][populate][destino_origen][fields][0]=title` +
+    `&populate[transportes][populate][destino_llegada][fields][0]=title` +
     `&populate[transportes][populate][precios][populate][vehiculo][populate][imagen]=*` +
     `&populate[transportes][populate][precios][populate][vehiculo][populate][features]=*`;
 

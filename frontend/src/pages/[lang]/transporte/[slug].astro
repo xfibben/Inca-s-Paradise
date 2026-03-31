@@ -33,7 +33,7 @@ let transporte: any = null;
 try {
   const res = await fetch(
     `${STRAPI_URL}/api/transportes?filters[slug][$eq]=${slug}` +
-    `&locale=${strapiLocale}&status=published` +
+    `&locale=${strapiLocale}&status=draft` +
     `&populate[image]=*` +
     `&populate[wallpaper]=*` +
     `&populate[destino_origen][fields][0]=title` +

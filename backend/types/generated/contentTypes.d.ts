@@ -1513,19 +1513,6 @@ export interface ApiTransporteTransporte extends Struct.CollectionTypeSchema {
           localized: false;
         };
       }>;
-    discount: Schema.Attribute.Decimal &
-      Schema.Attribute.SetPluginOptions<{
-        i18n: {
-          localized: false;
-        };
-      }> &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      > &
-      Schema.Attribute.DefaultTo<0>;
     distancia: Schema.Attribute.String &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
