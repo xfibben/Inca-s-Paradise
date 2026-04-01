@@ -468,6 +468,61 @@ if (sourceTour.documentId) {
 
 const cleanText = (value: any) =>
   typeof value === "string" ? value.trim() : "";
+
+const escapeHtml = (value: string) =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const toInlineMarkdownHtml = (value: string) => {
+  const imageTokens: Array<{ alt: string; src: string; title: string }> = [];
+
+  let text = value.replace(
+    /!\[([^\]]*)\]\((\S+?)(?:\s+"([^"]*)")?\)/g,
+    (_match, alt = "", src = "", title = "") => {
+      const tokenIndex = imageTokens.length;
+      imageTokens.push({ alt, src, title });
+      return `@@IMG_${tokenIndex}@@`;
+    }
+  );
+
+  text = escapeHtml(text)
+    .replace(
+      /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+    )
+    .replace(/\*\*([\s\S]+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/__([\s\S]+?)__/g, "<strong>$1</strong>")
+    .replace(/\*([\s\S]+?)\*/g, "<em>$1</em>")
+    .replace(/_([\s\S]+?)_/g, "<em>$1</em>");
+
+  return text.replace(/@@IMG_(\d+)@@/g, (_match, indexText) => {
+    const token = imageTokens[Number(indexText)];
+    if (!token) return "";
+    const src = token.src.trim();
+    const safeSrc =
+      /^(https?:\/\/|\/)/i.test(src) || /^uploads\//i.test(src)
+        ? src
+        : "";
+    if (!safeSrc) return "";
+
+    const absoluteSrc = /^uploads\//i.test(safeSrc)
+      ? toAbsoluteMediaUrl(`/${safeSrc}`)
+      : toAbsoluteMediaUrl(safeSrc);
+
+    const titleAttribute = token.title
+      ? ` title="${escapeHtml(token.title)}"`
+      : "";
+
+    return `<img src="${escapeHtml(absoluteSrc)}" alt="${escapeHtml(
+      token.alt ?? ""
+    )}"${titleAttribute} loading="lazy" />`;
+  });
+};
+
 const toRichHtml = (value: any) => {
   if (typeof value !== "string") return "";
   const raw = value.trim();
@@ -476,15 +531,13 @@ const toRichHtml = (value: any) => {
   // Si viene de rich text de Strapi, ya llega como HTML.
   if (/<[a-z][\s\S]*>/i.test(raw)) return raw;
 
-  // Compatibilidad con contenido antiguo en texto plano.
+  // Soporte markdown + compatibilidad con texto plano.
   return raw
     .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
     .map((paragraph) =>
-      `<p>${paragraph
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\n/g, "<br />")}</p>`
+      `<p>${toInlineMarkdownHtml(paragraph).replace(/\n/g, "<br />")}</p>`
     )
     .join("");
 };
@@ -916,7 +969,7 @@ const hasBookingCard = Boolean(
                           ) : null}
                           {item.descriptionHtml ? (
                             <div
-                              class="mt-3 text-sm md:text-base leading-relaxed text-gray-700 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_[style*='text-align:center']]:text-center [&_[style*='text-align:right']]:text-right [&_[style*='text-align:left']]:text-left [&_img]:mx-auto [&_img]:my-3 [&_img]:h-auto [&_img]:max-w-full"
+                              class="mt-3 text-sm md:text-base leading-relaxed text-gray-700 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_[style*='text-align:center']]:text-center [&_[style*='text-align:right']]:text-right [&_[style*='text-align:left']]:text-left [&_img]:my-3 [&_img]:block [&_img]:clear-both [&_img]:float-none [&_img]:mx-auto [&_img]:h-auto [&_img]:w-full [&_img]:max-w-[560px] [&_img]:max-h-[340px] [&_img]:object-cover"
                               set:html={item.descriptionHtml}
                             />
                           ) : null}
@@ -983,7 +1036,7 @@ const hasBookingCard = Boolean(
                     ) : null}
                     {item.contentHtml ? (
                       <div
-                        class="text-sm md:text-base leading-relaxed text-gray-700 [&_p]:mb-3 [&_p:last-child]:mb-0"
+                        class="text-sm md:text-base leading-relaxed text-gray-700 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_[style*='text-align:center']]:text-center [&_[style*='text-align:right']]:text-right [&_[style*='text-align:left']]:text-left [&_img]:my-3 [&_img]:block [&_img]:clear-both [&_img]:float-none [&_img]:mx-auto [&_img]:h-auto [&_img]:w-full [&_img]:max-w-[560px] [&_img]:max-h-[340px] [&_img]:object-cover"
                         set:html={item.contentHtml}
                       />
                     ) : null}
