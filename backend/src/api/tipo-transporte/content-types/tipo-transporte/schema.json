@@ -67,6 +67,14 @@
         }
       }
     },
+    "nroOrden": {
+      "type": "integer",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
     "transportes": {
       "type": "relation",
       "relation": "manyToMany",

@@ -81,14 +81,6 @@
       },
       "inversedBy": "transportes_llegada"
     },
-    "nro_asientos": {
-      "type": "integer",
-      "pluginOptions": {
-        "i18n": {
-          "localized": false
-        }
-      }
-    },
     "modelo_vehiculo": {
       "type": "string",
       "pluginOptions": {
@@ -136,6 +128,22 @@
           "localized": true
         }
       }
+    },
+    "adultUnitPrice": {
+      "type": "decimal",
+      "pluginOptions": { "i18n": { "localized": false } },
+      "min": 0
+    },
+    "childUnitPrice": {
+      "type": "decimal",
+      "pluginOptions": { "i18n": { "localized": false } },
+      "min": 0
+    },
+    "discount": {
+      "type": "decimal",
+      "pluginOptions": { "i18n": { "localized": false } },
+      "default": 0,
+      "min": 0
     },
     "includedTitle": {
       "type": "string",

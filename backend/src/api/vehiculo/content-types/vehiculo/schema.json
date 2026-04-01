@@ -42,6 +42,14 @@
         }
       }
     },
+    "nro_asientos": {
+      "type": "integer",
+      "pluginOptions": {
+        "i18n": {
+          "localized": false
+        }
+      }
+    },
     "features": {
       "type": "component",
       "repeatable": true,

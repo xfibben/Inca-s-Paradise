@@ -32,9 +32,9 @@ let tiposTransporte: any[] = [];
 try {
   const res = await fetch(
     `${STRAPI_URL}/api/tipo-transportes?locale=${strapiLocale}` +
-    `&fields[0]=nombre&fields[1]=slug` +
+    `&fields[0]=nombre&fields[1]=slug&fields[2]=nroOrden` +
     `&populate[image]=*` +
-    `&sort=nombre:asc`
+    `&sort=nroOrden:asc`
   );
   if (res.ok) {
     const json = await res.json();

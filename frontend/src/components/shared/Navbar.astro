@@ -27,7 +27,8 @@ let navDestinations: any[] = [];
 let navTipoTransportes: any[] = [];
 try {
   const tipoTransporteUrl = `${STRAPI_URL}/api/tipo-transportes?locale=${strapiLocale}&status=published` +
-    `&fields[0]=nombre&fields[1]=slug&populate[image][fields][0]=url&populate[image][fields][1]=formats`;
+    `&fields[0]=nombre&fields[1]=slug&fields[2]=nroOrden&populate[image][fields][0]=url&populate[image][fields][1]=formats` +
+    `&sort=nroOrden:asc`;
   const tipoRes = await fetch(tipoTransporteUrl);
   if (tipoRes.ok) {
     const json = await tipoRes.json();

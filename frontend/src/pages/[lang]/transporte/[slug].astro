@@ -41,7 +41,8 @@ try {
     `&populate[tipos_transporte][fields][0]=nombre&populate[tipos_transporte][fields][1]=slug` +
     `&populate[includedItems][fields][0]=text&populate[includedItems][fields][1]=icon` +
     `&populate[excludedItems][fields][0]=text&populate[excludedItems][fields][1]=icon` +
-    `&populate[precios][populate][vehiculo][populate][imagen]=*`
+    `&populate[precios][populate][vehiculo][populate][imagen]=*` +
+    `&populate[precios][populate][vehiculo][fields][0]=nombre&populate[precios][populate][vehiculo][fields][1]=nro_asientos`
   );
   if (res.ok) {
     const json = await res.json();
@@ -83,6 +84,7 @@ interface PrecioVehiculoData {
   precioAdulto: number;
   precioNino: number;
   descuento: number;
+  nroAsientos: number | null;
 }
 
 const preciosConVehiculo: PrecioVehiculoData[] = [];
@@ -94,6 +96,7 @@ for (const precio of transporte.precios ?? []) {
       precioAdulto: precio.precioAdulto ?? 0,
       precioNino: precio.precioNino ?? 0,
       descuento: precio.descuento ?? 0,
+      nroAsientos: veh.nro_asientos ?? null,
     });
   }
 }
@@ -110,7 +113,7 @@ const displayImageUrl = selectedPrecio?.imagenUrl ?? getImageUrl(transporte.imag
 // Precios y descripción
 const adultPrice = selectedPrecio?.precioAdulto ?? 0;
 const childPrice = selectedPrecio?.precioNino ?? 0;
-const discountPrice = selectedPrecio?.descuento ?? transporte.discount ?? 0;
+const discountPrice = selectedPrecio?.descuento ?? 0;
 const descripcion: string = transporte.descripcion ?? '';
 
 // Incluye / No incluye
@@ -173,14 +176,15 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
 
             <!-- Datos del vehículo -->
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {transporte.nro_asientos && (
-                <div class="bg-stone-50  p-4 flex flex-col items-center gap-2">
+              {selectedPrecio?.nroAsientos != null && (
+                <div class="bg-stone-50 p-4 flex flex-col items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-[#1AA093]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20H7a2 2 0 01-2-2V9a2 2 0 012-2h1V6a3 3 0 016 0v1h1a2 2 0 012 2v9a2 2 0 01-2 2z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6M9 16h6"/>
                   </svg>
-                  <p class="text-stone-800 font-semibold text-lg leading-none">{transporte.nro_asientos}</p>
-                  <p class="text-[#1AA093] uppercase tracking-widest text-xs text-center">{t.transporte.nroAsientos}</p>
+                  <!-- Valor y etiqueta actualizados dinámicamente por el selector -->
+                  <p id="nro-asientos-valor" class="text-stone-800 font-semibold text-lg leading-none">{selectedPrecio.nroAsientos}</p>
+                  <p id="nro-asientos-label" class="text-[#1AA093] uppercase tracking-widest text-xs text-center">{selectedPrecio.nombre}</p>
                 </div>
               )}
               {transporte.modelo_vehiculo && (
@@ -268,6 +272,7 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
                       data-precio-adulto={pv.precioAdulto}
                       data-precio-nino={pv.precioNino}
                       data-descuento={pv.descuento}
+                      data-nro-asientos={pv.nroAsientos ?? ''}
                     >
                       {pv.nombre}
                     </button>
@@ -414,6 +419,22 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
           var descuento = parseFloat(this.getAttribute('data-descuento') || '0');
           if (typeof window.updateBookingPrices === 'function') {
             window.updateBookingPrices(precioAdulto, precioNino, descuento);
+          }
+
+          // Actualiza nro de asientos y label con el nombre del vehículo seleccionado
+          var nroAsientos = this.getAttribute('data-nro-asientos');
+          var nombreVehiculo = this.getAttribute('data-nombre');
+          var valorEl = document.getElementById('nro-asientos-valor');
+          var labelEl = document.getElementById('nro-asientos-label');
+          if (valorEl && labelEl) {
+            if (nroAsientos) {
+              valorEl.textContent = nroAsientos;
+              labelEl.textContent = nombreVehiculo;
+              valorEl.closest('.bg-stone-50').style.display = '';
+            } else {
+              // Oculta la tarjeta si el vehículo no tiene asientos definidos
+              valorEl.closest('.bg-stone-50').style.display = 'none';
+            }
           }
         });
       });
