@@ -1,5 +1,18 @@
 {
+  "notFound": {
+    "code": "404",
+    "title": "Pagina non trovata",
+    "message": "Siamo spiacenti, la pagina che stai cercando non esiste o è stata spostata.",
+    "button": "Torna alla home"
+  },
   "transporte": {
+    "eyebrow": "Mobilità & Avventura",
+    "heroTitle": "Viaggia a modo tuo",
+    "heroSubtitle": "Scopri le opzioni di trasporto per esplorare le destinazioni più incredibili del Perù",
+    "explorar": "Esplorare",
+    "gridLabel": "Mobilità",
+    "gridTitle": "I Nostri Trasporti",
+    "proximamente": "Prossimamente",
     "tipoLabel": "Tipo di Trasporto",
     "disponibles": "Disponibili",
     "enCategoria": "Trasporti in questa categoria",

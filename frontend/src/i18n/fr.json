@@ -1,5 +1,18 @@
 {
+  "notFound": {
+    "code": "404",
+    "title": "Page introuvable",
+    "message": "Désolé, la page que vous recherchez n'existe pas ou a été déplacée.",
+    "button": "Retour à l'accueil"
+  },
   "transporte": {
+    "eyebrow": "Mobilité & Aventure",
+    "heroTitle": "Voyagez à votre façon",
+    "heroSubtitle": "Découvrez les options de transport pour explorer les destinations les plus incroyables du Pérou",
+    "explorar": "Explorer",
+    "gridLabel": "Mobilité",
+    "gridTitle": "Nos Transports",
+    "proximamente": "Bientôt disponible",
     "tipoLabel": "Type de Transport",
     "disponibles": "Disponibles",
     "enCategoria": "Transports dans cette catégorie",
