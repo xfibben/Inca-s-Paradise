@@ -41,8 +41,7 @@ try {
     `&populate[tipos_transporte][fields][0]=nombre&populate[tipos_transporte][fields][1]=slug` +
     `&populate[includedItems][fields][0]=text&populate[includedItems][fields][1]=icon` +
     `&populate[excludedItems][fields][0]=text&populate[excludedItems][fields][1]=icon` +
-    `&populate[precios][populate][vehiculo][populate][imagen]=*` +
-    `&populate[precios][populate][vehiculo][fields][0]=nombre&populate[precios][populate][vehiculo][fields][1]=nro_asientos`
+    `&populate[precios][populate][vehiculo]=*`
   );
   if (res.ok) {
     const json = await res.json();

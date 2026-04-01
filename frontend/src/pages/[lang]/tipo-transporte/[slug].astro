@@ -54,8 +54,7 @@ try {
     `&populate[transportes][populate][image]=*` +
     `&populate[transportes][populate][destino_origen][fields][0]=title` +
     `&populate[transportes][populate][destino_llegada][fields][0]=title` +
-    `&populate[transportes][populate][precios][populate][vehiculo][populate][imagen]=*` +
-    `&populate[transportes][populate][precios][populate][vehiculo][populate][features]=*`;
+    `&populate[transportes][populate][precios][populate][vehiculo]=*`;
 
   const res = await fetch(`${STRAPI_URL}/api/tipo-transportes?${query}`);
   if (res.ok) {

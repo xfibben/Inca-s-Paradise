@@ -12,7 +12,7 @@ export default factories.createCoreController('api::transporte.transporte', ({ s
       locale: (locale as string) || 'es-PE',
       filters: filters as any,
       sort: (sort as any) ?? ['nombre:asc'],
-      fields: ['nombre', 'slug', 'nro_asientos', 'modelo_vehiculo', 'duracion_viaje', 'distancia', 'descripcion_origen', 'descripcion_llegada', 'descripcion', 'adultUnitPrice', 'childUnitPrice', 'discount', 'includedTitle', 'excludedTitle'] as any,
+      fields: ['nombre', 'slug', 'modelo_vehiculo', 'duracion_viaje', 'distancia', 'descripcion_origen', 'descripcion_llegada', 'descripcion', 'includedTitle', 'excludedTitle'] as any,
       populate: {
         image: true,
         wallpaper: true,
