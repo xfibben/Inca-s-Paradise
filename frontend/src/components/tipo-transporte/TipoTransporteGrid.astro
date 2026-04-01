@@ -3,9 +3,10 @@ interface Props {
   tipos: any[];
   publicStrapiUrl: string;
   lang: string;
+  t: any;
 }
 
-const { tipos, publicStrapiUrl, lang } = Astro.props;
+const { tipos, publicStrapiUrl, lang, t } = Astro.props;
 
 /* Obtiene la URL absoluta de la imagen */
 function getImageUrl(media: any): string | null {
@@ -22,12 +23,12 @@ function getImageUrl(media: any): string | null {
 
     <!-- Encabezado de sección -->
     <div class="text-center mb-16">
-      <p class="text-[#1AA093] uppercase tracking-widest text-sm font-medium mb-3">Movilidad</p>
+      <p class="text-[#1AA093] uppercase tracking-widest text-sm font-medium mb-3">{t.transporte?.gridLabel ?? "Movilidad"}</p>
       <h2
         class="text-4xl md:text-5xl text-stone-800"
         style="font-family: 'Playfair Display', serif; font-style: italic;"
       >
-        Nuestros Transportes
+        {t.transporte?.gridTitle ?? "Nuestros Transportes"}
       </h2>
     </div>
 
@@ -79,7 +80,7 @@ function getImageUrl(media: any): string | null {
               class="text-2xl font-medium"
               style="font-family: 'Playfair Display', serif; font-style: italic;"
             >
-              Próximamente
+              {t.transporte?.proximamente ?? "Próximamente"}
             </h3>
           </div>
         </article>

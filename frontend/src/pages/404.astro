@@ -1,0 +1,74 @@
+---
+import { getTranslation, languages, defaultLanguage } from '../i18n';
+import '../styles/global.css';
+
+// Detectar el idioma desde la URL (ej: /en/algo -> "en")
+const pathname = Astro.url.pathname;
+const segments = pathname.split('/').filter(Boolean);
+const firstSegment = segments[0];
+const validLangs = Object.keys(languages);
+const lang = validLangs.includes(firstSegment) ? firstSegment : defaultLanguage;
+
+const t = getTranslation(lang);
+const n = t.notFound;
+const homeUrl = `/${lang}/`;
+---
+
+<!DOCTYPE html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{n.code} — {n.title}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="min-h-screen bg-[#f0faf9] flex flex-col items-center justify-center px-4 font-sans">
+
+    <!-- Logo -->
+    <a href={homeUrl} class="mb-10">
+      <img src="/public/landing page images/incasparadiselogo.webp" alt="Inca's Paradise" class="h-24 object-contain" />
+    </a>
+
+    <!-- Tarjeta central -->
+    <div class="bg-white rounded-2xl shadow-lg px-10 py-12 max-w-md w-full text-center">
+
+      <!-- Código 404 decorativo -->
+      <p class="text-8xl font-extrabold text-[#1AA093] leading-none tracking-tight mb-14">
+        {n.code}
+      </p>
+
+      <h1 class="text-2xl font-bold text-gray-800 mb-3">
+        {n.title}
+      </h1>
+
+      <p class="text-gray-500 mb-8 leading-relaxed">
+        {n.message}
+      </p>
+
+      <!-- Botón volver al inicio -->
+      <a
+        href={homeUrl}
+        class="inline-block bg-[#1AA093] hover:bg-[#0e8a7e] text-white font-semibold px-8 py-3 rounded-xl transition-colors duration-200"
+      >
+        {n.button}
+      </a>
+    </div>
+
+    <!-- Selector de idioma simple -->
+    <div class="mt-8 flex gap-3 text-sm">
+      {validLangs.map((l) => (
+        <a
+          href={`/${l}/`}
+          class={`px-3 py-1 rounded-full border transition-colors duration-200 ${
+            l === lang
+              ? 'bg-[#1AA093] text-white border-[#1AA093]'
+              : 'text-gray-500 border-gray-300 hover:border-[#1AA093] hover:text-[#1AA093]'
+          }`}
+        >
+          {l.toUpperCase()}
+        </a>
+      ))}
+    </div>
+
+  </body>
+</html>

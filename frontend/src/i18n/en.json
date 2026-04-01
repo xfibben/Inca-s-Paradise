@@ -1,5 +1,18 @@
 {
+  "notFound": {
+    "code": "404",
+    "title": "Page not found",
+    "message": "Sorry, the page you are looking for does not exist or has been moved.",
+    "button": "Back to home"
+  },
   "transporte": {
+    "eyebrow": "Mobility & Adventure",
+    "heroTitle": "Travel your way",
+    "heroSubtitle": "Discover the transport options to explore the most incredible destinations in Peru",
+    "explorar": "Explore",
+    "gridLabel": "Mobility",
+    "gridTitle": "Our Transports",
+    "proximamente": "Coming soon",
     "tipoLabel": "Transport Type",
     "disponibles": "Available",
     "enCategoria": "Transports in this category",
