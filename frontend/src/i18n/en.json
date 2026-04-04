@@ -413,6 +413,20 @@
       "description": "Official recognition for successfully completing PROMPERÚ's commercial promotion programs, demonstrating our commitment to promoting the image of Peruvian tourism worldwide."
     }
   ],
+  "ofertas": {
+    "title": "Special Offers",
+    "subtitle": "Exclusive discounts on selected tours and transport. Don't miss them!",
+    "toursTitle": "Tours with Discount",
+    "transportesTitle": "Transport with Discount",
+    "empty": "No offers available at this time.",
+    "descuento": "Discount",
+    "desde": "From",
+    "adulto": "Adult",
+    "nino": "Child",
+    "dias": "days",
+    "verDetalle": "See details",
+    "precioOriginal": "Original price"
+  },
   "footer": {
     "terms": "Terms & Conditions",
     "offers": "Offers",

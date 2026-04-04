@@ -20,6 +20,8 @@ interface Props {
   labelReservar: string;
 }
 
+import { formatPrice } from '../../utils/currency';
+
 const { vehiculos, rutas, lang, labelReservar } = Astro.props;
 
 // Nombres de columnas en el orden que lleguen
@@ -117,9 +119,9 @@ const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
                     {precio ? (
                       <div class="flex items-center justify-between gap-3 pt-2 border-t border-stone-200">
                         <div>
-                          <span class="text-lg font-bold text-stone-800">USD {precio.precio.toFixed(2)}</span>
+                          <span class="text-lg font-bold text-stone-800">{formatPrice(precio.precio, lang)}</span>
                           {precio.original && (
-                            <span class="block text-xs text-stone-400 line-through">USD {precio.original.toFixed(2)}</span>
+                            <span class="block text-xs text-stone-400 line-through">{formatPrice(precio.original, lang)}</span>
                           )}
                         </div>
                         <a
@@ -179,9 +181,9 @@ const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
                     <td class="px-6 py-4 text-center">
                       {p ? (
                         <>
-                          <span class="font-semibold text-stone-800">USD {p.precio.toFixed(2)}</span>
+                          <span class="font-semibold text-stone-800">{formatPrice(p.precio, lang)}</span>
                           {p.original && (
-                            <span class="block text-xs text-stone-400 line-through">USD {p.original.toFixed(2)}</span>
+                            <span class="block text-xs text-stone-400 line-through">{formatPrice(p.original, lang)}</span>
                           )}
                         </>
                       ) : (
@@ -261,7 +263,7 @@ const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
                                 <div class="flex items-center gap-3">
                                   <span class="text-stone-500 text-sm">{ruta.nombre}</span>
                                   <span class="text-lg font-bold text-stone-800">
-                                    USD {precio.precio.toFixed(2)}
+                                    {formatPrice(precio.precio, lang)}
                                   </span>
                                 </div>
                                 <a
