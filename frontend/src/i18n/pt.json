@@ -519,6 +519,20 @@
       "description": "Reconhecimento oficial por completar com sucesso os programas de promoção comercial da PROMPERÚ, demonstrando nosso compromisso em promover a imagem do turismo peruano no mundo."
     }
   ],
+  "ofertas": {
+    "title": "Ofertas Especiais",
+    "subtitle": "Descontos exclusivos em tours e transportes selecionados. Não perca!",
+    "toursTitle": "Tours com Desconto",
+    "transportesTitle": "Transportes com Desconto",
+    "empty": "Não há ofertas disponíveis no momento.",
+    "descuento": "Desconto",
+    "desde": "A partir de",
+    "adulto": "Adulto",
+    "nino": "Criança",
+    "dias": "dias",
+    "verDetalle": "Ver detalhes",
+    "precioOriginal": "Preço original"
+  },
   "footer": {
     "terms": "Termos e condições",
     "offers": "Ofertas",

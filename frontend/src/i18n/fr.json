@@ -413,6 +413,20 @@
       "description": "Reconnaissance officielle pour avoir complété avec succès les programmes de promotion commerciale de PROMPERÚ, démontrant notre engagement envers la promotion de l'image du tourisme péruvien dans le monde."
     }
   ],
+  "ofertas": {
+    "title": "Offres Spéciales",
+    "subtitle": "Réductions exclusives sur des circuits et transports sélectionnés. À ne pas manquer !",
+    "toursTitle": "Circuits avec Réduction",
+    "transportesTitle": "Transports avec Réduction",
+    "empty": "Aucune offre disponible pour le moment.",
+    "descuento": "Réduction",
+    "desde": "À partir de",
+    "adulto": "Adulte",
+    "nino": "Enfant",
+    "dias": "jours",
+    "verDetalle": "Voir les détails",
+    "precioOriginal": "Prix original"
+  },
   "footer": {
     "terms": "Conditions Générales",
     "offers": "Offres",

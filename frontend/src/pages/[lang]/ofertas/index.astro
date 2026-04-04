@@ -1,0 +1,313 @@
+---
+import { getTranslation, languages, defaultLanguage, type Language } from '../../../i18n';
+import '../../../styles/global.css';
+import Navbar from '../../../components/shared/Navbar.astro';
+import Footer from '../../../components/shared/Footer.astro';
+import { formatPrice } from '../../../utils/currency';
+
+const { lang } = Astro.params;
+
+const currentLang = Object.keys(languages).includes(lang as string)
+  ? (lang as Language)
+  : defaultLanguage;
+
+if (!Object.keys(languages).includes(lang as string)) {
+  return Astro.redirect(`/${currentLang}/ofertas/`);
+}
+
+const t = getTranslation(currentLang);
+
+const STRAPI_URL = import.meta.env.STRAPI_URL;
+const PUBLIC_STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL;
+
+const strapiLocale =
+  currentLang === 'pt' ? 'pt'
+  : currentLang === 'es' ? 'es-PE'
+  : currentLang;
+
+// Obtiene la URL absoluta de una imagen de Strapi
+function getImageUrl(media: any): string | null {
+  if (!media) return null;
+  const url = media?.formats?.large?.url ?? media?.formats?.medium?.url ?? media?.url;
+  if (!url) return null;
+  return url.startsWith('http') ? url : `${PUBLIC_STRAPI_URL}${url}`;
+}
+
+// --- Fetch de tours con descuento activo ---
+interface TourOferta {
+  slug: string;
+  title: string;
+  durationDays: number;
+  adultUnitPrice: number;
+  childUnitPrice: number;
+  discount: number;
+  imageUrl: string | null;
+}
+
+let toursOferta: TourOferta[] = [];
+
+try {
+  const res = await fetch(
+    `${STRAPI_URL}/api/tour-detalles` +
+    `?locale=${strapiLocale}&status=published` +
+    `&filters[discount][$gt]=0` +
+    `&fields[0]=title&fields[1]=slug&fields[2]=discount` +
+    `&fields[3]=adultUnitPrice&fields[4]=childUnitPrice&fields[5]=durationDays` +
+    `&populate[heroSlideImages][fields][0]=url&populate[heroSlideImages][fields][1]=formats` +
+    `&pagination[pageSize]=100`
+  );
+  if (res.ok) {
+    const json = await res.json();
+    const rows: any[] = json?.data ?? [];
+    toursOferta = rows.map((row: any) => {
+      const d = row?.attributes ?? row;
+      // Primera imagen del hero slide
+      const imgs: any[] = d?.heroSlideImages?.data ?? d?.heroSlideImages ?? [];
+      const firstImg = imgs[0]?.attributes ?? imgs[0] ?? null;
+      return {
+        slug: d.slug ?? '',
+        title: d.title ?? '',
+        durationDays: d.durationDays ?? 1,
+        adultUnitPrice: d.adultUnitPrice ?? 0,
+        childUnitPrice: d.childUnitPrice ?? 0,
+        discount: d.discount ?? 0,
+        imageUrl: getImageUrl(firstImg),
+      };
+    }).filter((t: TourOferta) => t.slug);
+  }
+} catch (e) {
+  console.error('Error al obtener tours con descuento:', e);
+}
+
+// --- Fetch de transportes que tengan algún precio con descuento > 0 ---
+interface TransporteOferta {
+  slug: string;
+  nombre: string;
+  imageUrl: string | null;
+  // Precio base mínimo con descuento entre todos sus vehículos
+  precioAdulto: number;
+  descuento: number;
+}
+
+let transportesOferta: TransporteOferta[] = [];
+
+try {
+  const res = await fetch(
+    `${STRAPI_URL}/api/transportes` +
+    `?locale=${strapiLocale}` +
+    `&filters[precios][descuento][$gt]=0` +
+    `&fields[0]=nombre&fields[1]=slug` +
+    `&populate[image]=*` +
+    `&populate[precios][populate][vehiculo][fields][0]=nombre` +
+    `&pagination[pageSize]=100`
+  );
+  if (res.ok) {
+    const json = await res.json();
+    const rows: any[] = json?.data ?? [];
+    transportesOferta = rows
+      .map((row: any) => {
+        const d = row?.attributes ?? row;
+        const precios: any[] = d?.precios ?? [];
+        // Filtra solo los precios que tienen descuento > 0
+        const preciosConDescuento = precios.filter((p: any) => (p.descuento ?? 0) > 0);
+        if (preciosConDescuento.length === 0) return null;
+        // Toma el precio con mayor descuento para mostrar
+        const mejorPrecio = preciosConDescuento.reduce((prev: any, curr: any) =>
+          (curr.descuento ?? 0) > (prev.descuento ?? 0) ? curr : prev
+        );
+        return {
+          slug: d.slug ?? '',
+          nombre: d.nombre ?? '',
+          imageUrl: getImageUrl(d.image),
+          precioAdulto: mejorPrecio.precioAdulto ?? 0,
+          descuento: mejorPrecio.descuento ?? 0,
+        };
+      })
+      .filter(Boolean) as TransporteOferta[];
+  }
+} catch (e) {
+  console.error('Error al obtener transportes con descuento:', e);
+}
+
+const hayOfertas = toursOferta.length > 0 || transportesOferta.length > 0;
+---
+
+<html lang={currentLang}>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{t.ofertas.title} — Inca's Paradise</title>
+    <meta name="description" content={t.ofertas.subtitle} />
+  </head>
+
+  <body class="bg-white text-stone-800 overflow-x-hidden flex flex-col min-h-screen" data-navbar-solid>
+    <Navbar t={t} currentLang={currentLang} />
+
+    <main class="flex-1">
+
+      <!-- Título de ofertas -->
+      <section class="pt-28 pb-6">
+        <div class="mx-auto max-w-5xl px-6 text-center">
+          <h1
+            class="text-3xl md:text-5xl font-bold italic text-black mb-2"
+            style="font-family: 'Playfair Display', serif;"
+          >
+            {t.ofertas.title}
+          </h1>
+          <p class="text-base md:text-lg text-gray-500 max-w-2xl mx-auto">
+            {t.ofertas.subtitle}
+          </p>
+        </div>
+      </section>
+
+      <div class="mx-auto max-w-6xl px-6 py-4 md:py-6 space-y-6">
+
+        {!hayOfertas && (
+          <p class="text-center text-gray-400 italic py-16">{t.ofertas.empty}</p>
+        )}
+
+        <!-- Sección Tours con descuento -->
+        {toursOferta.length > 0 && (
+          <section>
+            <h2
+              class="text-2xl md:text-3xl font-bold italic text-gray-800 mb-4"
+              style="font-family: 'Playfair Display', serif;"
+            >
+              {t.ofertas.toursTitle}
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {toursOferta.map((tour) => {
+                const precioConDescuento = tour.adultUnitPrice - tour.discount;
+                return (
+                  <a
+                    href={`/${currentLang}/tours/${tour.slug}`}
+                    class="group relative overflow-hidden bg-white flex flex-col"
+                  >
+                    <!-- Imagen -->
+                    <div class="relative h-52 overflow-hidden bg-gray-100">
+                      {tour.imageUrl ? (
+                        <img
+                          src={tour.imageUrl}
+                          alt={tour.title}
+                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div class="w-full h-full flex items-center justify-center bg-[#e0f7f5]">
+                          <svg class="w-12 h-12 text-[#1AA093]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7h18M3 12h18M3 17h18" />
+                          </svg>
+                        </div>
+                      )}
+                      <!-- Badge de descuento -->
+                      <span class="absolute top-3 left-3 bg-[#1AA093] text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+                        -{formatPrice(tour.discount, currentLang)}
+                      </span>
+                    </div>
+
+                    <!-- Contenido -->
+                    <div class="p-5 flex flex-col flex-1">
+                      <h3 class="font-semibold text-gray-800 text-base leading-tight mb-1 group-hover:text-[#1AA093] transition-colors">
+                        {tour.title}
+                      </h3>
+                      <p class="text-xs text-gray-400 mb-4">
+                        {tour.durationDays} {t.ofertas.dias}
+                      </p>
+
+                      <!-- Precios -->
+                      <div class="mt-auto flex items-end justify-between">
+                        <div>
+                          <p class="text-xs text-gray-400 line-through">
+                            {t.ofertas.adulto}: {formatPrice(tour.adultUnitPrice, currentLang)}
+                          </p>
+                          <p class="text-lg font-bold text-[#1AA093]">
+                            {t.ofertas.desde} {formatPrice(precioConDescuento, currentLang)}
+                          </p>
+                        </div>
+                        <span class="text-xs bg-[#e0f7f5] text-[#1AA093] font-semibold px-3 py-1 rounded-full">
+                          {t.ofertas.verDetalle}
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        <!-- Sección Transportes con descuento -->
+        {transportesOferta.length > 0 && (
+          <section>
+            <h2
+              class="text-2xl md:text-3xl font-bold italic text-gray-800 mb-4"
+              style="font-family: 'Playfair Display', serif;"
+            >
+              {t.ofertas.transportesTitle}
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {transportesOferta.map((tr) => {
+                const precioConDescuento = tr.precioAdulto - tr.descuento;
+                return (
+                  <a
+                    href={`/${currentLang}/transporte/${tr.slug}`}
+                    class="group relative overflow-hidden bg-white flex flex-col"
+                  >
+                    <!-- Imagen -->
+                    <div class="relative h-52 overflow-hidden bg-gray-100">
+                      {tr.imageUrl ? (
+                        <img
+                          src={tr.imageUrl}
+                          alt={tr.nombre}
+                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div class="w-full h-full flex items-center justify-center bg-[#e0f7f5]">
+                          <svg class="w-12 h-12 text-[#1AA093]/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          </svg>
+                        </div>
+                      )}
+                      <!-- Badge de descuento -->
+                      <span class="absolute top-3 left-3 bg-[#1AA093] text-white text-xs font-bold px-3 py-1 rounded-full shadow">
+                        -{formatPrice(tr.descuento, currentLang)}
+                      </span>
+                    </div>
+
+                    <!-- Contenido -->
+                    <div class="p-5 flex flex-col flex-1">
+                      <h3 class="font-semibold text-gray-800 text-base leading-tight mb-4 group-hover:text-[#1AA093] transition-colors">
+                        {tr.nombre}
+                      </h3>
+
+                      <!-- Precios -->
+                      <div class="mt-auto flex items-end justify-between">
+                        <div>
+                          <p class="text-xs text-gray-400 line-through">
+                            {t.ofertas.adulto}: {formatPrice(tr.precioAdulto, currentLang)}
+                          </p>
+                          <p class="text-lg font-bold text-[#1AA093]">
+                            {t.ofertas.desde} {formatPrice(precioConDescuento, currentLang)}
+                          </p>
+                        </div>
+                        <span class="text-xs bg-[#e0f7f5] text-[#1AA093] font-semibold px-3 py-1 rounded-full">
+                          {t.ofertas.verDetalle}
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+      </div>
+    </main>
+
+    <Footer currentLang={currentLang} t={t} />
+  </body>
+</html>
