@@ -1,8 +1,9 @@
----
+﻿---
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import { getTranslation, languages } from '../../../i18n';
 import '../../../styles/global.css';
+import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 
 const { lang } = Astro.params;
 const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
@@ -30,7 +31,7 @@ try {
   // no-op
 }
 
-const title = data?.title ?? (currentLang === 'es' ? 'Términos y Condiciones' : 'Terms & Conditions');
+const title = data?.title ?? (currentLang === 'es' ? 'TÃ©rminos y Condiciones' : 'Terms & Conditions');
 const description = data?.description ?? '';
 const seoTitle = data?.seoTitle ?? title;
 const seoDescription = data?.seoDescription ?? description;
@@ -77,8 +78,9 @@ function renderRichText(value: any): string {
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width" />
-    <title>{seoTitle} — Inca's Paradise</title>
+    <title>{seoTitle} â€” Inca's Paradise</title>
     <meta name="description" content={seoDescription} />
+    <GoogleAnalytics />
   </head>
   <body class="min-h-screen bg-white text-gray-900" data-navbar-solid>
     <Navbar {t} currentLang={currentLang} />
@@ -113,7 +115,7 @@ function renderRichText(value: any): string {
           </div>
         ) : (
           <p class="text-gray-400 italic">
-            {currentLang === 'es' ? 'Contenido próximamente.' : 'Content coming soon.'}
+            {currentLang === 'es' ? 'Contenido prÃ³ximamente.' : 'Content coming soon.'}
           </p>
         )}
 
@@ -123,3 +125,4 @@ function renderRichText(value: any): string {
     <Footer {t} currentLang={currentLang} />
   </body>
 </html>
+

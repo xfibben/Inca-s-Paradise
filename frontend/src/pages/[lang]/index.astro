@@ -1,6 +1,7 @@
----
+﻿---
 import { getTranslation, languages, defaultLanguage, type Language } from '../../i18n';
 import '../../styles/global.css';
+import GoogleAnalytics from '../../components/shared/GoogleAnalytics.astro';
 import Navbar from '../../components/shared/Navbar.astro';
 import Hero from '../../components/LandingPage/Hero.astro';
 import Features from '../../components/LandingPage/Features.astro';
@@ -15,22 +16,22 @@ import Commitment from '../../components/LandingPage/Commitment.astro';
 import Footer from '../../components/shared/Footer.astro';
 import SEOHead from '../../components/SEO/SEOHead.astro';
 
-// Función requerida para rutas dinámicas en Astro
+// FunciÃ³n requerida para rutas dinÃ¡micas en Astro
 export function getStaticPaths() {
   return Object.keys(languages).map((lang) => ({
     params: { lang }
   }));
 }
 
-// Parámetro dinámico de la ruta
+// ParÃ¡metro dinÃ¡mico de la ruta
 const { lang } = Astro.params;
 
-// Validar que el idioma sea válido, si no redirigir al idioma por defecto
+// Validar que el idioma sea vÃ¡lido, si no redirigir al idioma por defecto
 const validLang = Object.keys(languages).includes(lang as string) 
   ? (lang as Language)
   : defaultLanguage;
 
-// Si el idioma no es válido, redirigir
+// Si el idioma no es vÃ¡lido, redirigir
 if (!Object.keys(languages).includes(lang as string)) {
   return Astro.redirect(`/${validLang}/`);
 }
@@ -40,19 +41,19 @@ const currentLang = validLang;
 
 // SEO Configuration
 const titles: Record<Language, string> = {
-  es: "Inca's Paradise - Aventuras Personalizadas en Perú",
+  es: "Inca's Paradise - Aventuras Personalizadas en PerÃº",
   en: "Inca's Paradise - Tailor-made Adventures in Peru",
   pt: "Inca's Paradise - Aventuras Personalizadas no Peru",
-  fr: "Inca's Paradise - Aventures Sur Mesure au Pérou",
-  it: "Inca's Paradise - Avventure Personalizzate in Perù"
+  fr: "Inca's Paradise - Aventures Sur Mesure au PÃ©rou",
+  it: "Inca's Paradise - Avventure Personalizzate in PerÃ¹"
 };
 
 const descriptions: Record<Language, string> = {
-  es: "Viajes personalizados de lujo a Perú. Experimente el Camino Inca, Machu Picchu y aventuras sostenibles con guías expertos locales.",
+  es: "Viajes personalizados de lujo a PerÃº. Experimente el Camino Inca, Machu Picchu y aventuras sostenibles con guÃ­as expertos locales.",
   en: "Tailor-made luxury travel in Peru. Experience the Inca Trail, Machu Picchu, and sustainable adventures with expert local guides.",
-  pt: "Viagens personalizadas de luxo no Peru. Experiencie a Trilha Inca, Machu Picchu e aventuras sustentáveis com guias locais especialistas.",
-  fr: "Voyages de luxe sur mesure au Pérou. Découvrez le Chemin de l'Inca, Machu Picchu et des aventures durables avec des guides locaux experts.",
-  it: "Viaggio di lusso su misura in Perù. Scopri il Sentiero Inca, Machu Picchu e avventure sostenibili con guide locali esperte."
+  pt: "Viagens personalizadas de luxo no Peru. Experiencie a Trilha Inca, Machu Picchu e aventuras sustentÃ¡veis com guias locais especialistas.",
+  fr: "Voyages de luxe sur mesure au PÃ©rou. DÃ©couvrez le Chemin de l'Inca, Machu Picchu et des aventures durables avec des guides locaux experts.",
+  it: "Viaggio di lusso su misura in PerÃ¹. Scopri il Sentiero Inca, Machu Picchu e avventure sostenibili con guide locali esperte."
 };
 
 // Alternate language links for hreflang
@@ -90,7 +91,7 @@ const organizationSchema = {
   "priceRange": "$$"
 };
 
-// Genera langNames dinámicamente desde los idiomas disponibles
+// Genera langNames dinÃ¡micamente desde los idiomas disponibles
 const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Record<string, string>, lang: string) => {
   acc[lang] = lang;
   return acc;
@@ -159,7 +160,8 @@ const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Re
 				transition: width 0.3s ease;
 			}
 		</style>
-	</head>
+	  <GoogleAnalytics />
+  </head>
 	<body>
 		<script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
 		
@@ -177,3 +179,4 @@ const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Re
     <Footer {currentLang} {t} />
 	</body>
 </html>
+

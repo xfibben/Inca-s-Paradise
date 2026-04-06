@@ -1,6 +1,7 @@
----
+﻿---
 import { getTranslation, languages, defaultLanguage, type Language } from '../../../i18n';
 import '../../../styles/global.css';
+import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import { formatPrice } from '../../../utils/currency';
@@ -79,12 +80,12 @@ try {
   console.error('Error al obtener tours con descuento:', e);
 }
 
-// --- Fetch de transportes que tengan algún precio con descuento > 0 ---
+// --- Fetch de transportes que tengan algÃºn precio con descuento > 0 ---
 interface TransporteOferta {
   slug: string;
   nombre: string;
   imageUrl: string | null;
-  // Precio base mínimo con descuento entre todos sus vehículos
+  // Precio base mÃ­nimo con descuento entre todos sus vehÃ­culos
   precioAdulto: number;
   descuento: number;
 }
@@ -138,8 +139,9 @@ const hayOfertas = toursOferta.length > 0 || transportesOferta.length > 0;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{t.ofertas.title} — Inca's Paradise</title>
+    <title>{t.ofertas.title} â€” Inca's Paradise</title>
     <meta name="description" content={t.ofertas.subtitle} />
+    <GoogleAnalytics />
   </head>
 
   <body class="bg-white text-stone-800 overflow-x-hidden flex flex-col min-h-screen" data-navbar-solid>
@@ -147,7 +149,7 @@ const hayOfertas = toursOferta.length > 0 || transportesOferta.length > 0;
 
     <main class="flex-1">
 
-      <!-- Título de ofertas -->
+      <!-- TÃ­tulo de ofertas -->
       <section class="pt-28 pb-6">
         <div class="mx-auto max-w-5xl px-6 text-center">
           <h1
@@ -168,7 +170,7 @@ const hayOfertas = toursOferta.length > 0 || transportesOferta.length > 0;
           <p class="text-center text-gray-400 italic py-16">{t.ofertas.empty}</p>
         )}
 
-        <!-- Sección Tours con descuento -->
+        <!-- SecciÃ³n Tours con descuento -->
         {toursOferta.length > 0 && (
           <section>
             <h2
@@ -238,7 +240,7 @@ const hayOfertas = toursOferta.length > 0 || transportesOferta.length > 0;
           </section>
         )}
 
-        <!-- Sección Transportes con descuento -->
+        <!-- SecciÃ³n Transportes con descuento -->
         {transportesOferta.length > 0 && (
           <section>
             <h2
@@ -311,3 +313,4 @@ const hayOfertas = toursOferta.length > 0 || transportesOferta.length > 0;
     <Footer currentLang={currentLang} t={t} />
   </body>
 </html>
+

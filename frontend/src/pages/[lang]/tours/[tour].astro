@@ -1,6 +1,7 @@
----
+﻿---
 import { defaultLanguage, getTranslation, languages } from "../../../i18n";
 import "../../../styles/global.css";
+import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import Navbar from "../../../components/shared/Navbar.astro";
 import Footer from "../../../components/shared/Footer.astro";
 import BookingModal from "../../../components/tours/BookingModal.astro";
@@ -182,7 +183,7 @@ if (rawLang !== lang) {
 }
 
 let strapiTourRaw: Record<string, any> | null = null;
-// Usa locales hardcodeados igual que destinos — evita fetches extra a /api/locales
+// Usa locales hardcodeados igual que destinos â€” evita fetches extra a /api/locales
 const localeCandidates = getLocales(lang);
 for (const baseUrl of STRAPI_BASE_URLS) {
   for (const locale of localeCandidates) {
@@ -792,6 +793,7 @@ const hasBookingCard = Boolean(
     <meta name="twitter:title" content={twitterTitle} />
     <meta name="twitter:description" content={twitterDescription} />
     {twitterImage ? <meta name="twitter:image" content={twitterImage} /> : null}
+    <GoogleAnalytics />
   </head>
   <body class="tour-detail min-h-screen bg-white text-gray-900" data-navbar-solid>
     <script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
@@ -924,39 +926,77 @@ const hasBookingCard = Boolean(
                               data-itinerary-gallery
                               data-gallery-index={index}
                             >
-                              <div class="overflow-hidden" data-itinerary-gallery-viewport>
+                              <div class="overflow-hidden touch-pan-y" data-itinerary-gallery-viewport>
                                 <div
                                   class="flex gap-3 transition-transform duration-300 ease-out md:gap-4"
                                   data-itinerary-gallery-track
                                 >
-                                  {item.images.map((media: any) => (
-                                    <img
-                                      src={media.src}
-                                      alt={media.alt}
-                                      class="h-44 w-full flex-none object-cover md:h-52 md:w-[82%]"
+                                  {item.images.map((media: any, mediaIndex: number) => (
+                                    <button
+                                      type="button"
+                                      class="h-44 w-full flex-none overflow-hidden md:h-52 md:w-[82%]"
                                       data-itinerary-gallery-slide
-                                    />
+                                      data-itinerary-lightbox-open
+                                      data-gallery-index={index}
+                                      data-slide-index={mediaIndex}
+                                      data-src={media.src}
+                                      data-alt={media.alt ?? ""}
+                                      aria-label="Ver imagen en grande"
+                                    >
+                                      <img
+                                        src={media.src}
+                                        alt={media.alt}
+                                        class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                                      />
+                                    </button>
                                   ))}
                                 </div>
                               </div>
 
                               {item.images.length > 1 ? (
                                 <>
+                                  <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-20 bg-gradient-to-l from-black/30 to-transparent md:block"></div>
                                   <button
                                     type="button"
-                                    class="absolute left-2 top-1/2 z-10 -translate-y-1/2 bg-black/35 px-2 py-1 text-sm text-white transition hover:bg-black/55"
+                                    class="absolute left-3 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white transition hover:bg-black/65 md:left-4"
                                     data-itinerary-gallery-prev
                                     aria-label="Imagen anterior"
                                   >
-                                    &lsaquo;
+                                    <svg
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      aria-hidden="true"
+                                      class="h-6 w-6"
+                                    >
+                                      <path
+                                        d="M14.5 6.5L9 12l5.5 5.5"
+                                        stroke="currentColor"
+                                        stroke-width="2.5"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                      />
+                                    </svg>
                                   </button>
                                   <button
                                     type="button"
-                                    class="absolute right-2 top-1/2 z-10 -translate-y-1/2 bg-black/35 px-2 py-1 text-sm text-white transition hover:bg-black/55"
+                                    class="absolute right-3 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white transition hover:bg-black/65 md:right-4"
                                     data-itinerary-gallery-next
                                     aria-label="Imagen siguiente"
                                   >
-                                    &rsaquo;
+                                    <svg
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      aria-hidden="true"
+                                      class="h-6 w-6"
+                                    >
+                                      <path
+                                        d="M9.5 6.5L15 12l-5.5 5.5"
+                                        stroke="currentColor"
+                                        stroke-width="2.5"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                      />
+                                    </svg>
                                   </button>
                                 </>
                               ) : null}
@@ -1053,14 +1093,14 @@ const hasBookingCard = Boolean(
                 <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
                   {includedTitle ? (
                     <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
-                      <span class="mr-2 text-green-700">✓</span>{includedTitle}
+                      <span class="mr-2 text-green-700">âœ“</span>{includedTitle}
                     </h3>
                   ) : null}
                   <div class="divide-y divide-[#e5e7eb]">
                     {includedItems.map((item) => (
                       <div class="flex items-start gap-2 py-2 md:py-4">
                         <span class="mt-0.5 inline-flex h-5 w-5 md:h-6 md:w-6 shrink-0 items-center justify-center rounded-full border border-green-700 text-xs md:text-sm text-green-700">
-                          {item.icon || "✓"}
+                          {item.icon || "âœ“"}
                         </span>
                         <p class="text-xs md:text-lg leading-snug text-[#374151]">{item.text}</p>
                       </div>
@@ -1073,14 +1113,14 @@ const hasBookingCard = Boolean(
                 <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
                   {excludedTitle ? (
                     <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
-                      <span class="mr-2 text-[#6b7280]">✕</span>{excludedTitle}
+                      <span class="mr-2 text-[#6b7280]">âœ•</span>{excludedTitle}
                     </h3>
                   ) : null}
                   <div class="divide-y divide-[#e5e7eb]">
                     {excludedItems.map((item) => (
                       <div class="flex items-start gap-2 py-2 md:py-4">
                         <span class="mt-0.5 inline-flex h-5 w-5 md:h-6 md:w-6 shrink-0 items-center justify-center rounded-full border border-[#9ca3af] text-xs md:text-sm text-[#6b7280]">
-                          {item.icon || "✕"}
+                          {item.icon || "âœ•"}
                         </span>
                         <p class="text-xs md:text-lg leading-snug text-[#374151]">{item.text}</p>
                       </div>
@@ -1131,7 +1171,7 @@ const hasBookingCard = Boolean(
                   class="absolute top-4 right-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition text-2xl"
                   data-lightbox-close
                   aria-label="Cerrar"
-                >✕</button>
+                >âœ•</button>
 
                 <!-- Anterior -->
                 <button
@@ -1170,7 +1210,7 @@ const hasBookingCard = Boolean(
                 const counter = document.querySelector("[data-lightbox-counter]");
                 if (!lightbox || !img) return;
 
-                // Recopila imágenes de los botones
+                // Recopila imÃ¡genes de los botones
                 const btns = Array.from(document.querySelectorAll("[data-lightbox-open]")) as HTMLElement[];
                 const images = btns.map(b => ({
                   src: (b.querySelector("img") as HTMLImageElement)?.src ?? "",
@@ -1208,7 +1248,7 @@ const hasBookingCard = Boolean(
                   if (e.target === lightbox) close();
                 });
 
-                // Navegación con teclado
+                // NavegaciÃ³n con teclado
                 document.addEventListener("keydown", (e) => {
                   if (lightbox.classList.contains("hidden")) return;
                   if (e.key === "ArrowLeft") show(current - 1);
@@ -1261,6 +1301,51 @@ const hasBookingCard = Boolean(
         </div>
       </section>
       ) : null}
+
+      <div
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 px-4"
+        data-itinerary-lightbox
+      >
+        <button
+          type="button"
+          class="absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
+          data-itinerary-lightbox-close
+          aria-label="Cerrar"
+        >
+          &times;
+        </button>
+
+        <button
+          type="button"
+          class="absolute left-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition hover:bg-white/20"
+          data-itinerary-lightbox-prev
+          aria-label="Anterior"
+        >
+          &lsaquo;
+        </button>
+
+        <div class="relative max-h-[90vh] max-w-[92vw]">
+          <img
+            src=""
+            alt=""
+            class="max-h-[90vh] max-w-[92vw] object-contain"
+            data-itinerary-lightbox-img
+          />
+          <p
+            class="absolute bottom-3 left-0 right-0 text-center text-sm text-white/75"
+            data-itinerary-lightbox-counter
+          ></p>
+        </div>
+
+        <button
+          type="button"
+          class="absolute right-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition hover:bg-white/20"
+          data-itinerary-lightbox-next
+          aria-label="Siguiente"
+        >
+          &rsaquo;
+        </button>
+      </div>
     </main>
     <Footer currentLang={lang} {t} />
 
@@ -1398,16 +1483,24 @@ const hasBookingCard = Boolean(
           document.querySelectorAll("[data-itinerary-gallery]")
         );
         galleries.forEach((gallery) => {
+          const viewport = gallery.querySelector(
+            "[data-itinerary-gallery-viewport]"
+          );
           const track = gallery.querySelector("[data-itinerary-gallery-track]");
           const slides = Array.from(
             gallery.querySelectorAll("[data-itinerary-gallery-slide]")
           );
-          if (!track || slides.length <= 1) return;
+          if (!viewport || !track || slides.length <= 1) return;
 
           const prev = gallery.querySelector("[data-itinerary-gallery-prev]");
           const next = gallery.querySelector("[data-itinerary-gallery-next]");
           let current = 0;
           let step = 0;
+          let touchStartX = 0;
+          let touchDeltaX = 0;
+          let touching = false;
+          const isDesktop = () =>
+            window.matchMedia("(min-width: 768px)").matches;
 
           const updateStep = () => {
             const firstSlide = slides[0];
@@ -1425,20 +1518,197 @@ const hasBookingCard = Boolean(
             if (recalc || step === 0) updateStep();
             current = (targetIndex + slides.length) % slides.length;
             track.style.transform = `translateX(-${step * current}px)`;
+
+            const nextIndex = (current + 1) % slides.length;
+            slides.forEach((slide, slideIndex) => {
+              if (isDesktop()) {
+                if (slideIndex === current) {
+                  slide.style.opacity = "1";
+                  slide.style.filter = "none";
+                } else if (slideIndex === nextIndex) {
+                  slide.style.opacity = "0.46";
+                  slide.style.filter = "saturate(0.78)";
+                } else {
+                  slide.style.opacity = "0.2";
+                  slide.style.filter = "saturate(0.65)";
+                }
+              } else {
+                if (slideIndex === current) {
+                  slide.style.opacity = "1";
+                  slide.style.filter = "none";
+                } else {
+                  slide.style.opacity = "0.35";
+                  slide.style.filter = "saturate(0.78)";
+                }
+              }
+            });
           };
 
           prev?.addEventListener("click", () => show(current - 1));
           next?.addEventListener("click", () => show(current + 1));
+
+          const onTouchStart = (event) => {
+            if (!event.touches || event.touches.length === 0) return;
+            if (step === 0) updateStep();
+            touching = true;
+            touchStartX = event.touches[0].clientX;
+            touchDeltaX = 0;
+            track.style.transitionDuration = "0ms";
+          };
+
+          const onTouchMove = (event) => {
+            if (!touching || !event.touches || event.touches.length === 0) return;
+            touchDeltaX = event.touches[0].clientX - touchStartX;
+            track.style.transform = `translateX(${-step * current + touchDeltaX}px)`;
+          };
+
+          const onTouchEnd = () => {
+            if (!touching) return;
+            touching = false;
+            track.style.transitionDuration = "";
+            const threshold = Math.max(28, step * 0.08);
+            const moved = Math.abs(touchDeltaX) > 8;
+            if (moved) {
+              gallery.setAttribute(
+                "data-suppress-click-until",
+                String(Date.now() + 320)
+              );
+            }
+
+            if (touchDeltaX > threshold) show(current - 1);
+            else if (touchDeltaX < -threshold) show(current + 1);
+            else show(current);
+
+            touchDeltaX = 0;
+          };
+
+          viewport.addEventListener("touchstart", onTouchStart, { passive: true });
+          viewport.addEventListener("touchmove", onTouchMove, { passive: true });
+          viewport.addEventListener("touchend", onTouchEnd, { passive: true });
+          viewport.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
           window.addEventListener("resize", () => show(current, true), {
             passive: true,
           });
           show(0, true);
         });
 
+        const itineraryLightbox = document.querySelector(
+          "[data-itinerary-lightbox]"
+        );
+        if (itineraryLightbox) {
+          const lightboxImage = itineraryLightbox.querySelector(
+            "[data-itinerary-lightbox-img]"
+          );
+          const lightboxCounter = itineraryLightbox.querySelector(
+            "[data-itinerary-lightbox-counter]"
+          );
+          const closeButton = itineraryLightbox.querySelector(
+            "[data-itinerary-lightbox-close]"
+          );
+          const prevButton = itineraryLightbox.querySelector(
+            "[data-itinerary-lightbox-prev]"
+          );
+          const nextButton = itineraryLightbox.querySelector(
+            "[data-itinerary-lightbox-next]"
+          );
+          const openButtons = Array.from(
+            document.querySelectorAll("[data-itinerary-lightbox-open]")
+          );
+
+          let activeItems = [];
+          let activeIndex = 0;
+
+          const renderLightbox = () => {
+            if (!lightboxImage || !activeItems.length) return;
+            const currentItem = activeItems[activeIndex];
+            lightboxImage.src = currentItem.src;
+            lightboxImage.alt = currentItem.alt || "";
+            if (lightboxCounter) {
+              lightboxCounter.textContent = `${activeIndex + 1} / ${activeItems.length}`;
+            }
+          };
+
+          const closeLightbox = () => {
+            itineraryLightbox.classList.add("hidden");
+            itineraryLightbox.classList.remove("flex");
+            document.body.style.overflow = "";
+          };
+
+          const showLightboxSlide = (targetIndex) => {
+            if (!activeItems.length) return;
+            activeIndex = (targetIndex + activeItems.length) % activeItems.length;
+            renderLightbox();
+          };
+
+          const openLightbox = (galleryIndex, slideIndex) => {
+            activeItems = openButtons
+              .filter(
+                (button) =>
+                  button.getAttribute("data-gallery-index") === galleryIndex
+              )
+              .sort(
+                (a, b) =>
+                  Number(a.getAttribute("data-slide-index") || 0) -
+                  Number(b.getAttribute("data-slide-index") || 0)
+              )
+              .map((button) => ({
+                src: button.getAttribute("data-src") || "",
+                alt: button.getAttribute("data-alt") || "",
+              }))
+              .filter((item) => item.src);
+
+            if (!activeItems.length) return;
+            activeIndex = Math.max(
+              0,
+              Math.min(slideIndex, activeItems.length - 1)
+            );
+            renderLightbox();
+            itineraryLightbox.classList.remove("hidden");
+            itineraryLightbox.classList.add("flex");
+            document.body.style.overflow = "hidden";
+          };
+
+          openButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+              const parentGallery = button.closest("[data-itinerary-gallery]");
+              const suppressClickUntil = Number(
+                parentGallery?.getAttribute("data-suppress-click-until") || 0
+              );
+              if (Date.now() < suppressClickUntil) return;
+
+              const galleryIndex = button.getAttribute("data-gallery-index") || "";
+              const slideIndex = Number(
+                button.getAttribute("data-slide-index") || 0
+              );
+              openLightbox(galleryIndex, slideIndex);
+            });
+          });
+
+          closeButton?.addEventListener("click", closeLightbox);
+          prevButton?.addEventListener("click", () =>
+            showLightboxSlide(activeIndex - 1)
+          );
+          nextButton?.addEventListener("click", () =>
+            showLightboxSlide(activeIndex + 1)
+          );
+
+          itineraryLightbox.addEventListener("click", (event) => {
+            if (event.target === itineraryLightbox) closeLightbox();
+          });
+
+          document.addEventListener("keydown", (event) => {
+            if (itineraryLightbox.classList.contains("hidden")) return;
+            if (event.key === "Escape") closeLightbox();
+            if (event.key === "ArrowLeft") showLightboxSlide(activeIndex - 1);
+            if (event.key === "ArrowRight") showLightboxSlide(activeIndex + 1);
+          });
+        }
+
       })();
     </script>
 
-    <!-- Inyecta el ID numérico del tour para que BookingModal pueda crear la reserva -->
+    <!-- Inyecta el ID numÃ©rico del tour para que BookingModal pueda crear la reserva -->
     <script is:inline define:vars={{ tourNumericId: sourceTour.id ?? null, tourDocumentId: sourceTour.documentId ?? null, tourSlugs }}>
       window.__tourData = { numericId: tourNumericId, documentId: tourDocumentId };
       window.__tourSlugs = tourSlugs;
@@ -1452,3 +1722,4 @@ const hasBookingCard = Boolean(
   lang={lang}
   scheduleOptions={scheduleOptionTitles}
 />
+
