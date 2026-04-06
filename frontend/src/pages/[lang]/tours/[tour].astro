@@ -1,6 +1,7 @@
----
+﻿---
 import { defaultLanguage, getTranslation, languages } from "../../../i18n";
 import "../../../styles/global.css";
+import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import Navbar from "../../../components/shared/Navbar.astro";
 import Footer from "../../../components/shared/Footer.astro";
 import BookingModal from "../../../components/tours/BookingModal.astro";
@@ -182,7 +183,7 @@ if (rawLang !== lang) {
 }
 
 let strapiTourRaw: Record<string, any> | null = null;
-// Usa locales hardcodeados igual que destinos — evita fetches extra a /api/locales
+// Usa locales hardcodeados igual que destinos â€” evita fetches extra a /api/locales
 const localeCandidates = getLocales(lang);
 for (const baseUrl of STRAPI_BASE_URLS) {
   for (const locale of localeCandidates) {
@@ -792,6 +793,7 @@ const hasBookingCard = Boolean(
     <meta name="twitter:title" content={twitterTitle} />
     <meta name="twitter:description" content={twitterDescription} />
     {twitterImage ? <meta name="twitter:image" content={twitterImage} /> : null}
+    <GoogleAnalytics />
   </head>
   <body class="tour-detail min-h-screen bg-white text-gray-900" data-navbar-solid>
     <script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
@@ -1091,14 +1093,14 @@ const hasBookingCard = Boolean(
                 <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
                   {includedTitle ? (
                     <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
-                      <span class="mr-2 text-green-700">✓</span>{includedTitle}
+                      <span class="mr-2 text-green-700">âœ“</span>{includedTitle}
                     </h3>
                   ) : null}
                   <div class="divide-y divide-[#e5e7eb]">
                     {includedItems.map((item) => (
                       <div class="flex items-start gap-2 py-2 md:py-4">
                         <span class="mt-0.5 inline-flex h-5 w-5 md:h-6 md:w-6 shrink-0 items-center justify-center rounded-full border border-green-700 text-xs md:text-sm text-green-700">
-                          {item.icon || "✓"}
+                          {item.icon || "âœ“"}
                         </span>
                         <p class="text-xs md:text-lg leading-snug text-[#374151]">{item.text}</p>
                       </div>
@@ -1111,14 +1113,14 @@ const hasBookingCard = Boolean(
                 <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
                   {excludedTitle ? (
                     <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
-                      <span class="mr-2 text-[#6b7280]">✕</span>{excludedTitle}
+                      <span class="mr-2 text-[#6b7280]">âœ•</span>{excludedTitle}
                     </h3>
                   ) : null}
                   <div class="divide-y divide-[#e5e7eb]">
                     {excludedItems.map((item) => (
                       <div class="flex items-start gap-2 py-2 md:py-4">
                         <span class="mt-0.5 inline-flex h-5 w-5 md:h-6 md:w-6 shrink-0 items-center justify-center rounded-full border border-[#9ca3af] text-xs md:text-sm text-[#6b7280]">
-                          {item.icon || "✕"}
+                          {item.icon || "âœ•"}
                         </span>
                         <p class="text-xs md:text-lg leading-snug text-[#374151]">{item.text}</p>
                       </div>
@@ -1169,7 +1171,7 @@ const hasBookingCard = Boolean(
                   class="absolute top-4 right-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition text-2xl"
                   data-lightbox-close
                   aria-label="Cerrar"
-                >✕</button>
+                >âœ•</button>
 
                 <!-- Anterior -->
                 <button
@@ -1208,7 +1210,7 @@ const hasBookingCard = Boolean(
                 const counter = document.querySelector("[data-lightbox-counter]");
                 if (!lightbox || !img) return;
 
-                // Recopila imágenes de los botones
+                // Recopila imÃ¡genes de los botones
                 const btns = Array.from(document.querySelectorAll("[data-lightbox-open]")) as HTMLElement[];
                 const images = btns.map(b => ({
                   src: (b.querySelector("img") as HTMLImageElement)?.src ?? "",
@@ -1246,7 +1248,7 @@ const hasBookingCard = Boolean(
                   if (e.target === lightbox) close();
                 });
 
-                // Navegación con teclado
+                // NavegaciÃ³n con teclado
                 document.addEventListener("keydown", (e) => {
                   if (lightbox.classList.contains("hidden")) return;
                   if (e.key === "ArrowLeft") show(current - 1);
@@ -1706,7 +1708,7 @@ const hasBookingCard = Boolean(
       })();
     </script>
 
-    <!-- Inyecta el ID numérico del tour para que BookingModal pueda crear la reserva -->
+    <!-- Inyecta el ID numÃ©rico del tour para que BookingModal pueda crear la reserva -->
     <script is:inline define:vars={{ tourNumericId: sourceTour.id ?? null, tourDocumentId: sourceTour.documentId ?? null, tourSlugs }}>
       window.__tourData = { numericId: tourNumericId, documentId: tourDocumentId };
       window.__tourSlugs = tourSlugs;
@@ -1720,3 +1722,4 @@ const hasBookingCard = Boolean(
   lang={lang}
   scheduleOptions={scheduleOptionTitles}
 />
+

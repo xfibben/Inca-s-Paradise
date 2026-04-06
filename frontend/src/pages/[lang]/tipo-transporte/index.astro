@@ -1,6 +1,7 @@
----
+﻿---
 import { getTranslation, languages, defaultLanguage, type Language } from '../../../i18n';
 import '../../../styles/global.css';
+import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import TipoTransporteHero from '../../../components/tipo-transporte/TipoTransporteHero.astro';
@@ -48,11 +49,12 @@ try {
 <html lang={currentLang}>
   <head>
     <meta charset="utf-8" />
-    <title>Tipos de Transporte — Inca's Paradise</title>
+    <title>Tipos de Transporte â€” Inca's Paradise</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="description" content="Opciones de transporte para explorar los destinos más increíbles del Perú con Inca's Paradise." />
+    <meta name="description" content="Opciones de transporte para explorar los destinos mÃ¡s increÃ­bles del PerÃº con Inca's Paradise." />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <GoogleAnalytics />
   </head>
 
   <body class="bg-white text-stone-800 overflow-x-hidden flex flex-col min-h-screen">
@@ -73,3 +75,4 @@ try {
 
   </body>
 </html>
+

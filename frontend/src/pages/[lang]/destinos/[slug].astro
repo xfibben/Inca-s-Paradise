@@ -1,6 +1,7 @@
----
+﻿---
 import { getTranslation } from "../../../i18n";
 import "../../../styles/global.css";
+import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import DestinationsGallery from "../../../components/LandingPage/DestinationsGallery.astro";
 import Ribbon from "../../../components/shared/Ribbon.astro";
 import Navbar from "../../../components/shared/Navbar.astro";
@@ -644,7 +645,8 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 		<meta name="twitter:title" content={twitterTitle} />
 		<meta name="twitter:description" content={twitterDescription} />
 		{twitterImage ? <meta name="twitter:image" content={twitterImage} /> : null}
-	</head>
+	  <GoogleAnalytics />
+  </head>
 	<body class="min-h-screen bg-white text-gray-900">
 		<script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
 		<Navbar {t} currentLang={lang} />
@@ -1161,4 +1163,5 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 		</script>
 	</body>
 </html>
+
 
