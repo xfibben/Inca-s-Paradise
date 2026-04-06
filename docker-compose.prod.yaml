@@ -84,6 +84,8 @@ services:
       STRAPI_URL: http://backend:1336
       PUBLIC_STRAPI_URL: ${PUBLIC_STRAPI_URL}
       PUBLIC_BACKEND_URL: ${PUBLIC_STRAPI_URL}
+      PUBLIC_GA_MEASUREMENT_ID: ${PUBLIC_GA_MEASUREMENT_ID}
+
     command: >
       sh -c "
       npm install --legacy-peer-deps &&
