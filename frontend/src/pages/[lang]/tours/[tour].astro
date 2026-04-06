@@ -797,7 +797,11 @@ const hasBookingCard = Boolean(
   </head>
   <body class="tour-detail min-h-screen bg-white text-gray-900" data-navbar-solid>
     <script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
-    <Navbar {t} currentLang={lang} />
+    <Navbar
+      {t}
+      currentLang={lang}
+      whatsappTourName={cleanText(sourceTour.title) || undefined}
+    />
     <main>
 
       <section class="bg-[#f5f0e9]">
