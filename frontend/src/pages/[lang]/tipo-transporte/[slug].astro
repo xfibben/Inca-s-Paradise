@@ -1,6 +1,7 @@
----
+﻿---
 import { getTranslation, languages, defaultLanguage, type Language } from '../../../i18n';
 import '../../../styles/global.css';
+import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import TipoTransporteTable from '../../../components/tipo-transporte/TipoTransporteTable.astro';
@@ -39,7 +40,7 @@ interface RutaData {
   precios: Record<string, { precio: number; original: number | null }>;
 }
 
-// Fetch del tipo de transporte por slug con precios y vehículos anidados
+// Fetch del tipo de transporte por slug con precios y vehÃ­culos anidados
 let tipoTransporte: any = null;
 
 try {
@@ -81,7 +82,7 @@ const wallpaperUrl = getImageUrl(tipoTransporte.wallpaper);
 
 const transportes: any[] = tipoTransporte.transportes ?? [];
 
-// Construir vehículos únicos y rutas para la tabla comparativa
+// Construir vehÃ­culos Ãºnicos y rutas para la tabla comparativa
 const vehiculosMap = new Map<string, VehiculoData>();
 
 for (const tp of transportes) {
@@ -119,11 +120,12 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
 <html lang={currentLang}>
   <head>
     <meta charset="utf-8" />
-    <title>{tipoTransporte.nombre} — Inca's Paradise</title>
+    <title>{tipoTransporte.nombre} â€” Inca's Paradise</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="description" content={tipoTransporte.descripcion ?? `Conoce más sobre ${tipoTransporte.nombre} con Inca's Paradise.`} />
+    <meta name="description" content={tipoTransporte.descripcion ?? `Conoce mÃ¡s sobre ${tipoTransporte.nombre} con Inca's Paradise.`} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <GoogleAnalytics />
   </head>
 
   <body class="bg-white text-stone-800 overflow-x-hidden flex flex-col min-h-screen">
@@ -157,7 +159,7 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
         </div>
       </section>
 
-      <!-- Descripción -->
+      <!-- DescripciÃ³n -->
       {tipoTransporte.descripcion && (
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div
@@ -167,7 +169,7 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
         </div>
       )}
 
-      <!-- Tabla comparativa de precios por vehículo -->
+      <!-- Tabla comparativa de precios por vehÃ­culo -->
       {vehiculos.length > 0 && rutas.length > 0 && (
         <TipoTransporteTable vehiculos={vehiculos} rutas={rutas} lang={currentLang} labelReservar={t.transporte?.reservar ?? 'Reservar'} />
       )}
@@ -211,11 +213,11 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
                     )}
                     <div class="absolute inset-0 bg-linear-to-b from-black/30 to-black/65 flex flex-col justify-between p-6 text-white">
                       <span class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider">
-                        {origen ?? '—'}
+                        {origen ?? 'â€”'}
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
-                        {llegada ?? '—'}
+                        {llegada ?? 'â€”'}
                       </span>
                       <p class="text-lg font-bold leading-tight" style="font-family: 'Playfair Display', serif;">{tp.nombre}</p>
                     </div>
@@ -245,7 +247,7 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
 
     <Footer currentLang={currentLang} t={t} />
 
-    <!-- Renderiza markdown en la descripción -->
+    <!-- Renderiza markdown en la descripciÃ³n -->
     <script src="https://cdn.jsdelivr.net/npm/markdown-it@10.0.0/dist/markdown-it.min.js"></script>
     <script>
       function processMarkdown() {
@@ -267,3 +269,4 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
 
   </body>
 </html>
+

@@ -1,6 +1,7 @@
----
+﻿---
 import { getTranslation } from "../../../i18n";
 import "../../../styles/global.css";
+import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import DestinationsGallery from "../../../components/LandingPage/DestinationsGallery.astro";
 import Ribbon from "../../../components/shared/Ribbon.astro";
 import Navbar from "../../../components/shared/Navbar.astro";
@@ -101,7 +102,8 @@ const hasContactBandContent = Boolean(
 		<title>{title}</title>
 		<meta name="description" content={description} />
 		<link rel="canonical" href={canonical} />
-	</head>
+	  <GoogleAnalytics />
+  </head>
 	<body class="min-h-screen bg-white text-gray-900">
 		<script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
 		<Navbar {t} currentLang={lang} />
@@ -155,3 +157,4 @@ const hasContactBandContent = Boolean(
 		<Footer currentLang={lang} {t} />
 	</body>
 </html>
+

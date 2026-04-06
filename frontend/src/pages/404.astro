@@ -1,6 +1,7 @@
----
+﻿---
 import { getTranslation, languages, defaultLanguage } from '../i18n';
 import '../styles/global.css';
+import GoogleAnalytics from '../components/shared/GoogleAnalytics.astro';
 
 // Detectar el idioma desde la URL (ej: /en/algo -> "en")
 const pathname = Astro.url.pathname;
@@ -19,8 +20,9 @@ const homeUrl = `/${lang}/`;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{n.code} — {n.title}</title>
+    <title>{n.code} â€” {n.title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <GoogleAnalytics />
   </head>
   <body class="min-h-screen bg-[#f0faf9] flex flex-col items-center justify-center px-4 font-sans">
 
@@ -32,7 +34,7 @@ const homeUrl = `/${lang}/`;
     <!-- Tarjeta central -->
     <div class="bg-white rounded-2xl shadow-lg px-10 py-12 max-w-md w-full text-center">
 
-      <!-- Código 404 decorativo -->
+      <!-- CÃ³digo 404 decorativo -->
       <p class="text-8xl font-extrabold text-[#1AA093] leading-none tracking-tight mb-14">
         {n.code}
       </p>
@@ -45,7 +47,7 @@ const homeUrl = `/${lang}/`;
         {n.message}
       </p>
 
-      <!-- Botón volver al inicio -->
+      <!-- BotÃ³n volver al inicio -->
       <a
         href={homeUrl}
         class="inline-block bg-[#1AA093] hover:bg-[#0e8a7e] text-white font-semibold px-8 py-3 rounded-xl transition-colors duration-200"
@@ -72,3 +74,4 @@ const homeUrl = `/${lang}/`;
 
   </body>
 </html>
+
