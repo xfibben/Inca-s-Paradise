@@ -27,7 +27,8 @@ frontend/src/
 backend/src/api/
   destino/            # Destinations
   destino-detalle/    # Destination details
-  reserva/            # Reservations
+  reserva/            # Reservations (tiene estado_pago + relación oneToMany → pago)
+  pago/               # Transacciones de pago (PayPal / IziPay)
   style-trip/         # Style trips
   terminos/condiciones/ #Terminos y condiciones
   tour-detalle/       # Tour details
@@ -43,7 +44,67 @@ backend/src/components/
 ```
 
 ## Content types (Strapi)
-`destino`, `destino-detalle`, `reserva`, `style-trip`, `tour-detalle`, `transporte`, `tipo-transporte`, `vehiculo`
+`destino`, `destino-detalle`, `reserva`, `style-trip`, `tour-detalle`, `transporte`, `tipo-transporte`, `vehiculo`, `pago`
+
+## Módulo de pagos
+
+### Modelos
+- `reserva` tiene `estado_pago` (enum: `pendiente`, `pagado`, `fallido`) y relación `oneToMany` → `pago`
+- `pago`: `proveedor` (`paypal` | `izipay`), `metodo` (`paypal` | `tarjeta` | `yape_qr`), `moneda` (`PEN` | `USD` | `EUR`), `monto`, `estado`, `transaccion_id`, `orden_id`, `qr_url`, `fecha_pago`, `ip_cliente`
+- Una reserva puede tener múltiples pagos (reintentos). `estado_pago` en reserva es resumen de conveniencia.
+
+### Pasarelas
+- **PayPal** — implementado. SDK JS en frontend + REST API v2 en backend.
+- **IziPay Vpos** — skeleton listo (`izipay.ts`). Pendiente credenciales (`IZIPAY_SHOP_ID`, `IZIPAY_SECRET_KEY`).
+
+### Arquitectura backend (gateway unificado)
+```
+backend/src/api/pago/
+  services/
+    paypal.ts      # getAccessToken, crearOrden, capturarOrden, verificarWebhook
+    izipay.ts      # skeleton: crearTokenTarjeta, crearQrYape, verificarPago
+    gateway.ts     # router unificado: iniciarPago(proveedor, monto, moneda) / confirmarPago(proveedor, token)
+  routes/
+    pago-custom.ts # POST /pagos/iniciar | /pagos/confirmar | /pagos/webhook (auth: false)
+  controllers/
+    pago.ts        # iniciar → confirmar (crea reserva + pago) → webhook
+```
+
+### Endpoints custom (todos `auth: false`)
+| Endpoint | Body | Respuesta |
+|---|---|---|
+| `POST /api/pagos/iniciar` | `{ proveedor, monto, moneda }` | `{ orderID }` PayPal / `{ token, qrUrl }` IziPay |
+| `POST /api/pagos/confirmar` | `{ proveedor, token, reservaData }` | `{ ticket }` |
+| `POST /api/pagos/webhook` | payload del proveedor | `{ received: true }` |
+
+### Flujo completo de pago
+1. Usuario llena el formulario en `BookingModal` → clic "Continuar al pago"
+2. Datos guardados en `window.__pendingBooking` (en memoria, sin redirect)
+3. Usuario elige método (PayPal / Yape QR / Tarjeta)
+4. **PayPal:** SDK JS carga dinámicamente → `createOrder` llama `/api/pagos/iniciar` → popup PayPal → `onApprove` llama `/api/pagos/confirmar` con `reservaData`
+5. **IziPay (pendiente):** mismo patrón — `iniciar` devuelve token/QR → `confirmar` captura
+6. El endpoint `confirmar` en Strapi: captura el pago → genera ticket → crea `reserva` (con `publishedAt`) → crea registro `pago` → retorna `{ ticket }`
+7. Frontend muestra modal de éxito con el ticket
+
+### Gotchas importantes
+- `reserva` tiene `draftAndPublish: true` → al crear vía Document Service incluir `publishedAt: new Date().toISOString()` o quedará en draft
+- PayPal **no acepta PEN** → convertir a USD usando `tasaCambio` antes de llamar a `iniciarPago`
+- `PAYPAL_CLIENT_ID` es el mismo valor para backend y frontend — el frontend lo necesita como `PUBLIC_PAYPAL_CLIENT_ID`
+- El lifecycle `afterCreate` de `reserva` hace sync con Google Sheets automáticamente — se ejecuta igual al crear desde el controller de pago
+- Al agregar IziPay: solo crear lógica en `izipay.ts` y agregar `IZIPAY_SHOP_ID`/`IZIPAY_SECRET_KEY` en `.env` — el gateway y los endpoints no cambian
+
+### Variables de entorno (`.env` raíz)
+```
+PAYPAL_CLIENT_ID=          # también usado como PUBLIC_PAYPAL_CLIENT_ID en frontend
+PAYPAL_SECRET=             # solo backend
+PAYPAL_MODE=sandbox        # sandbox | live
+PAYPAL_WEBHOOK_ID=         # se obtiene al registrar webhook en dashboard PayPal
+PUBLIC_PAYPAL_CLIENT_ID=   # mismo valor que PAYPAL_CLIENT_ID
+# Futuro IziPay:
+# IZIPAY_SHOP_ID=
+# IZIPAY_SECRET_KEY=
+# IZIPAY_MODE=TEST
+```
 
 ## Transporte / Vehículo model
 - `vehiculo`: nombre, descripcion, imagen, features (repeatable `tours.inclusion-item`)

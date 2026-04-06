@@ -114,6 +114,22 @@
     "nacionalidad": {
       "type": "string",
       "required": true
+    },
+    "estado_pago": {
+      "type": "enumeration",
+      "required": true,
+      "default": "pendiente",
+      "enum": [
+        "pendiente",
+        "pagado",
+        "fallido"
+      ]
+    },
+    "pagos": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::pago.pago",
+      "mappedBy": "reserva"
     }
   }
 }

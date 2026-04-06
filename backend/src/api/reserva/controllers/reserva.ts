@@ -94,71 +94,37 @@ async function calcularMontos(data: any, strapi: any): Promise<void> {
 
 export default factories.createCoreController('api::reserva.reserva', ({ strapi }) => {
   return {
-    // Sincroniza las últimas 50 reservas con Google Sheets (reset completo del sheet)
+    // Sincroniza todas las reservas existentes con Google Sheets
     async syncSheets(ctx) {
-      const url = 'https://script.google.com/macros/s/AKfycbyB82Zr3xKLnBfQgTA9-8xlCHdN7PfYOxG9k7X4l71FRJsa1xUBb5nLrw8qLQxH_uPN5g/exec';
+      const url = process.env.GOOGLE_APPS_SCRIPT_URL;
+      if (!url) {
+        return ctx.badRequest('GOOGLE_APPS_SCRIPT_URL no configurado en .env');
+      }
 
-      // Trae las últimas 50 ordenadas de más nueva a más antigua
-      const reservas = await strapi.documents('api::reserva.reserva').findMany({
+      const reservas = await strapi.entityService.findMany('api::reserva.reserva', {
         populate: ['tour', 'transportes'],
-        sort: { createdAt: 'desc' },
-        limit: 50,
-      }) as any[];
-
-      // Construye cada entry con el mismo formato que el lifecycle
-      const entries = reservas.map((reserva) => {
-        const esTour = !!reserva.tour;
-        const servicio = esTour ? reserva.tour : (reserva.transportes?.length ? reserva.transportes[0] : null);
-
-        const nombreReserva = esTour ? (servicio?.title ?? '') : (servicio?.nombre ?? '');
-        const precioAdulto  = parseFloat(servicio?.adultUnitPrice) || 0;
-        const precioNino    = parseFloat(servicio?.childUnitPrice) || 0;
-        const pagoTotal     = parseFloat(reserva.monto_final) || 0;
-        const descuento     = parseFloat(reserva.descuento) || 0;
-        const mitad         = parseFloat((pagoTotal / 2).toFixed(2));
-
-        return {
-          fecha:            reserva.createdAt ?? new Date().toISOString(),
-          nombre_pax:       reserva.nombre ?? '',
-          cantidad_adultos: reserva.cantidad_adultos ?? 0,
-          cantidad_ninos:   reserva.cantidad_ninos ?? 0,
-          hora_recojo:      '',
-          nombre_reserva:   nombreReserva,
-          tipo_ss:          servicio?.tourType ?? '',
-          hotel:            '',
-          estado:           reserva.estado ?? 'pendiente',
-          precio_adulto:    precioAdulto,
-          precio_nino:      precioNino,
-          adelanto:         mitad,
-          saldo:            mitad,
-          porcentaje:       '',
-          descuento:        descuento,
-          pago_total:       pagoTotal,
-          email:            reserva.email,
-          telefono:         reserva.telefono,
-          canal_venta:      'Web',
-          notas:            reserva.notas ?? '',
-          id:               reserva.ticket ?? reserva.id,
-          tipo_servicio:    esTour ? 'tour' : 'transporte',
-        };
+        limit: -1, // todas
       });
 
-      try {
-        const body    = JSON.stringify({ entries });
-        const headers = { 'Content-Type': 'application/json' };
+      let enviadas = 0;
+      let errores = 0;
 
-        // Apps Script devuelve 302 — se obtiene el URL redirigido y se re-hace el POST
-        const firstRes    = await fetch(url, { method: 'POST', headers, body, redirect: 'manual' });
-        const redirectUrl = firstRes.headers.get('location') ?? url;
-
-        await fetch(redirectUrl, { method: 'POST', headers, body });
-
-        strapi.log.info(`[Sheets] Sync masivo: ${entries.length} reservas enviadas`);
-        return ctx.send({ ok: true, total: entries.length });
-      } catch (e) {
-        strapi.log.error('[Sheets] Error en sync masivo:', e);
-        return ctx.internalServerError('Error al sincronizar con Sheets');
+      for (const reserva of reservas as any[]) {
+        try {
+          await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ entry: reserva }),
+            redirect: 'follow',
+          });
+          enviadas++;
+        } catch (e) {
+          errores++;
+          strapi.log.error(`[Sheets] Error sincronizando reserva ID ${reserva.id}:`, e);
+        }
       }
+
+      return ctx.send({ ok: true, enviadas, errores, total: (reservas as any[]).length });
     },
 
     async create(ctx) {
