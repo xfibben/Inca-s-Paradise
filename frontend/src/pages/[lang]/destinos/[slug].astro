@@ -559,7 +559,7 @@ const blogButton = String(strapiDetail?.blogButton ?? "").trim();
 const prevLabel = lang === "en" ? "Previous" : "Anterior";
 const nextLabel = lang === "en" ? "Next" : "Siguiente";
 const itineraryLabel = lang === "en" ? "See itinerary" : "Ver itinerario";
-const tabReadMoreLabel = lang === "en" ? "See more" : "Ver mas";
+const tabReadMoreLabel = lang === "en" ? "See more" : "Ver más";
 
 const strapiCatalogCards = strapiToursForCatalog
   .map((tour: any) => ({
@@ -921,17 +921,6 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 											<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10"></div>
 											<div class="relative z-10 flex h-full flex-col justify-end p-4 text-white">
 												<h3 class="text-xl md:text-2xl font-semibold leading-tight">{item.title}</h3>
-												<p class="mt-1 text-sm text-white/90 leading-snug">
-													{item.description}
-												</p>
-												{item.route || item.locations || item.itinerary ? (
-													<p class="mt-3 border-t border-white/40 pt-2 text-sm text-white/90 leading-snug">
-														{item.route ?? item.locations ?? item.itinerary}
-													</p>
-												) : null}
-												<p class="mt-2 text-lg font-semibold text-[#ff7b2f]">
-													{item.meta}
-												</p>
 												{item.tourSlug ? (
 													<a
 														href={`/${lang}/tours/${item.tourSlug}`}
