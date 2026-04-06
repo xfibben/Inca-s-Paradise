@@ -764,6 +764,52 @@ export interface ApiDestinoDestino extends Struct.SingleTypeSchema {
   };
 }
 
+export interface ApiPagoPago extends Struct.CollectionTypeSchema {
+  collectionName: 'pagos';
+  info: {
+    displayName: 'Pago';
+    pluralName: 'pagos';
+    singularName: 'pago';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    codigo_respuesta: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    estado: Schema.Attribute.Enumeration<
+      ['pendiente', 'pagado', 'fallido', 'reembolsado']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pendiente'>;
+    fecha_pago: Schema.Attribute.DateTime;
+    ip_cliente: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::pago.pago'> &
+      Schema.Attribute.Private;
+    mensaje_respuesta: Schema.Attribute.String;
+    metodo: Schema.Attribute.Enumeration<['tarjeta', 'yape_qr', 'paypal']> &
+      Schema.Attribute.Required;
+    moneda: Schema.Attribute.Enumeration<['PEN', 'USD', 'EUR']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'PEN'>;
+    monto: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    orden_id: Schema.Attribute.String;
+    proveedor: Schema.Attribute.Enumeration<['izipay', 'paypal']> &
+      Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    qr_expiracion: Schema.Attribute.DateTime;
+    qr_url: Schema.Attribute.Text;
+    reserva: Schema.Attribute.Relation<'manyToOne', 'api::reserva.reserva'>;
+    transaccion_id: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiReservaReserva extends Struct.CollectionTypeSchema {
   collectionName: 'reservas';
   info: {
@@ -810,6 +856,11 @@ export interface ApiReservaReserva extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'pendiente'>;
+    estado_pago: Schema.Attribute.Enumeration<
+      ['pendiente', 'pagado', 'fallido']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pendiente'>;
     fecha_fin: Schema.Attribute.DateTime & Schema.Attribute.Required;
     fecha_inicio: Schema.Attribute.DateTime & Schema.Attribute.Required;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -824,6 +875,7 @@ export interface ApiReservaReserva extends Struct.CollectionTypeSchema {
     nombre: Schema.Attribute.String & Schema.Attribute.Required;
     notas: Schema.Attribute.Text;
     numero_documento: Schema.Attribute.String & Schema.Attribute.Required;
+    pagos: Schema.Attribute.Relation<'oneToMany', 'api::pago.pago'>;
     publishedAt: Schema.Attribute.DateTime;
     telefono: Schema.Attribute.String & Schema.Attribute.Required;
     ticket: Schema.Attribute.String &
@@ -2190,6 +2242,7 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::destino-detalle.destino-detalle': ApiDestinoDetalleDestinoDetalle;
       'api::destino.destino': ApiDestinoDestino;
+      'api::pago.pago': ApiPagoPago;
       'api::reserva.reserva': ApiReservaReserva;
       'api::style-trip.style-trip': ApiStyleTripStyleTrip;
       'api::terminos-condiciones.terminos-condiciones': ApiTerminosCondicionesTerminosCondiciones;
