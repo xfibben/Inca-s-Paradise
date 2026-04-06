@@ -1,28 +1,82 @@
 ---
-const measurementId = String(
+const gtmId = String(import.meta.env.PUBLIC_GTM_ID ?? "").trim();
+const gaMeasurementId = String(
   import.meta.env.PUBLIC_GA_MEASUREMENT_ID ?? ""
 ).trim();
-const enabled = import.meta.env.PROD && Boolean(measurementId);
+const isProd = Boolean(import.meta.env.PROD);
 ---
 
 {
-  enabled ? (
-    <script is:inline define:vars={{ measurementId }}>
+  isProd && gtmId ? (
+    <script is:inline define:vars={{ gtmId }}>
       (() => {
-        if (typeof window === "undefined" || !measurementId) return;
+        if (typeof window === "undefined" || !gtmId) return;
 
-        window.__ga4State = window.__ga4State || {};
+        window.__trackingState = window.__trackingState || {};
+        window.dataLayer = window.dataLayer || [];
+
+        const ensureGtmScript = () => {
+          const existing = document.querySelector(`script[data-gtm-id="${gtmId}"]`);
+          if (existing) return;
+
+          window.dataLayer.push({
+            "gtm.start": new Date().getTime(),
+            event: "gtm.js",
+          });
+
+          const script = document.createElement("script");
+          script.async = true;
+          script.src = `https://www.googletagmanager.com/gtm.js?id=${gtmId}`;
+          script.setAttribute("data-gtm-id", gtmId);
+          document.head.appendChild(script);
+        };
+
+        const trackPageView = () => {
+          window.dataLayer.push({
+            event: "astro_page_view",
+            page_title: document.title,
+            page_location: window.location.href,
+            page_path: `${window.location.pathname}${window.location.search}`,
+          });
+        };
+
+        ensureGtmScript();
+
+        if (!window.__trackingState.pageLoadListenerAdded) {
+          document.addEventListener("astro:page-load", trackPageView);
+          window.__trackingState.pageLoadListenerAdded = true;
+        }
+
+        if (!window.trackEvent) {
+          window.trackEvent = (eventName, params = {}) => {
+            if (!eventName) return;
+            window.dataLayer.push({
+              event: eventName,
+              ...params,
+            });
+          };
+        }
+
+        trackPageView();
+      })();
+    </script>
+  ) : isProd && gaMeasurementId ? (
+    <script is:inline define:vars={{ gaMeasurementId }}>
+      (() => {
+        if (typeof window === "undefined" || !gaMeasurementId) return;
+
+        window.__trackingState = window.__trackingState || {};
 
         const ensureGtagScript = () => {
           const existing = document.querySelector(
-            `script[data-ga4-id="${measurementId}"]`
+            `script[data-ga4-id="${gaMeasurementId}"]`
           );
           if (existing) return;
 
           const script = document.createElement("script");
           script.async = true;
-          script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
-          script.setAttribute("data-ga4-id", measurementId);
+          script.src = `https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`;
+          script.setAttribute("data-ga4-id", gaMeasurementId);
           document.head.appendChild(script);
         };
 
@@ -35,23 +89,26 @@ const enabled = import.meta.env.PROD && Boolean(measurementId);
             window.dataLayer.push(arguments);
           };
 
-        if (!window.__ga4State.initialized) {
+        if (!window.__trackingState.gaInitialized) {
           window.gtag("js", new Date());
-          window.gtag("config", measurementId, {
+          window.gtag("config", gaMeasurementId, {
             send_page_view: false,
             anonymize_ip: true,
           });
-          window.__ga4State.initialized = true;
+          window.__trackingState.gaInitialized = true;
         }
 
-        if (!window.__ga4State.trackPageView) {
-          window.__ga4State.trackPageView = () => {
-            window.gtag("event", "page_view", {
-              page_title: document.title,
-              page_location: window.location.href,
-              page_path: `${window.location.pathname}${window.location.search}`,
-            });
-          };
+        const trackPageView = () => {
+          window.gtag("event", "page_view", {
+            page_title: document.title,
+            page_location: window.location.href,
+            page_path: `${window.location.pathname}${window.location.search}`,
+          });
+        };
+
+        if (!window.__trackingState.pageLoadListenerAdded) {
+          document.addEventListener("astro:page-load", trackPageView);
+          window.__trackingState.pageLoadListenerAdded = true;
         }
 
         if (!window.trackEvent) {
@@ -61,14 +118,7 @@ const enabled = import.meta.env.PROD && Boolean(measurementId);
           };
         }
 
-        if (!window.__ga4State.pageLoadListenerAdded) {
-          document.addEventListener("astro:page-load", () => {
-            window.__ga4State.trackPageView();
-          });
-          window.__ga4State.pageLoadListenerAdded = true;
-        }
-
-        window.__ga4State.trackPageView();
+        trackPageView();
       })();
     </script>
   ) : null
