@@ -5,9 +5,56 @@ import { languages } from '../../i18n';
 interface Props {
   t: any;
   currentLang: string;
+  whatsappTourName?: string;
 }
 
-const { t, currentLang } = Astro.props;
+const { t, currentLang, whatsappTourName } = Astro.props;
+
+const pathname = Astro.url.pathname;
+
+function humanizeSlug(slug: string): string {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+const tourPathMatch = pathname.match(/^\/[a-z]{2}\/tours\/([^/]+)\/?$/i);
+const tourSlugFromPath = tourPathMatch?.[1] ?? "";
+const inferredTourName =
+  (typeof whatsappTourName === "string" ? whatsappTourName.trim() : "") ||
+  (tourSlugFromPath ? humanizeSlug(decodeURIComponent(tourSlugFromPath)) : "");
+
+const hasTourContext = Boolean(inferredTourName);
+
+const whatsappMessageByLang: Record<string, string> = {
+  es: hasTourContext
+    ? `Hola Inca's Paradise! Quiero informacion sobre el tour "${inferredTourName}".`
+    : "Hola Inca's Paradise! Quiero informacion sobre sus tours.",
+  en: hasTourContext
+    ? `Hi Inca's Paradise! I want information about the tour "${inferredTourName}".`
+    : "Hi Inca's Paradise! I want information about your tours.",
+  pt: hasTourContext
+    ? `Ola Inca's Paradise! Quero informacoes sobre o tour "${inferredTourName}".`
+    : "Ola Inca's Paradise! Quero informacoes sobre os seus tours.",
+  fr: hasTourContext
+    ? `Bonjour Inca's Paradise ! Je souhaite des informations sur le tour "${inferredTourName}".`
+    : "Bonjour Inca's Paradise ! Je souhaite des informations sur vos tours.",
+  it: hasTourContext
+    ? `Ciao Inca's Paradise! Vorrei informazioni sul tour "${inferredTourName}".`
+    : "Ciao Inca's Paradise! Vorrei informazioni sui vostri tour.",
+};
+
+const whatsappText =
+  whatsappMessageByLang[currentLang] ?? whatsappMessageByLang.en;
+
+const desktopWhatsappHref = `https://wa.me/51953556680?text=${encodeURIComponent(
+  whatsappText
+)}`;
+const mobileWhatsappHref = `https://wa.me/51984434547?text=${encodeURIComponent(
+  whatsappText
+)}`;
 
 const STRAPI_URL = import.meta.env.STRAPI_URL;
 const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL;
@@ -475,7 +522,7 @@ try {
         <LanguageSwitcher currentLang={currentLang} />
         <a
           id="contact-btn"
-          href="https://wa.me/51953556680?text=Hola%20Inca's%20Paradise!%20Estoy%20interesado%20en%20saber%20más%20sobre%20sus%20tours."
+          href={desktopWhatsappHref}
           target="_blank"
           rel="noopener noreferrer"
           class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition text-white text-sm font-semibold border border-white/30"
@@ -670,7 +717,7 @@ try {
         <LanguageSwitcher currentLang={currentLang} />
       </div>
       <a
-        href="https://wa.me/51984434547"
+        href={mobileWhatsappHref}
         target="_blank"
         rel="noopener noreferrer"
         class="flex items-center justify-center gap-2 w-full mx-4 px-4 py-2 bg-white text-gray-900 font-semibold rounded hover:bg-gray-100 transition text-sm"
