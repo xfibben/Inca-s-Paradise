@@ -36,9 +36,10 @@ export default factories.createCoreController('api::pago.pago', ({ strapi }) => 
         moneda: string;
       };
 
-      if (!proveedor || !monto || !moneda) {
-        return ctx.badRequest('Se requieren: proveedor, monto, moneda');
-      }
+      strapi.log.info('[pago.iniciar] body recibido:', { proveedor, monto, moneda });
+      if (!proveedor) return ctx.badRequest('Falta campo: proveedor');
+      if (!monto || monto <= 0) return ctx.badRequest('Falta campo: monto (o es 0)');
+      if (!moneda) return ctx.badRequest('Falta campo: moneda');
 
       try {
         const resultado = await iniciarPago(proveedor, Number(monto), moneda);
