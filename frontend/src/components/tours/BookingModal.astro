@@ -1029,7 +1029,12 @@ const t = translations[lang] ?? translations.es;
 
             const payload = { proveedor: "paypal", monto: montoPaypal, moneda: monedaPaypal };
             const strapiUrl = window.__strapiUrl ?? "http://localhost:1337";
-            
+
+            // Guard: evitar llamar al backend con monto inválido
+            if (!montoPaypal || montoPaypal <= 0) {
+              throw new Error("El monto de pago es inválido. Recarga la página e intenta nuevamente.");
+            }
+
             console.log("[PayPal] Enviando payload:", payload);
             console.log("[PayPal] URL:", strapiUrl);
 
@@ -1240,7 +1245,7 @@ const t = translations[lang] ?? translations.es;
       if (btnTotalEl) btnTotalEl.textContent = totalFormateado;
 
       // Guardar pricing para el paso 2
-      (window as any).__currentPricing = { totalConvertido, simboloMoneda, decimalesMoneda };
+      (window as any).__currentPricing = { totalConvertido, tasaCambio, simboloMoneda, decimalesMoneda };
 
       // Descuento row
       const descuentoRow = document.getElementById("modal-descuento-row");
