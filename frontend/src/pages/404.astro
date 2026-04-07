@@ -10,6 +10,12 @@ const firstSegment = segments[0];
 const validLangs = Object.keys(languages);
 const lang = validLangs.includes(firstSegment) ? firstSegment : defaultLanguage;
 
+// Si el usuario viene desde Google, redirigirlo al inicio en vez de mostrar el 404
+const referer = Astro.request.headers.get('referer') ?? '';
+if (referer.includes('google.')) {
+  return Astro.redirect(`/${lang}/`, 302);
+}
+
 const t = getTranslation(lang);
 const n = t.notFound;
 const homeUrl = `/${lang}/`;

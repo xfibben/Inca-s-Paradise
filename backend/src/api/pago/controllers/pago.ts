@@ -7,6 +7,48 @@ import { factories } from '@strapi/strapi';
 import { iniciarPago, confirmarPago, type Proveedor } from '../services/gateway';
 import { verificarWebhook } from '../services/paypal';
 
+// Caché en memoria del tipo de cambio — SBS actualiza una vez al día
+let cacheTc: { PEN: number; EUR: number; cachedAt: number } | null = null;
+const CACHE_TC_MS = 60 * 60 * 1000; // 1 hora
+
+async function obtenerTipoCambio(): Promise<{ PEN: number; EUR: number }> {
+  if (cacheTc && Date.now() - cacheTc.cachedAt < CACHE_TC_MS) {
+    return { PEN: cacheTc.PEN, EUR: cacheTc.EUR };
+  }
+
+  const token = process.env.APIS_NET_PE_TOKEN ?? '';
+  const hoy = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+  // USD/PEN desde SBS promedio
+  let usdVenta = 3.75;
+  try {
+    const res = await fetch('https://apis.net.pe/v1/tipo-cambio/sbs/average', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const data = await res.json() as any;
+      usdVenta = parseFloat(data.venta) || 3.75;
+    }
+  } catch {}
+
+  // EUR/PEN desde SBS contable — divide para obtener EUR por USD
+  let EUR = 0.92;
+  try {
+    const res = await fetch(
+      `https://apis.net.pe/v1/tipo-cambio/sbs/accounting?date=${hoy}&currency=EUR`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (res.ok) {
+      const data = await res.json() as any;
+      const eurVenta = parseFloat(data.venta);
+      if (eurVenta > 0) EUR = usdVenta / eurVenta; // cuántos EUR equivale 1 USD
+    }
+  } catch {}
+
+  cacheTc = { PEN: usdVenta, EUR, cachedAt: Date.now() };
+  return { PEN: usdVenta, EUR };
+}
+
 /**
  * Genera un ticket único para la reserva — mismo formato que en reserva.ts
  * Formato: TICKET-YYYYMMDD-XXXXX
@@ -22,6 +64,21 @@ function generarTicket(): string {
 
 export default factories.createCoreController('api::pago.pago', ({ strapi }) => {
   return {
+
+    /**
+     * GET /api/pagos/tipo-cambio
+     * Devuelve las tasas PEN y EUR respecto al USD.
+     * PEN desde SBS vía apis.net.pe, EUR desde open.er-api.com.
+     */
+    async tipoCambio(ctx) {
+      try {
+        const rates = await obtenerTipoCambio();
+        return ctx.send(rates);
+      } catch (err: any) {
+        strapi.log.error('[pago.tipoCambio]', err);
+        return ctx.internalServerError('No se pudo obtener el tipo de cambio');
+      }
+    },
 
     /**
      * POST /api/pagos/iniciar
