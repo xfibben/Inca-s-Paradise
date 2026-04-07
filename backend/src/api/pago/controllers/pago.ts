@@ -211,7 +211,7 @@ export default factories.createCoreController('api::pago.pago', ({ strapi }) => 
           for (const pago of pagos) {
             await strapi.documents('api::pago.pago').update({
               documentId: pago.documentId,
-              data: { estado: 'pagado' },
+              data: { estado: 'pagado' } as any,
             });
           }
         }
