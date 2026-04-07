@@ -1019,13 +1019,10 @@ const t = translations[lang] ?? translations.es;
             const b = window.__pendingBooking;
             if (!b) throw new Error("Sin datos de reserva");
 
-            // PayPal no acepta PEN — si la moneda es PEN, enviar en USD usando tasa guardada
-            const monedaPaypal = b.moneda === "PEN" ? "USD" : b.moneda;
-            const montoPaypal = b.moneda === "PEN"
-              ? parseFloat(((window as any).__currentPricing?.precioAdultoUsd
-                  ? b.monto_total / ((window as any).__currentPricing?.tasaCambio ?? 1)
-                  : b.monto_total).toFixed(2))
-              : b.monto_total;
+            // PayPal solo acepta USD — convertir desde la moneda seleccionada usando tasaCambio
+            const tasaCambio = (window as any).__currentPricing?.tasaCambio ?? 1;
+            const monedaPaypal = "USD";
+            const montoPaypal = parseFloat((b.monto_total / tasaCambio).toFixed(2));
 
             const payload = { proveedor: "paypal", monto: montoPaypal, moneda: monedaPaypal };
             const strapiUrl = window.__strapiUrl ?? "http://localhost:1337";
@@ -1197,7 +1194,7 @@ const t = translations[lang] ?? translations.es;
       adultos = 1, ninos = 0,
       precioAdultoUsd = 0, precioNinoUsd = 0,
       precioAdultoLabel = "", precioNinoLabel = "",
-      tasaCambio = 1, simboloMoneda = "$", decimalesMoneda = 0,
+      tasaCambio = 1, simboloMoneda = "$", decimalesMoneda = 2,
       descuento = 0, fechaInicio = null, fechaFin = null,
     }: BookingData = {}) => {
       // Pasajeros

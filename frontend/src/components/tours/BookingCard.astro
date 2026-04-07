@@ -451,7 +451,7 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
     type CurrencyKey = "USD" | "PEN" | "EUR";
     let rates: Record<CurrencyKey, number> = { USD: 1, PEN: 1, EUR: 1 };
     const currencySymbol: Record<CurrencyKey, string> = { USD: "$", PEN: "S/", EUR: "€" };
-    const currencyDecimals: Record<CurrencyKey, number> = { USD: 0, PEN: 0, EUR: 2 };
+    const currencyDecimals: Record<CurrencyKey, number> = { USD: 2, PEN: 2, EUR: 2 };
 
     const isCurrencyKey = (v: string): v is CurrencyKey => v in rates;
 
@@ -481,13 +481,13 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
       updateBtnTotal(currency);
     };
 
-    fetch("https://open.er-api.com/v6/latest/USD")
+    // Tipo de cambio SBS (PEN) + EUR desde el backend — CORS deshabilitado en apis.net.pe
+    const strapiUrl = (window as any).__strapiUrl ?? import.meta.env.PUBLIC_STRAPI_URL ?? 'http://localhost:1337';
+    fetch(`${strapiUrl}/api/pagos/tipo-cambio`)
       .then((r) => r.json())
-      .then((data) => {
-        if (data?.rates) {
-          rates.PEN = data.rates.PEN ?? 1;
-          rates.EUR = data.rates.EUR ?? 1;
-        }
+      .then((data: any) => {
+        if (data?.PEN) rates.PEN = data.PEN;
+        if (data?.EUR) rates.EUR = data.EUR;
         const defaultCur = currencySelect?.getAttribute("data-default-currency") || "USD";
         const val = isCurrencyKey(defaultCur) ? defaultCur : "USD";
         if (currencySelect) currencySelect.value = val;
