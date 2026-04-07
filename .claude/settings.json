@@ -3,7 +3,8 @@
     "allow": [
       "Bash(node -e ':*)",
       "Bash(wc -l /Users/arturo/Documents/Inca-s-Paradise/frontend/src/pages/[lang]/tours/[tour].astro)",
-      "Bash(curl -s https://incasparadise.com/sitemap.xml)"
+      "Bash(curl -s https://incasparadise.com/sitemap.xml)",
+      "Bash(node)"
     ]
   }
 }
