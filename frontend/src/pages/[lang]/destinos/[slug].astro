@@ -921,21 +921,26 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 											<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10"></div>
 											<div class="relative z-10 flex h-full flex-col justify-end p-4 text-white">
 												<h3 class="text-xl md:text-2xl font-semibold leading-tight">{item.title}</h3>
-												{item.tourSlug ? (
-													<a
-														href={`/${lang}/tours/${item.tourSlug}`}
-														class="mt-3 inline-flex w-fit items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff8e46]"
-													>
-														{item.buttonLabel ?? tabReadMoreLabel}
-													</a>
-												) : (
-													<button
-														type="button"
-														class="mt-3 inline-flex w-fit items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff8e46]"
-													>
-														{item.buttonLabel ?? tabReadMoreLabel}
-													</button>
-												)}
+												<div class="mt-2 flex items-end justify-between gap-3">
+													{item.description ? (
+														<p class="text-sm text-white/85 leading-snug line-clamp-3 flex-1">{item.description}</p>
+													) : <span class="flex-1" />}
+													{item.tourSlug ? (
+														<a
+															href={`/${lang}/tours/${item.tourSlug}`}
+															class="shrink-0 inline-flex items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff8e46]"
+														>
+															{item.buttonLabel ?? tabReadMoreLabel}
+														</a>
+													) : (
+														<button
+															type="button"
+															class="shrink-0 inline-flex items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff8e46]"
+														>
+															{item.buttonLabel ?? tabReadMoreLabel}
+														</button>
+													)}
+												</div>
 											</div>
 										</article>
 									);
