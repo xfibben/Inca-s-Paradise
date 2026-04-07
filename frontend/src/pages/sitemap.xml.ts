@@ -13,7 +13,7 @@ const staticPages = [
   { path: "/transporte",                    changefreq: "monthly", priority: "0.7" },
   { path: "/ofertas",                       changefreq: "weekly",  priority: "0.8" },
   { path: "/claims",                        changefreq: "yearly",  priority: "0.4" },
-  { path: "/terminos/terminos-condiciones", changefreq: "yearly",  priority: "0.3" },
+  { path: "/terminos",                      changefreq: "yearly",  priority: "0.3" },
 ];
 
 // Obtiene slugs desde Strapi con paginación completa

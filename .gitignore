@@ -26,3 +26,9 @@ CLAUDE.md
 frontend/package-lock.json
 
 backend/.env.example
+
+# Dumps de base de datos
+*.sql
+
+# Tipos generados automáticamente por Strapi
+backend/types/generated/

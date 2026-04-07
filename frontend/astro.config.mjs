@@ -12,7 +12,14 @@ export default defineConfig({
     mode: 'standalone'
   }),
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    server: {
+      watch: {
+        // Polling necesario en Windows con Docker para detectar cambios de archivos
+        usePolling: true,
+        interval: 500,
+      }
+    }
   },
 });
 

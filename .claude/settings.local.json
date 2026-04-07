@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"http://localhost:1337/api/style-trips?fields[0]=name&fields[1]=slug&locale=es-PE&status=published\")",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s \"http://localhost:1337/api/style-trips?fields[0]=name&fields[1]=slug&locale=es-PE\")",
+      "Bash(docker exec:*)"
+    ]
+  }
+}
