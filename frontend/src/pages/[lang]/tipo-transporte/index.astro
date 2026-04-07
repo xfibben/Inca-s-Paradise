@@ -19,6 +19,15 @@ if (!Object.keys(languages).includes(lang as string)) {
 
 const t = getTranslation(currentLang);
 
+const metaDescriptions: Record<string, string> = {
+  es: "Opciones de transporte para explorar los destinos más increíbles del Perú con Inca's Paradise.",
+  en: "Transport options to explore the most incredible destinations in Peru with Inca's Paradise.",
+  pt: "Opções de transporte para explorar os destinos mais incríveis do Peru com a Inca's Paradise.",
+  fr: "Options de transport pour explorer les destinations les plus incroyables du Pérou avec Inca's Paradise.",
+  it: "Opzioni di trasporto per esplorare le destinazioni più incredibili del Perù con Inca's Paradise.",
+};
+const metaDescription = metaDescriptions[currentLang] ?? metaDescriptions.es;
+
 const STRAPI_URL = import.meta.env.STRAPI_URL;
 const PUBLIC_STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL;
 
@@ -52,7 +61,7 @@ try {
     <title>Tipos de Transporte â€” Inca's Paradise</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="description" content="Opciones de transporte para explorar los destinos mÃ¡s increÃ­bles del PerÃº con Inca's Paradise." />
+    <meta name="description" content={metaDescription} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <GoogleAnalytics />
   </head>

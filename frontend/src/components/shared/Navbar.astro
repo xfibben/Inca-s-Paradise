@@ -361,7 +361,7 @@ try {
                           : null;
                         return (
                           <a
-                            href={`/${currentLang}/style-trips/${toSlug(item.name)}`}
+                            href={`/${currentLang}/style-trips/${item.slug || toSlug(item.name)}`}
                             class="style-item-grid group relative overflow-hidden cursor-pointer transition-all duration-300 hover:z-20"
                           >
                             {imgUrl && (

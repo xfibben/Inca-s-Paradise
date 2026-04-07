@@ -18,6 +18,15 @@ const currentLang = Object.keys(languages).includes(lang as string)
 
 const t = getTranslation(currentLang);
 
+// Fallback de meta description por idioma cuando Strapi no tiene descripción
+const metaDescriptionFallbacks: Record<string, string> = {
+  es: (name: string) => `Conoce más sobre ${name} con Inca's Paradise.`,
+  en: (name: string) => `Learn more about ${name} with Inca's Paradise.`,
+  pt: (name: string) => `Saiba mais sobre ${name} com a Inca's Paradise.`,
+  fr: (name: string) => `En savoir plus sur ${name} avec Inca's Paradise.`,
+  it: (name: string) => `Scopri di più su ${name} con Inca's Paradise.`,
+} as any;
+
 const STRAPI_URL = import.meta.env.STRAPI_URL;
 const PUBLIC_STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL;
 
@@ -123,7 +132,7 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
     <title>{tipoTransporte.nombre} â€” Inca's Paradise</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="description" content={tipoTransporte.descripcion ?? `Conoce mÃ¡s sobre ${tipoTransporte.nombre} con Inca's Paradise.`} />
+    <meta name="description" content={tipoTransporte.descripcion ?? (metaDescriptionFallbacks[currentLang] ?? metaDescriptionFallbacks.es)(tipoTransporte.nombre)} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <GoogleAnalytics />
   </head>

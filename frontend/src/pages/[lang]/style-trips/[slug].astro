@@ -35,17 +35,19 @@ let relatedTours: any[] = [];
 let carouselTours: any[] = [];
 
 try {
-  const fetchUrl = `${STRAPI_URL}/api/style-trips?filters[slug][$eq]=${slug}` +
-    `&populate[wallpaper]=*` +
+  // Traemos todos los style-trips del locale y filtramos por slug en código
+  const fetchUrl = `${STRAPI_URL}/api/style-trips?` +
+    `populate[wallpaper]=*` +
     `&populate[tours][populate][heroSlideImages][fields][0]=url` +
     `&populate[tours][populate][heroSlideImages][fields][1]=formats` +
     `&populate[tours][populate][heroSlideImages][fields][2]=alternativeText` +
-    `&locale=${strapiLocale}&status=published`;
+    `&locale=${strapiLocale}&pagination[pageSize]=50`;
 
   const res = await fetch(fetchUrl);
   if (res.ok) {
     const json = await res.json();
-    trip = json.data?.[0] ?? null;
+    // Filtramos por slug exacto en el cliente para evitar problemas con el filtro de Strapi
+    trip = (json.data ?? []).find((item: any) => item.slug === slug) ?? null;
 
     if (trip) {
       const allTours = Array.isArray(trip.tours?.data)
@@ -87,7 +89,7 @@ const heroImageUrl = heroImage?.formats?.medium?.url
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
-    <title>{trip?.name || 'Style Trip'} â€” Inca's Paradise</title>
+    <title>{trip?.seoTitle || trip?.name || 'Style Trip'} — Inca's Paradise</title>
       <meta name="description" content={trip?.seoDescription || trip?.description || 'Style Trip'} />
       <meta name="title" content={trip?.seoTitle || trip?.name || 'Style Trip'} />
     <style>

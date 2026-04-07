@@ -12,7 +12,7 @@ const { lang } = Astro.params;
 
 // Claims page only works in Spanish
 if (lang !== 'es') {
-  return Astro.redirect('/es/claims');
+  return Astro.redirect('/es/claims', 301);
 }
 
 const currentLang = 'es' as const;
@@ -106,6 +106,88 @@ const labels: Record<Language, Labels> = {
     success_msg: "Your complaint was submitted. You will receive a response within 30 calendar days.",
     error_msg: "An error occurred. Please try again.",
   },
+  fr: {
+    title: "Livre de Réclamations",
+    subtitle: "Qu'est-ce qu'une réclamation ?",
+    description: "Expression de mécontentement liée aux biens achetés ou aux services contractés. Le prestataire devra répondre dans un délai maximum de 30 jours calendaires.",
+    legal: "Loi N.° 29571 — Code de protection et de défense des consommateurs",
+    representative: "Êtes-vous le représentant du titulaire de la réclamation ?",
+    section_titular: "Données du titulaire de la réclamation",
+    doc_type: "Type de document",
+    doc_number: "Numéro de document",
+    nombres: "Prénom(s)",
+    apellido_paterno: "Nom de famille",
+    apellido_materno: "Deuxième nom de famille",
+    section_contact: "Coordonnées",
+    address: "Adresse",
+    departamento: "Département",
+    provincia: "Province",
+    distrito: "District",
+    email: "E-mail",
+    phone: "Téléphone / Mobile",
+    section_product: "Bien contracté",
+    is_product: "Produit",
+    is_service: "Service",
+    product_desc: "Description du bien acquis",
+    product_amount: "Montant réclamé (S/)",
+    section_complaint: "Détails de la réclamation",
+    is_queja: "Plainte (non liée à un bien contracté)",
+    is_reclamo: "Réclamation (liée à un bien contracté)",
+    complaint_detail: "Description de la réclamation",
+    complaint_request: "Demande du consommateur",
+    submit: "Soumettre la réclamation",
+    required: "* Champs obligatoires",
+    select_dept: "-- Sélectionner le département --",
+    select_prov: "-- Sélectionner la province --",
+    select_dist: "-- Sélectionner le district --",
+    dni: "DNI",
+    ce: "Carte d'étranger",
+    pasaporte: "Passeport",
+    ruc: "RUC",
+    success_msg: "Votre réclamation a été envoyée. Vous recevrez une réponse dans un délai de 30 jours calendaires.",
+    error_msg: "Une erreur s'est produite. Veuillez réessayer.",
+  },
+  it: {
+    title: "Libro dei Reclami",
+    subtitle: "Cos'è un reclamo?",
+    description: "È l'espressione di insoddisfazione relativa a beni acquistati o servizi contrattati. Il fornitore dovrà rispondere entro 30 giorni di calendario.",
+    legal: "Legge N.° 29571 — Codice di protezione e difesa del consumatore",
+    representative: "Sei il rappresentante del titolare del reclamo?",
+    section_titular: "Dati del titolare del reclamo",
+    doc_type: "Tipo di documento",
+    doc_number: "Numero di documento",
+    nombres: "Nome/i",
+    apellido_paterno: "Cognome",
+    apellido_materno: "Secondo cognome",
+    section_contact: "Informazioni di contatto",
+    address: "Indirizzo",
+    departamento: "Dipartimento",
+    provincia: "Provincia",
+    distrito: "Distretto",
+    email: "E-mail",
+    phone: "Telefono / Cellulare",
+    section_product: "Bene contrattato",
+    is_product: "Prodotto",
+    is_service: "Servizio",
+    product_desc: "Descrizione del bene acquistato",
+    product_amount: "Importo reclamato (S/)",
+    section_complaint: "Dettagli del reclamo",
+    is_queja: "Lamentela (non relativa a un bene contrattato)",
+    is_reclamo: "Reclamo (relativo a un bene contrattato)",
+    complaint_detail: "Descrizione del reclamo",
+    complaint_request: "Richiesta del consumatore",
+    submit: "Invia reclamo",
+    required: "* Campi obbligatori",
+    select_dept: "-- Seleziona Dipartimento --",
+    select_prov: "-- Seleziona Provincia --",
+    select_dist: "-- Seleziona Distretto --",
+    dni: "DNI",
+    ce: "Carta d'identità straniera",
+    pasaporte: "Passaporto",
+    ruc: "RUC",
+    success_msg: "Il tuo reclamo è stato inviato. Riceverai una risposta entro 30 giorni di calendario.",
+    error_msg: "Si è verificato un errore. Riprova.",
+  },
   pt: {
     title: "Livro de ReclamaÃ§Ãµes",
     subtitle: "O que Ã© uma reclamaÃ§Ã£o?",
@@ -160,6 +242,7 @@ const L = labels[currentLang];
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>{titles[currentLang]}</title>
+    <meta name="description" content={L.description} />
     <GoogleAnalytics />
   </head>
   <body>
