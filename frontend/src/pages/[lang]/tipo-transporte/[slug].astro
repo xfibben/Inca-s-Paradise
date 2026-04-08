@@ -129,7 +129,7 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
 <html lang={currentLang}>
   <head>
     <meta charset="utf-8" />
-    <title>{tipoTransporte.nombre} â€” Inca's Paradise</title>
+    <title>{tipoTransporte.nombre} — Inca's Paradise</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="description" content={tipoTransporte.descripcion ?? (metaDescriptionFallbacks[currentLang] ?? metaDescriptionFallbacks.es)(tipoTransporte.nombre)} />
@@ -222,11 +222,11 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
                     )}
                     <div class="absolute inset-0 bg-linear-to-b from-black/30 to-black/65 flex flex-col justify-between p-6 text-white">
                       <span class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider">
-                        {origen ?? 'â€”'}
+                        {origen ?? '—'}
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                         </svg>
-                        {llegada ?? 'â€”'}
+                        {llegada ?? '—'}
                       </span>
                       <p class="text-lg font-bold leading-tight" style="font-family: 'Playfair Display', serif;">{tp.nombre}</p>
                     </div>

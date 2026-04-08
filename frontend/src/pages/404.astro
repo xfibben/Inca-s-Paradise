@@ -10,9 +10,11 @@ const firstSegment = segments[0];
 const validLangs = Object.keys(languages);
 const lang = validLangs.includes(firstSegment) ? firstSegment : defaultLanguage;
 
-// Si el usuario viene desde Google, redirigirlo al inicio en vez de mostrar el 404
+// Si el usuario viene desde un buscador o sitio externo, redirigir al inicio
 const referer = Astro.request.headers.get('referer') ?? '';
-if (referer.includes('google.')) {
+const siteHost = Astro.site ? new URL(Astro.site).hostname : 'incasparadise.com';
+const isExternalReferer = referer !== '' && !referer.includes(siteHost);
+if (isExternalReferer) {
   return Astro.redirect(`/${lang}/`, 302);
 }
 
@@ -26,7 +28,7 @@ const homeUrl = `/${lang}/`;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{n.code} â€” {n.title}</title>
+    <title>{n.code} – {n.title}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <GoogleAnalytics />
   </head>
@@ -40,7 +42,7 @@ const homeUrl = `/${lang}/`;
     <!-- Tarjeta central -->
     <div class="bg-white rounded-2xl shadow-lg px-10 py-12 max-w-md w-full text-center">
 
-      <!-- CÃ³digo 404 decorativo -->
+      <!-- Código 404 decorativo -->
       <p class="text-8xl font-extrabold text-[#1AA093] leading-none tracking-tight mb-14">
         {n.code}
       </p>
@@ -53,7 +55,7 @@ const homeUrl = `/${lang}/`;
         {n.message}
       </p>
 
-      <!-- BotÃ³n volver al inicio -->
+      <!-- Botón volver al inicio -->
       <a
         href={homeUrl}
         class="inline-block bg-[#1AA093] hover:bg-[#0e8a7e] text-white font-semibold px-8 py-3 rounded-xl transition-colors duration-200"

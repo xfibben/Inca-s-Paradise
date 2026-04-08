@@ -100,7 +100,9 @@ const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
                   <div class="px-5 py-4 flex flex-col gap-3">
                     <div>
                       <h3 class="text-base font-semibold text-stone-800 mb-1">{col}</h3>
-                      <p class="text-stone-500 text-sm leading-relaxed">{detalle.descripcion}</p>
+                      {detalle.descripcion && (
+                        <div class="prose prose-sm prose-stone max-w-none text-stone-500 markdown-content" data-markdown={detalle.descripcion} />
+                      )}
                     </div>
 
                     {detalle.features.length > 0 && (
@@ -240,7 +242,9 @@ const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
                           <div class="md:w-1/2 p-6 flex flex-col justify-center gap-4">
                             <div>
                               <h3 class="text-xl font-semibold text-stone-800 mb-1">{col}</h3>
-                              <p class="text-stone-500 text-sm leading-relaxed">{detalle.descripcion}</p>
+                              {detalle.descripcion && (
+                                <div class="prose prose-sm prose-stone max-w-none text-stone-500 markdown-content" data-markdown={detalle.descripcion} />
+                              )}
                             </div>
 
                             <!-- Features -->
@@ -290,6 +294,25 @@ const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
 
   </div>
 </section>
+
+<script src="https://cdn.jsdelivr.net/npm/markdown-it@10.0.0/dist/markdown-it.min.js"></script>
+<script>
+  function renderVehiculoMarkdown() {
+    if (typeof (window as any).markdownit === 'undefined') {
+      setTimeout(renderVehiculoMarkdown, 50);
+      return;
+    }
+    const md = (window as any).markdownit();
+    document.querySelectorAll('#transporte-table .markdown-content, #mobile-rutas .markdown-content').forEach((el: Element) => {
+      const raw = el.getAttribute('data-markdown');
+      if (raw) {
+        el.innerHTML = md.render(raw);
+        el.removeAttribute('data-markdown');
+      }
+    });
+  }
+  document.addEventListener('DOMContentLoaded', renderVehiculoMarkdown);
+</script>
 
 <script is:inline>
   // Expande/colapsa fila al hacer click

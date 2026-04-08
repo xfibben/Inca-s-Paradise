@@ -19,57 +19,57 @@ const currentLang = 'es' as const;
 const t = getTranslation(currentLang);
 
 const titles: Record<'es', string> = {
-  es: "Reclamaciones â€” Inca's Paradise",
+  es: "Reclamaciones — Inca's Paradise",
 };
 
 type Labels = Record<string, string>;
 const labels: Record<Language, Labels> = {
   es: {
     title: "Libro de Reclamaciones",
-    subtitle: "Â¿QuÃ© es un reclamo?",
-    description: "Es la manifestaciÃ³n de disconformidad relacionada con los bienes adquiridos o servicios contratados por el consumidor. El proveedor deberÃ¡ dar respuesta en un plazo no mayor de 30 dÃ­as calendario.",
-    legal: "Ley N.Â° 29571 â€” CÃ³digo de ProtecciÃ³n y Defensa del Consumidor",
-    representative: "Â¿Es usted representante del titular del reclamo?",
+    subtitle: "¿Qué es un reclamo?",
+    description: "Es la manifestación de disconformidad relacionada con los bienes adquiridos o servicios contratados por el consumidor. El proveedor deberá dar respuesta en un plazo no mayor de 30 días calendario.",
+    legal: "Ley N.° 29571 — Código de Protección y Defensa del Consumidor",
+    representative: "¿Es usted representante del titular del reclamo?",
     section_titular: "Datos del titular del reclamo",
     doc_type: "Tipo de documento",
-    doc_number: "NÃºmero de documento",
+    doc_number: "Número de documento",
     nombres: "Nombres",
     apellido_paterno: "Apellido paterno",
     apellido_materno: "Apellido materno",
     section_contact: "Datos de contacto",
-    address: "DirecciÃ³n",
+    address: "Dirección",
     departamento: "Departamento",
     provincia: "Provincia",
     distrito: "Distrito",
-    email: "Correo electrÃ³nico",
-    phone: "TelÃ©fono / Celular",
+    email: "Correo electrónico",
+    phone: "Teléfono / Celular",
     section_product: "Bien contratado",
     is_product: "Producto",
     is_service: "Servicio",
-    product_desc: "DescripciÃ³n del bien adquirido",
+    product_desc: "Descripción del bien adquirido",
     product_amount: "Monto reclamado (S/)",
-    section_complaint: "Detalle de la reclamaciÃ³n",
+    section_complaint: "Detalle de la reclamación",
     is_queja: "Queja (no relacionada a un bien contratado)",
     is_reclamo: "Reclamo (relacionado a un bien contratado)",
-    complaint_detail: "Detalle de la reclamaciÃ³n",
+    complaint_detail: "Detalle de la reclamación",
     complaint_request: "Pedido del consumidor",
-    submit: "Enviar reclamaciÃ³n",
+    submit: "Enviar reclamación",
     required: "* Campos obligatorios",
     select_dept: "-- Seleccione Departamento --",
     select_prov: "-- Seleccione Provincia --",
     select_dist: "-- Seleccione Distrito --",
     dni: "DNI",
-    ce: "CarnÃ© de ExtranjerÃ­a",
+    ce: "Carné de Extranjería",
     pasaporte: "Pasaporte",
     ruc: "RUC",
-    success_msg: "Tu reclamaciÃ³n fue enviada. RecibirÃ¡s una respuesta en un mÃ¡ximo de 30 dÃ­as calendario.",
-    error_msg: "OcurriÃ³ un error al enviar. Por favor, intenta nuevamente.",
+    success_msg: "Tu reclamación fue enviada. Recibirás una respuesta en un máximo de 30 días calendario.",
+    error_msg: "Ocurrió un error al enviar. Por favor, intenta nuevamente.",
   },
   en: {
     title: "Complaints Book",
     subtitle: "What is a complaint?",
     description: "It is the expression of dissatisfaction related to goods purchased or services contracted. The provider must respond within 30 calendar days.",
-    legal: "Law N.Â° 29571 â€” Consumer Protection and Defense Code",
+    legal: "Law N.° 29571 — Consumer Protection and Defense Code",
     representative: "Are you a representative of the complaint holder?",
     section_titular: "Claimant's details",
     doc_type: "Document type",
@@ -189,44 +189,44 @@ const labels: Record<Language, Labels> = {
     error_msg: "Si è verificato un errore. Riprova.",
   },
   pt: {
-    title: "Livro de ReclamaÃ§Ãµes",
-    subtitle: "O que Ã© uma reclamaÃ§Ã£o?",
-    description: "Ã‰ a manifestaÃ§Ã£o de inconformidade relacionada com os bens adquiridos ou serviÃ§os contratados. O fornecedor deverÃ¡ responder em no mÃ¡ximo 30 dias corridos.",
-    legal: "Lei N.Â° 29571 â€” CÃ³digo de ProteÃ§Ã£o e Defesa do Consumidor",
-    representative: "VocÃª Ã© representante do titular da reclamaÃ§Ã£o?",
-    section_titular: "Dados do titular da reclamaÃ§Ã£o",
+    title: "Livro de Reclamações",
+    subtitle: "O que é uma reclamação?",
+    description: "É a manifestação de inconformidade relacionada com os bens adquiridos ou serviços contratados. O fornecedor deverá responder em no máximo 30 dias corridos.",
+    legal: "Lei N.° 29571 — Código de Proteção e Defesa do Consumidor",
+    representative: "Você é representante do titular da reclamação?",
+    section_titular: "Dados do titular da reclamação",
     doc_type: "Tipo de documento",
-    doc_number: "NÃºmero do documento",
+    doc_number: "Número do documento",
     nombres: "Nome(s)",
     apellido_paterno: "Sobrenome paterno",
     apellido_materno: "Sobrenome materno",
     section_contact: "Dados de contato",
-    address: "EndereÃ§o",
+    address: "Endereço",
     departamento: "Departamento",
-    provincia: "ProvÃ­ncia",
+    provincia: "Província",
     distrito: "Distrito",
     email: "E-mail",
     phone: "Telefone / Celular",
     section_product: "Bem contratado",
     is_product: "Produto",
-    is_service: "ServiÃ§o",
-    product_desc: "DescriÃ§Ã£o do bem adquirido",
+    is_service: "Serviço",
+    product_desc: "Descrição do bem adquirido",
     product_amount: "Valor reclamado (S/)",
-    section_complaint: "Detalhes da reclamaÃ§Ã£o",
-    is_queja: "Queixa (nÃ£o relacionada a um bem contratado)",
-    is_reclamo: "ReclamaÃ§Ã£o (relacionada a um bem contratado)",
-    complaint_detail: "DescriÃ§Ã£o da reclamaÃ§Ã£o",
+    section_complaint: "Detalhes da reclamação",
+    is_queja: "Queixa (não relacionada a um bem contratado)",
+    is_reclamo: "Reclamação (relacionada a um bem contratado)",
+    complaint_detail: "Descrição da reclamação",
     complaint_request: "Pedido do consumidor",
-    submit: "Enviar reclamaÃ§Ã£o",
-    required: "* Campos obrigatÃ³rios",
+    submit: "Enviar reclamação",
+    required: "* Campos obrigatórios",
     select_dept: "-- Selecione Departamento --",
-    select_prov: "-- Selecione ProvÃ­ncia --",
+    select_prov: "-- Selecione Província --",
     select_dist: "-- Selecione Distrito --",
     dni: "DNI",
     ce: "Carteira de Estrangeiro",
     pasaporte: "Passaporte",
     ruc: "RUC",
-    success_msg: "Sua reclamaÃ§Ã£o foi enviada. VocÃª receberÃ¡ resposta em atÃ© 30 dias corridos.",
+    success_msg: "Sua reclamação foi enviada. Você receberá resposta em até 30 dias corridos.",
     error_msg: "Ocorreu um erro ao enviar. Tente novamente.",
   },
 };
@@ -292,13 +292,13 @@ const L = labels[currentLang];
             <div class="md:col-span-2 p-7">
               <form id="reclamaciones-form" novalidate class="space-y-7">
 
-                <!-- Â¿Es representante? -->
+                <!-- ¿Es representante? -->
                 <label class="flex items-start gap-3 cursor-pointer select-none">
                   <input type="checkbox" id="is-representative" name="is_representative" class="mt-0.5 w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500" />
                   <span class="text-sm text-gray-700">{L.representative}</span>
                 </label>
 
-                <!-- SecciÃ³n 1: Datos del titular -->
+                <!-- Sección 1: Datos del titular -->
                 <section>
                   <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">{L.section_titular}</h3>
                   <div class="grid sm:grid-cols-2 gap-4">
@@ -330,7 +330,7 @@ const L = labels[currentLang];
                   </div>
                 </section>
 
-                <!-- SecciÃ³n 2: Datos de contacto -->
+                <!-- Sección 2: Datos de contacto -->
                 <section>
                   <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">{L.section_contact}</h3>
                   <div class="grid sm:grid-cols-2 gap-4">
@@ -367,7 +367,7 @@ const L = labels[currentLang];
                   </div>
                 </section>
 
-                <!-- SecciÃ³n 3: Bien contratado -->
+                <!-- Sección 3: Bien contratado -->
                 <section>
                   <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">{L.section_product}</h3>
                   <div class="flex gap-6 mb-4">
@@ -392,7 +392,7 @@ const L = labels[currentLang];
                   </div>
                 </section>
 
-                <!-- SecciÃ³n 4: Detalle de la reclamaciÃ³n -->
+                <!-- Sección 4: Detalle de la reclamación -->
                 <section>
                   <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 border-b pb-2">{L.section_complaint}</h3>
                   <div class="flex flex-col sm:flex-row gap-4 mb-4">
@@ -495,7 +495,7 @@ const L = labels[currentLang];
         }
         const data = Object.fromEntries(new FormData(form));
         try {
-          console.log('ReclamaciÃ³n enviada:', data);
+          console.log('Reclamación enviada:', data);
           successEl.classList.remove('hidden');
           form.reset();
           selProv.disabled = true;
