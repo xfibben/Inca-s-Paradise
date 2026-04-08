@@ -793,6 +793,30 @@ const hasBookingCard = Boolean(
     <meta name="twitter:title" content={twitterTitle} />
     <meta name="twitter:description" content={twitterDescription} />
     {twitterImage ? <meta name="twitter:image" content={twitterImage} /> : null}
+    <!-- Schema JSON-LD TouristTrip -->
+    <script type="application/ld+json" set:html={JSON.stringify((() => {
+      const schema: Record<string, any> = {
+        "@context": "https://schema.org",
+        "@type": "TouristTrip",
+        "name": seoTitle,
+        "description": pageDescription,
+        "url": canonical,
+        "provider": {
+          "@type": "TravelAgency",
+          "name": "Inca's Paradise",
+          "url": "https://incasparadise.com"
+        }
+      };
+      if (ogImage) schema["image"] = ogImage;
+      if (sourceTour.durationDays) schema["duration"] = `P${sourceTour.durationDays}D`;
+      if (sourceTour.adultUnitPrice) schema["offers"] = {
+        "@type": "Offer",
+        "price": toNumber(sourceTour.adultUnitPrice),
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+      };
+      return schema;
+    })())} />
     <GoogleAnalytics />
   </head>
   <body class="tour-detail min-h-screen bg-white text-gray-900" data-navbar-solid>

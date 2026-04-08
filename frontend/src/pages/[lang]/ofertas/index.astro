@@ -141,6 +141,19 @@ const hayOfertas = toursOferta.length > 0 || transportesOferta.length > 0;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{t.ofertas.title}Inca's Paradise</title>
     <meta name="description" content={t.ofertas.subtitle} />
+    <!-- Schema JSON-LD ItemList -->
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Ofertas de viaje - Inca's Paradise",
+      "description": "Las mejores ofertas en tours y viajes personalizados en Perú con Inca's Paradise",
+      "url": Astro.url.href,
+      "provider": {
+        "@type": "TravelAgency",
+        "name": "Inca's Paradise",
+        "url": "https://incasparadise.com"
+      }
+    })} />
     <GoogleAnalytics />
   </head>
 

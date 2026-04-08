@@ -134,6 +134,20 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
     <link rel="icon" href="/favicon.ico" />
     <meta name="description" content={tipoTransporte.descripcion ?? (metaDescriptionFallbacks[currentLang] ?? metaDescriptionFallbacks.es)(tipoTransporte.nombre)} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Schema JSON-LD Service -->
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": tipoTransporte.nombre,
+      "description": tipoTransporte.descripcion ?? (metaDescriptionFallbacks as any)[currentLang]?.(tipoTransporte.nombre) ?? `${tipoTransporte.nombre} - Inca's Paradise`,
+      "url": `${Astro.site}${currentLang}/tipo-transporte/${slug}`,
+      "image": wallpaperUrl ?? undefined,
+      "provider": {
+        "@type": "TravelAgency",
+        "name": "Inca's Paradise",
+        "url": "https://incasparadise.com"
+      }
+    })} />
     <GoogleAnalytics />
   </head>
 

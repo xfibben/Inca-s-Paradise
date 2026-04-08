@@ -145,6 +145,29 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
     <link rel=”icon” href=”/favicon.ico” />
     <meta name=”description” content={transporte.seoDescription || (metaDescriptionFallbacks[currentLang] ?? metaDescriptionFallbacks.es)(transporte.nombre)} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Schema JSON-LD Service -->
+    <script is:inline type="application/ld+json" set:html={JSON.stringify((() => {
+      const schema: Record<string, any> = {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "name": transporte.seoTitle || transporte.nombre,
+        "description": transporte.seoDescription || (metaDescriptionFallbacks[currentLang] ?? metaDescriptionFallbacks.es)(transporte.nombre),
+        "url": `${Astro.site}${currentLang}/transporte/${slug}`,
+        "provider": {
+          "@type": "TravelAgency",
+          "name": "Inca's Paradise",
+          "url": "https://incasparadise.com"
+        }
+      };
+      if (displayImageUrl) schema["image"] = displayImageUrl;
+      if (adultPrice) schema["offers"] = {
+        "@type": "Offer",
+        "price": adultPrice,
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
+      };
+      return schema;
+    })())} />
     <GoogleAnalytics />
   </head>
 
