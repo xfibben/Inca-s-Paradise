@@ -645,6 +645,24 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 		<meta name="twitter:title" content={twitterTitle} />
 		<meta name="twitter:description" content={twitterDescription} />
 		{twitterImage ? <meta name="twitter:image" content={twitterImage} /> : null}
+    <!-- Schema JSON-LD TouristDestination -->
+    <script is:inline type="application/ld+json" set:html={JSON.stringify((() => {
+      const schema: Record<string, any> = {
+        "@context": "https://schema.org",
+        "@type": "TouristDestination",
+        "name": seoTitle,
+        "description": seoDescription,
+        "url": canonical,
+        "touristType": "Adventure, Cultural",
+        "provider": {
+          "@type": "TravelAgency",
+          "name": "Inca's Paradise",
+          "url": "https://incasparadise.com"
+        }
+      };
+      if (ogImage) schema["image"] = ogImage;
+      return schema;
+    })())} />
 	  <GoogleAnalytics />
   </head>
 	<body class="min-h-screen bg-white text-gray-900">

@@ -137,6 +137,19 @@ const heroImageUrl = heroImage?.formats?.medium?.url
         }
       }
     </style>
+    <!-- Schema JSON-LD TouristTrip -->
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "TouristTrip",
+      "name": trip?.seoTitle || trip?.name || 'Style Trip',
+      "description": trip?.seoDescription || trip?.description || 'Style Trip',
+      "url": Astro.url.href,
+      "provider": {
+        "@type": "TravelAgency",
+        "name": "Inca's Paradise",
+        "url": "https://incasparadise.com"
+      }
+    })} />
     <GoogleAnalytics />
   </head>
   <body>
