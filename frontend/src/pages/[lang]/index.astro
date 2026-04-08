@@ -16,22 +16,22 @@ import Commitment from '../../components/LandingPage/Commitment.astro';
 import Footer from '../../components/shared/Footer.astro';
 import SEOHead from '../../components/SEO/SEOHead.astro';
 
-// FunciÃ³n requerida para rutas dinÃ¡micas en Astro
+// Función requerida para rutas dinámicas en Astro
 export function getStaticPaths() {
   return Object.keys(languages).map((lang) => ({
     params: { lang }
   }));
 }
 
-// ParÃ¡metro dinÃ¡mico de la ruta
+// Parámetro dinámico de la ruta
 const { lang } = Astro.params;
 
-// Validar que el idioma sea vÃ¡lido, si no redirigir al idioma por defecto
+// Validar que el idioma sea válido, si no redirigir al idioma por defecto
 const validLang = Object.keys(languages).includes(lang as string) 
   ? (lang as Language)
   : defaultLanguage;
 
-// Si el idioma no es vÃ¡lido, redirigir
+// Si el idioma no es válido, redirigir
 if (!Object.keys(languages).includes(lang as string)) {
   return Astro.redirect(`/${validLang}/`);
 }
@@ -41,19 +41,19 @@ const currentLang = validLang;
 
 // SEO Configuration
 const titles: Record<Language, string> = {
-  es: "Inca's Paradise - Aventuras Personalizadas en PerÃº",
+  es: "Inca's Paradise - Aventuras Personalizadas en Perú",
   en: "Inca's Paradise - Tailor-made Adventures in Peru",
   pt: "Inca's Paradise - Aventuras Personalizadas no Peru",
-  fr: "Inca's Paradise - Aventures Sur Mesure au PÃ©rou",
-  it: "Inca's Paradise - Avventure Personalizzate in PerÃ¹"
+  fr: "Inca's Paradise - Aventures Sur Mesure au Pérou",
+  it: "Inca's Paradise - Avventure Personalizzate in Perù"
 };
 
 const descriptions: Record<Language, string> = {
-  es: "Viajes personalizados de lujo a PerÃº. Experimente el Camino Inca, Machu Picchu y aventuras sostenibles con guÃ­as expertos locales.",
+  es: "Viajes personalizados de lujo a Perú. Experimente el Camino Inca, Machu Picchu y aventuras sostenibles con guías expertos locales.",
   en: "Tailor-made luxury travel in Peru. Experience the Inca Trail, Machu Picchu, and sustainable adventures with expert local guides.",
-  pt: "Viagens personalizadas de luxo no Peru. Experiencie a Trilha Inca, Machu Picchu e aventuras sustentÃ¡veis com guias locais especialistas.",
-  fr: "Voyages de luxe sur mesure au PÃ©rou. DÃ©couvrez le Chemin de l'Inca, Machu Picchu et des aventures durables avec des guides locaux experts.",
-  it: "Viaggio di lusso su misura in PerÃ¹. Scopri il Sentiero Inca, Machu Picchu e avventure sostenibili con guide locali esperte."
+  pt: "Viagens personalizadas de luxo no Peru. Experiencie a Trilha Inca, Machu Picchu e aventuras sustentáveis com guias locais especialistas.",
+  fr: "Voyages de luxe sur mesure au Pérou. Découvrez le Chemin de l'Inca, Machu Picchu et des aventures durables avec des guides locaux experts.",
+  it: "Viaggio di lusso su misura in Perù. Scopri il Sentiero Inca, Machu Picchu e avventure sostenibili con guide locali esperte."
 };
 
 // Alternate language links for hreflang
@@ -91,7 +91,7 @@ const organizationSchema = {
   "priceRange": "$$"
 };
 
-// Genera langNames dinÃ¡micamente desde los idiomas disponibles
+// Genera langNames dinámicamente desde los idiomas disponibles
 const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Record<string, string>, lang: string) => {
   acc[lang] = lang;
   return acc;
@@ -119,12 +119,7 @@ const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Re
 		
 		<!-- Performance: Preload hero image for faster LCP -->
 		<link rel="preload" as="image" href="/landing page images/Imagen2.webp" type="image/webp" />
-		<!-- Prefetch carousel images -->
-		<link rel="prefetch" as="image" href="/landing page images/Imagen3.webp" type="image/webp" />
-		<link rel="prefetch" as="image" href="/landing page images/ubicacion-choquequirao-full.webp" type="image/webp" />
-		<!-- Prefetch sustainability images -->
-		<link rel="prefetch" as="image" href="/landing page images/sostenibilidad/Turismo justo.webp" />
-		<link rel="prefetch" as="image" href="/landing page images/sostenibilidad/Sostenibilidad.webp" />
+
 		
 		<style>
 			h1, h2 {

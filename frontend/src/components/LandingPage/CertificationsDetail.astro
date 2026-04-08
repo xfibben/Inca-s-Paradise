@@ -169,13 +169,14 @@ const certifications = t.certifications;
           data-index={index}
         >
           <div class="slide-image">
-            <img 
+            <img
               src={`/landing page images/certifications/certificaciondoc${cert.number}.webp`}
               alt={cert.title}
-              width="200" height="120"
+              width="540"
+              height="700"
               style={`height: ${getImageHeight(cert.number)}; width: auto;`}
-              loading={index === 0 ? 'eager' : 'lazy'}
-              fetchpriority={index === 0 ? 'high' : 'low'}
+              loading="lazy"
+              decoding="async"
             />
           </div>
           <div class="slide-content">
@@ -189,9 +190,10 @@ const certifications = t.certifications;
     <!-- Dots Navigation -->
     <div class="carousel-nav">
       {certifications.map((_, index) => (
-        <button 
-          class={`carousel-dot ${index === 0 ? 'active' : ''}`} 
+        <button
+          class={`carousel-dot ${index === 0 ? 'active' : ''}`}
           data-index={index}
+          aria-label={`Ver certificación ${index + 1}`}
         ></button>
       ))}
     </div>
