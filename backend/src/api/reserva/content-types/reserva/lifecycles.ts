@@ -1,6 +1,10 @@
 // Sincroniza reservas con Google Sheets vía Apps Script (gratis, sin Google Cloud)
 async function sincronizarConSheets(id: number) {
-  const url = 'https://script.google.com/macros/s/AKfycbzolk8iNVCTv435deCW9cA9nceXUhxyX5Gev6E73FnhmRsbl_1cfAzGeLLAoBp272zm_A/exec';
+  const url = process.env.GOOGLE_APPS_SCRIPT_URL;
+  if (!url) {
+    strapi.log.warn('[Sheets] GOOGLE_APPS_SCRIPT_URL no configurada — sincronización omitida');
+    return;
+  }
   // Fetch con relaciones populadas para obtener nombre y precios del tour/transporte
   const reserva = await strapi.documents('api::reserva.reserva').findFirst({
     filters: { id: { $eq: id } },
@@ -20,9 +24,12 @@ async function sincronizarConSheets(id: number) {
   const precioAdulto = parseFloat(servicio?.adultUnitPrice) || 0;
   const precioNino   = parseFloat(servicio?.childUnitPrice) || 0;
 
-  const pagoTotal  = parseFloat(reserva.monto_final) || 0;
-  const descuento  = parseFloat(reserva.descuento) || 0;
-  const mitad      = parseFloat((pagoTotal / 2).toFixed(2));
+  const pagoTotal        = parseFloat(reserva.monto_final)       || 0;
+  const descuento        = parseFloat(reserva.descuento)         || 0;
+  const montoWeb         = parseFloat(reserva.monto_web)         || 0;
+  const montoAgencia     = parseFloat(reserva.monto_agencia)     || 0;
+  const precioAdultoWeb  = parseFloat(reserva.precio_adulto_web) || 0;
+  const precioNinoWeb    = parseFloat(reserva.precio_nino_web)   || 0;
 
   const entry = {
     fecha:             reserva.createdAt ?? new Date().toISOString(),
@@ -36,8 +43,10 @@ async function sincronizarConSheets(id: number) {
     estado:            reserva.estado ?? 'pendiente',
     precio_adulto:     precioAdulto,
     precio_nino:       precioNino,
-    adelanto:          mitad,
-    saldo:             mitad,
+    precio_adulto_web: precioAdultoWeb,
+    precio_nino_web:   precioNinoWeb,
+    adelanto:          montoWeb,
+    saldo:             montoAgencia,
     porcentaje:        '',
     descuento:         descuento,
     pago_total:        pagoTotal,
@@ -67,7 +76,55 @@ async function sincronizarConSheets(id: number) {
   }
 }
 
+// Recalcula monto_web y monto_final antes de guardar
+function calcularMontos(data: any) {
+  // monto_web = precio_adulto_web + precio_nino_web (ya incluyen las cantidades)
+  const precioAdultoWeb = parseFloat(data.precio_adulto_web) || 0;
+  const precioNinoWeb   = parseFloat(data.precio_nino_web)   || 0;
+
+  if (precioAdultoWeb > 0 || precioNinoWeb > 0) {
+    data.monto_web = parseFloat((precioAdultoWeb + precioNinoWeb).toFixed(2));
+  }
+
+  // monto_agencia = monto_estimado - monto_web (siempre recalcular)
+  const estimado = parseFloat(data.monto_estimado) || 0;
+  const web      = parseFloat(data.monto_web)      || 0;
+  if (estimado > 0) {
+    data.monto_agencia = parseFloat(Math.max(0, estimado - web).toFixed(2));
+  }
+
+  // monto_final = monto_web + monto_agencia
+  const agencia = parseFloat(data.monto_agencia) || 0;
+  if (web > 0 || agencia > 0) {
+    data.monto_final = parseFloat((web + agencia).toFixed(2));
+  }
+}
+
 export default {
+  beforeCreate(event: any) {
+    calcularMontos(event.params.data);
+  },
+
+  beforeUpdate(event: any) {
+    const data = event.params.data;
+    // En update el admin envía todos los campos — nunca recalcular monto_agencia
+    // para no pisar ediciones manuales. Solo actualizar monto_final.
+    const web     = parseFloat(data.monto_web)     || 0;
+    const agencia = parseFloat(data.monto_agencia) || 0;
+    if (web > 0 || agencia > 0) {
+      data.monto_final = parseFloat((web + agencia).toFixed(2));
+    }
+
+    // Pasar a pago_completo automáticamente si monto_final >= precio_tour
+    // Solo si el usuario no lo está cambiando manualmente a otro estado
+    const precioTour = parseFloat(data.precio_tour) || 0;
+    const montoFinal = parseFloat(data.monto_final) || 0;
+    const estadoPagoManual = data.estado_pago;
+    if (precioTour > 0 && montoFinal >= precioTour && estadoPagoManual !== 'pendiente' && estadoPagoManual !== 'fallido') {
+      data.estado_pago = 'pago_completo';
+    }
+  },
+
   afterCreate(event: any) {
     // setImmediate garantiza que corre fuera de la transacción de Strapi
     const id = event.result.id;

@@ -19,10 +19,6 @@ function generarTicket(): string {
 }
 
 /**
- * Calcula monto_subtotal y monto_final (incluye IGV)
- * Jala los precios unitarios del tour-detalle relacionado
- */
-/**
  * Extrae el documentId desde un campo de relación con formato { connect: [id] }
  */
 function extraerDocumentId(campo: any): string | null {
@@ -34,7 +30,7 @@ function extraerDocumentId(campo: any): string | null {
 }
 
 /**
- * Calcula monto_subtotal y monto_final en USD
+ * Calcula monto_estimado, monto_web (30%) y monto_agencia (70%) en USD
  * Los precios se obtienen directamente del tour-detalle o transporte relacionado
  */
 async function calcularMontos(data: any, strapi: any): Promise<void> {
@@ -82,11 +78,16 @@ async function calcularMontos(data: any, strapi: any): Promise<void> {
     const montoBase = (cantidadAdultos * precioUnitarioAdulto) + (cantidadNinos * precioUnitarioNino);
     const montoFinal = montoBase - descuento;
 
-    data.descuento = Math.round(descuento * 100) / 100;
-    data.monto_subtotal = Math.round(montoBase * 100) / 100;
-    data.monto_final = Math.round(montoFinal * 100) / 100;
+    const montoWeb     = Math.round(montoFinal * 0.3 * 100) / 100;
+    const montoAgencia = Math.round((montoFinal - montoWeb) * 100) / 100;
 
-    console.log('Montos calculados (USD):', { monto_subtotal: data.monto_subtotal, descuento, monto_final: data.monto_final });
+    data.descuento      = Math.round(descuento * 100) / 100;
+    data.monto_estimado = Math.round(montoFinal * 100) / 100;
+    data.monto_web      = montoWeb;
+    data.monto_agencia  = montoAgencia;
+    // monto_final lo calcula el lifecycle beforeCreate/beforeUpdate
+
+    console.log('Montos calculados (USD):', { monto_estimado: data.monto_estimado, monto_web: montoWeb, monto_agencia: montoAgencia });
   } catch (error) {
     console.error('Error calculando montos:', error);
   }
