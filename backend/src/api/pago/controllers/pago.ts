@@ -131,17 +131,24 @@ export default factories.createCoreController('api::pago.pago', ({ strapi }) => 
         }
 
         // 2. Extraer campos propios del pago antes de armar la reserva
-        const { monto_total, moneda, metodo, ...datosReserva } = reservaData;
+        const { monto_total, monto_original, precio_tour, precio_adulto_web, precio_nino_web, moneda, metodo, ...datosReserva } = reservaData;
 
-        // 3. Crear la reserva en Strapi con ticket ya generado
+        // 3. Los montos web/agencia/final los calcula el lifecycle beforeCreate
+        const montoEstimado = parseFloat(monto_original) || parseFloat(monto_total) / 0.3;
+
+        // 4. Crear la reserva en Strapi con ticket ya generado
         //    publishedAt se incluye para que no quede en estado draft
+        //    monto_final se calculará automáticamente en el lifecycle beforeCreate
         const ticket = generarTicket();
         // "as any" necesario: datosReserva viene de un payload dinámico del frontend
         const reserva = await (strapi.documents('api::reserva.reserva') as any).create({
           data: {
             ...datosReserva,
             ticket,
-            monto_final: monto_total ?? 0,
+            precio_tour:       parseFloat(precio_tour)        || montoEstimado,
+            precio_adulto_web: parseFloat(precio_adulto_web) || 0,
+            precio_nino_web:   parseFloat(precio_nino_web)   || 0,
+            monto_estimado:    montoEstimado,
             estado: 'confirmada',
             estado_pago: 'pagado',
             publishedAt: new Date().toISOString(),

@@ -66,9 +66,35 @@
       "default": 0,
       "min": 0
     },
-    "monto_subtotal": {
+    "precio_tour": {
       "type": "decimal",
-      "required": false
+      "required": false,
+      "min": 0
+    },
+    "precio_adulto_web": {
+      "type": "decimal",
+      "required": false,
+      "min": 0
+    },
+    "precio_nino_web": {
+      "type": "decimal",
+      "required": false,
+      "min": 0
+    },
+    "monto_estimado": {
+      "type": "decimal",
+      "required": false,
+      "min": 0
+    },
+    "monto_web": {
+      "type": "decimal",
+      "required": false,
+      "min": 0
+    },
+    "monto_agencia": {
+      "type": "decimal",
+      "required": false,
+      "min": 0
     },
     "monto_final": {
       "type": "decimal",
@@ -122,7 +148,8 @@
       "enum": [
         "pendiente",
         "pagado",
-        "fallido"
+        "fallido",
+        "pago_completo"
       ]
     },
     "pagos": {

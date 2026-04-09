@@ -41,6 +41,7 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     ticketLabel: "Número de Ticket:",
     ticketInfo: "Guarda este número para hacer tu seguimiento. Nos contactaremos pronto con los detalles de tu reserva.",
     copyTicket: "Copiar Ticket",
+    downloadVoucher: "Descargar Comprobante",
     sending: "Enviando...",
     discount: "Descuento",
     schedule: "Horario",
@@ -97,6 +98,7 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     ticketLabel: "Ticket Number:",
     ticketInfo: "Save this number to track your booking. We will contact you soon with booking details.",
     copyTicket: "Copy Ticket",
+    downloadVoucher: "Download Voucher",
     sending: "Sending...",
     discount: "Discount",
     schedule: "Schedule",
@@ -153,6 +155,7 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     ticketLabel: "Número do Ticket:",
     ticketInfo: "Guarde este número para acompanhar sua reserva. Entraremos em contato em breve com os detalhes.",
     copyTicket: "Copiar Ticket",
+    downloadVoucher: "Baixar Comprovante",
     sending: "Enviando...",
     discount: "Desconto",
     schedule: "Horário",
@@ -209,6 +212,7 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     ticketLabel: "Numéro de Ticket :",
     ticketInfo: "Conservez ce numéro pour suivre votre réservation. Nous vous contacterons bientôt avec les détails.",
     copyTicket: "Copier le Ticket",
+    downloadVoucher: "Télécharger le Reçu",
     sending: "Envoi en cours...",
     discount: "Remise",
     schedule: "Horaire",
@@ -265,6 +269,7 @@ const translations: Record<SupportedLang, Record<string, string>> = {
     ticketLabel: "Numero di Ticket:",
     ticketInfo: "Salva questo numero per seguire la tua prenotazione. Ti contatteremo presto con i dettagli.",
     copyTicket: "Copia Ticket",
+    downloadVoucher: "Scarica Ricevuta",
     sending: "Invio in corso...",
     discount: "Sconto",
     schedule: "Orario",
@@ -662,30 +667,43 @@ const t = translations[lang] ?? translations.es;
       </p>
     </div>
     <p class="text-sm text-gray-700 mb-6">{t.ticketInfo}</p>
-    <div class="flex gap-3">
+    <div class="flex flex-col gap-3">
       <button
         type="button"
-        data-close-success
-        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+        data-download-voucher
+        class="w-full px-4 py-2 bg-[#1AA093] rounded-lg text-white font-medium hover:bg-[#0e8a7e] transition flex items-center justify-center gap-2"
       >
-        {t.close}
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+        </svg>
+        {t.downloadVoucher}
       </button>
-      <button
-        type="button"
-        data-copy-ticket
-        class="flex-1 px-4 py-2 bg-[#1AA093] rounded-lg text-white font-medium hover:bg-[#1AA093] transition"
-      >
-        {t.copyTicket}
-      </button>
+      <div class="flex gap-3">
+        <button
+          type="button"
+          data-close-success
+          class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+        >
+          {t.close}
+        </button>
+        <button
+          type="button"
+          data-copy-ticket
+          class="flex-1 px-4 py-2 border border-[#1AA093] rounded-lg text-[#1AA093] font-medium hover:bg-[#e0f7f5] transition"
+        >
+          {t.copyTicket}
+        </button>
+      </div>
     </div>
   </div>
 </div>
 
-<script is:inline define:vars={{ strapiUrl: import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337', pagoTituloText: t.pagoTitulo, bookingTituloText: t.title, paypalClientId: import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || '' }}>
+<script is:inline define:vars={{ strapiUrl: import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337', pagoTituloText: t.pagoTitulo, bookingTituloText: t.title, paypalClientId: import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || '', tourTitleVar: tourTitle }}>
   window.__strapiUrl = strapiUrl;
   window.__pagoTituloText = pagoTituloText;
   window.__bookingTituloText = bookingTituloText;
   window.__paypalClientId = paypalClientId;
+  window.__tourTitle = tourTitleVar;
 </script>
 
 <script>
@@ -717,6 +735,9 @@ const t = translations[lang] ?? translations.es;
     simbolo_moneda: string; decimales_moneda: number;
     porcentaje_pago: number; // Porcentaje a pagar: 30, 50 o 100
     monto_original: number; // Monto total sin aplicar porcentaje
+    precio_adulto_web: number; // 30% del precio unitario adulto en moneda elegida
+    precio_nino_web: number;   // 30% del precio unitario niño en moneda elegida
+    tourNombre: string;
   }
 
   declare global {
@@ -725,6 +746,8 @@ const t = translations[lang] ?? translations.es;
       __transporteData?: { numericId: number | null; documentId: string | null };
       __strapiUrl?: string;
       __pendingBooking?: PendingBooking;
+      __lastCompletedBooking?: PendingBooking; // copia persistente para el comprobante PDF
+      __tourTitle?: string;
       __pagoTituloText?: string;
       __bookingTituloText?: string;
       __paypalClientId?: string;
@@ -784,12 +807,16 @@ const t = translations[lang] ?? translations.es;
         transporteDocumentId: transporteData?.documentId ?? null,
         transporteNumericId: transporteData?.numericId ?? null,
         descuento_usd: parseFloat(str(raw.descuento_usd)) || 0,
-        monto_total: (pricing.totalConvertido ?? 0) * 0.3, // Iniciar al 30%
+        monto_total: (pricing.totalConvertido ?? 0) * 0.3,
         moneda: monedaMap[pricing.simboloMoneda ?? "$"] ?? "USD",
         simbolo_moneda: pricing.simboloMoneda ?? "$",
         decimales_moneda: pricing.decimalesMoneda ?? 2,
-        porcentaje_pago: 30, // Por defecto 30%
+        porcentaje_pago: 30,
         monto_original: pricing.totalConvertido ?? 0,
+        // precio_adulto_web y precio_nino_web = precio unitario × 30% × cantidad
+        precio_adulto_web: parseFloat(((pricing.precioAdultoConvertido ?? 0) * 0.3 * (parseInt(str(raw.cantidad_adultos)) || 1)).toFixed(pricing.decimalesMoneda ?? 2)),
+        precio_nino_web:   parseFloat(((pricing.precioNinoConvertido   ?? 0) * 0.3 * (parseInt(str(raw.cantidad_ninos))   || 0)).toFixed(pricing.decimalesMoneda ?? 2)),
+        tourNombre: window.__tourTitle ?? "",
       };
 
       // Mostrar total en el panel de pago y actualizar botón
@@ -913,7 +940,10 @@ const t = translations[lang] ?? translations.es;
             ...(b.turno ? { turno: b.turno } : {}),
             ...(tourConnect ? { tour: tourConnect } : {}),
             ...(transporteConnect ? { transportes: transporteConnect } : {}),
-            monto_final: b.monto_total,
+            precio_tour:       b.monto_original,
+            precio_adulto_web: b.precio_adulto_web,
+            precio_nino_web:   b.precio_nino_web,
+            monto_estimado:    b.monto_original,
             descuento: b.descuento_usd,
             estado: "confirmada",
             estado_pago: "pagado",
@@ -973,6 +1003,8 @@ const t = translations[lang] ?? translations.es;
         modal?.classList.add("hidden");
         successModal?.classList.remove("hidden");
         form?.reset();
+        // Guardar copia antes de borrar para el comprobante PDF
+        if (window.__pendingBooking) window.__lastCompletedBooking = { ...window.__pendingBooking };
         window.__pendingBooking = undefined;
       } catch (err) {
         if (errorEl) {
@@ -1083,6 +1115,10 @@ const t = translations[lang] ?? translations.es;
                   ...(esTransporte && b.transporteDocumentId ? { transportes: { connect: [b.transporteDocumentId] } } : {}),
                   ...(esTransporte && !b.transporteDocumentId && b.transporteNumericId ? { transportes: { connect: [{ id: b.transporteNumericId }] } } : {}),
                   monto_total: b.monto_total,
+                  monto_original: b.monto_original,
+                  precio_tour:       b.monto_original,
+                  precio_adulto_web: b.precio_adulto_web,
+                  precio_nino_web:   b.precio_nino_web,
                   moneda: b.moneda,
                   metodo: "paypal",
                 },
@@ -1107,6 +1143,8 @@ const t = translations[lang] ?? translations.es;
             successModal?.classList.remove("hidden");
             form?.reset();
             paypalBotonesRendered = false; // resetear para la próxima reserva
+            // Guardar copia antes de borrar para el comprobante PDF
+            if (window.__pendingBooking) window.__lastCompletedBooking = { ...window.__pendingBooking };
             window.__pendingBooking = undefined;
           },
 
@@ -1180,6 +1218,174 @@ const t = translations[lang] ?? translations.es;
       }).catch(() => alert("Error al copiar"));
     });
 
+    // ── Descargar comprobante en PDF ──
+    const downloadVoucherBtn = successModal?.querySelector("[data-download-voucher]") as HTMLButtonElement | null;
+    downloadVoucherBtn?.addEventListener("click", async () => {
+      const ticket = successModal?.querySelector("[data-ticket-number]")?.textContent?.trim() || "TICKET";
+      // Usar la copia guardada antes de borrar __pendingBooking
+      const booking = window.__lastCompletedBooking;
+
+      // Carga jsPDF dinámicamente para no incluirlo en el bundle principal
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
+
+      // ── Logo: rasterizar el favicon.svg en canvas ──
+      let logoDataUrl: string | null = null;
+      try {
+        const svgResp = await fetch("/favicon.svg");
+        const svgText = await svgResp.text();
+        const blob = new Blob([svgText], { type: "image/svg+xml" });
+        const url = URL.createObjectURL(blob);
+        await new Promise<void>((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = 95;
+            canvas.height = 95;
+            const ctx = canvas.getContext("2d");
+            ctx?.drawImage(img, 0, 0, 95, 95);
+            logoDataUrl = canvas.toDataURL("image/png");
+            URL.revokeObjectURL(url);
+            resolve();
+          };
+          img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+          img.src = url;
+        });
+      } catch { /* si falla el logo, continuar sin él */ }
+
+      // ── Encabezado verde ──
+      doc.setFillColor(26, 160, 147);
+      doc.rect(0, 0, 210, 42, "F");
+
+      // Logo SVG rasterizado
+      if (logoDataUrl) {
+        doc.addImage(logoDataUrl, "PNG", 13, 6, 16, 16);
+      }
+
+      // Nombre empresa
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.text("Inca's Paradise", logoDataUrl ? 32 : 15, 17);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text("Comprobante de Reserva de Tour", logoDataUrl ? 32 : 15, 26);
+
+      // Fecha de emisión alineada a la derecha
+      const fechaEmision = new Date().toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" });
+      doc.setFontSize(8);
+      doc.text(`Emitido: ${fechaEmision}`, 197, 36, { align: "right" });
+
+      // ── Ticket destacado ──
+      doc.setFillColor(245, 240, 233);
+      doc.roundedRect(15, 50, 180, 22, 3, 3, "F");
+      doc.setDrawColor(26, 160, 147);
+      doc.setLineWidth(0.5);
+      doc.roundedRect(15, 50, 180, 22, 3, 3, "S");
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text("NÚMERO DE TICKET", 105, 57, { align: "center" });
+      doc.setTextColor(26, 160, 147);
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text(ticket, 105, 67, { align: "center" });
+
+      // ── Obtener destino del tour desde Strapi ──
+      let destinoNombre = "";
+      try {
+        if (booking?.tourDocumentId) {
+          const strapiBase = window.__strapiUrl ?? "http://localhost:1337";
+          const r = await fetch(`${strapiBase}/api/tour-detalles/${booking.tourDocumentId}?populate[destinos][fields][0]=nombre`);
+          if (r.ok) {
+            const tj = await r.json();
+            const destinos = tj?.data?.destinos;
+            if (Array.isArray(destinos) && destinos.length > 0) {
+              destinoNombre = destinos[0]?.nombre ?? "";
+            } else if (destinos?.nombre) {
+              destinoNombre = destinos.nombre;
+            }
+          }
+        }
+      } catch { /* continuar sin destino */ }
+
+      // ── Secciones de datos ──
+      let y = 84;
+      const lineH = 8;
+
+      const seccion = (titulo: string) => {
+        doc.setFillColor(26, 160, 147);
+        doc.rect(15, y, 180, 7, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text(titulo, 18, y + 5);
+        y += 11;
+      };
+
+      const fila = (label: string, valor: string) => {
+        doc.setTextColor(100, 116, 139);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(label, 18, y);
+        doc.setTextColor(31, 41, 55);
+        doc.setFont("helvetica", "bold");
+        doc.text(valor || "—", 80, y);
+        y += lineH;
+      };
+
+      seccion("DATOS DEL PASAJERO");
+      fila("Nombre completo:", booking?.nombre || "—");
+      fila("Correo electrónico:", booking?.email || "—");
+      fila("Teléfono:", booking?.telefono || "—");
+      fila("Tipo de documento:", booking?.tipo_documento?.toUpperCase() || "—");
+      fila("Número de documento:", booking?.numero_documento || "—");
+      fila("Nacionalidad:", booking?.nacionalidad || "—");
+
+      y += 4;
+      seccion("DETALLES DEL TOUR");
+      fila("Tour:", booking?.tourNombre || "—");
+      if (destinoNombre) fila("Destino:", destinoNombre);
+      fila("Fecha de inicio:", booking?.fecha_inicio || "—");
+      fila("Fecha de fin:", booking?.fecha_fin || "—");
+      if (booking?.turno) fila("Horario:", booking.turno);
+      fila("Adultos:", String(booking?.cantidad_adultos ?? "—"));
+      fila("Niños:", String(booking?.cantidad_ninos ?? 0));
+      if (booking?.notas) fila("Notas:", booking.notas);
+
+      y += 4;
+      seccion("RESUMEN DE PAGO");
+      const simbolo = booking?.simbolo_moneda ?? "$";
+      const dec = booking?.decimales_moneda ?? 2;
+      const montoOriginal = booking?.monto_original ?? booking?.monto_total ?? 0;
+      const montoPagado = booking?.monto_total ?? 0;
+      const porcentaje = booking?.porcentaje_pago ?? 30;
+      fila("Monto total del tour:", `${simbolo}${montoOriginal.toFixed(dec)} ${booking?.moneda ?? "USD"}`);
+      fila(`Pagado (${porcentaje}%):`, `${simbolo}${montoPagado.toFixed(dec)} ${booking?.moneda ?? "USD"}`);
+      if (porcentaje < 100) {
+        const resto = montoOriginal - montoPagado;
+        fila("Saldo en agencia:", `${simbolo}${resto.toFixed(dec)} ${booking?.moneda ?? "USD"}`);
+      }
+
+      // ── Nota al pie ──
+      y += 8;
+      doc.setFillColor(245, 240, 233);
+      doc.rect(15, y, 180, 20, "F");
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "italic");
+      doc.text("Este comprobante es válido como confirmación de reserva. Preséntelo el día del tour.", 105, y + 7, { align: "center" });
+      doc.text("Para consultas: contacto@incasparadise.com", 105, y + 14, { align: "center" });
+
+      // ── Pie de página ──
+      doc.setTextColor(100, 116, 139);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text("www.incasparadise.com", 105, 285, { align: "center" });
+
+      doc.save(`comprobante-${ticket}.pdf`);
+    });
+
     // Placeholder del documento
     const docTypeSelect = form?.querySelector("[data-doc-type]") as HTMLSelectElement | null;
     const docNumberInput = form?.querySelector("[data-doc-number]") as HTMLInputElement | null;
@@ -1242,7 +1448,11 @@ const t = translations[lang] ?? translations.es;
       if (btnTotalEl) btnTotalEl.textContent = totalFormateado;
 
       // Guardar pricing para el paso 2
-      (window as any).__currentPricing = { totalConvertido, tasaCambio, simboloMoneda, decimalesMoneda };
+      (window as any).__currentPricing = {
+        totalConvertido, tasaCambio, simboloMoneda, decimalesMoneda,
+        precioAdultoConvertido: precioAdultoUsd * tasaCambio,
+        precioNinoConvertido:   precioNinoUsd   * tasaCambio,
+      };
 
       // Descuento row
       const descuentoRow = document.getElementById("modal-descuento-row");
