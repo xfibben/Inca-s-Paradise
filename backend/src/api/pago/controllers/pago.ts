@@ -133,6 +133,11 @@ export default factories.createCoreController('api::pago.pago', ({ strapi }) => 
         // 2. Extraer campos propios del pago antes de armar la reserva
         const { monto_total, monto_original, precio_tour, precio_adulto_web, precio_nino_web, moneda, metodo, ...datosReserva } = reservaData;
 
+        // moneda_usuario = lo que eligió el usuario (PEN/USD/EUR)
+        // moneda_cobro   = la moneda real cargada al proveedor (PayPal solo acepta USD)
+        const monedaUsuario: string = moneda ?? 'USD';
+        const monedaCobro: string = proveedor === 'paypal' ? 'USD' : monedaUsuario;
+
         // 3. Los montos web/agencia/final los calcula el lifecycle beforeCreate
         const montoEstimado = parseFloat(monto_original) || parseFloat(monto_total) / 0.3;
 
@@ -145,6 +150,7 @@ export default factories.createCoreController('api::pago.pago', ({ strapi }) => 
           data: {
             ...datosReserva,
             ticket,
+            moneda_usuario: monedaUsuario,
             precio_tour:       parseFloat(precio_tour)        || montoEstimado,
             precio_adulto_web: parseFloat(precio_adulto_web) || 0,
             precio_nino_web:   parseFloat(precio_nino_web)   || 0,
@@ -165,7 +171,7 @@ export default factories.createCoreController('api::pago.pago', ({ strapi }) => 
             reserva: { set: [{ documentId: reserva.documentId }] },
             proveedor: proveedorSchema,
             metodo: metodo ?? proveedor,
-            moneda: moneda ?? 'USD',
+            moneda: monedaCobro,
             monto: monto_total ?? 0,
             estado: 'pagado',
             transaccion_id: pagoResult.transaccionId,
