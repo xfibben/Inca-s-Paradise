@@ -138,7 +138,7 @@ export async function getStaticPaths() {
         const localePart = locale ? `locale=${encodeURIComponent(locale)}&` : "";
         const url =
           `${baseUrl}${strapiEndpoint}?${localePart}` +
-          "status=published&fields[0]=slug&pagination[pageSize]=200";
+          "status=published&fields[0]=slug&fields[1]=locale&pagination[pageSize]=200";
 
         try {
           const res = await fetch(url);
@@ -150,6 +150,14 @@ export async function getStaticPaths() {
             const attrs = row?.attributes ?? row;
             const tour = String(attrs?.slug ?? "").toLowerCase();
             if (!tour) continue;
+
+            // Verificar que el locale del tour coincide con el lang pedido
+            // para evitar generar paths con contenido en fallback (ej: fr con contenido es)
+            if (lang !== "es") {
+              const rowLocale = String(attrs?.locale ?? "").toLowerCase();
+              const rowLangBase = rowLocale.split("-")[0];
+              if (rowLangBase && rowLangBase !== lang) continue;
+            }
 
             const key = `${lang}::${tour}`;
             if (strapiSeen.has(key)) continue;
@@ -249,6 +257,17 @@ for (const baseUrl of STRAPI_BASE_URLS) {
 
 if (!strapiTourRaw) {
   return Astro.redirect(`/${lang}/destinos`);
+}
+
+// Si Strapi devolvió el tour en un idioma distinto al pedido (fallback de locale),
+// redirigir al idioma real del contenido para evitar mostrar español con URL en fr/pt/etc.
+if (lang !== "es") {
+  const tourLocale = String(strapiTourRaw?.locale ?? "").toLowerCase();
+  const tourLangBase = tourLocale.split("-")[0];
+  if (tourLangBase && tourLangBase !== lang) {
+    const targetLang = SUPPORTED_LANGS.includes(tourLangBase) ? tourLangBase : "es";
+    return Astro.redirect(`/${targetLang}/tours/${tourSlug}`, 301);
+  }
 }
 
 if (lang !== "es") {

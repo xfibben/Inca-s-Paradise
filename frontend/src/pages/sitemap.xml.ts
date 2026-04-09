@@ -5,6 +5,15 @@ const baseUrl = "https://incasparadise.com";
 const STRAPI_URL = import.meta.env.STRAPI_URL || "http://localhost:1337";
 const langs = ["es", "en", "pt", "fr", "it"];
 
+// Mapeo de lang a locale de Strapi
+const langToLocale: Record<string, string> = {
+  es: "es",
+  en: "en",
+  pt: "pt",
+  fr: "fr",
+  it: "it",
+};
+
 // Páginas estáticas por idioma
 const staticPages = [
   { path: "/",                              changefreq: "weekly",  priority: "1.0" },
@@ -16,45 +25,81 @@ const staticPages = [
   { path: "/terminos",                      changefreq: "yearly",  priority: "0.3" },
 ];
 
-// Obtiene slugs desde Strapi con paginación completa
-async function fetchAllSlugs(endpoint: string, field = "slug"): Promise<string[]> {
+// Obtiene slugs de un endpoint filtrando por locale
+async function fetchSlugsByLocale(endpoint: string, locale: string): Promise<string[]> {
   const slugs: string[] = [];
   let page = 1;
   const pageSize = 100;
 
-  while (true) {
-    try {
-      const res = await fetch(
-        `${STRAPI_URL}/api/${endpoint}?fields[0]=${field}&pagination[page]=${page}&pagination[pageSize]=${pageSize}&status=published`
-      );
-      if (!res.ok) break;
-      const json = await res.json();
-      const items: any[] = json?.data ?? [];
-      if (items.length === 0) break;
-      for (const item of items) {
-        const slug = item?.[field] ?? item?.attributes?.[field];
-        if (slug) slugs.push(slug);
+  // Para español, probar es-PE primero y luego es como fallback
+  const localeCandidates = locale === "es" ? ["es-PE", "es"] : [locale];
+
+  for (const loc of localeCandidates) {
+    const candidateSlugs: string[] = [];
+    page = 1;
+
+    while (true) {
+      try {
+        const res = await fetch(
+          `${STRAPI_URL}/api/${endpoint}?locale=${encodeURIComponent(loc)}&fields[0]=slug&fields[1]=locale&pagination[page]=${page}&pagination[pageSize]=${pageSize}&status=published`
+        );
+        if (!res.ok) break;
+        const json = await res.json();
+        const items: any[] = json?.data ?? [];
+        if (items.length === 0) break;
+
+        for (const item of items) {
+          const attrs = item?.attributes ?? item;
+          const slug = attrs?.slug;
+          const itemLocale = String(attrs?.locale ?? "").toLowerCase();
+          const itemLangBase = itemLocale.split("-")[0];
+
+          // Solo incluir si el locale del item coincide con el lang pedido
+          if (slug && itemLangBase === locale) {
+            candidateSlugs.push(slug);
+          }
+        }
+
+        const total = json?.meta?.pagination?.total ?? 0;
+        if (page * pageSize >= total) break;
+        page++;
+      } catch {
+        break;
       }
-      const total = json?.meta?.pagination?.total ?? 0;
-      if (page * pageSize >= total) break;
-      page++;
-    } catch {
-      break;
+    }
+
+    if (candidateSlugs.length > 0) {
+      slugs.push(...candidateSlugs);
+      break; // Encontramos con este locale candidate, no seguir
     }
   }
+
   return slugs;
 }
 
 export async function GET() {
-  // Obtener slugs dinámicos en paralelo
-  const [tourSlugs, destinoSlugs, styleTripSlugs, tipoTransporteSlugs, transporteSlugs] =
-    await Promise.all([
-      fetchAllSlugs("tour-detalles"),
-      fetchAllSlugs("destinos"),
-      fetchAllSlugs("style-trips"),
-      fetchAllSlugs("tipo-transportes"),
-      fetchAllSlugs("transportes"),
-    ]);
+  // Obtener slugs por idioma en paralelo
+  const endpoints = [
+    { key: "tours",          path: "tour-detalles",    urlPath: "tours"          },
+    { key: "destinos",       path: "destinos",          urlPath: "destinos"       },
+    { key: "styleTrips",     path: "style-trips",       urlPath: "style-trips"    },
+    { key: "tipoTransporte", path: "tipo-transportes",  urlPath: "tipo-transporte" },
+    { key: "transporte",     path: "transportes",       urlPath: "transporte"     },
+  ];
+
+  // Obtener slugs por lang y endpoint
+  const slugsByLangAndEndpoint: Record<string, Record<string, string[]>> = {};
+
+  await Promise.all(
+    langs.flatMap((lang) =>
+      endpoints.map(async ({ key, path }) => {
+        const locale = langToLocale[lang] ?? lang;
+        const slugs = await fetchSlugsByLocale(path, locale);
+        if (!slugsByLangAndEndpoint[lang]) slugsByLangAndEndpoint[lang] = {};
+        slugsByLangAndEndpoint[lang][key] = slugs;
+      })
+    )
+  );
 
   const entries: string[] = [];
   const today = new Date().toISOString().split("T")[0];
@@ -76,37 +121,23 @@ export async function GET() {
     }
   }
 
-  // Tours
+  // Páginas dinámicas: solo URLs donde el contenido existe en ese idioma
   for (const lang of langs) {
-    for (const slug of tourSlugs) {
+    const langSlugs = slugsByLangAndEndpoint[lang] ?? {};
+
+    for (const slug of (langSlugs.tours ?? [])) {
       addUrl(`${baseUrl}/${lang}/tours/${slug}`, "weekly", "0.9");
     }
-  }
-
-  // Destinos
-  for (const lang of langs) {
-    for (const slug of destinoSlugs) {
+    for (const slug of (langSlugs.destinos ?? [])) {
       addUrl(`${baseUrl}/${lang}/destinos/${slug}`, "monthly", "0.8");
     }
-  }
-
-  // Style trips
-  for (const lang of langs) {
-    for (const slug of styleTripSlugs) {
+    for (const slug of (langSlugs.styleTrips ?? [])) {
       addUrl(`${baseUrl}/${lang}/style-trips/${slug}`, "monthly", "0.7");
     }
-  }
-
-  // Tipo transporte
-  for (const lang of langs) {
-    for (const slug of tipoTransporteSlugs) {
+    for (const slug of (langSlugs.tipoTransporte ?? [])) {
       addUrl(`${baseUrl}/${lang}/tipo-transporte/${slug}`, "monthly", "0.7");
     }
-  }
-
-  // Transporte
-  for (const lang of langs) {
-    for (const slug of transporteSlugs) {
+    for (const slug of (langSlugs.transporte ?? [])) {
       addUrl(`${baseUrl}/${lang}/transporte/${slug}`, "monthly", "0.7");
     }
   }
