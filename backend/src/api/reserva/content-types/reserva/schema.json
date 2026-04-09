@@ -152,6 +152,16 @@
         "pago_completo"
       ]
     },
+    "moneda_usuario": {
+      "type": "enumeration",
+      "required": false,
+      "default": "USD",
+      "enum": [
+        "PEN",
+        "USD",
+        "EUR"
+      ]
+    },
     "pagos": {
       "type": "relation",
       "relation": "oneToMany",

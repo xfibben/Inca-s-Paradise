@@ -33,29 +33,34 @@ async function sincronizarConSheets(id: number) {
 
   const entry = {
     fecha:             reserva.createdAt ?? new Date().toISOString(),
+    id:                reserva.ticket ?? id,
     nombre_pax:        reserva.nombre ?? '',
+    email:             reserva.email ?? '',
+    telefono:          reserva.telefono ?? '',
+    tipo_documento:    reserva.tipo_documento ?? '',
+    numero_documento:  reserva.numero_documento ?? '',
+    nacionalidad:      reserva.nacionalidad ?? '',
     cantidad_adultos:  reserva.cantidad_adultos ?? 0,
     cantidad_ninos:    reserva.cantidad_ninos ?? 0,
-    hora_recojo:       '',
-    nombre_reserva:    nombreReserva,
-    tipo_ss:           servicio?.tourType ?? '',
-    hotel:             '',
-    estado:            reserva.estado ?? 'pendiente',
     precio_adulto:     precioAdulto,
     precio_nino:       precioNino,
     precio_adulto_web: precioAdultoWeb,
     precio_nino_web:   precioNinoWeb,
+    fecha_inicio:      reserva.fecha_inicio ?? '',
+    fecha_fin:         reserva.fecha_fin ?? '',
+    hora_recojo:       reserva.turno ?? '',
+    nombre_reserva:    nombreReserva,
+    tipo_servicio:     esTour ? 'tour' : 'transporte',
+    descuento:         descuento,
+    precio_tour:       parseFloat(reserva.precio_tour) || 0,
     adelanto:          montoWeb,
     saldo:             montoAgencia,
-    porcentaje:        '',
-    descuento:         descuento,
     pago_total:        pagoTotal,
-    email:             reserva.email,
-    telefono:          reserva.telefono,
+    estado:            reserva.estado ?? 'pendiente',
+    estado_pago:       reserva.estado_pago ?? '',
+    moneda:            reserva.moneda_usuario ?? 'USD',
     canal_venta:       'Web',
     notas:             reserva.notas ?? '',
-    id:                reserva.ticket ?? id,
-    tipo_servicio:     esTour ? 'tour' : 'transporte',
     prepend:           true,
   };
 
@@ -77,6 +82,7 @@ async function sincronizarConSheets(id: number) {
 }
 
 // Recalcula monto_web y monto_final antes de guardar
+// monto_agencia NO se calcula — se llena manualmente en el admin
 function calcularMontos(data: any) {
   // monto_web = precio_adulto_web + precio_nino_web (ya incluyen las cantidades)
   const precioAdultoWeb = parseFloat(data.precio_adulto_web) || 0;
@@ -86,14 +92,8 @@ function calcularMontos(data: any) {
     data.monto_web = parseFloat((precioAdultoWeb + precioNinoWeb).toFixed(2));
   }
 
-  // monto_agencia = monto_estimado - monto_web (siempre recalcular)
-  const estimado = parseFloat(data.monto_estimado) || 0;
-  const web      = parseFloat(data.monto_web)      || 0;
-  if (estimado > 0) {
-    data.monto_agencia = parseFloat(Math.max(0, estimado - web).toFixed(2));
-  }
-
   // monto_final = monto_web + monto_agencia
+  const web     = parseFloat(data.monto_web)     || 0;
   const agencia = parseFloat(data.monto_agencia) || 0;
   if (web > 0 || agencia > 0) {
     data.monto_final = parseFloat((web + agencia).toFixed(2));

@@ -940,6 +940,7 @@ const t = translations[lang] ?? translations.es;
             ...(b.turno ? { turno: b.turno } : {}),
             ...(tourConnect ? { tour: tourConnect } : {}),
             ...(transporteConnect ? { transportes: transporteConnect } : {}),
+            moneda_usuario:    b.moneda,
             precio_tour:       b.monto_original,
             precio_adulto_web: b.precio_adulto_web,
             precio_nino_web:   b.precio_nino_web,
@@ -1222,168 +1223,9 @@ const t = translations[lang] ?? translations.es;
     const downloadVoucherBtn = successModal?.querySelector("[data-download-voucher]") as HTMLButtonElement | null;
     downloadVoucherBtn?.addEventListener("click", async () => {
       const ticket = successModal?.querySelector("[data-ticket-number]")?.textContent?.trim() || "TICKET";
-      // Usar la copia guardada antes de borrar __pendingBooking
       const booking = window.__lastCompletedBooking;
-
-      // Carga jsPDF dinámicamente para no incluirlo en el bundle principal
-      const { jsPDF } = await import("jspdf");
-      const doc = new jsPDF({ unit: "mm", format: "a4" });
-
-      // ── Logo: rasterizar el favicon.svg en canvas ──
-      let logoDataUrl: string | null = null;
-      try {
-        const svgResp = await fetch("/favicon.svg");
-        const svgText = await svgResp.text();
-        const blob = new Blob([svgText], { type: "image/svg+xml" });
-        const url = URL.createObjectURL(blob);
-        await new Promise<void>((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement("canvas");
-            canvas.width = 95;
-            canvas.height = 95;
-            const ctx = canvas.getContext("2d");
-            ctx?.drawImage(img, 0, 0, 95, 95);
-            logoDataUrl = canvas.toDataURL("image/png");
-            URL.revokeObjectURL(url);
-            resolve();
-          };
-          img.onerror = () => { URL.revokeObjectURL(url); resolve(); };
-          img.src = url;
-        });
-      } catch { /* si falla el logo, continuar sin él */ }
-
-      // ── Encabezado verde ──
-      doc.setFillColor(26, 160, 147);
-      doc.rect(0, 0, 210, 42, "F");
-
-      // Logo SVG rasterizado
-      if (logoDataUrl) {
-        doc.addImage(logoDataUrl, "PNG", 13, 6, 16, 16);
-      }
-
-      // Nombre empresa
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(20);
-      doc.setFont("helvetica", "bold");
-      doc.text("Inca's Paradise", logoDataUrl ? 32 : 15, 17);
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.text("Comprobante de Reserva de Tour", logoDataUrl ? 32 : 15, 26);
-
-      // Fecha de emisión alineada a la derecha
-      const fechaEmision = new Date().toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" });
-      doc.setFontSize(8);
-      doc.text(`Emitido: ${fechaEmision}`, 197, 36, { align: "right" });
-
-      // ── Ticket destacado ──
-      doc.setFillColor(245, 240, 233);
-      doc.roundedRect(15, 50, 180, 22, 3, 3, "F");
-      doc.setDrawColor(26, 160, 147);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(15, 50, 180, 22, 3, 3, "S");
-      doc.setTextColor(100, 116, 139);
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.text("NÚMERO DE TICKET", 105, 57, { align: "center" });
-      doc.setTextColor(26, 160, 147);
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      doc.text(ticket, 105, 67, { align: "center" });
-
-      // ── Obtener destino del tour desde Strapi ──
-      let destinoNombre = "";
-      try {
-        if (booking?.tourDocumentId) {
-          const strapiBase = window.__strapiUrl ?? "http://localhost:1337";
-          const r = await fetch(`${strapiBase}/api/tour-detalles/${booking.tourDocumentId}?populate[destinos][fields][0]=nombre`);
-          if (r.ok) {
-            const tj = await r.json();
-            const destinos = tj?.data?.destinos;
-            if (Array.isArray(destinos) && destinos.length > 0) {
-              destinoNombre = destinos[0]?.nombre ?? "";
-            } else if (destinos?.nombre) {
-              destinoNombre = destinos.nombre;
-            }
-          }
-        }
-      } catch { /* continuar sin destino */ }
-
-      // ── Secciones de datos ──
-      let y = 84;
-      const lineH = 8;
-
-      const seccion = (titulo: string) => {
-        doc.setFillColor(26, 160, 147);
-        doc.rect(15, y, 180, 7, "F");
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "bold");
-        doc.text(titulo, 18, y + 5);
-        y += 11;
-      };
-
-      const fila = (label: string, valor: string) => {
-        doc.setTextColor(100, 116, 139);
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
-        doc.text(label, 18, y);
-        doc.setTextColor(31, 41, 55);
-        doc.setFont("helvetica", "bold");
-        doc.text(valor || "—", 80, y);
-        y += lineH;
-      };
-
-      seccion("DATOS DEL PASAJERO");
-      fila("Nombre completo:", booking?.nombre || "—");
-      fila("Correo electrónico:", booking?.email || "—");
-      fila("Teléfono:", booking?.telefono || "—");
-      fila("Tipo de documento:", booking?.tipo_documento?.toUpperCase() || "—");
-      fila("Número de documento:", booking?.numero_documento || "—");
-      fila("Nacionalidad:", booking?.nacionalidad || "—");
-
-      y += 4;
-      seccion("DETALLES DEL TOUR");
-      fila("Tour:", booking?.tourNombre || "—");
-      if (destinoNombre) fila("Destino:", destinoNombre);
-      fila("Fecha de inicio:", booking?.fecha_inicio || "—");
-      fila("Fecha de fin:", booking?.fecha_fin || "—");
-      if (booking?.turno) fila("Horario:", booking.turno);
-      fila("Adultos:", String(booking?.cantidad_adultos ?? "—"));
-      fila("Niños:", String(booking?.cantidad_ninos ?? 0));
-      if (booking?.notas) fila("Notas:", booking.notas);
-
-      y += 4;
-      seccion("RESUMEN DE PAGO");
-      const simbolo = booking?.simbolo_moneda ?? "$";
-      const dec = booking?.decimales_moneda ?? 2;
-      const montoOriginal = booking?.monto_original ?? booking?.monto_total ?? 0;
-      const montoPagado = booking?.monto_total ?? 0;
-      const porcentaje = booking?.porcentaje_pago ?? 30;
-      fila("Monto total del tour:", `${simbolo}${montoOriginal.toFixed(dec)} ${booking?.moneda ?? "USD"}`);
-      fila(`Pagado (${porcentaje}%):`, `${simbolo}${montoPagado.toFixed(dec)} ${booking?.moneda ?? "USD"}`);
-      if (porcentaje < 100) {
-        const resto = montoOriginal - montoPagado;
-        fila("Saldo en agencia:", `${simbolo}${resto.toFixed(dec)} ${booking?.moneda ?? "USD"}`);
-      }
-
-      // ── Nota al pie ──
-      y += 8;
-      doc.setFillColor(245, 240, 233);
-      doc.rect(15, y, 180, 20, "F");
-      doc.setTextColor(100, 116, 139);
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "italic");
-      doc.text("Este comprobante es válido como confirmación de reserva. Preséntelo el día del tour.", 105, y + 7, { align: "center" });
-      doc.text("Para consultas: contacto@incasparadise.com", 105, y + 14, { align: "center" });
-
-      // ── Pie de página ──
-      doc.setTextColor(100, 116, 139);
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.text("www.incasparadise.com", 105, 285, { align: "center" });
-
-      doc.save(`comprobante-${ticket}.pdf`);
+      const { generarVoucherPDF } = await import("./voucher-pdf");
+      await generarVoucherPDF(ticket, booking);
     });
 
     // Placeholder del documento
