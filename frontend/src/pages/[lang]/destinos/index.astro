@@ -6,6 +6,7 @@ import DestinationsGallery from "../../../components/LandingPage/DestinationsGal
 import Ribbon from "../../../components/shared/Ribbon.astro";
 import Navbar from "../../../components/shared/Navbar.astro";
 import Footer from "../../../components/shared/Footer.astro";
+import SEOHead from "../../../components/SEO/SEOHead.astro";
 
 type SupportedLang = "es" | "en";
 
@@ -86,6 +87,56 @@ const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(
   ""
 );
 const canonical = `${siteOrigin}/${lang}/destinos`;
+const cleanText = (value: any) =>
+  typeof value === "string" ? value.trim() : "";
+
+const seoTitle = (() => {
+  const base = cleanText(title);
+  if (!base) return "Destinos | Inca's Paradise";
+  return /inca'?s paradise/i.test(base) ? base : `${base} | Inca's Paradise`;
+})();
+
+const seoDescription =
+  cleanText(description) ||
+  (isEnglish
+    ? "Explore destinations in Peru with tailor-made experiences by Inca's Paradise."
+    : "Explora destinos en Peru con experiencias personalizadas de Inca's Paradise.");
+
+const alternateLanguages = [
+  { lang: "es-PE", url: `${siteOrigin}/es/destinos` },
+  { lang: "en", url: `${siteOrigin}/en/destinos` },
+];
+
+const destinationCollectionSchema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: seoTitle,
+  description: seoDescription,
+  inLanguage: isEnglish ? "en" : "es",
+  url: canonical,
+  isPartOf: {
+    "@type": "WebSite",
+    name: "Inca's Paradise",
+    url: siteOrigin,
+  },
+  breadcrumb: {
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: isEnglish ? "Home" : "Inicio",
+        item: `${siteOrigin}/${lang}/`,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: isEnglish ? "Destinations" : "Destinos",
+        item: canonical,
+      },
+    ],
+  },
+};
 const hasHeroContent = Boolean(title || description);
 const hasContactBandContent = Boolean(
   contactBandText || contactBandPhone || contactBandButtonLabel
@@ -99,9 +150,18 @@ const hasContactBandContent = Boolean(
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>{title}</title>
-		<meta name="description" content={description} />
-		<link rel="canonical" href={canonical} />
+		<title>{seoTitle}</title>
+		<SEOHead
+			title={seoTitle}
+			description={seoDescription}
+			canonical={canonical}
+			ogImage={`${siteOrigin}/og-image.jpg`}
+			ogType="website"
+			currentLang={lang}
+			alternateLanguages={alternateLanguages}
+			xDefaultUrl={`${siteOrigin}/es/destinos`}
+			structuredData={destinationCollectionSchema}
+		/>
 	  <GoogleAnalytics />
   </head>
 	<body class="min-h-screen bg-white text-gray-900">

@@ -9,6 +9,7 @@ interface Props {
   currentLang?: string;
   alternateLanguages?: Array<{ lang: string; url: string }>;
   structuredData?: Record<string, any>;
+  xDefaultUrl?: string;
 }
 
 const {
@@ -21,10 +22,12 @@ const {
   currentLang = 'es',
   alternateLanguages = [],
   structuredData,
+  xDefaultUrl,
 } = Astro.props;
 
 const baseUrl = Astro.url.origin;
 const canonicalUrl = canonical || Astro.url.href;
+const xDefaultHref = xDefaultUrl || `${baseUrl}/${currentLang}/`;
 ---
 
 <!-- Basic Meta Tags -->
@@ -39,7 +42,7 @@ const canonicalUrl = canonical || Astro.url.href;
 {alternateLanguages.map(alt => (
   <link rel="alternate" hrefLang={alt.lang} href={alt.url} />
 ))}
-<link rel="alternate" hrefLang="x-default" href={`${baseUrl}/${currentLang}/`} />
+<link rel="alternate" hrefLang="x-default" href={xDefaultHref} />
 
 <!-- Open Graph Tags -->
 <meta property="og:type" content={ogType} />
