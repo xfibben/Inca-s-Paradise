@@ -138,7 +138,7 @@ export async function getStaticPaths() {
         const localePart = locale ? `locale=${encodeURIComponent(locale)}&` : "";
         const url =
           `${baseUrl}${strapiEndpoint}?${localePart}` +
-          "status=published&fields[0]=slug&fields[1]=locale&pagination[pageSize]=200";
+          "status=published&fields[0]=slug&pagination[pageSize]=200";
 
         try {
           const res = await fetch(url);
@@ -150,14 +150,6 @@ export async function getStaticPaths() {
             const attrs = row?.attributes ?? row;
             const tour = String(attrs?.slug ?? "").toLowerCase();
             if (!tour) continue;
-
-            // Verificar que el locale del tour coincide con el lang pedido
-            // para evitar generar paths con contenido en fallback (ej: fr con contenido es)
-            if (lang !== "es") {
-              const rowLocale = String(attrs?.locale ?? "").toLowerCase();
-              const rowLangBase = rowLocale.split("-")[0];
-              if (rowLangBase && rowLangBase !== lang) continue;
-            }
 
             const key = `${lang}::${tour}`;
             if (strapiSeen.has(key)) continue;
@@ -257,17 +249,6 @@ for (const baseUrl of STRAPI_BASE_URLS) {
 
 if (!strapiTourRaw) {
   return Astro.redirect(`/${lang}/destinos`);
-}
-
-// Si Strapi devolvió el tour en un idioma distinto al pedido (fallback de locale),
-// redirigir al idioma real del contenido para evitar mostrar español con URL en fr/pt/etc.
-if (lang !== "es") {
-  const tourLocale = String(strapiTourRaw?.locale ?? "").toLowerCase();
-  const tourLangBase = tourLocale.split("-")[0];
-  if (tourLangBase && tourLangBase !== lang) {
-    const targetLang = SUPPORTED_LANGS.includes(tourLangBase) ? tourLangBase : "es";
-    return Astro.redirect(`/${targetLang}/tours/${tourSlug}`, 301);
-  }
 }
 
 if (lang !== "es") {
@@ -596,7 +577,7 @@ const highlightsItems = Array.isArray(sourceTour.highlightsItems)
       .filter((item: any) => item.title || item.descriptionHtml)
   : [];
 const highlightsTitle = cleanText(sourceTour.highlightsTitle);
-const highlightsLead = toRichHtml(sourceTour.highlightsLead);
+const highlightsLead = cleanText(sourceTour.highlightsLead);
 const highlightsQuestion = cleanText(sourceTour.highlightsQuestion);
 const heroSlides = Array.isArray(sourceTour.heroSlideImages?.data)
   ? sourceTour.heroSlideImages.data
@@ -872,7 +853,9 @@ const hasBookingCard = Boolean(
                     </h2>
                   ) : null}
                   {highlightsLead ? (
-                    <div class="mt-3 text-sm leading-relaxed text-[#1f2937] md:text-base [&>p]:text-justify [&>p]:mb-3 [&>p:last-child]:mb-0 [&_strong]:font-semibold [&_em]:italic [&_a]:text-[#1AA093] [&_a]:underline [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" set:html={highlightsLead} />
+                    <p class="mt-3 text-sm leading-relaxed text-[#4b5563] md:text-base">
+                      {highlightsLead}
+                    </p>
                   ) : null}
 
                   {highlightsQuestion ? (
@@ -894,7 +877,7 @@ const hasBookingCard = Boolean(
                             </p>
                             {item.descriptionHtml ? (
                               <div
-                                class="mt-1 text-sm leading-relaxed text-[#1f2937] md:text-base [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_i]:italic"
+                                class="mt-1 text-sm leading-relaxed text-[#4b5563] md:text-base [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_i]:italic"
                                 set:html={item.descriptionHtml}
                               />
                             ) : null}
@@ -992,7 +975,7 @@ const hasBookingCard = Boolean(
                                   {item.images.map((media: any, mediaIndex: number) => (
                                     <button
                                       type="button"
-                                      class="h-44 w-full flex-none overflow-hidden md:h-52 md:w-[82%]"
+                                      class="h-50 w-full flex-none overflow-hidden md:h-64 md:w-[82%]"
                                       data-itinerary-gallery-slide
                                       data-itinerary-lightbox-open
                                       data-gallery-index={index}
