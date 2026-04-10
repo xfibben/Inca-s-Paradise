@@ -9,6 +9,7 @@ interface PendingBooking {
   nacionalidad?: string;
   tourNombre?: string;
   tourDocumentId?: string | null;
+  transporteDocumentId?: string | null;
   fecha_inicio?: string;
   fecha_fin?: string;
   turno?: string | null;
@@ -81,7 +82,9 @@ export async function generarVoucherPDF(ticket: string, booking: PendingBooking 
   doc.text("Inca's Paradise", logoDataUrl ? 32 : 15, 17);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text("Comprobante de Reserva de Tour", logoDataUrl ? 32 : 15, 26);
+  const esTransporte = !!booking?.transporteDocumentId;
+  const tipoServicio = esTransporte ? "Transporte" : "Tour";
+  doc.text(`Comprobante de Reserva de ${tipoServicio}`, logoDataUrl ? 32 : 15, 26);
 
   const fechaEmision = new Date().toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" });
   doc.setFontSize(8);
@@ -167,8 +170,8 @@ export async function generarVoucherPDF(ticket: string, booking: PendingBooking 
   fila("Nacionalidad:", booking?.nacionalidad || "—");
 
   y += 4;
-  seccion("DETALLES DEL TOUR");
-  fila("Tour:", booking?.tourNombre || "—");
+  seccion(`DETALLES DEL ${tipoServicio.toUpperCase()}`);
+  fila(`${tipoServicio}:`, booking?.tourNombre || "—");
   if (destinoNombre) fila("Destino:", destinoNombre);
   fila("Fecha de inicio:", booking?.fecha_inicio || "—");
   fila("Fecha de fin:", booking?.fecha_fin || "—");
@@ -184,7 +187,7 @@ export async function generarVoucherPDF(ticket: string, booking: PendingBooking 
   const montoOriginal = booking?.monto_original ?? booking?.monto_total ?? 0;
   const montoPagado = booking?.monto_total ?? 0;
   const porcentaje = booking?.porcentaje_pago ?? 30;
-  fila("Monto total del tour:", `${simbolo}${montoOriginal.toFixed(dec)} ${booking?.moneda ?? "USD"}`);
+  fila(`Monto total del ${tipoServicio.toLowerCase()}:`, `${simbolo}${montoOriginal.toFixed(dec)} ${booking?.moneda ?? "USD"}`);
   fila(`Pagado (${porcentaje}%):`, `${simbolo}${montoPagado.toFixed(dec)} ${booking?.moneda ?? "USD"}`);
   if (porcentaje < 100) {
     const resto = montoOriginal - montoPagado;
@@ -198,7 +201,7 @@ export async function generarVoucherPDF(ticket: string, booking: PendingBooking 
   doc.setTextColor(100, 116, 139);
   doc.setFontSize(8);
   doc.setFont("helvetica", "italic");
-  doc.text("Este comprobante es válido como confirmación de reserva. Preséntelo el día del tour.", 105, y + 7, { align: "center" });
+  doc.text(`Este comprobante es válido como confirmación de reserva. Preséntelo el día del ${tipoServicio.toLowerCase()}.`, 105, y + 7, { align: "center" });
   doc.text("Para consultas: contacto@incasparadise.com", 105, y + 14, { align: "center" });
 
   // ── Pie de página ──

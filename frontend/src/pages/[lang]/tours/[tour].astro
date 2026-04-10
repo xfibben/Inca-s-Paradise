@@ -524,13 +524,19 @@ const toInlineMarkdownHtml = (value: string) => {
   });
 };
 
-const toRichHtml = (value: any) => {
+const toRichHtml = (value: any, alwaysMarkdown = false) => {
   if (typeof value !== "string") return "";
   const raw = value.trim();
   if (!raw) return "";
 
-  // Si viene de rich text de Strapi, ya llega como HTML.
-  if (/<[a-z][\s\S]*>/i.test(raw)) return raw;
+  // Si ya tiene HTML de bloque (p, h1, ul...) y no se fuerza markdown,
+  // aplicar aun así el procesado inline para convertir **bold** etc. dentro del HTML.
+  if (!alwaysMarkdown && /<[a-z][\s\S]*>/i.test(raw)) {
+    // Procesar markdown inline dentro de nodos de texto del HTML
+    return raw.replace(/>([^<]+)</g, (_match: string, text: string) =>
+      `>${toInlineMarkdownHtml(text)}<`
+    );
+  }
 
   // Soporte markdown + compatibilidad con texto plano.
   return raw
@@ -577,7 +583,7 @@ const highlightsItems = Array.isArray(sourceTour.highlightsItems)
       .filter((item: any) => item.title || item.descriptionHtml)
   : [];
 const highlightsTitle = cleanText(sourceTour.highlightsTitle);
-const highlightsLead = cleanText(sourceTour.highlightsLead);
+const highlightsLead = sourceTour.highlightsLead ?? "";
 const highlightsQuestion = cleanText(sourceTour.highlightsQuestion);
 const heroSlides = Array.isArray(sourceTour.heroSlideImages?.data)
   ? sourceTour.heroSlideImages.data
@@ -853,9 +859,10 @@ const hasBookingCard = Boolean(
                     </h2>
                   ) : null}
                   {highlightsLead ? (
-                    <p class="mt-3 text-sm leading-relaxed text-[#4b5563] md:text-base">
-                      {highlightsLead}
-                    </p>
+                    <div
+                      class="markdown-content mt-3 text-sm leading-relaxed text-[#1f2937] text-justify md:text-base"
+                      data-markdown={highlightsLead}
+                    />
                   ) : null}
 
                   {highlightsQuestion ? (
@@ -1753,6 +1760,25 @@ const hasBookingCard = Boolean(
     <script is:inline define:vars={{ tourNumericId: sourceTour.id ?? null, tourDocumentId: sourceTour.documentId ?? null, tourSlugs }}>
       window.__tourData = { numericId: tourNumericId, documentId: tourDocumentId };
       window.__tourSlugs = tourSlugs;
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@10.0.0/dist/markdown-it.min.js"></script>
+    <script is:inline>
+      function processMarkdown() {
+        if (typeof window.markdownit !== 'undefined') {
+          const md = window.markdownit();
+          document.querySelectorAll('.markdown-content').forEach(function(el) {
+            const markdown = el.getAttribute('data-markdown');
+            if (markdown) {
+              el.innerHTML = md.render(markdown);
+              el.removeAttribute('data-markdown');
+            }
+          });
+        } else {
+          setTimeout(processMarkdown, 100);
+        }
+      }
+      processMarkdown();
     </script>
   </body>
 </html>
