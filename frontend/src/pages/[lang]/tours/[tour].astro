@@ -6,6 +6,7 @@ import Navbar from "../../../components/shared/Navbar.astro";
 import Footer from "../../../components/shared/Footer.astro";
 import BookingModal from "../../../components/tours/BookingModal.astro";
 import BookingCard from "../../../components/tours/BookingCard.astro";
+import Ribbon from "../../../components/shared/Ribbon.astro";
 
 type SupportedLang = string;
 
@@ -104,6 +105,12 @@ function toAbsoluteMediaUrl(value: any) {
   const normalizedBase = String(publicBase).replace(/\/$/, "");
   const normalizedPath = String(url).startsWith("/") ? String(url) : `/${url}`;
   return `${normalizedBase}${normalizedPath}`;
+}
+
+function toCardImageFromTour(tour: any) {
+  const mediaRows = toMediaRows(tour?.heroSlideImages);
+  const firstWithUrl = mediaRows.find((entry: any) => Boolean(toAbsoluteMediaUrl(entry)));
+  return toAbsoluteMediaUrl(firstWithUrl);
 }
 
 export async function getStaticPaths() {
@@ -207,6 +214,8 @@ for (const baseUrl of STRAPI_BASE_URLS) {
       "populate[featuredImages][populate][image][fields][2]=formats&" +
       "populate[highlightsItems][fields][0]=title&" +
       "populate[highlightsItems][fields][1]=description&" +
+      "populate[destinos][fields][0]=title&" +
+      "populate[destinos][fields][1]=slug&" +
       "populate[itineraryItems][fields][0]=title&" +
       "populate[itineraryItems][fields][1]=highlight&" +
       "populate[itineraryItems][fields][2]=description&" +
@@ -277,6 +286,8 @@ if (lang !== "es") {
         "populate[featuredImages][populate][image][fields][0]=url&" +
         "populate[featuredImages][populate][image][fields][1]=alternativeText&" +
         "populate[featuredImages][populate][image][fields][2]=formats&" +
+        "populate[destinos][fields][0]=title&" +
+        "populate[destinos][fields][1]=slug&" +
         "populate[itineraryItems][fields][0]=title&" +
         "populate[itineraryItems][fields][1]=highlight&" +
         "populate[itineraryItems][fields][2]=description&" +
@@ -407,6 +418,20 @@ if (lang !== "es") {
       strapiTourRaw.featuredTitle = spanishTourRaw.featuredTitle;
     }
 
+    const currentDestRows = Array.isArray(strapiTourRaw.destinos?.data)
+      ? strapiTourRaw.destinos.data
+      : Array.isArray(strapiTourRaw.destinos)
+      ? strapiTourRaw.destinos
+      : [];
+    const spanishDestRows = Array.isArray(spanishTourRaw.destinos?.data)
+      ? spanishTourRaw.destinos.data
+      : Array.isArray(spanishTourRaw.destinos)
+      ? spanishTourRaw.destinos
+      : [];
+    if (currentDestRows.length === 0 && spanishDestRows.length > 0) {
+      strapiTourRaw.destinos = spanishTourRaw.destinos;
+    }
+
     const itineraryTextFields = [
       "itineraryTitle",
       "itineraryItemLabel",
@@ -469,6 +494,12 @@ if (sourceTour.documentId) {
 
 const cleanText = (value: any) =>
   typeof value === "string" ? value.trim() : "";
+const humanizeSlug = (value: string) =>
+  value
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\p{L}/gu, (letter) => letter.toUpperCase());
 
 const escapeHtml = (value: string) =>
   value
@@ -632,6 +663,83 @@ const featuredImages = Array.isArray(sourceTour.featuredImages)
       .filter(Boolean)
   : [];
 const hasFeaturedSection = Boolean(featuredTitle || featuredImages.length);
+
+const tourDestinationRows = Array.isArray(sourceTour.destinos?.data)
+  ? sourceTour.destinos.data
+  : Array.isArray(sourceTour.destinos)
+  ? sourceTour.destinos
+  : [];
+const tourDestinationNames = tourDestinationRows
+  .map((entry: any) => normalizeRow(entry))
+  .filter(Boolean)
+  .map((entry: any) => cleanText(entry?.title))
+  .filter(Boolean);
+const firstDestinationSlug = (() => {
+  const firstRow = tourDestinationRows
+    .map((entry: any) => normalizeRow(entry))
+    .find(Boolean);
+  return cleanText(firstRow?.slug) || cleanText(sourceTour.destinationSlug);
+})();
+const primaryDestinationName =
+  tourDestinationNames[0] || humanizeSlug(cleanText(sourceTour.destinationSlug));
+const moreToursPrefix = lang === "es" ? "Más tours en" : lang === "pt" ? "Mais tours em" : "More tours in";
+const moreToursRibbonText = primaryDestinationName
+  ? `${moreToursPrefix} ${primaryDestinationName}`
+  : "";
+let strapiMoreToursRaw: any[] = [];
+if (firstDestinationSlug) {
+  for (const baseUrl of STRAPI_BASE_URLS) {
+    let loadedMoreTours = false;
+    for (const locale of localeCandidates) {
+      const localePart = localePrefix(locale);
+      const url =
+        `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
+        "status=published&" +
+        `filters[destinationSlug][$eq]=${encodeURIComponent(firstDestinationSlug)}&` +
+        `filters[slug][$ne]=${encodeURIComponent(tourSlug)}&` +
+        "pagination[pageSize]=8&" +
+        "sort[0]=updatedAt:desc&" +
+        "fields[0]=slug&" +
+        "fields[1]=title&" +
+        "fields[2]=metaTitle&" +
+        "fields[3]=metaDescription&" +
+        "populate[heroSlideImages][fields][0]=url&" +
+        "populate[heroSlideImages][fields][1]=alternativeText&" +
+        "populate[heroSlideImages][fields][2]=formats";
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const json = await res.json();
+        const rows = Array.isArray(json?.data)
+          ? json.data.map((entry: any) => normalizeRow(entry)).filter(Boolean)
+          : [];
+        strapiMoreToursRaw = rows;
+        loadedMoreTours = true;
+        break;
+      } catch {
+        // Try next locale / URL.
+      }
+    }
+    if (loadedMoreTours) break;
+  }
+}
+const tourDetailCtaLabel =
+  lang === "en" ? "View tour" : lang === "pt" ? "Ver tour" : "Ver tour";
+const moreToursCards = strapiMoreToursRaw
+  .map((tour: any) => {
+    const slug = cleanText(tour?.slug).toLowerCase();
+    if (!slug) return null;
+    return {
+      slug,
+      title: cleanText(tour?.metaTitle) || cleanText(tour?.title),
+      description: cleanText(tour?.metaDescription),
+      image: toCardImageFromTour(tour),
+    };
+  })
+  .filter(Boolean)
+  .slice(0, 6);
+const hasMoreToursSection = Boolean(moreToursRibbonText && moreToursCards.length);
 
 const itineraryTitle = cleanText(sourceTour.itineraryTitle);
 const itineraryItemLabel = cleanText(sourceTour.itineraryItemLabel);
@@ -1249,6 +1357,63 @@ const hasBookingCard = Boolean(
                 >&#8250;</button>
               </div>
             </section>
+            ) : null}
+
+            {hasMoreToursSection ? (
+              <>
+                <Ribbon
+                  text={moreToursRibbonText}
+                  backgroundClass="bg-white"
+                  maxWidthClass="max-w-7xl"
+                  paddingClass="py-6 md:py-8"
+                  textClass="text-base md:text-xl lg:text-2xl text-gray-900 leading-relaxed"
+                  accentClass="bg-orange-500"
+                  sectionClass="mb-4 md:mb-6"
+                />
+                <section class="pt-1 pb-10 md:pt-2 md:pb-14">
+                  <div class="mx-auto w-full max-w-7xl px-6">
+                    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                      {moreToursCards.map((card: any) => (
+                        <article class="overflow-hidden border border-[#e2e8f0] bg-white">
+                          <a
+                            href={`/${lang}/tours/${card.slug}`}
+                            class="block"
+                            aria-label={card.title || tourDetailCtaLabel}
+                          >
+                            {card.image ? (
+                              <img
+                                src={card.image}
+                                alt={card.title || ""}
+                                class="h-52 w-full object-cover"
+                              />
+                            ) : (
+                              <div class="h-52 w-full bg-gray-200" />
+                            )}
+                          </a>
+                          <div class="p-4 md:p-5">
+                            {card.title ? (
+                              <h3 class="text-lg font-semibold text-gray-900">
+                                {card.title}
+                              </h3>
+                            ) : null}
+                            {card.description ? (
+                              <p class="mt-2 line-clamp-3 text-sm leading-relaxed text-gray-600">
+                                {card.description}
+                              </p>
+                            ) : null}
+                            <a
+                              href={`/${lang}/tours/${card.slug}`}
+                              class="mt-4 inline-flex items-center justify-center border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-700 hover:text-white"
+                            >
+                              {tourDetailCtaLabel}
+                            </a>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              </>
             ) : null}
 
             <script>
