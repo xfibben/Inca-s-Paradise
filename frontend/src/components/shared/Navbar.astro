@@ -129,7 +129,17 @@ try {
   /* Links oscuros en páginas sin hero */
   body[data-navbar-solid] #navbar a:not(#lang-dropdown a),
   body[data-navbar-solid] #navbar button:not(#lang-dropdown button) {
-    color: #111827;
+    color: #111827 !important;
+  }
+
+  /* Botón de contacto oscuro en páginas sin hero */
+  body[data-navbar-solid] #contact-btn {
+    background-color: #f3f4f6 !important;
+    border-color: #d1d5db !important;
+    color: #111827 !important;
+  }
+  body[data-navbar-solid] #contact-btn:hover {
+    background-color: #e5e7eb !important;
   }
 
   /* Cuando el menú móvil está abierto, navbar siempre blanco */

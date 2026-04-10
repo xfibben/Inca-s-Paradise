@@ -5,7 +5,8 @@
       "Bash(python -m json.tool)",
       "Bash(curl -s \"http://localhost:1337/api/style-trips?fields[0]=name&fields[1]=slug&locale=es-PE\")",
       "Bash(docker exec:*)",
-      "Bash(python3)"
+      "Bash(python3)",
+      "WebFetch(domain:docs.google.com)"
     ]
   }
 }

@@ -84,6 +84,7 @@ services:
       STRAPI_URL: http://backend:1337
       PUBLIC_STRAPI_URL: http://localhost:1337
       PUBLIC_PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
+      PUBLIC_GOOGLE_CLAIMS_FORM_URL: ${PUBLIC_GOOGLE_CLAIMS_FORM_URL}
     # Auto-instalador de Astro si la carpeta está vacía
     command: >
       sh -c "

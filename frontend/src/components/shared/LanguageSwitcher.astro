@@ -142,20 +142,4 @@ const languages = [
     return `/${code}${rest}`;
   }
 
-  (window as any).updateLanguageSwitcherDesktop = function(languages: Record<string, string>) {
-    const langButton = document.querySelector('#lang-button span#lang-name') as HTMLElement | null;
-    const langDropdown = document.querySelector('#lang-dropdown') as HTMLElement | null;
-    if (!langButton || !langDropdown) return;
-
-    const currentCode = window.location.pathname.match(/^\/([a-z]{2})/)?.[1] ?? 'es';
-
-    if (languages[currentCode]) langButton.textContent = languages[currentCode];
-
-    langDropdown.innerHTML = '';
-    for (const [code, name] of Object.entries(languages)) {
-      if (code === currentCode) continue;
-      const link = makeFlagItem(code, name as string, buildLangUrl(code));
-      langDropdown.appendChild(link);
-    }
-  };
 </script>

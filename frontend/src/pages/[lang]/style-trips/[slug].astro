@@ -34,36 +34,46 @@ let trip: any = null;
 let relatedTours: any[] = [];
 let carouselTours: any[] = [];
 
+const basePopulate =
+  `populate[wallpaper]=*` +
+  `&populate[localizations][fields][0]=slug` +
+  `&populate[localizations][fields][1]=locale` +
+  `&populate[tours][populate][heroSlideImages][fields][0]=url` +
+  `&populate[tours][populate][heroSlideImages][fields][1]=formats` +
+  `&populate[tours][populate][heroSlideImages][fields][2]=alternativeText` +
+  `&pagination[pageSize]=50`;
+
+async function fetchTrips(locale: string) {
+  const res = await fetch(`${STRAPI_URL}/api/style-trips?${basePopulate}&locale=${locale}`);
+  if (!res.ok) return [];
+  const json = await res.json();
+  return json.data ?? [];
+}
+
 try {
-  // Traemos todos los style-trips del locale y filtramos por slug en código
-  const fetchUrl = `${STRAPI_URL}/api/style-trips?` +
-    `populate[wallpaper]=*` +
-    `&populate[tours][populate][heroSlideImages][fields][0]=url` +
-    `&populate[tours][populate][heroSlideImages][fields][1]=formats` +
-    `&populate[tours][populate][heroSlideImages][fields][2]=alternativeText` +
-    `&locale=${strapiLocale}&pagination[pageSize]=50`;
+  let items = await fetchTrips(strapiLocale);
+  trip = items.find((item: any) => item.slug === slug) ?? null;
 
-  const res = await fetch(fetchUrl);
-  if (res.ok) {
-    const json = await res.json();
-    // Filtramos por slug exacto en el cliente para evitar problemas con el filtro de Strapi
-    trip = (json.data ?? []).find((item: any) => item.slug === slug) ?? null;
+  // Fallback a español si el locale actual no tiene el slug
+  if (!trip && strapiLocale !== 'es-PE') {
+    items = await fetchTrips('es-PE');
+    trip = items.find((item: any) => item.slug === slug) ?? null;
+  }
 
-    if (trip) {
-      const allTours = Array.isArray(trip.tours?.data)
-        ? trip.tours.data.map((t: any) => t.attributes ?? t)
-        : Array.isArray(trip.tours)
-        ? trip.tours
-        : [];
+  if (trip) {
+    const allTours = Array.isArray(trip.tours?.data)
+      ? trip.tours.data.map((t: any) => t.attributes ?? t)
+      : Array.isArray(trip.tours)
+      ? trip.tours
+      : [];
 
-      relatedTours = allTours.filter((tour: any) =>
-        tour.tourType === 'small_trip' && tour.showInStyles === true
-      );
+    relatedTours = allTours.filter((tour: any) =>
+      tour.tourType === 'small_trip' && tour.showInStyles === true
+    );
 
-      carouselTours = allTours.filter((tour: any) =>
-        tour.tourType === 'tour' || tour.tourType === 'package'
-      );
-    }
+    carouselTours = allTours.filter((tour: any) =>
+      tour.tourType === 'tour' || tour.tourType === 'package'
+    );
   }
 } catch (e) {
   console.error('Error:', e);
@@ -154,6 +164,23 @@ const heroImageUrl = heroImage?.formats?.medium?.url
   </head>
   <body>
     <Navbar {t} {currentLang} />
+
+    {/* Mapa de slugs por locale para que el navbar cambie la URL correctamente */}
+    <script is:inline define:vars={{ trip, currentLang, strapiLocale }}>
+      if (trip) {
+        const slugMap = { [strapiLocale]: trip.slug };
+        const locs = Array.isArray(trip.localizations) ? trip.localizations : [];
+        locs.forEach(l => { if (l.locale && l.slug) slugMap[l.locale] = l.slug; });
+        // Normalizar claves a lang code (es-PE → es)
+        const localeToLang = { 'es-PE': 'es', 'pt': 'pt', 'en': 'en', 'fr': 'fr', 'it': 'it' };
+        window.__langSlugs = {};
+        Object.entries(slugMap).forEach(([loc, s]) => {
+          const lang = localeToLang[loc] || loc;
+          window.__langSlugs[lang] = s;
+        });
+        window.__slugBasePath = '/style-trips/';
+      }
+    </script>
 
     <!-- Hero Section: 3/4 viewport height -->
     <header class="relative w-full overflow-hidden" style="height: 75vh;">

@@ -37,39 +37,6 @@ const seoTitle = data?.seoTitle ?? title;
 const seoDescription = data?.seoDescription ?? description;
 const sections: Array<{ title: string; text: string }> = Array.isArray(data?.sections) ? data.sections : [];
 
-function renderRichText(value: any): string {
-  if (!value) return '';
-  if (typeof value === 'string') return value;
-  // Strapi richtext as blocks array
-  if (Array.isArray(value)) {
-    return value.map((block: any) => {
-      if (block.type === 'paragraph') {
-        const text = (block.children ?? []).map((c: any) => {
-          let t = c.text ?? '';
-          if (c.bold) t = `<strong>${t}</strong>`;
-          if (c.italic) t = `<em>${t}</em>`;
-          if (c.underline) t = `<u>${t}</u>`;
-          return t;
-        }).join('');
-        return `<p>${text}</p>`;
-      }
-      if (block.type === 'heading') {
-        const level = block.level ?? 2;
-        const text = (block.children ?? []).map((c: any) => c.text ?? '').join('');
-        return `<h${level}>${text}</h${level}>`;
-      }
-      if (block.type === 'list') {
-        const tag = block.format === 'ordered' ? 'ol' : 'ul';
-        const items = (block.children ?? []).map((item: any) =>
-          `<li>${(item.children ?? []).map((c: any) => c.text ?? '').join('')}</li>`
-        ).join('');
-        return `<${tag}>${items}</${tag}>`;
-      }
-      return '';
-    }).join('');
-  }
-  return '';
-}
 ---
 
 <!DOCTYPE html>
@@ -78,19 +45,26 @@ function renderRichText(value: any): string {
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width" />
-    <title>{seoTitle}Inca's Paradise</title>
+    <title>{seoTitle}</title>
     <meta name="description" content={seoDescription} />
     <GoogleAnalytics />
+    <style>
+      h1, h2 {
+        font-family: 'Playfair Display', serif;
+        font-weight: 500;
+        font-style: italic;
+      }
+    </style>
   </head>
-  <body class="min-h-screen bg-white text-gray-900" data-navbar-solid>
+  <body class="min-h-screen flex flex-col text-gray-900" data-navbar-solid>
     <Navbar {t} currentLang={currentLang} />
 
-    <main class="pt-24 pb-16">
-      <div class="mx-auto max-w-3xl px-6">
+    <main class="flex-1 pt-24 pb-16 bg-white">
+      <div class="mx-auto max-w-5xl px-4">
 
         <!-- Header -->
         <div class="mb-10 border-b border-gray-200 pb-8">
-          <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4 italic" style="font-family: 'Playfair Display', serif;">
+          <h1 class="mb-4">
             {title}
           </h1>
           {description && (
@@ -103,12 +77,12 @@ function renderRichText(value: any): string {
           <div class="space-y-10">
             {sections.map((section, i) => (
               <div>
-                <h2 class="text-xl font-semibold text-gray-800 mb-3">
+                <h2 class="mb-3 text-2xl">
                   {i + 1}. {section.title}
                 </h2>
                 <div
-                  class="prose prose-gray max-w-none text-gray-700 leading-relaxed text-justify"
-                  set:html={renderRichText(section.text)}
+                  class="prose prose-gray max-w-none text-gray-700 leading-relaxed text-justify markdown-content"
+                  data-markdown={typeof section.text === 'string' ? section.text : JSON.stringify(section.text)}
                 />
               </div>
             ))}
@@ -123,6 +97,25 @@ function renderRichText(value: any): string {
     </main>
 
     <Footer {t} currentLang={currentLang} />
+
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@10.0.0/dist/markdown-it.min.js"></script>
+    <script is:inline>
+      function processMarkdown() {
+        if (typeof window.markdownit !== 'undefined') {
+          const md = window.markdownit();
+          document.querySelectorAll('.markdown-content').forEach(el => {
+            const markdown = el.getAttribute('data-markdown');
+            if (markdown) {
+              el.innerHTML = md.render(markdown);
+              el.removeAttribute('data-markdown');
+            }
+          });
+        } else {
+          setTimeout(processMarkdown, 100);
+        }
+      }
+      processMarkdown();
+    </script>
   </body>
 </html>
 
