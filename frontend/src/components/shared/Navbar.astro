@@ -762,6 +762,12 @@ try {
   const _w = window as any;
 
   function buildLanguageUrl(languageCode: string): string {
+    const slugs = _w.__langSlugs as Record<string, string> | undefined;
+    const basePath = _w.__slugBasePath as string | undefined;
+    const onSlugPage = basePath && window.location.pathname.includes(basePath);
+    if (slugs && onSlugPage && slugs[languageCode]) {
+      return `/${languageCode}${basePath}${slugs[languageCode]}`;
+    }
     const currentPath = window.location.pathname;
     const pathMatch = currentPath.match(/^\/[a-z]{2}(.*)/);
     const relativePath = pathMatch ? pathMatch[1] : '/';

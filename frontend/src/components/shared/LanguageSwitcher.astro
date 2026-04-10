@@ -116,6 +116,13 @@ const languages = [
   }
 
   function buildLangUrl(code: string): string {
+    const langSlugs = (window as any).__langSlugs as Record<string, string> | undefined;
+    const slugBasePath = (window as any).__slugBasePath as string | undefined;
+    const onSlugPage = slugBasePath && window.location.pathname.includes(slugBasePath);
+    if (langSlugs && onSlugPage && langSlugs[code]) {
+      return `/${code}${slugBasePath}${langSlugs[code]}`;
+    }
+
     const tourSlugs = (window as any).__tourSlugs as Record<string, string> | undefined;
     const tourMatch = window.location.pathname.match(/^\/[a-z]{2}\/tours\/[^/]+/);
     if (tourSlugs && tourMatch) {
