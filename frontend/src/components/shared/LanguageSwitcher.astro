@@ -116,13 +116,27 @@ const languages = [
   }
 
   function buildLangUrl(code: string): string {
-    // Si estamos en una página de tour y hay slugs por idioma, usar el slug correcto
     const tourSlugs = (window as any).__tourSlugs as Record<string, string> | undefined;
     const tourMatch = window.location.pathname.match(/^\/[a-z]{2}\/tours\/[^/]+/);
     if (tourSlugs && tourMatch) {
       const slug = tourSlugs[code];
       if (slug) return `/${code}/tours/${slug}`;
     }
+
+    const tipoTransporteSlugs = (window as any).__tipoTransporteSlugs as Record<string, string> | undefined;
+    const tipoTransporteMatch = window.location.pathname.match(/^\/[a-z]{2}\/tipo-transporte\/[^/]+/);
+    if (tipoTransporteSlugs && tipoTransporteMatch) {
+      const slug = tipoTransporteSlugs[code];
+      if (slug) return `/${code}/tipo-transporte/${slug}`;
+    }
+
+    const transporteSlugs = (window as any).__transporteSlugs as Record<string, string> | undefined;
+    const transporteMatch = window.location.pathname.match(/^\/[a-z]{2}\/transporte\/[^/]+/);
+    if (transporteSlugs && transporteMatch) {
+      const slug = transporteSlugs[code];
+      if (slug) return `/${code}/transporte/${slug}`;
+    }
+
     const pathMatch = window.location.pathname.match(/^\/[a-z]{2}(.*)/);
     const rest = pathMatch ? pathMatch[1] : '/';
     return `/${code}${rest}`;

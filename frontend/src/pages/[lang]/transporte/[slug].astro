@@ -65,6 +65,28 @@ if (!transporte) {
   return Astro.redirect(`/${currentLang}/tipo-transporte/`);
 }
 
+// Slugs localizados para el cambio de idioma en la navbar
+const LANG_TO_LOCALE: Record<string, string> = { es: 'es-PE', en: 'en', pt: 'pt', fr: 'fr', it: 'it' };
+const ALL_LANGS = ['es', 'en', 'pt', 'fr', 'it'];
+const transporteSlugs: Record<string, string> = { [currentLang]: slug as string };
+
+if (transporte.documentId) {
+  await Promise.all(
+    ALL_LANGS.filter((l) => l !== currentLang).map(async (targetLang) => {
+      const locale = LANG_TO_LOCALE[targetLang] ?? targetLang;
+      try {
+        const res = await fetch(
+          `${STRAPI_URL}/api/transportes/${transporte.documentId}?locale=${locale}&fields[0]=slug`
+        );
+        if (!res.ok) return;
+        const json = await res.json();
+        const s = json?.data?.slug ?? json?.slug;
+        if (s) transporteSlugs[targetLang] = String(s).toLowerCase();
+      } catch {}
+    })
+  );
+}
+
 function getImageUrl(media: any): string | null {
   if (!media) return null;
   const url = media?.formats?.large?.url ?? media?.formats?.medium?.url ?? media?.url;
@@ -470,6 +492,10 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
           }
         });
       });
+    </script>
+
+    <script is:inline define:vars={{ transporteSlugs }}>
+      window.__transporteSlugs = transporteSlugs;
     </script>
 
     <!-- Fija el BookingCard justo debajo del navbar (top-20 = 80px) -->
