@@ -596,7 +596,7 @@ const highlightsItems = Array.isArray(sourceTour.highlightsItems)
       .filter((item: any) => item.title || item.descriptionHtml)
   : [];
 const highlightsTitle = cleanText(sourceTour.highlightsTitle);
-const highlightsLead = cleanText(sourceTour.highlightsLead);
+const highlightsLead = toRichHtml(sourceTour.highlightsLead);
 const highlightsQuestion = cleanText(sourceTour.highlightsQuestion);
 const heroSlides = Array.isArray(sourceTour.heroSlideImages?.data)
   ? sourceTour.heroSlideImages.data
@@ -872,9 +872,7 @@ const hasBookingCard = Boolean(
                     </h2>
                   ) : null}
                   {highlightsLead ? (
-                    <p class="mt-3 text-sm leading-relaxed text-[#4b5563] md:text-base">
-                      {highlightsLead}
-                    </p>
+                    <div class="mt-3 text-sm leading-relaxed text-[#1f2937] md:text-base [&>p]:text-justify [&>p]:mb-3 [&>p:last-child]:mb-0 [&_strong]:font-semibold [&_em]:italic [&_a]:text-[#1AA093] [&_a]:underline [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5" set:html={highlightsLead} />
                   ) : null}
 
                   {highlightsQuestion ? (
@@ -896,7 +894,7 @@ const hasBookingCard = Boolean(
                             </p>
                             {item.descriptionHtml ? (
                               <div
-                                class="mt-1 text-sm leading-relaxed text-[#4b5563] md:text-base [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_i]:italic"
+                                class="mt-1 text-sm leading-relaxed text-[#1f2937] md:text-base [&_p]:mb-2 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_i]:italic"
                                 set:html={item.descriptionHtml}
                               />
                             ) : null}
