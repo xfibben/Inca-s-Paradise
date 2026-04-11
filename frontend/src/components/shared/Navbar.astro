@@ -768,6 +768,28 @@ try {
     if (slugs && onSlugPage && slugs[languageCode]) {
       return `/${languageCode}${basePath}${slugs[languageCode]}`;
     }
+
+    const tourSlugs = _w.__tourSlugs as Record<string, string> | undefined;
+    const tourMatch = window.location.pathname.match(/^\/[a-z]{2}\/tours\/[^/]+/);
+    if (tourSlugs && tourMatch) {
+      const slug = tourSlugs[languageCode];
+      if (slug) return `/${languageCode}/tours/${slug}`;
+    }
+
+    const tipoTransporteSlugs = _w.__tipoTransporteSlugs as Record<string, string> | undefined;
+    const tipoTransporteMatch = window.location.pathname.match(/^\/[a-z]{2}\/tipo-transporte\/[^/]+/);
+    if (tipoTransporteSlugs && tipoTransporteMatch) {
+      const slug = tipoTransporteSlugs[languageCode];
+      if (slug) return `/${languageCode}/tipo-transporte/${slug}`;
+    }
+
+    const transporteSlugs = _w.__transporteSlugs as Record<string, string> | undefined;
+    const transporteMatch = window.location.pathname.match(/^\/[a-z]{2}\/transporte\/[^/]+/);
+    if (transporteSlugs && transporteMatch) {
+      const slug = transporteSlugs[languageCode];
+      if (slug) return `/${languageCode}/transporte/${slug}`;
+    }
+
     const currentPath = window.location.pathname;
     const pathMatch = currentPath.match(/^\/[a-z]{2}(.*)/);
     const relativePath = pathMatch ? pathMatch[1] : '/';
