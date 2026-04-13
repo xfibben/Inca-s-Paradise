@@ -12,38 +12,25 @@ const { t } = Astro.props;
   <div id="hero-carousel" class="absolute top-0 left-0 w-full h-full">
     <!-- First image: loaded immediately -->
     <picture>
-      <source srcset="/landing page images/Imagen2.webp" type="image/webp" />
+      <source srcset="/landing page images/wallpaper1.jpeg" type="image/webp" />
       <img
-        src="/landing page images/Imagen2.webp"
+        src="/landing page images/wallpaper1.jpeg"
         alt="Aventuras personalizadas en Perú - Machu Picchu y Los Andes"
-        class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-2500 opacity-100"
+        class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-3000 opacity-100"
         data-index="0"
         width="1280"
         height="720"
         fetchpriority="high"
       />
     </picture>
-    <!-- Second image: lazy loaded -->
-    <picture>
-      <source srcset="/landing page images/Imagen3.webp" type="image/webp" />
-      <img
-        src="/landing page images/Imagen3.webp"
-        alt="Experiencias de viaje exclusivas en los Andes peruanos"
-        class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-2500 opacity-0"
-        data-index="1"
-        width="1280"
-        height="720"
-        loading="lazy"
-      />
-    </picture>
-    <!-- Third image: lazy loaded -->
+    <!-- segunda image: lazy loaded -->
     <picture>
       <source srcset="/landing page images/ubicacion-choquequirao-full.webp" type="image/webp" />
       <img
         src="/landing page images/ubicacion-choquequirao-full.webp"
         alt="Choquequirao - Ciudadela inca perdida en Cusco"
-        class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-2500 opacity-0"
-        data-index="2"
+        class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-3000 opacity-0"
+        data-index="1"
         width="1280"
         height="853"
         loading="lazy"
@@ -57,8 +44,7 @@ const { t } = Astro.props;
   <!-- Carousel Indicators -->
   <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3">
     <button class="hero-dot h-3 w-3 rounded-full bg-white/70 hover:bg-white transition-all duration-300" data-index="0" aria-label="Ir a imagen 1"></button>
-    <button class="hero-dot h-3 w-3 rounded-full bg-white/40 hover:bg-white/70 transition-all duration-300" data-index="1" aria-label="Ir a imagen 2"></button>
-    <button class="hero-dot h-3 w-3 rounded-full bg-white/40 hover:bg-white/70 transition-all duration-300" data-index="2" aria-label="Ir a imagen 3"></button>
+    <button class="hero-dot h-3 w-3 rounded-full bg-white/40 hover:bg-white/70 transition-all duration-300" data-index="1" aria-label="Ir a imagen 3"></button>
   </div>
 
   <!-- Content -->
@@ -75,16 +61,16 @@ const { t } = Astro.props;
     </p>
 
     <!-- CTA Button -->
-    <a href="/contact" class="px-8 md:px-10 py-3 md:py-4 border-2 border-white text-white font-semibold text-base md:text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
+    <button id="hero-cta" class="px-8 md:px-10 py-3 md:py-4 border-2 border-white text-white font-semibold text-base md:text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
       {t.hero.cta}
-    </a>
+    </button>
   </div>
 </section>
 
 <script is:inline>
   // Hero Image Carousel
   let currentImageIndex = 0;
-  const totalImages = 3;
+  const totalImages = 2;
   const carouselInterval = 2500; // 2.5 seconds
   let imageCarouselTimer;
 
@@ -125,6 +111,11 @@ const { t } = Astro.props;
   function stopImageCarousel() {
     clearInterval(imageCarouselTimer);
   }
+
+  // Scroll a destinos al hacer click en CTA
+  document.getElementById('hero-cta').addEventListener('click', () => {
+    document.getElementById('destinos').scrollIntoView({ behavior: 'smooth' });
+  });
 
   // Start carousel on load
   startImageCarousel();
