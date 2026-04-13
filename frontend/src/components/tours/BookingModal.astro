@@ -698,12 +698,14 @@ const t = translations[lang] ?? translations.es;
   </div>
 </div>
 
-<script is:inline define:vars={{ strapiUrl: import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337', pagoTituloText: t.pagoTitulo, bookingTituloText: t.title, paypalClientId: import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || '', tourTitleVar: tourTitle }}>
+<script is:inline define:vars={{ strapiUrl: import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337', pagoTituloText: t.pagoTitulo, bookingTituloText: t.title, paypalClientId: import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || '', tourTitleVar: tourTitle, tourSlugVar: tourSlug, langVar: lang }}>
   window.__strapiUrl = strapiUrl;
   window.__pagoTituloText = pagoTituloText;
   window.__bookingTituloText = bookingTituloText;
   window.__paypalClientId = paypalClientId;
   window.__tourTitle = tourTitleVar;
+  window.__tourSlug = tourSlugVar;
+  window.__lang = langVar;
 </script>
 
 <script>
@@ -748,9 +750,13 @@ const t = translations[lang] ?? translations.es;
       __pendingBooking?: PendingBooking;
       __lastCompletedBooking?: PendingBooking; // copia persistente para el comprobante PDF
       __tourTitle?: string;
+      __tourSlug?: string;
+      __lang?: string;
       __pagoTituloText?: string;
       __bookingTituloText?: string;
       __paypalClientId?: string;
+      trackEvent?: (eventName: string, params?: Record<string, unknown>) => void;
+      dataLayer?: Array<Record<string, unknown>>;
       openBookingModal?: (data?: BookingData) => void;
     }
   }
@@ -761,6 +767,39 @@ const t = translations[lang] ?? translations.es;
     const paymentStep = document.getElementById("payment-step");
     const modalTitle = document.querySelector("[data-modal-title]");
     const closeButtons = document.querySelectorAll("[data-close-modal]");
+
+    const emitBookingTicketCreated = (
+      ticket: string,
+      provider: string,
+      method: string,
+      booking?: PendingBooking
+    ) => {
+      const payload = {
+        ticket_id: ticket,
+        tour_slug: window.__tourSlug ?? "",
+        tour_title: window.__tourTitle ?? booking?.tourNombre ?? "",
+        lang: window.__lang ?? "es",
+        payment_provider: provider,
+        payment_method: method,
+        currency: booking?.moneda ?? "USD",
+        value: Number(booking?.monto_total ?? 0),
+        adults: Number(booking?.cantidad_adultos ?? 0),
+        children: Number(booking?.cantidad_ninos ?? 0),
+        schedule: booking?.turno ?? "",
+      };
+
+      if (typeof window.trackEvent === "function") {
+        window.trackEvent("booking_ticket_created", payload);
+        return;
+      }
+
+      if (Array.isArray(window.dataLayer)) {
+        window.dataLayer.push({
+          event: "booking_ticket_created",
+          ...payload,
+        });
+      }
+    };
 
     // ── Cierre del modal ──
     const cerrarModal = () => {
@@ -996,6 +1035,9 @@ const t = translations[lang] ?? translations.es;
       if (errorEl) errorEl.classList.add("hidden");
       try {
         const ticket = await crearReserva(metodoPago, proveedor);
+        const completedBooking = window.__pendingBooking
+          ? { ...window.__pendingBooking }
+          : undefined;
         // Mostrar ticket en el modal de éxito
         const successModal = document.querySelector("[data-success-modal]");
         const ticketEl = successModal?.querySelector("[data-ticket-number]");
@@ -1005,7 +1047,8 @@ const t = translations[lang] ?? translations.es;
         successModal?.classList.remove("hidden");
         form?.reset();
         // Guardar copia antes de borrar para el comprobante PDF
-        if (window.__pendingBooking) window.__lastCompletedBooking = { ...window.__pendingBooking };
+        if (completedBooking) window.__lastCompletedBooking = completedBooking;
+        emitBookingTicketCreated(ticket, proveedor, metodoPago, completedBooking);
         window.__pendingBooking = undefined;
       } catch (err) {
         if (errorEl) {
@@ -1134,6 +1177,9 @@ const t = translations[lang] ?? translations.es;
             }
 
             const { ticket } = await res.json();
+            const completedBooking = window.__pendingBooking
+              ? { ...window.__pendingBooking }
+              : undefined;
 
             // Mostrar modal de éxito con el ticket
             const successModal = document.querySelector("[data-success-modal]");
@@ -1145,7 +1191,8 @@ const t = translations[lang] ?? translations.es;
             form?.reset();
             paypalBotonesRendered = false; // resetear para la próxima reserva
             // Guardar copia antes de borrar para el comprobante PDF
-            if (window.__pendingBooking) window.__lastCompletedBooking = { ...window.__pendingBooking };
+            if (completedBooking) window.__lastCompletedBooking = completedBooking;
+            emitBookingTicketCreated(ticket, "paypal", "paypal", completedBooking);
             window.__pendingBooking = undefined;
           },
 
