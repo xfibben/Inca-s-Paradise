@@ -8,7 +8,7 @@ interface Props {
   scheduleOptions?: string[];
 }
 
-const { lang, tourTitle, scheduleOptions = [] } = Astro.props;
+const { lang, tourTitle, tourSlug, scheduleOptions = [] } = Astro.props;
 
 const translations: Record<SupportedLang, Record<string, string>> = {
   es: {
