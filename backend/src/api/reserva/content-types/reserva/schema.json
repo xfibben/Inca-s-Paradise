@@ -91,7 +91,7 @@
       "required": false,
       "min": 0
     },
-    "monto_agencia": {
+    "pago_restante": {
       "type": "decimal",
       "required": false,
       "min": 0

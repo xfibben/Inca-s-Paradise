@@ -4,6 +4,7 @@ import Footer from '../../../components/shared/Footer.astro';
 import { getTranslation, languages } from '../../../i18n';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
+import SEOHead from '../../../components/SEO/SEOHead.astro';
 
 const { lang } = Astro.params;
 const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
@@ -31,11 +32,49 @@ try {
   // no-op
 }
 
-const title = data?.title ?? (currentLang === 'es' ? 'TÃ©rminos y Condiciones' : 'Terms & Conditions');
+const title = data?.title ?? (currentLang === 'es' ? 'Términos y Condiciones' : 'Terms & Conditions');
 const description = data?.description ?? '';
 const seoTitle = data?.seoTitle ?? title;
-const seoDescription = data?.seoDescription ?? description;
+
+const fallbackDescriptions: Record<string, string> = {
+  es: "Consulta los términos y condiciones de Inca's Paradise para reservas de tours y transporte en Cusco, Puno y Machu Picchu.",
+  en: "Read the terms and conditions of Inca's Paradise for tour and transport bookings in Cusco, Puno, and Machu Picchu.",
+  pt: "Leia os termos e condições da Inca's Paradise para reservas de tours e transporte em Cusco, Puno e Machu Picchu.",
+  fr: "Consultez les termes et conditions d'Inca's Paradise pour les réservations de circuits et transport à Cusco, Puno et Machu Picchu.",
+  it: "Leggi i termini e condizioni di Inca's Paradise per prenotazioni di tour e trasporto a Cusco, Puno e Machu Picchu.",
+};
+const seoDescription = data?.seoDescription || description || fallbackDescriptions[currentLang] || fallbackDescriptions.es;
 const sections: Array<{ title: string; text: string }> = Array.isArray(data?.sections) ? data.sections : [];
+
+const siteOrigin = (Astro.site?.origin ?? 'https://incasparadise.com').replace(/\/$/, '');
+const canonical = `${siteOrigin}/${currentLang}/terminos`;
+const alternateLanguages = [
+  { lang: 'es', url: `${siteOrigin}/es/terminos` },
+  { lang: 'en', url: `${siteOrigin}/en/terminos` },
+  { lang: 'pt', url: `${siteOrigin}/pt/terminos` },
+  { lang: 'fr', url: `${siteOrigin}/fr/terminos` },
+  { lang: 'it', url: `${siteOrigin}/it/terminos` },
+];
+
+const terminosSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": seoTitle,
+  "description": seoDescription,
+  "url": canonical,
+  "inLanguage": currentLang === 'es' ? 'es-PE' : currentLang,
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "Inca's Paradise",
+    "url": siteOrigin,
+  },
+  ...(sections.length > 0 && {
+    "hasPart": sections.map((s, i) => ({
+      "@type": "WebPageElement",
+      "name": `${i + 1}. ${s.title}`,
+    })),
+  }),
+};
 
 ---
 
@@ -46,7 +85,15 @@ const sections: Array<{ title: string; text: string }> = Array.isArray(data?.sec
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width" />
     <title>{seoTitle}</title>
-    <meta name="description" content={seoDescription} />
+    <SEOHead
+      title={seoTitle}
+      description={seoDescription}
+      canonical={canonical}
+      currentLang={currentLang}
+      alternateLanguages={alternateLanguages}
+      xDefaultUrl={`${siteOrigin}/es/terminos`}
+      structuredData={terminosSchema}
+    />
     <GoogleAnalytics />
     <style>
       h1, h2 {

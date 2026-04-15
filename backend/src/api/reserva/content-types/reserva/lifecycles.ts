@@ -27,7 +27,7 @@ async function sincronizarConSheets(id: number) {
   const pagoTotal        = parseFloat(reserva.monto_final)       || 0;
   const descuento        = parseFloat(reserva.descuento)         || 0;
   const montoWeb         = parseFloat(reserva.monto_web)         || 0;
-  const montoAgencia     = parseFloat(reserva.monto_agencia)     || 0;
+  const montoAgencia     = parseFloat(reserva.pago_restante)     || 0;
   const precioAdultoWeb  = parseFloat(reserva.precio_adulto_web) || 0;
   const precioNinoWeb    = parseFloat(reserva.precio_nino_web)   || 0;
 
@@ -82,7 +82,7 @@ async function sincronizarConSheets(id: number) {
 }
 
 // Recalcula monto_web y monto_final antes de guardar
-// monto_agencia NO se calcula — se llena manualmente en el admin
+// pago_restante NO se calcula — se llena manualmente en el admin
 function calcularMontos(data: any) {
   // monto_web = precio_adulto_web + precio_nino_web (ya incluyen las cantidades)
   const precioAdultoWeb = parseFloat(data.precio_adulto_web) || 0;
@@ -92,9 +92,9 @@ function calcularMontos(data: any) {
     data.monto_web = parseFloat((precioAdultoWeb + precioNinoWeb).toFixed(2));
   }
 
-  // monto_final = monto_web + monto_agencia
+  // monto_final = monto_web + pago_restante
   const web     = parseFloat(data.monto_web)     || 0;
-  const agencia = parseFloat(data.monto_agencia) || 0;
+  const agencia = parseFloat(data.pago_restante) || 0;
   if (web > 0 || agencia > 0) {
     data.monto_final = parseFloat((web + agencia).toFixed(2));
   }
@@ -107,10 +107,10 @@ export default {
 
   beforeUpdate(event: any) {
     const data = event.params.data;
-    // En update el admin envía todos los campos — nunca recalcular monto_agencia
+    // En update el admin envía todos los campos — nunca recalcular pago_restante
     // para no pisar ediciones manuales. Solo actualizar monto_final.
     const web     = parseFloat(data.monto_web)     || 0;
-    const agencia = parseFloat(data.monto_agencia) || 0;
+    const agencia = parseFloat(data.pago_restante) || 0;
     if (web > 0 || agencia > 0) {
       data.monto_final = parseFloat((web + agencia).toFixed(2));
     }

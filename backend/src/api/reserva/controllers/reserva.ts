@@ -30,7 +30,7 @@ function extraerDocumentId(campo: any): string | null {
 }
 
 /**
- * Calcula monto_estimado, monto_web (30%) y monto_agencia (70%) en USD
+ * Calcula monto_estimado, monto_web (30%) y pago_restante (70%) en USD
  * Los precios se obtienen directamente del tour-detalle o transporte relacionado
  */
 async function calcularMontos(data: any, strapi: any): Promise<void> {
@@ -84,10 +84,10 @@ async function calcularMontos(data: any, strapi: any): Promise<void> {
     data.descuento      = Math.round(descuento * 100) / 100;
     data.monto_estimado = Math.round(montoFinal * 100) / 100;
     data.monto_web      = montoWeb;
-    data.monto_agencia  = montoAgencia;
+    data.pago_restante  = montoAgencia;
     // monto_final lo calcula el lifecycle beforeCreate/beforeUpdate
 
-    console.log('Montos calculados (USD):', { monto_estimado: data.monto_estimado, monto_web: montoWeb, monto_agencia: montoAgencia });
+    console.log('Montos calculados (USD):', { monto_estimado: data.monto_estimado, monto_web: montoWeb, pago_restante: montoAgencia });
   } catch (error) {
     console.error('Error calculando montos:', error);
   }

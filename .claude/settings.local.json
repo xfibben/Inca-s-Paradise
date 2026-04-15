@@ -6,7 +6,8 @@
       "Bash(curl -s \"http://localhost:1337/api/style-trips?fields[0]=name&fields[1]=slug&locale=es-PE\")",
       "Bash(docker exec:*)",
       "Bash(python3)",
-      "WebFetch(domain:docs.google.com)"
+      "WebFetch(domain:docs.google.com)",
+      "Bash(grep -l \"SEOHead\" /Users/arturo/Documents/Inca-s-Paradise/frontend/src/pages/**/*.astro /Users/arturo/Documents/Inca-s-Paradise/frontend/src/pages/*.astro)"
     ]
   }
 }
