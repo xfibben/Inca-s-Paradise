@@ -70,7 +70,6 @@ try {
   if (res.ok) {
     const json = await res.json();
     tipoTransporte = json?.data?.[0] ?? null;
-    console.log('DEBUG transportes[0]:', JSON.stringify(tipoTransporte?.transportes?.[0], null, 2));
   }
 } catch (e) {
   console.error("Error al obtener tipo de transporte:", e);

@@ -19,7 +19,6 @@ async function initializeLanguages() {
     const languages = await fetchLanguagesFromBackend();
     
     // Log for debugging (remove in production)
-    console.log('Languages loaded from backend:', languages);
     
     // Store in window for client-side access
     (window as any).__availableLanguages = languages;
@@ -92,5 +91,4 @@ function updateLanguageSwitcher(languages: Record<string, string>) {
     dropdown.appendChild(link);
   }
 
-  console.log('Language switcher updated with', Object.keys(languages).length, 'languages');
 }
