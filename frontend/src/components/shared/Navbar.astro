@@ -95,24 +95,17 @@ try {
     `&populate[tours][fields][1]=slug` +
     `&populate[tours][populate][heroSlideImages][fields][0]=url` +
     `&populate[tours][populate][heroSlideImages][fields][1]=alternativeText`;
-  console.log('[Navbar] Fetching:', { styleUrl, destUrl });
   const [styleRes, destRes] = await Promise.all([
     fetch(styleUrl),
     fetch(destUrl)
   ]);
-  console.log('[Navbar] Style Response:', styleRes.status);
-  console.log('[Navbar] Dest Response:', destRes.status);
   if (styleRes.ok) {
     const json = await styleRes.json();
     navStyleTrips = json.data ?? [];
-    console.log('[Navbar] Style Trips Count:', navStyleTrips.length);
-    console.log('[Navbar] Style Trips Data:', navStyleTrips);
   }
   if (destRes.ok) {
     const json = await destRes.json();
     navDestinations = json.data ?? [];
-    console.log('[Navbar] Destinations Count:', navDestinations.length);
-    console.log('[Navbar] Destinations Data:', navDestinations);
   }
 } catch (e) {
   console.error('[Navbar] Fetch error:', e);
@@ -811,22 +804,16 @@ try {
     const pathMatch = window.location.pathname.match(/^\/([a-z]{2})\//);
     const currentLangCode = pathMatch ? pathMatch[1] : 'es';
     
-    console.log('Navbar: Current language:', currentLangCode);
-    console.log('Navbar: Updating switchers with languages:', Object.keys(languages));
-
     // Update ALL lang-switcher instances
     const langSwitchers = document.querySelectorAll('#lang-switcher');
-    console.log('Navbar: Found', langSwitchers.length, 'switchers');
 
     langSwitchers.forEach((switcher, switcherIndex) => {
-      console.log(`Navbar: Updating switcher ${switcherIndex}`);
       
       const button = switcher.querySelector('#lang-button');
       const dropdown = switcher.querySelector('#lang-dropdown');
       const langArrow = switcher.querySelector('#lang-arrow');
       
       if (!button || !dropdown) {
-        console.log(`Navbar: Switcher ${switcherIndex} missing button or dropdown`);
         return;
       }
 
@@ -844,7 +831,6 @@ try {
       // Add all language links with event listeners
       for (const [code, name] of Object.entries(languages)) {
         if (code === currentLangCode) {
-          console.log(`Navbar: Skipping current language ${code}`);
           continue;
         }
 
@@ -866,12 +852,10 @@ try {
 
         // Attach click handler IMMEDIATELY
         link.addEventListener('click', (e) => {
-          console.log('Navbar: Language link clicked:', code);
           e.preventDefault();
           e.stopPropagation();
           
           const url = buildLanguageUrl(code);
-          console.log('Navbar: Navigating to:', url);
           
           dropdown.classList.add('hidden');
           langArrow?.classList.remove('rotate-180');
@@ -880,11 +864,9 @@ try {
         });
 
         dropdown.appendChild(link);
-        console.log(`Navbar: Added link for ${code}: ${name}`);
       }
     });
 
-    console.log('Navbar: Update complete');
   }
 
   // Initialize on page load

@@ -52,249 +52,20 @@
     "fiveStarReviews": "Recensioni 5 Stelle",
     "easyBookings": "Prenotazioni Rapide, Facili e Sicure"
   },
-  "styles": {
-    "title": "I Nostri Stili di Viaggio",
-    "images": {
-      "adventure": "landing page images/estilos/1. Aventura y trekking.jpg",
-      "gastronomy": "landing page images/estilos/2. Gastronomico.jpg",
-      "nature": "landing page images/estilos/4. Naturaleza.jpg",
-      "lifestyle": "landing page images/estilos/3. Estilo de vida y cultura.jpeg",
-      "biodiversity": "landing page images/estilos/5. Viajes a medida.webp"
-    },
-    "adventure": {
-      "name": "AVVENTURA E TREKKING"
-    },
-    "gastronomy": {
-      "name": "GASTRONOMICO"
-    },
-    "nature": {
-      "name": "BENESSERE & NATURA"
-    },
-    "lifestyle": {
-      "name": "STILE DI VITA & CULTURA"
-    },
-    "biodiversity": {
-      "name": "SU MISURA"
-    }
-  },
   "stylesMenu": {
     "travelStyles": {
-      "name": "Stili di Viaggio",
-      "description": "Scopri i nostri 5 stili di viaggio unici progettati per ogni tipo di avventuriero.",
-      "image": "landing page images/estilos/4. Naturaleza.jpg",
-      "subitems": {
-        "adventure": {
-          "name": "AVVENTURA E TREKKING",
-          "image": "landing page images/estilos/1. Aventura y trekking.jpg"
-        },
-        "gastronomy": {
-          "name": "GASTRONOMICO",
-          "image": "landing page images/estilos/2. Gastronomico.jpg"
-        },
-        "lifestyle": {
-          "name": "STILE DI VITA & CULTURA",
-          "image": "landing page images/estilos/3. Estilo de vida y cultura.jpeg"
-        },
-        "nature": {
-          "name": "BENESSERE & NATURA",
-          "image": "landing page images/estilos/4. Naturaleza.jpg"
-        },
-        "biodiversity": {
-          "name": "SU MISURA",
-          "image": "landing page images/estilos/5. Viajes a medida.webp"
-        }
-      }
+      "name": "Stili di Viaggio"
     },
     "smallTrips": {
-      "name": "Piccoli Viaggi",
-      "description": "Prossimamente - Esperienze brevi e emozionanti per il tuo prossimo viaggio.",
-      "image": "",
-      "subitems": {}
+      "name": "Piccoli Viaggi"
     },
     "packages": {
-      "name": "Pacchetti",
-      "description": "Prossimamente - Pacchetti speciali con il meglio del Perù.",
-      "image": "",
-      "subitems": {}
-    }
-  },
-  "destinations": {
-    "chachapoyas": {
-      "name": "CHACHAPOYAS",
-      "description": "Scopri le rovine antiche e i paesaggi magici della foresta nuvolosa."
-    },
-    "iquitos": {
-      "name": "IQUITOS",
-      "description": "L'avventura nel cuore dell'Amazzonia."
-    },
-    "tarapoto": {
-      "name": "TARAPOTO",
-      "description": "Giungla lussureggiante e acque cristalline."
-    },
-    "tambopata": {
-      "name": "TAMBOPATA",
-      "description": "Biodiversità unica in Amazzonia."
-    },
-    "limaIcaNazca": {
-      "name": "LIMA - ICA - NAZCA",
-      "description": "Cultura ancestrale e mistero."
-    },
-    "arequipa": {
-      "name": "AREQUIPA",
-      "description": "Architettura coloniale e vulcani."
-    },
-    "puno": {
-      "name": "PUNO",
-      "description": "Lago Titicaca e tradizioni vive."
-    },
-    "cusco": {
-      "name": "CUSCO",
-      "description": "Machu Picchu e il cuore dell'impero."
-    },
-    "copacabana": {
-      "name": "COPACABANA - ISOLA DEL SOLE",
-      "description": "Isola del Sole e spiritualità."
-    },
-    "laPaz": {
-      "name": "LA PAZ",
-      "description": "Capitale in altitudine."
-    },
-    "uyuni": {
-      "name": "UYUNI",
-      "description": "Il più grande deserto di sale del mondo."
-    },
-    "sucre": {
-      "name": "SUCRE",
-      "description": "Città bianca e capitale culturale."
+      "name": "Pacchetti"
     }
   },
   "commitment": {
     "text": "In Inca's Paradise, ci impegniamo ad accompagnarti in ogni viaggio con dedizione, trasparenza e calore umano. Ci prendiamo cura di ogni dettaglio, dalla pianificazione al tuo ritorno, affinché tu viva un'esperienza autentica, sicura e profondamente significativa. Non guidiamo semplicemente i viaggiatori: creiamo momenti che ispirано, collegano e rimangono nell'anima.",
     "author": "Inca's Paradise"
-  },
-  "megamenu": {
-    "destinos": [
-      {
-        "key": "chachapoyas",
-        "name": "CHACHAPOYAS",
-        "image": "landing page images/destinos/1. Amazonas - Kuelap.jpg",
-        "tours": [
-          { "name": "Gata Malla", "days": 3 },
-          { "name": "Canyon Marañón", "days": 4 },
-          { "name": "Lago Pomacochas", "days": 2 }
-        ]
-      },
-      {
-        "key": "iquitos",
-        "name": "IQUITOS",
-        "image": "landing page images/destinos/2 Loreto - Iquitos.jpg",
-        "tours": [
-          { "name": "Amazzonia Profonda", "days": 5 },
-          { "name": "Fiume Napo", "days": 3 },
-          { "name": "Riserva Allpahuayo", "days": 2 }
-        ]
-      },
-      {
-        "key": "tarapoto",
-        "name": "TARAPOTO",
-        "image": "landing page images/destinos/3 San Martin-Tarapoto.jpg",
-        "tours": [
-          { "name": "Cascata Ahuashiyacú", "days": 2 },
-          { "name": "Laguna Blu", "days": 3 },
-          { "name": "Fiume Shilcayo", "days": 2 }
-        ]
-      },
-      {
-        "key": "tambopata",
-        "name": "TAMBOPATA",
-        "image": "landing page images/destinos/4. Tambopata.webp",
-        "tours": [
-          { "name": "Collpa Ara", "days": 3 },
-          { "name": "Lago Sandoval", "days": 4 },
-          { "name": "Foresta Vergine", "days": 2 }
-        ]
-      },
-      {
-        "key": "limaIcaNazca",
-        "name": "LIMA - ICA - NAZCA",
-        "image": "landing page images/destinos/5 Lima - Ica - Nazca.jpg",
-        "tours": [
-          { "name": "Volo Linee di Nazca", "days": 1 },
-          { "name": "Oasi Huacachina", "days": 2 },
-          { "name": "Circuito Archeologico", "days": 3 }
-        ]
-      },
-      {
-        "key": "arequipa",
-        "name": "AREQUIPA",
-        "image": "landing page images/destinos/6 Arequipa.jpg",
-        "tours": [
-          { "name": "Vulcano Misti", "days": 2 },
-          { "name": "Canyon Colca", "days": 3 },
-          { "name": "Città Bianca", "days": 1 }
-        ]
-      },
-      {
-        "key": "puno",
-        "name": "PUNO",
-        "image": "landing page images/destinos/7. Puno tinajani.webp",
-        "tours": [
-          { "name": "Isole Uros", "days": 1 },
-          { "name": "Taquile e Amantaní", "days": 2 },
-          { "name": "Lago Titicaca", "days": 3 }
-        ]
-      },
-      {
-        "key": "cusco",
-        "name": "CUSCO",
-        "image": "landing page images/destinos/8. Cusco Machu Picchu.jpg",
-        "tours": [
-          { "name": "Machu Picchu Classico", "days": 2 },
-          { "name": "Sentiero dell'Inca", "days": 4 },
-          { "name": "Valle Sacra", "days": 2 }
-        ]
-      },
-      {
-        "key": "copacabana",
-        "name": "COPACABANA - ISOLA DEL SOLE",
-        "image": "landing page images/destinos/9. Isla del Sol - Copacabana.webp",
-        "tours": [
-          { "name": "Isola del Sole", "days": 1 },
-          { "name": "Santuario Copacabana", "days": 1 },
-          { "name": "Lago Titicaca Bolivia", "days": 2 }
-        ]
-      },
-      {
-        "key": "laPaz",
-        "name": "LA PAZ",
-        "image": "landing page images/destinos/10. Valle de las Animas - La Paz.jpg",
-        "tours": [
-          { "name": "Teleférico La Paz", "days": 1 },
-          { "name": "Valle della Luna", "days": 1 },
-          { "name": "Città Magica", "days": 2 }
-        ]
-      },
-      {
-        "key": "uyuni",
-        "name": "UYUNI",
-        "image": "landing page images/destinos/12. Salar de Uyuni.jpg",
-        "tours": [
-          { "name": "Salar de Uyuni Classico", "days": 3 },
-          { "name": "Tramonto Deserto di Sale", "days": 2 },
-          { "name": "Lagune Colorate", "days": 4 }
-        ]
-      },
-      {
-        "key": "sucre",
-        "name": "SUCRE",
-        "image": "landing page images/destinos/11. Sucre.jpg",
-        "tours": [
-          { "name": "Città Bianca Bolivia", "days": 1 },
-          { "name": "Dinosauri Cal Orck'o", "days": 1 },
-          { "name": "Archeologia e Cultura", "days": 2 }
-        ]
-      }
-    ]
   },
   "sustainability": {
     "title": "Sostenibilità: Inca's Paradise",
@@ -345,49 +116,42 @@
     "goToComment": "Vai al Commento"
   },
   "reviews": {
-    "title": "Esperienze dei Nostri Viaggiatori",
     "reviews": [
       {
         "year": "2017",
         "title": "Tour Puno-Bolivia",
         "opinion": "Ho fatto il viaggio con Inca's Paradise ed è stata un'ottima scelta, attenzione personalizzata, mi hanno fatto un programma su misura, rispettando il programma e quanto offerto ad ogni tappa. Gli operatori scelti in Bolivia eccellenti. Gli hotel forniti con tutto il necessario. Abbiamo visitato Sillustani, Isole degli Uros, Amantaní, Taquile. Poi Chucuito e la Porta Interdimensionale, un luogo incredibile. Una delle cose più impressionanti è stata Tiahuanaco. Il Salar di Uyuni con i suoi paesaggi impressionanti e foto affascinanti. Abbiamo terminato a Copacabana e la visita alle Isole del Sole e della Luna. Grazie Gumercinda, Willy, Juan Carlos, Luis e le diverse guide che ci hanno guidati attraverso l'Altopiano.",
-        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r537539026-Inca_s_Paradise-Puno_Puno_Region.html",
-        "image": "review2017"
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r537539026-Inca_s_Paradise-Puno_Puno_Region.html"
       },
       {
         "year": "2018",
         "title": "Eccellenti! Professionalità e caloriosità",
         "opinion": "Abbiamo conosciuto l'azienda per raccomandazione di un'amica e ci hanno organizzato un viaggio su misura che ha superato tutte le nostre aspettative. Abbiamo sentito il loro accompagnamento dal momento in cui abbiamo messo piede nel suolo peruviano ad Arequipa (Gumer ci ha accolto lì) fino all'ultimo giorno quando Yaque ci ha detto addio a Juliaca. Hanno curato ogni dettaglio e sono stati molto attenti ai nostri suggerimenti e valutazioni. Senza dubbio la consigliamo!",
-        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r616420223-Inca_s_Paradise-Puno_Puno_Region.html",
-        "image": "review2018"
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r616420223-Inca_s_Paradise-Puno_Puno_Region.html"
       },
       {
         "year": "2019",
         "title": "Agenzia di viaggio consigliata con grande servizio",
         "opinion": "Ho prenotato due tour alla Valle Sacra e alla montagna Arcobaleno e un biglietto dell'autobus per La Paz con Inca's Paradise. Ho ricevuto un servizio attento e disponibile a un prezzo competitivo. È decisamente una buona agenzia di viaggio in cui puoi fidarti. Consigliato!",
-        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r673294842-Inca_s_Paradise-Puno_Puno_Region.html",
-        "image": "review2019"
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r673294842-Inca_s_Paradise-Puno_Puno_Region.html"
       },
       {
         "year": "2020",
         "title": "Professionali e Premurosi",
         "opinion": "Abbiamo fatto, con Inca's Paradise, i tour del Canyon Colca da Arequipa, il trasferimento fino a Puno e il tour alle isole Uros e Taquile sul Lago Titicaca. Tutto come pattuito e, nonostante la comunicazione un po' 'frammentaria', dal momento in cui abbiamo iniziato a comunicare via WhatsApp, hanno sempre risposto molto velocemente e sono stati molto premurosi. Inoltre, ci hanno messo a disposizione guide che hanno reso i tour ancora più speciali! Consiglio!",
-        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r722384916-Inca_s_Paradise-Puno_Puno_Region.html",
-        "image": "review2020"
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r722384916-Inca_s_Paradise-Puno_Puno_Region.html"
       },
       {
         "year": "2023",
         "title": "I Migliori a Puno!",
         "opinion": "Servizio eccellente! Molto piacevole dal momento in cui ti vengono a prendere, super pazienti e premurosi. Abbiamo iniziato il tour e si è adattato al nostro passo poiché stavamo arrivando da un cambio di altitudine, durante il tour hanno spiegato e risposto a tutte le nostre domande. Oltre a questo, la nostra guida molto amichevole, molto competente e con un'aura bellissima che ha sicuramente migliorato l'esperienza. Ci hanno portato esattamente dove volevamo andare. Il servizio di trasporto eccellente anche. Sicuramente lo consiglierei, è al di sopra di altri servizi di tour. Altamente consigliato",
-        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r898348355-Inca_s_Paradise-Puno_Puno_Region.html",
-        "image": "review2023"
+        "url": "https://www.tripadvisor.com.pe/ShowUserReviews-g298442-d8702357-r898348355-Inca_s_Paradise-Puno_Puno_Region.html"
       },
       {
         "year": "2024",
         "title": "Grande Esperienza a Puno e Bolivia",
         "opinion": "Inca's Paradise è stata decisamente la mia scelta migliore in questo viaggio in solitaria, sono stati incredibili con l'itinerario. Adriana era la ragazza incaricata e ha curato ogni dettaglio affinché la mia esperienza fosse meravigliosa. Punto salienti: comunicazione, puntualità, hanno rispettato le mie preferenze, e senza dubbio consiglio la loro agenzia di viaggio.",
-        "url": "https://www.tripadvisor.com.pe/Profile/yoselynd188?fid=59505cf2-06b2-4e08-840d-7f95fac023ad",
-        "image": "review2024"
+        "url": "https://www.tripadvisor.com.pe/Profile/yoselynd188?fid=59505cf2-06b2-4e08-840d-7f95fac023ad"
       }
     ]
   },
