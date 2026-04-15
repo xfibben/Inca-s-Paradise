@@ -850,6 +850,7 @@ try {
 
         const flagCode = flagMap[code] || code;
         const link = document.createElement('a');
+        link.href='#';
         link.className = 'relative flex items-center gap-3 px-4 py-3 transition text-white text-sm cursor-pointer whitespace-nowrap overflow-hidden';
         link.style.cssText = `background-image: url(https://flagcdn.com/w80/${flagCode}.png); background-size: cover; background-position: center;`;
 
