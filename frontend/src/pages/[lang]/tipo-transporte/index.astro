@@ -4,6 +4,7 @@ import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
+import SEOHead from '../../../components/SEO/SEOHead.astro';
 import TipoTransporteHero from '../../../components/tipo-transporte/TipoTransporteHero.astro';
 import TipoTransporteGrid from '../../../components/tipo-transporte/TipoTransporteGrid.astro';
 
@@ -27,6 +28,25 @@ const metaDescriptions: Record<string, string> = {
   it: "Opzioni di trasporto per esplorare le destinazioni più incredibili del Perù con Inca's Paradise.",
 };
 const metaDescription = metaDescriptions[currentLang] ?? metaDescriptions.es;
+
+const metaTitles: Record<string, string> = {
+  es: "Tipos de Transporte | Inca's Paradise",
+  en: "Transport Types | Inca's Paradise",
+  pt: "Tipos de Transporte | Inca's Paradise",
+  fr: "Types de Transport | Inca's Paradise",
+  it: "Tipi di Trasporto | Inca's Paradise",
+};
+const metaTitle = metaTitles[currentLang] ?? metaTitles.es;
+
+const siteOrigin = (Astro.site?.origin ?? 'https://incasparadise.com').replace(/\/$/, '');
+const canonical = `${siteOrigin}/${currentLang}/tipo-transporte`;
+const alternateLanguages = [
+  { lang: 'es', url: `${siteOrigin}/es/tipo-transporte` },
+  { lang: 'en', url: `${siteOrigin}/en/tipo-transporte` },
+  { lang: 'pt', url: `${siteOrigin}/pt/tipo-transporte` },
+  { lang: 'fr', url: `${siteOrigin}/fr/tipo-transporte` },
+  { lang: 'it', url: `${siteOrigin}/it/tipo-transporte` },
+];
 
 const STRAPI_URL = import.meta.env.STRAPI_URL;
 const PUBLIC_STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL;
@@ -53,16 +73,47 @@ try {
 } catch (e) {
   console.error("Error al obtener tipos de transporte:", e);
 }
+
+const tipoTransporteSchema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": metaTitle,
+  "description": metaDescription,
+  "url": canonical,
+  "inLanguage": currentLang === 'es' ? 'es-PE' : currentLang,
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "Inca's Paradise",
+    "url": siteOrigin,
+  },
+  ...(tiposTransporte.length > 0 && {
+    "hasPart": tiposTransporte.map((tipo: any) => {
+      const d = tipo?.attributes ?? tipo;
+      return {
+        "@type": "WebPage",
+        "name": d.nombre,
+        "url": `${siteOrigin}/${currentLang}/tipo-transporte/${d.slug}`,
+      };
+    }),
+  }),
+};
 ---
 
 <html lang={currentLang}>
   <head>
     <meta charset="utf-8" />
-    <title>Tipos de Transporte Inca's Paradise</title>
+    <title>{metaTitle}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="description" content={metaDescription} />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <SEOHead
+      title={metaTitle}
+      description={metaDescription}
+      canonical={canonical}
+      currentLang={currentLang}
+      alternateLanguages={alternateLanguages}
+      xDefaultUrl={`${siteOrigin}/es/tipo-transporte`}
+      structuredData={tipoTransporteSchema}
+    />
     <GoogleAnalytics />
   </head>
 

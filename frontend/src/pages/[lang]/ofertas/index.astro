@@ -4,6 +4,7 @@ import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
+import SEOHead from '../../../components/SEO/SEOHead.astro';
 import { formatPrice } from '../../../utils/currency';
 
 const { lang } = Astro.params;
@@ -131,6 +132,42 @@ try {
 }
 
 const hayOfertas = toursOferta.length > 0 || transportesOferta.length > 0;
+const metaTitle = `${t.ofertas.title} | Inca's Paradise`;
+const metaDescriptionByLang: Record<Language, string> = {
+  es: "Ofertas de viaje a Cusco, Puno y Machu Picchu con tours y servicios de transportes personalizados en Inca's Paradise.",
+  en: "Travel deals to Cusco, Puno, and Machu Picchu with tours and personalized transport services at Inca's Paradise.",
+  pt: "Ofertas de viagem para Cusco, Puno e Machu Picchu com tours e serviços de transporte personalizados na Inca's Paradise.",
+  fr: "Offres de voyage à Cusco, Puno et Machu Picchu avec circuits et services de transport personnalisés chez Inca's Paradise.",
+  it: "Offerte di viaggio a Cusco, Puno e Machu Picchu con tour e servizi di trasporto personalizzati di Inca's Paradise.",
+};
+const metaDescription = String(
+  metaDescriptionByLang[currentLang] ??
+    metaDescriptionByLang.es ??
+    t?.ofertas?.subtitle
+).trim();
+
+const siteOrigin = (Astro.site?.origin ?? 'https://incasparadise.com').replace(/\/$/, '');
+const canonical = `${siteOrigin}/${currentLang}/ofertas`;
+const alternateLanguages = [
+  { lang: 'es', url: `${siteOrigin}/es/ofertas` },
+  { lang: 'en', url: `${siteOrigin}/en/ofertas` },
+  { lang: 'pt', url: `${siteOrigin}/pt/ofertas` },
+  { lang: 'fr', url: `${siteOrigin}/fr/ofertas` },
+  { lang: 'it', url: `${siteOrigin}/it/ofertas` },
+];
+
+const ofertasSchema = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Ofertas de viaje - Inca's Paradise",
+  "description": metaDescription,
+  "url": canonical,
+  "provider": {
+    "@type": "TravelAgency",
+    "name": "Inca's Paradise",
+    "url": siteOrigin,
+  },
+};
 ---
 
 <html lang={currentLang}>
@@ -139,21 +176,16 @@ const hayOfertas = toursOferta.length > 0 || transportesOferta.length > 0;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{t.ofertas.title}Inca's Paradise</title>
-    <meta name="description" content={t.ofertas.subtitle} />
-    <!-- Schema JSON-LD ItemList -->
-    <script is:inline type="application/ld+json" set:html={JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "ItemList",
-      "name": "Ofertas de viaje - Inca's Paradise",
-      "description": "Las mejores ofertas en tours y viajes personalizados en Perú con Inca's Paradise",
-      "url": Astro.url.href,
-      "provider": {
-        "@type": "TravelAgency",
-        "name": "Inca's Paradise",
-        "url": "https://incasparadise.com"
-      }
-    })} />
+    <title>{metaTitle}</title>
+    <SEOHead
+      title={metaTitle}
+      description={metaDescription}
+      canonical={canonical}
+      currentLang={currentLang}
+      alternateLanguages={alternateLanguages}
+      xDefaultUrl={`${siteOrigin}/es/ofertas`}
+      structuredData={ofertasSchema}
+    />
     <GoogleAnalytics />
   </head>
 
@@ -326,4 +358,3 @@ const hayOfertas = toursOferta.length > 0 || transportesOferta.length > 0;
     <Footer currentLang={currentLang} t={t} />
   </body>
 </html>
-

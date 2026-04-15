@@ -4,6 +4,7 @@ import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
+import SEOHead from '../../../components/SEO/SEOHead.astro';
 import departamentosData from '../../../i18n/ubigeo_departamento.json';
 import provinciasData from '../../../i18n/ubigeo_provincia.json';
 import distritosData from '../../../i18n/ubigeo_distrito.json';
@@ -229,6 +230,37 @@ const labels: Record<Language, Labels> = {
 };
 
 const L = labels[currentLang];
+
+const siteOrigin = (Astro.site?.origin ?? 'https://incasparadise.com').replace(/\/$/, '');
+const canonical = `${siteOrigin}/${currentLang}/claims`;
+const alternateLanguages = [
+  { lang: 'es', url: `${siteOrigin}/es/claims` },
+  { lang: 'en', url: `${siteOrigin}/en/claims` },
+  { lang: 'pt', url: `${siteOrigin}/pt/claims` },
+  { lang: 'fr', url: `${siteOrigin}/fr/claims` },
+  { lang: 'it', url: `${siteOrigin}/it/claims` },
+];
+
+const claimsSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": `${L.title} — Inca's Paradise`,
+  "description": L.description,
+  "url": canonical,
+  "inLanguage": currentLang === 'es' ? 'es-PE' : currentLang,
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "Inca's Paradise",
+    "url": siteOrigin,
+  },
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Inicio", "item": `${siteOrigin}/${currentLang}/` },
+      { "@type": "ListItem", "position": 2, "name": L.title, "item": canonical },
+    ],
+  },
+};
 ---
 
 <html lang={currentLang}>
@@ -239,7 +271,15 @@ const L = labels[currentLang];
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>{L.title} — Inca's Paradise</title>
-    <meta name="description" content={L.description} />
+    <SEOHead
+      title={`${L.title} — Inca's Paradise`}
+      description={L.description}
+      canonical={canonical}
+      currentLang={currentLang}
+      alternateLanguages={alternateLanguages}
+      xDefaultUrl={`${siteOrigin}/es/claims`}
+      structuredData={claimsSchema}
+    />
     <GoogleAnalytics />
     <style>
       h1, h2 {
