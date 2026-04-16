@@ -232,10 +232,10 @@ const middleDescriptionHtml = trip?.middle_description ? md.render(trip.middle_d
         const heroImg = Array.isArray(tour.heroSlideImages) && tour.heroSlideImages.length > 0
           ? tour.heroSlideImages[0]
           : tour.heroSlideImages;
-        const tourImageUrl = heroImg?.formats?.medium?.url
+        const tourImageUrl = heroImg?.formats?.small?.url
+          ? `${STRAPI_PUBLIC_URL}${heroImg.formats.small.url}`
+          : heroImg?.formats?.medium?.url
           ? `${STRAPI_PUBLIC_URL}${heroImg.formats.medium.url}`
-          : heroImg?.formats?.large?.url
-          ? `${STRAPI_PUBLIC_URL}${heroImg.formats.large.url}`
           : heroImg?.url
           ? `${STRAPI_PUBLIC_URL}${heroImg.url}`
           : 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop';
