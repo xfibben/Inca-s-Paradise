@@ -61,6 +61,25 @@ const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL;
 // const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
   const strapiLocale = currentLang === 'pt' ? 'pt' : currentLang === 'es' ? 'es-PE' : currentLang;
 
+const NAV_CACHE_TTL_MS = 5 * 60 * 1000;
+const NAV_CACHE_KEY = '__incas_nav_cache_v1__';
+type NavCacheEntry = { expiresAt: number; value: any };
+const navCache: Map<string, NavCacheEntry> =
+  ((globalThis as any)[NAV_CACHE_KEY] as Map<string, NavCacheEntry> | undefined) ?? new Map();
+(globalThis as any)[NAV_CACHE_KEY] = navCache;
+
+async function fetchJsonCached(url: string) {
+  const now = Date.now();
+  const cached = navCache.get(url);
+  if (cached && cached.expiresAt > now) return cached.value;
+
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`[Navbar] HTTP ${response.status} for ${url}`);
+  const json = await response.json();
+  navCache.set(url, { value: json, expiresAt: now + NAV_CACHE_TTL_MS });
+  return json;
+}
+
   // Soporte para portugués en destinos
   function getDestTitle(dest: any) {
     return dest.title || dest.name || dest.titulo || dest.titulo_pt || dest.titulo_en || dest.titulo_es || '';
@@ -76,11 +95,8 @@ try {
   const tipoTransporteUrl = `${STRAPI_URL}/api/tipo-transportes?locale=${strapiLocale}&status=published` +
     `&fields[0]=nombre&fields[1]=slug&fields[2]=nroOrden&populate[image][fields][0]=url&populate[image][fields][1]=formats` +
     `&sort=nroOrden:asc`;
-  const tipoRes = await fetch(tipoTransporteUrl);
-  if (tipoRes.ok) {
-    const json = await tipoRes.json();
-    navTipoTransportes = json.data ?? [];
-  }
+  const json = await fetchJsonCached(tipoTransporteUrl);
+  navTipoTransportes = json.data ?? [];
 } catch (e) {
   console.error('[Navbar] Error tipo-transportes:', e);
 }
@@ -95,18 +111,12 @@ try {
     `&populate[tours][fields][1]=slug` +
     `&populate[tours][populate][heroSlideImages][fields][0]=url` +
     `&populate[tours][populate][heroSlideImages][fields][1]=alternativeText`;
-  const [styleRes, destRes] = await Promise.all([
-    fetch(styleUrl),
-    fetch(destUrl)
+  const [styleJson, destJson] = await Promise.all([
+    fetchJsonCached(styleUrl),
+    fetchJsonCached(destUrl)
   ]);
-  if (styleRes.ok) {
-    const json = await styleRes.json();
-    navStyleTrips = json.data ?? [];
-  }
-  if (destRes.ok) {
-    const json = await destRes.json();
-    navDestinations = json.data ?? [];
-  }
+  navStyleTrips = styleJson.data ?? [];
+  navDestinations = destJson.data ?? [];
 } catch (e) {
   console.error('[Navbar] Fetch error:', e);
 }

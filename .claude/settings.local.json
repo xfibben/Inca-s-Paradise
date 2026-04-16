@@ -8,7 +8,8 @@
       "Bash(python3)",
       "WebFetch(domain:docs.google.com)",
       "Bash(grep -l \"SEOHead\" /Users/arturo/Documents/Inca-s-Paradise/frontend/src/pages/**/*.astro /Users/arturo/Documents/Inca-s-Paradise/frontend/src/pages/*.astro)",
-      "Bash(grep -n \"import\\\\|markdown\\\\|markdownit\\\\|data-markdown\\\\|descripcion\\\\|middle_description\\\\|highlightsLead\" /Users/arturo/Documents/Inca-s-Paradise/frontend/src/pages/[lang]/tipo-transporte/\\\\[slug\\\\].astro)"
+      "Bash(grep -n \"import\\\\|markdown\\\\|markdownit\\\\|data-markdown\\\\|descripcion\\\\|middle_description\\\\|highlightsLead\" /Users/arturo/Documents/Inca-s-Paradise/frontend/src/pages/[lang]/tipo-transporte/\\\\[slug\\\\].astro)",
+      "Bash(git fetch *)"
     ]
   }
 }

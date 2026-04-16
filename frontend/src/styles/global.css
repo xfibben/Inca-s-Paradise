@@ -16,11 +16,8 @@
   line-gap-override: 0%;
 }
 
-@import "flowbite/src/themes/default";
-@plugin "flowbite/plugin";
 @plugin "@tailwindcss/typography";
 @source "../**/*.{astro,html,js,jsx,ts,tsx,md,mdx}";
-@source "../../node_modules/flowbite";
 
 html, body {
   overflow-x: hidden;
@@ -46,6 +43,12 @@ body {
 /* Fallback inmediato para headings con Playfair — evita que el LCP espere al font */
 h1, h2, h3 {
   font-family: 'Playfair Display', 'Playfair Display Fallback', Georgia, 'Times New Roman', serif;
+}
+
+.prose :where(em, i),
+.markdown-content :where(em, i) {
+  font-family: 'Playfair Display', 'Playfair Display Fallback', Georgia, 'Times New Roman', serif;
+  font-style: italic;
 }
 
 .markdown-content h1 {

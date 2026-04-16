@@ -24,13 +24,14 @@ const { t } = Astro.props;
     />
     <!-- segunda imagen: lazy loaded -->
     <img
-      src="/landing page images/ubicacion-choquequirao-full.webp"
+      data-src="/landing page images/ubicacion-choquequirao-full.webp"
       alt="Choquequirao - Ciudadela inca perdida en Cusco"
       class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-3000 opacity-0"
       data-index="1"
       width="1280"
       height="853"
       loading="lazy"
+      fetchpriority="low"
       decoding="async"
     />
   </div>
@@ -70,6 +71,18 @@ const { t } = Astro.props;
   const totalImages = 2;
   const carouselInterval = 2500; // 2.5 seconds
   let imageCarouselTimer;
+  let secondaryImageLoaded = false;
+
+  function ensureSecondaryImageLoaded() {
+    if (secondaryImageLoaded) return;
+    const secondImage = document.querySelector('.hero-image[data-index="1"]');
+    if (!secondImage) return;
+    const pendingSrc = secondImage.getAttribute('data-src');
+    if (!pendingSrc) return;
+    secondImage.setAttribute('src', pendingSrc);
+    secondImage.removeAttribute('data-src');
+    secondaryImageLoaded = true;
+  }
 
   function showHeroImage(index) {
     const images = document.querySelectorAll('.hero-image');
@@ -97,6 +110,7 @@ const { t } = Astro.props;
   }
 
   function nextHeroImage() {
+    ensureSecondaryImageLoaded();
     currentImageIndex = (currentImageIndex + 1) % totalImages;
     showHeroImage(currentImageIndex);
   }
@@ -117,9 +131,16 @@ const { t } = Astro.props;
   // Start carousel on load
   startImageCarousel();
 
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => ensureSecondaryImageLoaded(), { timeout: 3500 });
+  } else {
+    setTimeout(() => ensureSecondaryImageLoaded(), 2500);
+  }
+
   // Add click handlers to dots
   document.querySelectorAll('.hero-dot').forEach(dot => {
     dot.addEventListener('click', () => {
+      ensureSecondaryImageLoaded();
       currentImageIndex = parseInt(dot.getAttribute('data-index'));
       showHeroImage(currentImageIndex);
       // Reset timer when user clicks
