@@ -117,8 +117,8 @@ const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Re
 			structuredData={organizationSchema}
 		/>
 		
-		<!-- Performance: Preload hero image for faster LCP -->
-		
+		<link rel="preload" as="image" href="/landing page images/wallpaper1.jpeg" fetchpriority="high" />
+
 		<style>
 			h1, h2 {
 				font-family: 'Playfair Display', serif;

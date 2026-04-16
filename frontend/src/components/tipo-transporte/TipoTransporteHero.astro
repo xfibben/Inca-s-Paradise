@@ -28,17 +28,16 @@ const {
 <!-- Hero Section - Tipo de Transporte -->
 <section class="tipo-transporte-hero relative w-full overflow-hidden">
   <!-- Imagen de fondo -->
-  <picture>
-    <source srcset={heroImageSrc} type="image/webp" />
-    <img
-      src={heroImageSrc}
-      alt="Transporte en Perú - Inca's Paradise"
-      class="absolute inset-0 w-full h-full object-cover"
-      width="2000"
-      height="1333"
-      fetchpriority="high"
-    />
-  </picture>
+  <img
+    src={heroImageSrc}
+    alt="Transporte en Perú - Inca's Paradise"
+    class="absolute inset-0 w-full h-full object-cover"
+    width="2000"
+    height="1333"
+    fetchpriority="high"
+    loading="eager"
+    decoding="async"
+  />
 
   <!-- Overlay oscuro -->
   <div class="absolute inset-0 bg-black/50"></div>

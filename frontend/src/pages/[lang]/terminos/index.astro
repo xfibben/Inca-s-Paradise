@@ -1,4 +1,5 @@
 ﻿---
+import MarkdownIt from 'markdown-it';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import { getTranslation, languages } from '../../../i18n';
@@ -44,7 +45,13 @@ const fallbackDescriptions: Record<string, string> = {
   it: "Leggi i termini e condizioni di Inca's Paradise per prenotazioni di tour e trasporto a Cusco, Puno e Machu Picchu.",
 };
 const seoDescription = data?.seoDescription || description || fallbackDescriptions[currentLang] || fallbackDescriptions.es;
-const sections: Array<{ title: string; text: string }> = Array.isArray(data?.sections) ? data.sections : [];
+const md = new MarkdownIt({ html: true });
+const sections: Array<{ title: string; renderedText: string }> = Array.isArray(data?.sections)
+  ? data.sections.map((s: { title: string; text: string }) => ({
+      title: s.title,
+      renderedText: md.render(typeof s.text === 'string' ? s.text : JSON.stringify(s.text)),
+    }))
+  : [];
 
 const siteOrigin = (Astro.site?.origin ?? 'https://incasparadise.com').replace(/\/$/, '');
 const canonical = `${siteOrigin}/${currentLang}/terminos`;
@@ -111,7 +118,7 @@ const terminosSchema = {
 
         <!-- Header -->
         <div class="mb-10 border-b border-gray-200 pb-8">
-          <h1 class="mb-4">
+          <h1 class="mb-4 text-2xl">
             {title}
           </h1>
           {description && (
@@ -128,8 +135,8 @@ const terminosSchema = {
                   {i + 1}. {section.title}
                 </h2>
                 <div
-                  class="prose prose-gray max-w-none text-gray-700 leading-relaxed text-justify markdown-content"
-                  data-markdown={typeof section.text === 'string' ? section.text : JSON.stringify(section.text)}
+                  class="prose prose-gray max-w-none text-gray-700 leading-relaxed text-justify"
+                  set:html={section.renderedText}
                 />
               </div>
             ))}
@@ -145,24 +152,6 @@ const terminosSchema = {
 
     <Footer {t} currentLang={currentLang} />
 
-    <script src="https://cdn.jsdelivr.net/npm/markdown-it@10.0.0/dist/markdown-it.min.js"></script>
-    <script is:inline>
-      function processMarkdown() {
-        if (typeof window.markdownit !== 'undefined') {
-          const md = window.markdownit();
-          document.querySelectorAll('.markdown-content').forEach(el => {
-            const markdown = el.getAttribute('data-markdown');
-            if (markdown) {
-              el.innerHTML = md.render(markdown);
-              el.removeAttribute('data-markdown');
-            }
-          });
-        } else {
-          setTimeout(processMarkdown, 100);
-        }
-      }
-      processMarkdown();
-    </script>
   </body>
 </html>
 
