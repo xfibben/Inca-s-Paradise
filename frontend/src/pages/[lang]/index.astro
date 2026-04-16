@@ -16,6 +16,8 @@ import Commitment from '../../components/LandingPage/Commitment.astro';
 import Footer from '../../components/shared/Footer.astro';
 import SEOHead from '../../components/SEO/SEOHead.astro';
 
+export const prerender = true;
+
 // Función requerida para rutas dinámicas en Astro
 export function getStaticPaths() {
   return Object.keys(languages).map((lang) => ({
@@ -156,8 +158,6 @@ const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Re
 	  <GoogleAnalytics />
   </head>
 	<body>
-		<script is:inline defer src="https://cdn.jsdelivr.net/npm/flowbite@4.0.1/dist/flowbite.min.js"></script>
-		
 		<Navbar {t} {currentLang} />
 		<Hero {t} />
 		<Features {t} />
@@ -172,4 +172,3 @@ const langNames: Record<string, string> = Object.keys(languages).reduce((acc: Re
     <Footer {currentLang} {t} />
 	</body>
 </html>
-
