@@ -5,6 +5,17 @@
 @import "@fontsource/playfair-display/400-italic.css";
 @import "@fontsource/playfair-display/500-italic.css";
 @import "@fontsource/playfair-display/700-italic.css";
+
+/* Fallback con métricas ajustadas a Playfair Display para minimizar CLS */
+@font-face {
+  font-family: 'Playfair Display Fallback';
+  src: local('Georgia'), local('Times New Roman');
+  size-adjust: 97%;
+  ascent-override: 95%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
 @import "flowbite/src/themes/default";
 @plugin "flowbite/plugin";
 @plugin "@tailwindcss/typography";
@@ -30,6 +41,11 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
+}
+
+/* Fallback inmediato para headings con Playfair — evita que el LCP espere al font */
+h1, h2, h3 {
+  font-family: 'Playfair Display', 'Playfair Display Fallback', Georgia, 'Times New Roman', serif;
 }
 
 .markdown-content h1 {

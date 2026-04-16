@@ -9,7 +9,7 @@ const { tipos, publicStrapiUrl } = Astro.props;
 /* Obtiene la URL absoluta de la imagen */
 function getImageUrl(media: any): string | null {
   if (!media) return null;
-  const url = media?.formats?.large?.url ?? media?.formats?.medium?.url ?? media?.url;
+  const url = media?.formats?.small?.url ?? media?.formats?.medium?.url ?? media?.url;
   if (!url) return null;
   return url.startsWith('http') ? url : `${publicStrapiUrl}${url}`;
 }

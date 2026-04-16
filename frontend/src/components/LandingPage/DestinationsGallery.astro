@@ -38,9 +38,9 @@ function toMediaObject(value: any) {
 function toAbsoluteMediaUrl(value: any) {
   const media = toMediaObject(value);
   const rawUrl =
-    media?.formats?.medium?.url ??
     media?.formats?.small?.url ??
     media?.formats?.thumbnail?.url ??
+    media?.formats?.medium?.url ??
     media?.url ??
     (typeof value === 'string' ? value : '');
   if (!rawUrl) return '';

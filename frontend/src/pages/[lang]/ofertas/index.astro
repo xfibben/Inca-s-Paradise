@@ -30,7 +30,7 @@ const strapiLocale =
 // Obtiene la URL absoluta de una imagen de Strapi
 function getImageUrl(media: any): string | null {
   if (!media) return null;
-  const url = media?.formats?.large?.url ?? media?.formats?.medium?.url ?? media?.url;
+  const url = media?.formats?.small?.url ?? media?.formats?.medium?.url ?? media?.url;
   if (!url) return null;
   return url.startsWith('http') ? url : `${PUBLIC_STRAPI_URL}${url}`;
 }
