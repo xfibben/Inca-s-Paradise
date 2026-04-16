@@ -1,4 +1,5 @@
 ﻿---
+import MarkdownIt from 'markdown-it';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import CarouselCard from '../../../components/stylestrips/StylesCarouselCard.astro';
@@ -97,6 +98,9 @@ const heroImageUrl = heroImage?.formats?.medium?.url
   : heroImage?.url
   ? `${STRAPI_PUBLIC_URL}${heroImage.url}`
   : null;
+
+const md = new MarkdownIt({ html: true });
+const middleDescriptionHtml = trip?.middle_description ? md.render(trip.middle_description) : '';
 ---
 
 <!DOCTYPE html>
@@ -168,6 +172,7 @@ const heroImageUrl = heroImage?.formats?.medium?.url
         "url": "https://incasparadise.com"
       }
     })} />
+    {heroImageUrl && <link rel="preload" as="image" href={heroImageUrl} fetchpriority="high" />}
     <GoogleAnalytics />
   </head>
   <body>
@@ -184,6 +189,9 @@ const heroImageUrl = heroImage?.formats?.medium?.url
           src={heroImageUrl}
           alt={trip.name}
           class="absolute inset-0 w-full h-full object-cover"
+          fetchpriority="high"
+          loading="eager"
+          decoding="async"
         />
       )}
       <div class="absolute inset-0 bg-black/40"></div>
@@ -304,39 +312,18 @@ const heroImageUrl = heroImage?.formats?.medium?.url
               <div class="w-12 h-0.5 bg-yellow-600 mx-auto mb-6 md:mb-8"></div>
             </>
           )}
-          {trip?.middle_description && (
-            <div 
-              class="text-base md:text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto markdown-content text-justify"
-              data-markdown={trip.middle_description}
+          {middleDescriptionHtml && (
+            <div
+              class="text-base md:text-lg text-gray-600 leading-relaxed max-w-3xl mx-auto text-justify"
+              set:html={middleDescriptionHtml}
             />
           )}
         </div>
       </section>
     )}
 
-    <script src="https://cdn.jsdelivr.net/npm/markdown-it@10.0.0/dist/markdown-it.min.js"></script>
-    
     <script>
-      // Procesar markdown cuando cargue markdown-it
-      function processMarkdown() {
-        if (typeof window.markdownit !== 'undefined') {
-          const md = window.markdownit();
-          const markdownElements = document.querySelectorAll('.markdown-content');
-          markdownElements.forEach(element => {
-            const markdown = element.getAttribute('data-markdown');
-            if (markdown) {
-              element.innerHTML = md.render(markdown);
-              element.removeAttribute('data-markdown');
-            }
-          });
-        } else {
-          // Reintentar si markdown-it aÃºn no carga
-          setTimeout(processMarkdown, 100);
-        }
-      }
-      processMarkdown();
-
-      // Script original para mostrar mÃ¡s
+      // Script para mostrar más
       const btn = document.getElementById('show-more-btn');
       const list = document.getElementById('more-trips');
       const icon = document.getElementById('show-more-icon');

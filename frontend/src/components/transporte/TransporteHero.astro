@@ -20,17 +20,16 @@ const { t } = Astro.props;
 <!-- Hero Section - Transporte -->
 <section class="transporte-hero relative w-full overflow-hidden">
   <!-- Imagen de fondo -->
-  <picture>
-    <source srcset="/landing page images/ubicacion-choquequirao-full.webp" type="image/webp" />
-    <img
-      src="/landing page images/ubicacion-choquequirao-full.webp"
-      alt="Transporte en Perú - Inca's Paradise"
-      class="absolute inset-0 w-full h-full object-cover"
-      width="2000"
-      height="1333"
-      fetchpriority="high"
-    />
-  </picture>
+  <img
+    src="/landing page images/ubicacion-choquequirao-full.webp"
+    alt="Transporte en Perú - Inca's Paradise"
+    class="absolute inset-0 w-full h-full object-cover"
+    width="2000"
+    height="1333"
+    fetchpriority="high"
+    loading="eager"
+    decoding="async"
+  />
 
   <!-- Overlay oscuro -->
   <div class="absolute inset-0 bg-black/50"></div>

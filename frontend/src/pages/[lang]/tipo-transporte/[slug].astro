@@ -1,4 +1,5 @@
 ﻿---
+import MarkdownIt from 'markdown-it';
 import { getTranslation, languages, defaultLanguage, type Language } from '../../../i18n';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
@@ -131,6 +132,8 @@ for (const tp of transportes) {
 }
 
 const vehiculos: VehiculoData[] = Array.from(vehiculosMap.values());
+const md = new MarkdownIt({ html: true });
+const descripcionHtml = tipoTransporte?.descripcion ? md.render(tipoTransporte.descripcion) : '';
 
 const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
   const preciosMap: Record<string, { precio: number; original: number | null }> = {};
@@ -169,6 +172,7 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
         "url": "https://incasparadise.com"
       }
     })} />
+    {wallpaperUrl && <link rel="preload" as="image" href={wallpaperUrl} fetchpriority="high" />}
     <GoogleAnalytics />
   </head>
 
@@ -186,6 +190,8 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
             alt={tipoTransporte.nombre}
             class="absolute inset-0 w-full h-full object-cover"
             fetchpriority="high"
+            loading="eager"
+            decoding="async"
           />
         ) : (
           <div class="absolute inset-0 bg-linear-to-br from-stone-600 to-stone-900" />
@@ -207,8 +213,8 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
       {tipoTransporte.descripcion && (
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div
-            class="prose prose-stone max-w-none text-[#374151] markdown-content text-justify"
-            data-markdown={tipoTransporte.descripcion}
+            class="prose prose-stone max-w-none text-[#374151] text-justify"
+            set:html={descripcionHtml}
           />
         </div>
       )}
@@ -295,25 +301,6 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
       window.__tipoTransporteSlugs = tipoTransporteSlugs;
     </script>
 
-    <!-- Renderiza markdown en la descripciÃ³n -->
-    <script src="https://cdn.jsdelivr.net/npm/markdown-it@10.0.0/dist/markdown-it.min.js"></script>
-    <script>
-      function processMarkdown() {
-        if (typeof (window as any).markdownit !== 'undefined') {
-          const md = (window as any).markdownit();
-          document.querySelectorAll('.markdown-content').forEach((el: Element) => {
-            const raw = el.getAttribute('data-markdown');
-            if (raw) {
-              el.innerHTML = md.render(raw);
-              el.removeAttribute('data-markdown');
-            }
-          });
-        } else {
-          setTimeout(processMarkdown, 50);
-        }
-      }
-      document.addEventListener('DOMContentLoaded', processMarkdown);
-    </script>
 
   </body>
 </html>

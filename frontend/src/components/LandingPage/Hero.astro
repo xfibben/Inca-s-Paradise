@@ -11,31 +11,28 @@ const { t } = Astro.props;
   <!-- Image Carousel Background -->
   <div id="hero-carousel" class="absolute top-0 left-0 w-full h-full">
     <!-- First image: loaded immediately -->
-    <picture>
-      <source srcset="/landing page images/wallpaper1.jpeg" type="image/webp" />
-      <img
-        src="/landing page images/wallpaper1.jpeg"
-        alt="Aventuras personalizadas en Perú - Machu Picchu y Los Andes"
-        class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-3000 opacity-100"
-        data-index="0"
-        width="1280"
-        height="720"
-        fetchpriority="high"
-      />
-    </picture>
-    <!-- segunda image: lazy loaded -->
-    <picture>
-      <source srcset="/landing page images/ubicacion-choquequirao-full.webp" type="image/webp" />
-      <img
-        src="/landing page images/ubicacion-choquequirao-full.webp"
-        alt="Choquequirao - Ciudadela inca perdida en Cusco"
-        class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-3000 opacity-0"
-        data-index="1"
-        width="1280"
-        height="853"
-        loading="lazy"
-      />
-    </picture>
+    <img
+      src="/landing page images/wallpaper1.jpeg"
+      alt="Aventuras personalizadas en Perú - Machu Picchu y Los Andes"
+      class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-3000 opacity-100"
+      data-index="0"
+      width="1280"
+      height="720"
+      fetchpriority="high"
+      loading="eager"
+      decoding="async"
+    />
+    <!-- segunda imagen: lazy loaded -->
+    <img
+      src="/landing page images/ubicacion-choquequirao-full.webp"
+      alt="Choquequirao - Ciudadela inca perdida en Cusco"
+      class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-3000 opacity-0"
+      data-index="1"
+      width="1280"
+      height="853"
+      loading="lazy"
+      decoding="async"
+    />
   </div>
 
   <!-- Overlay -->
