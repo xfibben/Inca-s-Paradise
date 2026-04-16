@@ -92,8 +92,8 @@ function toAbsoluteMediaUrl(value: any) {
   const url =
     typeof value === "string"
       ? value
-      : value?.formats?.medium?.url ??
-        value?.formats?.large?.url ??
+      : value?.formats?.large?.url ??
+        value?.formats?.medium?.url ??
         value?.formats?.small?.url ??
         value?.url ??
         "";
