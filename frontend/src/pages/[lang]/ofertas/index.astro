@@ -28,11 +28,26 @@ const strapiLocale =
   : currentLang;
 
 // Obtiene la URL absoluta de una imagen de Strapi
+function absUrl(raw: string): string {
+  if (!raw) return '';
+  return raw.startsWith('http') ? raw : `${PUBLIC_STRAPI_URL}${raw}`;
+}
+
 function getImageUrl(media: any): string | null {
   if (!media) return null;
   const url = media?.formats?.small?.url ?? media?.formats?.medium?.url ?? media?.url;
   if (!url) return null;
-  return url.startsWith('http') ? url : `${PUBLIC_STRAPI_URL}${url}`;
+  return absUrl(url);
+}
+
+function getCardSrcset(media: any): string {
+  if (!media) return '';
+  const small  = absUrl(media?.formats?.small?.url  ?? '');
+  const medium = absUrl(media?.formats?.medium?.url ?? '');
+  return [
+    small  ? `${small} 500w`  : '',
+    medium ? `${medium} 750w` : '',
+  ].filter(Boolean).join(', ');
 }
 
 // --- Fetch de tours con descuento activo ---
@@ -44,6 +59,7 @@ interface TourOferta {
   childUnitPrice: number;
   discount: number;
   imageUrl: string | null;
+  imageSrcset: string;
 }
 
 let toursOferta: TourOferta[] = [];
@@ -74,6 +90,7 @@ try {
         childUnitPrice: d.childUnitPrice ?? 0,
         discount: d.discount ?? 0,
         imageUrl: getImageUrl(firstImg),
+        imageSrcset: getCardSrcset(firstImg),
       };
     }).filter((t: TourOferta) => t.slug);
   }
@@ -237,6 +254,8 @@ const ofertasSchema = {
                       {tour.imageUrl ? (
                         <img
                           src={tour.imageUrl}
+                          srcset={tour.imageSrcset || undefined}
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           alt={tour.title}
                           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"

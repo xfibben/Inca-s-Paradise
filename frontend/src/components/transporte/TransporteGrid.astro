@@ -6,12 +6,21 @@ interface Props {
 
 const { tipos, publicStrapiUrl } = Astro.props;
 
-/* Obtiene la URL absoluta de la imagen */
-function getImageUrl(media: any): string | null {
-  if (!media) return null;
-  const url = media?.formats?.small?.url ?? media?.formats?.medium?.url ?? media?.url;
-  if (!url) return null;
-  return url.startsWith('http') ? url : `${publicStrapiUrl}${url}`;
+function absUrl(raw: string): string {
+  if (!raw) return '';
+  return raw.startsWith('http') ? raw : `${publicStrapiUrl}${raw}`;
+}
+
+function getCardImage(media: any): { src: string; srcset: string } {
+  if (!media) return { src: '', srcset: '' };
+  const small  = absUrl(media?.formats?.small?.url  ?? '');
+  const medium = absUrl(media?.formats?.medium?.url ?? '');
+  const src    = small || medium || absUrl(media?.url ?? '');
+  const srcset = [
+    small  ? `${small} 500w`  : '',
+    medium ? `${medium} 750w` : '',
+  ].filter(Boolean).join(', ');
+  return { src, srcset };
 }
 ---
 
@@ -33,15 +42,17 @@ function getImageUrl(media: any): string | null {
     <!-- Grid 4 columnas -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       {tipos.map((tipo) => {
-        const imgUrl = getImageUrl(tipo.image);
+        const { src: imgSrc, srcset: imgSrcset } = getCardImage(tipo.image);
 
         return (
           <article class="group relative rounded-2xl overflow-hidden bg-stone-100 shadow-md hover:shadow-xl transition-shadow duration-300 min-h-105 flex flex-col">
 
             <!-- Imagen de fondo -->
-            {imgUrl ? (
+            {imgSrc ? (
               <img
-                src={imgUrl}
+                src={imgSrc}
+                srcset={imgSrcset || undefined}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 alt={tipo.nombre}
                 class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"

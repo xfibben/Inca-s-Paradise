@@ -357,7 +357,9 @@ try {
                     <div class="grid grid-cols-5 gap-2 h-full w-full px-2 py-2">
                       {navStyleTrips.map((item: any) => {
                         const navImg = Array.isArray(item.image) ? item.image[0] : item.image;
-                        const imgUrl = navImg?.formats?.medium?.url
+                        const imgUrl = navImg?.formats?.small?.url
+                          ? `${STRAPI_PUBLIC_URL}${navImg.formats.small.url}`
+                          : navImg?.formats?.medium?.url
                           ? `${STRAPI_PUBLIC_URL}${navImg.formats.medium.url}`
                           : navImg?.url
                           ? `${STRAPI_PUBLIC_URL}${navImg.url}`
@@ -624,7 +626,9 @@ try {
               let imgUrl = '';
               if (item.image) {
                 const navImg = Array.isArray(item.image) ? item.image[0] : item.image;
-                if (navImg?.formats?.medium?.url) {
+                if (navImg?.formats?.small?.url) {
+                  imgUrl = `${STRAPI_PUBLIC_URL}${navImg.formats.small.url}`;
+                } else if (navImg?.formats?.medium?.url) {
                   imgUrl = `${STRAPI_PUBLIC_URL}${navImg.formats.medium.url}`;
                 } else if (navImg?.url) {
                   imgUrl = `${STRAPI_PUBLIC_URL}${navImg.url}`;
