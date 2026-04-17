@@ -1,0 +1,122 @@
+---
+import Navbar from '../../../components/shared/Navbar.astro';
+import Footer from '../../../components/shared/Footer.astro';
+import { getTranslation, languages } from '../../../i18n';
+import '../../../styles/global.css';
+import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
+import SEOHead from '../../../components/SEO/SEOHead.astro';
+
+const { lang } = Astro.params;
+const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
+const t = getTranslation(currentLang);
+
+const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
+const strapiLocale =
+  currentLang === 'pt' ? 'pt'
+  : currentLang === 'es' ? 'es-PE'
+  : currentLang === 'it' ? 'it'
+  : currentLang === 'fr' ? 'fr'
+  : currentLang;
+
+let data: any = null;
+try {
+  const res = await fetch(
+    `${STRAPI_URL}/api/preguntas-frecuentes?locale=${strapiLocale}&status=published`
+  );
+  if (res.ok) {
+    const json = await res.json();
+    data = json.data ?? null;
+  }
+} catch (e) {
+}
+
+const fallbackTitles: Record<string, string> = {
+  es: 'Preguntas Frecuentes',
+  en: 'Frequently Asked Questions',
+  pt: 'Perguntas Frequentes',
+  fr: 'Questions Fréquentes',
+  it: 'Domande Frequenti',
+};
+
+const fallbackDescriptions: Record<string, string> = {
+  es: 'Encuentra respuestas sobre reservas, pagos, tours, transporte y otros temas frecuentes de Inca\'s Paradise.',
+  en: 'Find answers about bookings, payments, tours, transport, and other frequent topics at Inca\'s Paradise.',
+  pt: 'Encontre respostas sobre reservas, pagamentos, tours, transporte e outros temas frequentes da Inca\'s Paradise.',
+  fr: 'Trouvez des réponses sur les réservations, les paiements, les circuits, le transport et d\'autres sujets fréquents chez Inca\'s Paradise.',
+  it: 'Trova risposte su prenotazioni, pagamenti, tour, trasporto e altri temi frequenti di Inca\'s Paradise.',
+};
+
+const title = data?.title ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
+const description = data?.description ?? '';
+const seoTitle = data?.metaTitle ?? title;
+const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
+
+const siteOrigin = (Astro.site?.origin ?? 'https://incasparadise.com').replace(/\/$/, '');
+const canonical = `${siteOrigin}/${currentLang}/preguntas-frecuentes`;
+const alternateLanguages = [
+  { lang: 'es', url: `${siteOrigin}/es/preguntas-frecuentes` },
+  { lang: 'en', url: `${siteOrigin}/en/preguntas-frecuentes` },
+  { lang: 'pt', url: `${siteOrigin}/pt/preguntas-frecuentes` },
+  { lang: 'fr', url: `${siteOrigin}/fr/preguntas-frecuentes` },
+  { lang: 'it', url: `${siteOrigin}/it/preguntas-frecuentes` },
+];
+
+const pageSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": seoTitle,
+  "description": seoDescription,
+  "url": canonical,
+  "inLanguage": currentLang === 'es' ? 'es-PE' : currentLang,
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "Inca's Paradise",
+    "url": siteOrigin,
+  },
+};
+---
+
+<!DOCTYPE html>
+<html lang={currentLang}>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{seoTitle}</title>
+    <SEOHead
+      title={seoTitle}
+      description={seoDescription}
+      canonical={canonical}
+      currentLang={currentLang}
+      alternateLanguages={alternateLanguages}
+      xDefaultUrl={`${siteOrigin}/es/preguntas-frecuentes`}
+      structuredData={pageSchema}
+    />
+    <GoogleAnalytics />
+    <style>
+      h1, h2 {
+        font-family: 'Playfair Display', serif;
+        font-weight: 500;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col text-gray-900" data-navbar-solid>
+    <Navbar {t} currentLang={currentLang} />
+    <main class="flex-1 pt-24 pb-16 bg-white">
+      <div class="mx-auto max-w-5xl px-4">
+        <div class="mb-6">
+          <h1 class="mb-4 text-3xl md:text-4xl">{title}</h1>
+          {description ? (
+            <p class="text-base text-gray-600 leading-relaxed text-justify">{description}</p>
+          ) : (
+            <p class="text-gray-400 italic">
+              {currentLang === 'es' ? 'Contenido próximamente.' : 'Content coming soon.'}
+            </p>
+          )}
+        </div>
+      </div>
+    </main>
+    <Footer {t} currentLang={currentLang} />
+  </body>
+</html>

@@ -1,0 +1,254 @@
+---
+import MarkdownIt from 'markdown-it';
+import Navbar from '../../../components/shared/Navbar.astro';
+import Footer from '../../../components/shared/Footer.astro';
+import { getTranslation, languages } from '../../../i18n';
+import '../../../styles/global.css';
+import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
+import SEOHead from '../../../components/SEO/SEOHead.astro';
+
+const { lang } = Astro.params;
+const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
+const t = getTranslation(currentLang);
+
+const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
+const STRAPI_BASE_URLS = Array.from(
+  new Set([
+    import.meta.env.STRAPI_URL,
+    import.meta.env.PUBLIC_STRAPI_URL,
+  ].filter(Boolean))
+);
+const STRAPI_NOSOTROS_ENDPOINT = '/api/nosotros';
+const strapiLocale =
+  currentLang === 'pt' ? 'pt'
+  : currentLang === 'es' ? 'es-PE'
+  : currentLang === 'it' ? 'it'
+  : currentLang === 'fr' ? 'fr'
+  : currentLang;
+
+let data: any = null;
+let spanishData: any = null;
+for (const baseUrl of STRAPI_BASE_URLS) {
+  try {
+    const res = await fetch(
+      `${baseUrl}${STRAPI_NOSOTROS_ENDPOINT}?populate[sections][populate]=image&locale=${strapiLocale}&status=published`
+    );
+    if (!res.ok) continue;
+
+    const json = await res.json();
+    const row = json.data ?? null;
+    if (row) {
+      data = row;
+      break;
+    }
+  } catch (e) {
+  }
+}
+
+if (strapiLocale !== 'es-PE') {
+  for (const baseUrl of STRAPI_BASE_URLS) {
+    try {
+      const res = await fetch(
+        `${baseUrl}${STRAPI_NOSOTROS_ENDPOINT}?populate[sections][populate]=image&locale=es-PE&status=published`
+      );
+      if (!res.ok) continue;
+
+      const json = await res.json();
+      const row = json.data ?? null;
+      if (row) {
+        spanishData = row;
+        break;
+      }
+    } catch (e) {
+    }
+  }
+}
+
+const fallbackTitles: Record<string, string> = {
+  es: 'Nosotros',
+  en: 'About Us',
+  pt: 'Sobre Nós',
+  fr: 'À Propos',
+  it: 'Chi Siamo',
+};
+
+const fallbackDescriptions: Record<string, string> = {
+  es: 'Conoce más sobre Inca\'s Paradise, nuestra propuesta de viaje y la forma en que acompañamos cada experiencia en Perú.',
+  en: 'Learn more about Inca\'s Paradise, our travel approach, and how we support every experience in Peru.',
+  pt: 'Conheça mais sobre a Inca\'s Paradise, nossa proposta de viagem e como acompanhamos cada experiência no Peru.',
+  fr: 'Découvrez Inca\'s Paradise, notre approche du voyage et la manière dont nous accompagnons chaque expérience au Pérou.',
+  it: 'Scopri di più su Inca\'s Paradise, il nostro modo di viaggiare e come accompagniamo ogni esperienza in Perù.',
+};
+
+const title = data?.title ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
+const description = data?.description ?? '';
+const seoTitle = data?.metaTitle ?? title;
+const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
+const md = new MarkdownIt({ html: true });
+const strapiPublicUrl = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
+
+const fallbackSections: Record<string, Array<{ title: string; text: string; imageUrl?: string }>> = {
+  es: [
+    {
+      title: 'Bienvenidos a Incas Paradise Comfort',
+      text: 'Somos especialistas en organizar viajes de todo tipo: tours y paquetes en Perú y Bolivia, porque estamos convencidos de que la calidad de servicio que ofrecemos es nuestra herramienta más competitiva. Estamos aquí para asegurarnos de que cada uno de sus viajes sea una experiencia apasionante e inolvidable.'
+    },
+    {
+      title: 'Innovación y creatividad',
+      text: 'Nuestro principal objetivo es ofrecer experiencias auténticas y únicas. En nuestro sitio web siempre encontrarás nuevos tours y paquetes de lugares menos visitados de Perú, pensados para cumplir el viaje de tus sueños y las expectativas de nuestros clientes.',
+      imageUrl: '/landing page images/nosotros/innovacion-luxury.svg'
+    },
+    {
+      title: 'Respeto',
+      text: 'Trabajamos en equipo con nuestros socios y proveedores con respeto e integridad para desarrollar y mantener relaciones de trabajo duraderas y mutuamente beneficiosas.',
+      imageUrl: '/landing page images/nosotros/respeto-luxury.svg'
+    },
+    {
+      title: 'Honestidad',
+      text: 'Estamos comprometidos íntegramente con nuestros clientes, colaboradores, proveedores y la comunidad, ofreciendo sinceridad y transparencia en cada trato.',
+      imageUrl: '/landing page images/nosotros/honestidad-luxury.svg'
+    },
+    {
+      title: 'Excelencia',
+      text: 'Ofrecemos excelencia a nuestros clientes y socios de viaje a través del desarrollo de sistemas de calidad. Somos una organización enfocada en la satisfacción total de nuestros clientes.',
+      imageUrl: '/landing page images/nosotros/excelencia-luxury.svg'
+    },
+    {
+      title: 'Simplicidad',
+      text: 'Contamos con sistemas web integrados que brindan una manera simple de realizar pagos online asociados con empresas bancarias y financieras, además de reservas y comentarios para que nuestros clientes interactúen con nosotros desde la comodidad de su hogar.',
+      imageUrl: '/landing page images/nosotros/simplicidad-luxury.svg'
+    }
+  ]
+};
+
+const sections = Array.isArray(data?.sections) && data.sections.length > 0
+  ? data.sections.map((section: any, index: number) => {
+      const currentImageUrl = section?.image?.url
+        ? `${strapiPublicUrl}${section.image.url}`
+        : '';
+      const fallbackSection = Array.isArray(spanishData?.sections)
+        ? spanishData.sections[index]
+        : null;
+      const fallbackImageUrl = fallbackSection?.image?.url
+        ? `${strapiPublicUrl}${fallbackSection.image.url}`
+        : '';
+      const imageUrl = currentImageUrl || fallbackImageUrl || null;
+
+      return {
+        title: section?.title ?? '',
+        imageUrl,
+        renderedText: md.render(typeof section?.text === 'string' ? section.text : '')
+      };
+    })
+  : (fallbackSections[currentLang] ?? fallbackSections.es).map((section) => ({
+      title: section.title,
+      imageUrl: section.imageUrl ?? null,
+      renderedText: md.render(section.text)
+    }));
+
+const siteOrigin = (Astro.site?.origin ?? 'https://incasparadise.com').replace(/\/$/, '');
+const canonical = `${siteOrigin}/${currentLang}/nosotros`;
+const alternateLanguages = [
+  { lang: 'es', url: `${siteOrigin}/es/nosotros` },
+  { lang: 'en', url: `${siteOrigin}/en/nosotros` },
+  { lang: 'pt', url: `${siteOrigin}/pt/nosotros` },
+  { lang: 'fr', url: `${siteOrigin}/fr/nosotros` },
+  { lang: 'it', url: `${siteOrigin}/it/nosotros` },
+];
+
+const pageSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": seoTitle,
+  "description": seoDescription,
+  "url": canonical,
+  "inLanguage": currentLang === 'es' ? 'es-PE' : currentLang,
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "Inca's Paradise",
+    "url": siteOrigin,
+  },
+  ...(sections.length > 0 && {
+    "hasPart": sections.map((section, index) => ({
+      "@type": "WebPageElement",
+      "name": `${index + 1}. ${section.title}`,
+    })),
+  }),
+};
+---
+
+<!DOCTYPE html>
+<html lang={currentLang}>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{seoTitle}</title>
+    <SEOHead
+      title={seoTitle}
+      description={seoDescription}
+      canonical={canonical}
+      currentLang={currentLang}
+      alternateLanguages={alternateLanguages}
+      xDefaultUrl={`${siteOrigin}/es/nosotros`}
+      structuredData={pageSchema}
+    />
+    <GoogleAnalytics />
+    <style>
+      h1, h2 {
+        font-family: 'Playfair Display', serif;
+        font-weight: 500;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col text-gray-900" data-navbar-solid>
+    <Navbar {t} currentLang={currentLang} />
+    <main class="flex-1 pt-24 pb-16 bg-white">
+      <div class="mx-auto max-w-5xl px-4">
+        <div class="mb-6">
+          <h1 class="mb-4 text-3xl md:text-4xl">{title}</h1>
+          {description && (
+            <p class="text-base text-gray-600 leading-relaxed text-justify">{description}</p>
+          )}
+        </div>
+
+        {sections.length > 0 ? (
+          <div class="grid border-t border-gray-200 md:grid-cols-2 md:gap-x-12">
+            {sections.map((section, index) => {
+              const isLastOddItem = sections.length % 2 !== 0 && index === sections.length - 1;
+
+              return (
+              <section class:list={[
+                'border-b border-gray-200 py-7 md:py-8',
+                isLastOddItem && 'md:col-span-2'
+              ]}>
+                <div>
+                  <div class="mb-3 flex items-center gap-3 md:gap-4">
+                    {section.imageUrl ? (
+                      <img src={section.imageUrl} alt={section.title} class="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" loading="lazy" />
+                    ) : (
+                      <span class="block shrink-0 text-sm tracking-[0.28em] text-gray-400">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                    )}
+                    <h2 class="text-xl text-gray-900 md:text-2xl">{section.title}</h2>
+                  </div>
+                  <div
+                    class="prose prose-gray max-w-none text-gray-700 leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:mt-0 prose-headings:mb-0 prose-strong:text-gray-900"
+                    set:html={section.renderedText}
+                  />
+                </div>
+              </section>
+            )})}
+          </div>
+        ) : (
+          <p class="text-gray-400 italic">
+            {currentLang === 'es' ? 'Contenido próximamente.' : 'Content coming soon.'}
+          </p>
+        )}
+      </div>
+    </main>
+    <Footer {t} currentLang={currentLang} />
+  </body>
+</html>
