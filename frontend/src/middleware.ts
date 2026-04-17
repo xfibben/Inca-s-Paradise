@@ -35,6 +35,15 @@ function applyCacheHeaders(pathname: string, response: Response): void {
     return;
   }
 
+  const isLandingPage =
+    pathname === '/' ||
+    /^\/(?:es|en|pt|fr|it)\/?$/.test(pathname);
+
+  if (isLandingPage) {
+    response.headers.set('Cache-Control', 'no-store');
+    return;
+  }
+
   const contentType = response.headers.get('content-type') ?? '';
   if (contentType.includes('text/html')) {
     // CDN/shared cache corto para HTML, con stale para evitar picos de latencia.
