@@ -1312,7 +1312,7 @@ const hasBookingCard = Boolean(
                   <div class="mx-auto w-full max-w-7xl px-6">
                     <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                       {moreToursCards.map((card: any) => (
-                        <article class="overflow-hidden border border-[#e2e8f0] bg-white">
+                        <article class="flex h-full flex-col overflow-hidden border border-[#e2e8f0] bg-white">
                           <a
                             href={`/${lang}/tours/${card.slug}`}
                             class="block"
@@ -1328,7 +1328,7 @@ const hasBookingCard = Boolean(
                               <div class="h-52 w-full bg-gray-200" />
                             )}
                           </a>
-                          <div class="p-4 md:p-5">
+                          <div class="flex flex-1 flex-col p-4 md:p-5">
                             {card.title ? (
                               <h3 class="text-lg font-semibold text-gray-900">
                                 {card.title}
@@ -1341,7 +1341,7 @@ const hasBookingCard = Boolean(
                             ) : null}
                             <a
                               href={`/${lang}/tours/${card.slug}`}
-                              class="mt-4 inline-flex items-center justify-center border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-700 hover:text-white"
+                              class="mt-auto inline-flex w-fit self-start items-center justify-center border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-700 hover:text-white"
                             >
                               {tourDetailCtaLabel}
                             </a>
