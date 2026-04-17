@@ -1,120 +1,147 @@
-# Guía de Estilos - Tipografía
+# Inca's Paradise
 
-## Tipografía General
+Plataforma de turismo para destinos en Peru con frontend SSR, CMS headless, reservas y pasarela de pago.
 
-Este proyecto utiliza **Tailwind CSS** y **Flowbite** para gestionar la tipografía y los estilos visuales.
+## Stack
 
----
+- Frontend: Astro 5.17.1 + Tailwind CSS 4.2.1 + Flowbite 4.0.1
+- Backend: Strapi 5.37.1 + PostgreSQL 14
+- PDF: `jspdf`
+- Contenido multidioma: i18n local en Astro + locales de Strapi
+- Infraestructura local y productiva: Docker Compose
 
-## Familias de Fuentes
+## Dependencias principales
 
-### Font Stack
-```css
-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-  "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-  sans-serif;
+### Frontend
+
+- `astro`
+- `@astrojs/node`
+- `tailwindcss`
+- `@tailwindcss/vite`
+- `@tailwindcss/typography`
+- `flowbite`
+- `@fontsource/playfair-display`
+- `markdown-it`
+- `jspdf`
+
+### Backend
+
+- `@strapi/strapi`
+- `@strapi/plugin-users-permissions`
+- `@strapi/plugin-cloud`
+- `pg`
+- `react`
+- `react-dom`
+- `react-router-dom`
+- `styled-components`
+
+## Arquitectura
+
+```text
+/
+├── frontend/                  # Sitio web SSR en Astro
+│   ├── src/pages/[lang]/      # Rutas por idioma
+│   ├── src/components/        # UI por dominio
+│   ├── src/i18n/              # Traducciones locales y UBIGEO
+│   └── src/data/              # Datos estaticos de apoyo
+├── backend/                   # CMS y APIs en Strapi
+│   └── src/api/               # Content types, controllers, routes y services
+├── docker-compose.yaml        # Desarrollo
+├── docker-compose.prod.yaml   # Produccion
+└── docs/                      # Documentacion del proyecto
 ```
 
----
+## Modulos funcionales
 
-## Sistema de Tipografía Responsivo
+- Destinos y detalle de destinos
+- Tours y reservas
+- Style trips
+- Transporte, tipos de transporte y vehiculos
+- Terminos y condiciones
+- Pagos con gateway unificado
+- Sincronizacion de reservas con Google Sheets
 
-## Filosofía de Diseño
+## Arranque rapido
 
-Para mantener **consistencia y simplificar** el desarrollo, este proyecto utiliza **elementos tipográficos responsivos** que se adaptan según el dispositivo.
+### Opcion 1: Docker Compose
 
----
+1. Configurar variables en `.env`.
+2. Levantar servicios:
 
-## H1 - Títulos Principales
-
-### Especificaciones
-- **Móvil:** `text-2xl` (24px)
-- **Tablet:** `md:text-3xl` (30px)
-- **Desktop:** `lg:text-4xl` (36px)
-- **Peso:** `font-bold`
-- **Color:** `text-gray-900`
-
-```html
-<head>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500&display=swap" rel="stylesheet" />
-</head>
-<h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 style="font-family: 'Playfair Display', serif; font-style: italic;">
-  Título Principal
-</h1>
+```bash
+docker compose up
 ```
 
----
+Servicios por defecto:
 
-## H2 - Subtítulos Secundarios
+- Frontend: `http://localhost:4321`
+- Backend Strapi: `http://localhost:1337`
+- PostgreSQL: `localhost:5432`
 
-### Especificaciones
-- **Móvil:** `text-lg` (18px)
-- **Tablet:** `md:text-xl` (20px)
-- **Desktop:** `lg:text-2xl` (24px)
-- **Peso:** `font-semibold`
-- **Color:** `text-gray-800`
+### Opcion 2: Ejecucion por separado
 
-```html
-<h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-gray-800 leading-snug my-3 md:my-4 lg:my-6">
-  Subtítulo Secundario
-</h2>
+Backend:
+
+```bash
+cd backend
+npm install
+npm run develop
 ```
 
----
+Frontend:
 
-## H3 - Subtítulos Terciarios
-
-### Especificaciones
-- **Móvil:** `text-base` (16px)
-- **Tablet:** `md:text-lg` (18px)
-- **Desktop:** `lg:text-xl` (20px)
-- **Peso:** `font-semibold`
-- **Color:** `text-gray-700`
-
-```html
-<h3 class="text-base md:text-lg lg:text-xl font-semibold text-gray-700 leading-snug my-2 md:my-3 lg:my-4">
-  Subtítulo Terciario
-</h3>
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
----
+## Variables de entorno
 
-## P - Párrafos de Contenido
+El proyecto usa variables en el `.env` raiz y ejemplos parciales en:
 
-### Especificaciones
-- **Móvil:** `text-sm` (14px)
-- **Tablet:** `md:text-base` (16px)
-- **Desktop:** `lg:text-lg` (18px)
-- **Peso:** `font-normal`
-- **Color:** `text-gray-700`
+- [frontend/.env.example](/Users/arturo/Documents/Inca-s-Paradise/frontend/.env.example)
+- [backend/.env.example](/Users/arturo/Documents/Inca-s-Paradise/backend/.env.example)
 
-```html
-<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed mb-3 md:mb-4 lg:mb-6">
-  Párrafo de contenido principal.
-</p>
-```
+Variables clave:
 
----
+- Base de datos: `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+- Strapi: `ADMIN_JWT_SECRET`, `API_TOKEN_SALT`, `APP_KEYS`, `JWT_SECRET`
+- Frontend: `PUBLIC_STRAPI_URL`, `PUBLIC_GTM_ID`, `PUBLIC_GA_MEASUREMENT_ID`
+- Google Sheets: `GOOGLE_APPS_SCRIPT_URL`
+- PayPal: `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `PAYPAL_MODE`, `PAYPAL_WEBHOOK_ID`
+- Cambio de moneda y documentos: `APIS_NET_PE_TOKEN`
 
-## Tabla Resumen
+## Flujo general
 
-| Elemento | Móvil | Tablet | Desktop | Peso | Color |
-|----------|-------|--------|---------|------|-------|
-| **H1** | 24px | 30px | 36px | bold | gray-900 |
-| **H2** | 18px | 20px | 24px | semibold | gray-800 |
-| **H3** | 16px | 18px | 20px | semibold | gray-700 |
-| **P** | 14px | 16px | 18px | normal | gray-700 |
+1. El usuario navega el sitio en `/[lang]/...`.
+2. El frontend consume contenido y datos desde Strapi.
+3. La reserva se arma en el frontend.
+4. El backend confirma el pago y crea la reserva.
+5. La reserva se sincroniza a Google Sheets.
 
----
+## Documentacion
 
-## Breakpoints
+- [Guia de desarrollo](./docs/desarrollo.md)
+- [Guia de multidioma](./docs/multidioma.md)
+- [Reservas y pagos](./docs/reservas-y-pagos.md)
+- [Operacion y contenido](./docs/operacion-y-contenido.md)
+- [Guia de uso del CMS](./docs/guia-cms.md)
+- [Guia del VPS](./docs/vps.md)
 
-```
-Móvil:   0px - 767px
-Tablet:  768px - 1023px
-Desktop: 1024px+
-```
+## Estado actual
 
----
+- PayPal: implementado
+- IziPay tarjeta: pendiente
+- IziPay Yape QR: pendiente
+- Sincronizacion a Google Sheets: activa por lifecycle de `reserva`
+- Suite de tests automatizados: no encontrada en el repositorio
+
+## Recomendado documentar despues
+
+- Proceso de despliegue y rollback
+- Politica de manejo de credenciales y rotacion de secretos
+- Flujo editorial para altas y cambios de contenido
+- SEO, analytics y eventos de conversion
+- Manejo de media en Strapi
+- Respuesta operativa ante pagos fallidos o reservas incompletas

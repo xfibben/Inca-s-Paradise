@@ -22,7 +22,7 @@ build/
 .tmp/
 public/uploads/
 
-CLAUDE.md
+AGENTS.md
 frontend/package-lock.json
 
 backend/.env.example
