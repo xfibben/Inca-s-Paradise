@@ -1,4 +1,5 @@
 ---
+import MarkdownIt from 'markdown-it';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import { getTranslation, languages } from '../../../i18n';
@@ -10,7 +11,13 @@ const { lang } = Astro.params;
 const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
 const t = getTranslation(currentLang);
 
-const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
+const STRAPI_BASE_URLS = Array.from(
+  new Set([
+    import.meta.env.STRAPI_URL,
+    import.meta.env.PUBLIC_STRAPI_URL,
+  ].filter(Boolean))
+);
+const STRAPI_FAQ_ENDPOINT = '/api/preguntas-frecuentes';
 const strapiLocale =
   currentLang === 'pt' ? 'pt'
   : currentLang === 'es' ? 'es-PE'
@@ -19,15 +26,22 @@ const strapiLocale =
   : currentLang;
 
 let data: any = null;
-try {
-  const res = await fetch(
-    `${STRAPI_URL}/api/preguntas-frecuentes?locale=${strapiLocale}&status=published`
-  );
-  if (res.ok) {
+
+for (const baseUrl of STRAPI_BASE_URLS) {
+  try {
+    const res = await fetch(
+      `${baseUrl}${STRAPI_FAQ_ENDPOINT}?populate[sections]=*&locale=${strapiLocale}&status=published`
+    );
+    if (!res.ok) continue;
+
     const json = await res.json();
-    data = json.data ?? null;
+    const row = json.data ?? null;
+    if (row) {
+      data = row;
+      break;
+    }
+  } catch (e) {
   }
-} catch (e) {
 }
 
 const fallbackTitles: Record<string, string> = {
@@ -39,17 +53,47 @@ const fallbackTitles: Record<string, string> = {
 };
 
 const fallbackDescriptions: Record<string, string> = {
-  es: 'Encuentra respuestas sobre reservas, pagos, tours, transporte y otros temas frecuentes de Inca\'s Paradise.',
-  en: 'Find answers about bookings, payments, tours, transport, and other frequent topics at Inca\'s Paradise.',
-  pt: 'Encontre respostas sobre reservas, pagamentos, tours, transporte e outros temas frequentes da Inca\'s Paradise.',
-  fr: 'Trouvez des réponses sur les réservations, les paiements, les circuits, le transport et d\'autres sujets fréquents chez Inca\'s Paradise.',
-  it: 'Trova risposte su prenotazioni, pagamenti, tour, trasporto e altri temi frequenti di Inca\'s Paradise.',
+  es: 'Resolvemos tus dudas más comunes sobre reservas, pagos, tours y transporte para que planifiques tu viaje con tranquilidad.',
+  en: 'We answer the most common questions about bookings, payments, tours, and transport so you can plan your trip with confidence.',
+  pt: 'Respondemos às dúvidas mais frequentes sobre reservas, pagamentos, tours e transporte para que você planeje sua viagem com tranquilidade.',
+  fr: 'Nous répondons aux questions les plus fréquentes sur les réservations, paiements, circuits et transports pour vous aider à planifier votre voyage sereinement.',
+  it: 'Rispondiamo alle domande più frequenti su prenotazioni, pagamenti, tour e trasporti per aiutarti a pianificare il viaggio con tranquillità.',
 };
 
-const title = data?.title ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
-const description = data?.description ?? '';
+const title = data?.titulo ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
+const description = data?.descripcion ?? '';
 const seoTitle = data?.metaTitle ?? title;
 const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
+const md = new MarkdownIt({ html: true });
+
+const fallbackSections: Record<string, Array<{ question: string; answer: string }>> = {
+  es: [
+    {
+      question: '¿Cómo puedo reservar un tour o transporte?',
+      answer: 'Puedes reservar directamente desde nuestras páginas de tours y transporte, completando el formulario y siguiendo el proceso de pago indicado.'
+    },
+    {
+      question: '¿Qué métodos de pago aceptan?',
+      answer: 'Aceptamos los métodos de pago disponibles en la plataforma al momento de tu reserva. Si necesitas ayuda, también podemos orientarte por WhatsApp.'
+    },
+    {
+      question: '¿Puedo modificar mi reserva después del pago?',
+      answer: 'Sí, sujeto a disponibilidad y a las condiciones de la reserva. Te recomendamos contactarnos lo antes posible para revisar opciones.'
+    }
+  ]
+};
+
+const sections = Array.isArray(data?.sections) && data.sections.length > 0
+  ? data.sections.map((section: any) => {
+      return {
+        question: section?.pregunta ?? '',
+        renderedAnswer: md.render(typeof section?.respuesta === 'string' ? section.respuesta : '')
+      };
+    })
+  : (fallbackSections[currentLang] ?? fallbackSections.es).map((section) => ({
+      question: section.question,
+      renderedAnswer: md.render(section.answer)
+    }));
 
 const siteOrigin = (Astro.site?.origin ?? 'https://incasparadise.com').replace(/\/$/, '');
 const canonical = `${siteOrigin}/${currentLang}/preguntas-frecuentes`;
@@ -63,7 +107,7 @@ const alternateLanguages = [
 
 const pageSchema = {
   "@context": "https://schema.org",
-  "@type": "WebPage",
+  "@type": "FAQPage",
   "name": seoTitle,
   "description": seoDescription,
   "url": canonical,
@@ -73,6 +117,16 @@ const pageSchema = {
     "name": "Inca's Paradise",
     "url": siteOrigin,
   },
+  ...(sections.length > 0 && {
+    "mainEntity": sections.map((section) => ({
+      "@type": "Question",
+      "name": section.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": section.renderedAnswer.replace(/<[^>]*>/g, ' ').trim(),
+      },
+    })),
+  }),
 };
 ---
 
@@ -101,22 +155,76 @@ const pageSchema = {
       }
     </style>
   </head>
-  <body class="min-h-screen flex flex-col text-gray-900" data-navbar-solid>
+  <body class="min-h-screen flex flex-col bg-[#f8f4ee] text-gray-900" data-navbar-solid>
     <Navbar {t} currentLang={currentLang} />
-    <main class="flex-1 pt-24 pb-16 bg-white">
-      <div class="mx-auto max-w-5xl px-4">
-        <div class="mb-6">
-          <h1 class="mb-4 text-3xl md:text-4xl">{title}</h1>
-          {description ? (
-            <p class="text-base text-gray-600 leading-relaxed text-justify">{description}</p>
-          ) : (
-            <p class="text-gray-400 italic">
-              {currentLang === 'es' ? 'Contenido próximamente.' : 'Content coming soon.'}
-            </p>
-          )}
+    <main class="flex-1 pt-24 pb-16">
+      <section class="mx-auto max-w-7xl px-4 py-8 md:px-8 md:py-12">
+        <div class="grid gap-12 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
+          <div class="lg:sticky lg:top-32 lg:self-start">
+            <h1 class="max-w-md text-4xl leading-none text-[#1AA093] md:text-6xl">{title}</h1>
+            {description && (
+              <p class="mt-6 max-w-md text-base leading-relaxed text-gray-600">
+                {description}
+              </p>
+            )}
+          </div>
+
+          <div class="border-t border-[#d8d0c3]">
+            {sections.length > 0 ? (
+              sections.map((section, index) => (
+                <details class="faq-item group border-b border-[#d8d0c3]" data-faq-item>
+                  <summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-7 text-left">
+                    <div class="flex min-w-0 items-center gap-4">
+                      <span class="text-base uppercase leading-snug tracking-tight text-[#1AA093] md:text-[1.05rem]">
+                        {section.question}
+                      </span>
+                    </div>
+                    <span class="relative block h-7 w-7 shrink-0 text-[#1AA093]">
+                      <span class="faq-cross-line absolute left-1/2 top-1/2 h-px w-7 -translate-x-1/2 -translate-y-1/2 bg-current transition-transform duration-200"></span>
+                      <span class="faq-cross-line absolute left-1/2 top-1/2 h-px w-7 -translate-x-1/2 -translate-y-1/2 rotate-90 bg-current transition-transform duration-200"></span>
+                    </span>
+                  </summary>
+                  <div class="faq-answer hidden pb-7 pr-12">
+                    <div
+                      class="prose prose-gray max-w-none text-black prose-p:my-0 prose-p:leading-7 prose-ul:my-3 prose-ol:my-3 prose-li:my-1 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e]"
+                      set:html={section.renderedAnswer}
+                    />
+                  </div>
+                </details>
+              ))
+            ) : (
+              <p class="py-8 text-[#7c7b73] italic">
+                {currentLang === 'es' ? 'Contenido próximamente.' : 'Content coming soon.'}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      </section>
     </main>
     <Footer {t} currentLang={currentLang} />
+
+    <script is:inline>
+      document.querySelectorAll('[data-faq-item]').forEach((item) => {
+        const details = item;
+        const answer = item.querySelector('.faq-answer');
+        const lines = item.querySelectorAll('.faq-cross-line');
+
+        if (!(details instanceof HTMLDetailsElement) || !answer) return;
+
+        details.addEventListener('toggle', () => {
+          if (details.open) {
+            answer.classList.remove('hidden');
+            lines[0]?.classList.add('rotate-45');
+            lines[1]?.classList.remove('rotate-90');
+            lines[1]?.classList.add('-rotate-45');
+          } else {
+            answer.classList.add('hidden');
+            lines[0]?.classList.remove('rotate-45');
+            lines[1]?.classList.remove('-rotate-45');
+            lines[1]?.classList.add('rotate-90');
+          }
+        });
+      });
+    </script>
   </body>
 </html>

@@ -15,7 +15,7 @@
     }
   },
   "attributes": {
-    "title": {
+    "titulo": {
       "type": "string",
       "required": true,
       "pluginOptions": {
@@ -24,7 +24,7 @@
         }
       }
     },
-    "description": {
+    "descripcion": {
       "type": "text",
       "pluginOptions": {
         "i18n": {
@@ -42,6 +42,16 @@
     },
     "metaDescription": {
       "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "secciones": {
+      "type": "component",
+      "component": "legal.seccion-contenido",
+      "repeatable": true,
       "pluginOptions": {
         "i18n": {
           "localized": true

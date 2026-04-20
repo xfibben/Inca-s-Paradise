@@ -1,4 +1,5 @@
 ---
+import MarkdownIt from 'markdown-it';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import { getTranslation, languages } from '../../../i18n';
@@ -21,7 +22,7 @@ const strapiLocale =
 let data: any = null;
 try {
   const res = await fetch(
-    `${STRAPI_URL}/api/cancelaciones?locale=${strapiLocale}&status=published`
+    `${STRAPI_URL}/api/cancelaciones?populate[secciones]=*&locale=${strapiLocale}&status=published`
   );
   if (res.ok) {
     const json = await res.json();
@@ -46,10 +47,46 @@ const fallbackDescriptions: Record<string, string> = {
   it: 'Consulta le informazioni su cancellazioni, modifiche e condizioni applicabili alle prenotazioni con Inca\'s Paradise.',
 };
 
-const title = data?.title ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
-const description = data?.description ?? '';
+const title = data?.titulo ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
+const description = data?.descripcion ?? '';
 const seoTitle = data?.metaTitle ?? title;
 const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
+const md = new MarkdownIt({ html: true });
+
+const fallbackSecciones: Record<string, Array<{ titulo: string; contenido: string }>> = {
+  es: [
+    {
+      titulo: 'Cancelaciones con anticipación',
+      contenido: 'Las solicitudes de cancelación deben enviarse con la mayor anticipación posible. Las condiciones aplicables pueden variar según el tipo de servicio, proveedor y fecha reservada.'
+    },
+    {
+      titulo: 'Cambios de fecha',
+      contenido: 'Las reprogramaciones están sujetas a disponibilidad y a las condiciones del servicio contratado. En algunos casos pueden aplicarse cargos adicionales.'
+    },
+    {
+      titulo: 'Servicios no reembolsables',
+      contenido: 'Algunos servicios operados por terceros, entradas o tarifas promocionales pueden ser no reembolsables una vez confirmados.'
+    },
+    {
+      titulo: 'No show',
+      contenido: 'La no presentación del pasajero en la fecha y hora programadas puede implicar la pérdida total del servicio sin derecho a reembolso.'
+    },
+    {
+      titulo: 'Fuerza mayor',
+      contenido: 'En casos de clima extremo, cierres de rutas, huelgas u otras situaciones ajenas a nuestro control, buscaremos alternativas de reprogramación o la solución más razonable según cada caso.'
+    }
+  ]
+};
+
+const secciones = Array.isArray(data?.secciones) && data.secciones.length > 0
+  ? data.secciones.map((seccion: any) => ({
+      titulo: seccion?.titulo ?? '',
+      contenidoHtml: md.render(typeof seccion?.contenido === 'string' ? seccion.contenido : '')
+    }))
+  : (fallbackSecciones[currentLang] ?? fallbackSecciones.es).map((seccion) => ({
+      titulo: seccion.titulo,
+      contenidoHtml: md.render(seccion.contenido)
+    }));
 
 const siteOrigin = (Astro.site?.origin ?? 'https://incasparadise.com').replace(/\/$/, '');
 const canonical = `${siteOrigin}/${currentLang}/cancelaciones`;
@@ -73,6 +110,12 @@ const pageSchema = {
     "name": "Inca's Paradise",
     "url": siteOrigin,
   },
+  ...(secciones.length > 0 && {
+    "hasPart": secciones.map((seccion, index) => ({
+      "@type": "WebPageElement",
+      "name": `${index + 1}. ${seccion.titulo}`,
+    })),
+  }),
 };
 ---
 
@@ -106,15 +149,36 @@ const pageSchema = {
     <main class="flex-1 pt-24 pb-16 bg-white">
       <div class="mx-auto max-w-5xl px-4">
         <div class="mb-6">
-          <h1 class="mb-4 text-3xl md:text-4xl">{title}</h1>
-          {description ? (
+          <h1 class="mb-4 text-3xl md:text-4xl text-[#1AA093]">{title}</h1>
+          {description && (
             <p class="text-base text-gray-600 leading-relaxed text-justify">{description}</p>
-          ) : (
-            <p class="text-gray-400 italic">
-              {currentLang === 'es' ? 'Contenido próximamente.' : 'Content coming soon.'}
-            </p>
           )}
         </div>
+
+        {secciones.length > 0 ? (
+          <div class="border-t border-gray-200">
+            {secciones.map((seccion, index) => (
+              <section class="border-b border-gray-200 py-7 md:py-8">
+                <div>
+                  <div class="mb-3 flex items-center gap-3 md:gap-4">
+                    <span class="block shrink-0 text-lg font-medium tracking-[0.18em] text-[#1AA093] md:text-xl">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <h2 class="text-xl text-[#1AA093] md:text-2xl">{seccion.titulo}</h2>
+                  </div>
+                  <div
+                    class="prose prose-gray max-w-none text-black leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:mt-0 prose-headings:mb-0 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e]"
+                    set:html={seccion.contenidoHtml}
+                  />
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <p class="text-gray-400 italic">
+            {currentLang === 'es' ? 'Contenido próximamente.' : 'Content coming soon.'}
+          </p>
+        )}
       </div>
     </main>
     <Footer {t} currentLang={currentLang} />

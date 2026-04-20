@@ -207,7 +207,7 @@ const pageSchema = {
     <main class="flex-1 pt-24 pb-16 bg-white">
       <div class="mx-auto max-w-5xl px-4">
         <div class="mb-6">
-          <h1 class="mb-4 text-3xl md:text-4xl">{title}</h1>
+          <h1 class="mb-4 text-3xl text-[#1AA093] md:text-4xl">{title}</h1>
           {description && (
             <p class="text-base text-gray-600 leading-relaxed text-justify">{description}</p>
           )}
@@ -232,10 +232,10 @@ const pageSchema = {
                         {String(index + 1).padStart(2, '0')}
                       </span>
                     )}
-                    <h2 class="text-xl text-gray-900 md:text-2xl">{section.title}</h2>
+                    <h2 class="text-xl text-[#1AA093] md:text-2xl">{section.title}</h2>
                   </div>
                   <div
-                    class="prose prose-gray max-w-none text-gray-700 leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:mt-0 prose-headings:mb-0 prose-strong:text-gray-900"
+                    class="prose prose-gray max-w-none text-black leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:mt-0 prose-headings:mb-0 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e]"
                     set:html={section.renderedText}
                   />
                 </div>
