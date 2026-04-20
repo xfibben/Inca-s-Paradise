@@ -25,7 +25,7 @@
       }
     },
     "descripcion": {
-      "type": "text",
+      "type": "richtext",
       "pluginOptions": {
         "i18n": {
           "localized": true

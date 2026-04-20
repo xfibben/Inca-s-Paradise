@@ -1,4 +1,5 @@
 ---
+import MarkdownIt from 'markdown-it';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import { getTranslation, languages } from '../../../i18n';
@@ -21,7 +22,7 @@ const strapiLocale =
 let data: any = null;
 try {
   const res = await fetch(
-    `${STRAPI_URL}/api/politicas?locale=${strapiLocale}&status=published`
+    `${STRAPI_URL}/api/politicas?populate[secciones]=*&locale=${strapiLocale}&status=published`
   );
   if (res.ok) {
     const json = await res.json();
@@ -50,6 +51,39 @@ const title = data?.titulo ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
 const description = data?.descripcion ?? '';
 const seoTitle = data?.metaTitle ?? title;
 const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
+const md = new MarkdownIt({ html: true });
+const descriptionHtml = md.render(typeof description === 'string' ? description : '');
+
+const fallbackSecciones: Record<string, Array<{ titulo: string; contenido: string }>> = {
+  es: [
+    {
+      titulo: 'Reservas y confirmaciones',
+      contenido: 'Toda reserva está sujeta a disponibilidad y se considera confirmada una vez recibido el pago o anticipo correspondiente, según las condiciones del servicio contratado.'
+    },
+    {
+      titulo: 'Cambios operativos',
+      contenido: 'Nos reservamos el derecho de realizar ajustes razonables en itinerarios, horarios o servicios cuando existan causas operativas, climáticas o de seguridad.'
+    },
+    {
+      titulo: 'Responsabilidad del viajero',
+      contenido: 'Es responsabilidad del pasajero presentar documentación válida, llegar a tiempo a los puntos de encuentro y revisar la información importante de su reserva antes del viaje.'
+    },
+    {
+      titulo: 'Servicios de terceros',
+      contenido: 'Algunos servicios pueden ser operados por terceros. En esos casos, las condiciones específicas del proveedor también pueden resultar aplicables.'
+    }
+  ]
+};
+
+const secciones = Array.isArray(data?.secciones) && data.secciones.length > 0
+  ? data.secciones.map((seccion: any) => ({
+      titulo: seccion?.titulo ?? '',
+      contenidoHtml: md.render(typeof seccion?.contenido === 'string' ? seccion.contenido : '')
+    }))
+  : (fallbackSecciones[currentLang] ?? fallbackSecciones.es).map((seccion) => ({
+      titulo: seccion.titulo,
+      contenidoHtml: md.render(seccion.contenido)
+    }));
 
 const siteOrigin = (Astro.site?.origin ?? 'https://incasparadise.com').replace(/\/$/, '');
 const canonical = `${siteOrigin}/${currentLang}/politicas`;
@@ -73,6 +107,12 @@ const pageSchema = {
     "name": "Inca's Paradise",
     "url": siteOrigin,
   },
+  ...(secciones.length > 0 && {
+    "hasPart": secciones.map((seccion, index) => ({
+      "@type": "WebPageElement",
+      "name": `${index + 1}. ${seccion.titulo}`,
+    })),
+  }),
 };
 ---
 
@@ -106,15 +146,39 @@ const pageSchema = {
     <main class="flex-1 pt-24 pb-16 bg-white">
       <div class="mx-auto max-w-5xl px-4">
         <div class="mb-6">
-          <h1 class="mb-4 text-3xl md:text-4xl">{title}</h1>
-          {description ? (
-            <p class="text-base text-gray-600 leading-relaxed text-justify">{description}</p>
-          ) : (
-            <p class="text-gray-400 italic">
-              {currentLang === 'es' ? 'Contenido próximamente.' : 'Content coming soon.'}
-            </p>
+          <h1 class="mb-4 text-3xl md:text-4xl text-[#1AA093]">{title}</h1>
+          {description && (
+            <div
+              class="prose prose-gray max-w-none text-black leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e]"
+              set:html={descriptionHtml}
+            />
           )}
         </div>
+
+        {secciones.length > 0 ? (
+          <div class="border-t border-gray-200">
+            {secciones.map((seccion, index) => (
+              <section class="border-b border-gray-200 py-7 md:py-8">
+                <div>
+                  <div class="mb-3 flex items-center gap-3 md:gap-4">
+                    <span class="block shrink-0 text-lg font-medium tracking-[0.18em] text-[#1AA093] md:text-xl">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <h2 class="text-xl text-[#1AA093] md:text-2xl">{seccion.titulo}</h2>
+                  </div>
+                  <div
+                    class="prose prose-gray max-w-none text-black leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:mt-0 prose-headings:mb-0 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e]"
+                    set:html={seccion.contenidoHtml}
+                  />
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <p class="text-gray-400 italic">
+            {currentLang === 'es' ? 'Contenido próximamente.' : 'Content coming soon.'}
+          </p>
+        )}
       </div>
     </main>
     <Footer {t} currentLang={currentLang} />
