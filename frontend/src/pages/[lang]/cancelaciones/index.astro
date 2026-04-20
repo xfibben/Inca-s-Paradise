@@ -52,6 +52,7 @@ const description = data?.descripcion ?? '';
 const seoTitle = data?.metaTitle ?? title;
 const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
 const md = new MarkdownIt({ html: true });
+const descriptionHtml = md.render(typeof description === 'string' ? description : '');
 
 const fallbackSecciones: Record<string, Array<{ titulo: string; contenido: string }>> = {
   es: [
@@ -151,7 +152,10 @@ const pageSchema = {
         <div class="mb-6">
           <h1 class="mb-4 text-3xl md:text-4xl text-[#1AA093]">{title}</h1>
           {description && (
-            <p class="text-base text-gray-600 leading-relaxed text-justify">{description}</p>
+            <div
+              class="prose prose-gray max-w-none text-black leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e]"
+              set:html={descriptionHtml}
+            />
           )}
         </div>
 
