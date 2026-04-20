@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_legal_faq_items",
+  "info": {
+    "displayName": "FAQ Item",
+    "description": "Bloque de preguntas frecuentes con pregunta y respuesta"
+  },
+  "options": {},
+  "attributes": {
+    "pregunta": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "respuesta": {
+      "type": "richtext",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}

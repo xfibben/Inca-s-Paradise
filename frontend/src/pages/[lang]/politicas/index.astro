@@ -46,8 +46,8 @@ const fallbackDescriptions: Record<string, string> = {
   it: 'Consulta le politiche di Inca\'s Paradise per servizi turistici, prenotazioni e assistenza ai viaggiatori.',
 };
 
-const title = data?.title ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
-const description = data?.description ?? '';
+const title = data?.titulo ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
+const description = data?.descripcion ?? '';
 const seoTitle = data?.metaTitle ?? title;
 const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
 

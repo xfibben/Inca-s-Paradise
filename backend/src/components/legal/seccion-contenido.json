@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_legal_seccion_contenidos",
+  "info": {
+    "displayName": "Sección Contenido",
+    "description": "Sección legal con título y contenido"
+  },
+  "options": {},
+  "attributes": {
+    "titulo": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "contenido": {
+      "type": "richtext",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
+}
