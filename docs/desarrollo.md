@@ -151,3 +151,4 @@ Nota:
 - Los `README.md` de `frontend/` y `backend/` venian con boilerplate y no describian el sistema real.
 - El proyecto depende de variables sensibles en `.env` raiz.
 - El despliegue depende de disciplina de ramas y de `git pull` manual en el VPS.
+- Las reservas de transporte antiguas pueden no tener `vehiculo_seleccionado`, porque el campo se incorporo despues.

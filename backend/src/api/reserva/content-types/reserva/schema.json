@@ -118,6 +118,10 @@
       "type": "string",
       "required": false
     },
+    "vehiculo_seleccionado": {
+      "type": "string",
+      "required": false
+    },
     "ticket": {
       "type": "string",
       "required": true,

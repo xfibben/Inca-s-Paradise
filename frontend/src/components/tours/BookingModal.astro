@@ -720,6 +720,7 @@ const t = translations[lang] ?? translations.es;
     simboloMoneda?: string;
     decimalesMoneda?: number;
     descuento?: number;
+    discountMode?: "amount" | "percent";
     fechaInicio?: string | null;
     fechaFin?: string | null;
   }
@@ -731,6 +732,7 @@ const t = translations[lang] ?? translations.es;
     fecha_inicio: string; fecha_fin: string;
     notas: string | null; tipo_documento: string;
     numero_documento: string; nacionalidad: string; turno: string | null;
+    vehiculo_seleccionado?: string | null;
     tourDocumentId: string | null; tourNumericId: number | null;
     transporteDocumentId: string | null; transporteNumericId: number | null;
     descuento_usd: number; monto_total: number; moneda: string;
@@ -752,6 +754,7 @@ const t = translations[lang] ?? translations.es;
       __tourTitle?: string;
       __tourSlug?: string;
       __lang?: string;
+      __selectedVehicleName?: string;
       __pagoTituloText?: string;
       __bookingTituloText?: string;
       __paypalClientId?: string;
@@ -841,6 +844,7 @@ const t = translations[lang] ?? translations.es;
         numero_documento: str(raw.numero_documento),
         nacionalidad: str(raw.nacionalidad),
         turno: (str(raw.turno) || null),
+        vehiculo_seleccionado: window.__selectedVehicleName ?? null,
         tourDocumentId: tourData?.documentId ?? null,
         tourNumericId: tourData?.numericId ?? null,
         transporteDocumentId: transporteData?.documentId ?? null,
@@ -976,6 +980,7 @@ const t = translations[lang] ?? translations.es;
             notas: b.notas || null,
             tipo_documento: b.tipo_documento, numero_documento: b.numero_documento,
             nacionalidad: b.nacionalidad,
+            vehiculo_seleccionado: b.vehiculo_seleccionado ?? null,
             ...(b.turno ? { turno: b.turno } : {}),
             ...(tourConnect ? { tour: tourConnect } : {}),
             ...(transporteConnect ? { transportes: transporteConnect } : {}),
@@ -1153,6 +1158,7 @@ const t = translations[lang] ?? translations.es;
                   tipo_documento: b.tipo_documento,
                   numero_documento: b.numero_documento,
                   nacionalidad: b.nacionalidad,
+                  vehiculo_seleccionado: b.vehiculo_seleccionado ?? null,
                   ...(b.turno ? { turno: b.turno } : {}),
                   ...(!esTransporte && b.tourDocumentId ? { tour: { connect: [b.tourDocumentId] } } : {}),
                   ...(!esTransporte && !b.tourDocumentId && b.tourNumericId ? { tour: { connect: [{ id: b.tourNumericId }] } } : {}),
@@ -1163,6 +1169,7 @@ const t = translations[lang] ?? translations.es;
                   precio_tour:       b.monto_original,
                   precio_adulto_web: b.precio_adulto_web,
                   precio_nino_web:   b.precio_nino_web,
+                  descuento: b.descuento_usd,
                   moneda: b.moneda,
                   metodo: "paypal",
                 },
@@ -1290,7 +1297,7 @@ const t = translations[lang] ?? translations.es;
       precioAdultoUsd = 0, precioNinoUsd = 0,
       precioAdultoLabel = "", precioNinoLabel = "",
       tasaCambio = 1, simboloMoneda = "$", decimalesMoneda = 2,
-      descuento = 0, fechaInicio = null, fechaFin = null,
+      descuento = 0, discountMode = "amount", fechaInicio = null, fechaFin = null,
     }: BookingData = {}) => {
       // Pasajeros
       const adultoHidden = form?.querySelector("[data-modal-adultos]") as HTMLInputElement | null;
@@ -1318,7 +1325,9 @@ const t = translations[lang] ?? translations.es;
 
       // Precios
       const bruto = (adultos * precioAdultoUsd + ninos * precioNinoUsd) * tasaCambio;
-      const descuentoConvertido = descuento * tasaCambio;
+      const descuentoConvertido = discountMode === "percent"
+        ? bruto * (Math.max(0, descuento) / 100)
+        : descuento * tasaCambio;
       const totalConvertido = Math.max(0, bruto - descuentoConvertido);
       const totalFormateado = `${simboloMoneda}${totalConvertido.toFixed(decimalesMoneda)}`;
 
@@ -1349,7 +1358,9 @@ const t = translations[lang] ?? translations.es;
       if (descuentoRow && descuentoEl) {
         if (descuento > 0) {
           descuentoRow.classList.remove("hidden"); descuentoRow.classList.add("flex");
-          descuentoEl.textContent = `-${simboloMoneda}${descuentoConvertido.toFixed(decimalesMoneda)}`;
+          descuentoEl.textContent = discountMode === "percent"
+            ? `-${descuento.toFixed(0)}%`
+            : `-${simboloMoneda}${descuentoConvertido.toFixed(decimalesMoneda)}`;
         } else {
           descuentoRow.classList.add("hidden"); descuentoRow.classList.remove("flex");
         }

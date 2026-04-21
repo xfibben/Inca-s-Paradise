@@ -243,7 +243,7 @@ const ofertasSchema = {
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {toursOferta.map((tour) => {
-                const precioConDescuento = tour.adultUnitPrice - tour.discount;
+                const precioConDescuento = Math.max(0, tour.adultUnitPrice - (tour.adultUnitPrice * Math.max(0, tour.discount)) / 100);
                 return (
                   <a
                     href={`/${currentLang}/tours/${tour.slug}`}
@@ -269,7 +269,7 @@ const ofertasSchema = {
                       )}
                       <!-- Badge de descuento -->
                       <span class="absolute top-3 left-3 bg-[#1AA093] text-white text-xs font-bold px-3 py-1 rounded-full shadow">
-                        -{formatPrice(tour.discount, currentLang)}
+                        -{tour.discount.toFixed(0)}%
                       </span>
                     </div>
 
@@ -315,7 +315,7 @@ const ofertasSchema = {
             </h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {transportesOferta.map((tr) => {
-                const precioConDescuento = tr.precioAdulto - tr.descuento;
+                const precioConDescuento = Math.max(0, tr.precioAdulto - (tr.precioAdulto * Math.max(0, tr.descuento)) / 100);
                 return (
                   <a
                     href={`/${currentLang}/transporte/${tr.slug}`}
@@ -339,7 +339,7 @@ const ofertasSchema = {
                       )}
                       <!-- Badge de descuento -->
                       <span class="absolute top-3 left-3 bg-[#1AA093] text-white text-xs font-bold px-3 py-1 rounded-full shadow">
-                        -{formatPrice(tr.descuento, currentLang)}
+                        -{tr.descuento.toFixed(0)}%
                       </span>
                     </div>
 

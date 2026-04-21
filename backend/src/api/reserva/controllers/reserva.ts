@@ -35,10 +35,28 @@ function extraerDocumentId(campo: any): string | null {
  */
 async function calcularMontos(data: any, strapi: any): Promise<void> {
   try {
+    const precioTourRecibido = parseFloat(data.precio_tour) || parseFloat(data.monto_estimado) || 0;
+    const precioAdultoWebRecibido = parseFloat(data.precio_adulto_web) || 0;
+    const precioNinoWebRecibido = parseFloat(data.precio_nino_web) || 0;
+    const descuentoRecibido = parseFloat(data.descuento) || 0;
+
+    if (precioTourRecibido > 0 || precioAdultoWebRecibido > 0 || precioNinoWebRecibido > 0) {
+      data.descuento = Math.round(descuentoRecibido * 100) / 100;
+      if (precioTourRecibido > 0) {
+        data.monto_estimado = Math.round(precioTourRecibido * 100) / 100;
+      }
+      if (precioAdultoWebRecibido > 0 || precioNinoWebRecibido > 0) {
+        data.monto_web = Math.round((precioAdultoWebRecibido + precioNinoWebRecibido) * 100) / 100;
+      }
+      if ((parseFloat(data.monto_estimado) || 0) > 0 && (parseFloat(data.monto_web) || 0) >= 0) {
+        data.pago_restante = Math.round(((parseFloat(data.monto_estimado) || 0) - (parseFloat(data.monto_web) || 0)) * 100) / 100;
+      }
+      return;
+    }
+
     let precioUnitarioAdulto = 0;
     let precioUnitarioNino = 0;
-
-    let descuento = 0;
+    let descuentoPorcentaje = 0;
 
     if (data.tour) {
       const documentId = extraerDocumentId(data.tour);
@@ -52,7 +70,7 @@ async function calcularMontos(data: any, strapi: any): Promise<void> {
       if (!tour) { console.warn(`Tour con documentId ${documentId} no encontrado`); return; }
       precioUnitarioAdulto = parseFloat(tour.adultUnitPrice) || 0;
       precioUnitarioNino = parseFloat(tour.childUnitPrice) || 0;
-      descuento = parseFloat(tour.discount) || 0;
+      descuentoPorcentaje = parseFloat(tour.discount) || 0;
 
     } else if (data.transportes) {
       const documentId = extraerDocumentId(data.transportes);
@@ -60,12 +78,22 @@ async function calcularMontos(data: any, strapi: any): Promise<void> {
 
       const transporte = await strapi.documents('api::transporte.transporte').findOne({
         documentId,
-        fields: ['adultUnitPrice', 'childUnitPrice', 'discount'],
+        populate: {
+          precios: {
+            populate: ['vehiculo'],
+          },
+        },
       });
       if (!transporte) { console.warn(`Transporte con documentId ${documentId} no encontrado`); return; }
-      precioUnitarioAdulto = parseFloat(transporte.adultUnitPrice) || 0;
-      precioUnitarioNino = parseFloat(transporte.childUnitPrice) || 0;
-      descuento = parseFloat(transporte.discount) || 0;
+      const vehiculoSeleccionado = String(data.vehiculo_seleccionado ?? '').trim().toLowerCase();
+      const precios = Array.isArray(transporte.precios) ? transporte.precios : [];
+      const precioTransporte = precios.find((precio: any) =>
+        Array.isArray(precio?.vehiculo) &&
+        precio.vehiculo.some((veh: any) => String(veh?.nombre ?? '').trim().toLowerCase() === vehiculoSeleccionado)
+      ) ?? precios[0] ?? null;
+      precioUnitarioAdulto = parseFloat(precioTransporte?.precioAdulto) || 0;
+      precioUnitarioNino = parseFloat(precioTransporte?.precioNino) || 0;
+      descuentoPorcentaje = parseFloat(precioTransporte?.descuento) || 0;
 
     } else {
       return;
@@ -74,14 +102,14 @@ async function calcularMontos(data: any, strapi: any): Promise<void> {
     const cantidadAdultos = parseFloat(data.cantidad_adultos) || 0;
     const cantidadNinos = parseFloat(data.cantidad_ninos) || 0;
 
-    // Cálculo en USD — sin IGV, descuento obtenido del tour/transporte
+    // Cálculo base usando descuento porcentual
     const montoBase = (cantidadAdultos * precioUnitarioAdulto) + (cantidadNinos * precioUnitarioNino);
-    const montoFinal = montoBase - descuento;
+    const montoFinal = montoBase - (montoBase * Math.max(0, descuentoPorcentaje)) / 100;
 
     const montoWeb     = Math.round(montoFinal * 0.3 * 100) / 100;
     const montoAgencia = Math.round((montoFinal - montoWeb) * 100) / 100;
 
-    data.descuento      = Math.round(descuento * 100) / 100;
+    data.descuento      = Math.round(descuentoPorcentaje * 100) / 100;
     data.monto_estimado = Math.round(montoFinal * 100) / 100;
     data.monto_web      = montoWeb;
     data.pago_restante  = montoAgencia;
@@ -147,4 +175,3 @@ export default factories.createCoreController('api::reserva.reserva', ({ strapi 
     },
   };
 });
-
