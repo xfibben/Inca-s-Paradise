@@ -47,12 +47,41 @@ const fallbackDescriptions: Record<string, string> = {
   it: 'Consulta le informazioni su cancellazioni, modifiche e condizioni applicabili alle prenotazioni con Inca\'s Paradise.',
 };
 
+function richTextToMarkdown(value: any): string {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => richTextToMarkdown(item))
+      .filter(Boolean)
+      .join('\n\n');
+  }
+  if (!value || typeof value !== 'object') return '';
+
+  if (typeof value.text === 'string') return value.text;
+
+  if (Array.isArray(value.children)) {
+    return value.children
+      .map((child: any) => richTextToMarkdown(child))
+      .filter(Boolean)
+      .join('');
+  }
+
+  if (Array.isArray(value.content)) {
+    return value.content
+      .map((item: any) => richTextToMarkdown(item))
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  return '';
+}
+
 const title = data?.titulo ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
-const description = data?.descripcion ?? '';
+const description = richTextToMarkdown(data?.descripcion ?? '');
 const seoTitle = data?.metaTitle ?? title;
 const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
 const md = new MarkdownIt({ html: true });
-const descriptionHtml = md.render(typeof description === 'string' ? description : '');
+const descriptionHtml = md.render(description);
 
 const fallbackSecciones: Record<string, Array<{ titulo: string; contenido: string }>> = {
   es: [
@@ -82,7 +111,7 @@ const fallbackSecciones: Record<string, Array<{ titulo: string; contenido: strin
 const secciones = Array.isArray(data?.secciones) && data.secciones.length > 0
   ? data.secciones.map((seccion: any) => ({
       titulo: seccion?.titulo ?? '',
-      contenidoHtml: md.render(typeof seccion?.contenido === 'string' ? seccion.contenido : '')
+      contenidoHtml: md.render(richTextToMarkdown(seccion?.contenido))
     }))
   : (fallbackSecciones[currentLang] ?? fallbackSecciones.es).map((seccion) => ({
       titulo: seccion.titulo,
