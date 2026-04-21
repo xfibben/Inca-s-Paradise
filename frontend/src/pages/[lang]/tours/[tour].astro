@@ -965,7 +965,7 @@ const hasBookingCard = Boolean(
                   itineraryItems.length > 1 && (
                     <button
                       type="button"
-                      class="inline-flex items-center justify-center border border-green-600 px-5 py-2 text-sm font-semibold text-green-600 transition hover:bg-green-600 hover:text-white"
+                      class="inline-flex items-center justify-center border border-[#166534] px-5 py-2 text-sm font-semibold text-[#166534] transition hover:bg-[#166534] hover:text-white"
                       data-itinerary-expand
                       data-label-more={itineraryExpandLabel}
                       data-label-less={itineraryCollapseLabel}
@@ -1140,7 +1140,7 @@ const hasBookingCard = Boolean(
                   <div class="mt-8 flex justify-center">
                     <button
                       type="button"
-                      class="inline-flex items-center justify-center border border-green-600 px-7 py-3 text-sm font-semibold text-green-600 transition hover:bg-green-600 hover:text-white"
+                      class="inline-flex items-center justify-center border border-[#166534] px-7 py-3 text-sm font-semibold text-[#166534] transition hover:bg-[#166534] hover:text-white"
                       data-itinerary-expand
                       data-label-more={itineraryExpandLabel}
                       data-label-less={itineraryCollapseLabel}
@@ -1579,10 +1579,53 @@ const hasBookingCard = Boolean(
             });
           };
 
+          const focusableSelector = [
+            "a[href]",
+            "area[href]",
+            "button",
+            "input",
+            "select",
+            "textarea",
+            "iframe",
+            "[tabindex]",
+            "[contenteditable='true']",
+          ].join(",");
+
+          const setPanelFocusableState = (panel, isOpen) => {
+            if (!panel) return;
+            const focusables = Array.from(panel.querySelectorAll(focusableSelector));
+            focusables.forEach((element) => {
+              if (!(element instanceof HTMLElement)) return;
+              if (isOpen) {
+                if (element.hasAttribute("data-itinerary-prev-tabindex")) {
+                  const previous = element.getAttribute("data-itinerary-prev-tabindex");
+                  if (previous === "__none__") {
+                    element.removeAttribute("tabindex");
+                  } else if (previous !== null) {
+                    element.setAttribute("tabindex", previous);
+                  }
+                  element.removeAttribute("data-itinerary-prev-tabindex");
+                }
+                return;
+              }
+
+              if (!element.hasAttribute("data-itinerary-prev-tabindex")) {
+                const currentTabindex = element.getAttribute("tabindex");
+                element.setAttribute(
+                  "data-itinerary-prev-tabindex",
+                  currentTabindex === null ? "__none__" : currentTabindex
+                );
+              }
+              element.setAttribute("tabindex", "-1");
+            });
+          };
+
           const setPanelState = (panel, isOpen) => {
             if (!panel) return;
             panel.classList.toggle("pointer-events-none", !isOpen);
             panel.setAttribute("aria-hidden", String(!isOpen));
+            panel.toggleAttribute("inert", !isOpen);
+            setPanelFocusableState(panel, isOpen);
             panel.style.maxHeight = isOpen ? `${panel.scrollHeight}px` : "0px";
             panel.style.opacity = isOpen ? "1" : "0";
           };
