@@ -9,6 +9,7 @@ interface Props {
   precioAdultoUsd: number;
   precioNinoUsd: number;
   descuentoUsd: number;
+  discountMode?: "amount" | "percent";
   duracionDias: number;
   calendarLocale: string;
   calendarStart: string;
@@ -24,6 +25,7 @@ const {
   precioAdultoUsd,
   precioNinoUsd,
   descuentoUsd = 0,
+  discountMode = "amount",
   duracionDias,
   calendarLocale,
   calendarStart,
@@ -147,6 +149,7 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
       data-price-adult-usd={precioAdultoUsd}
       data-price-child-usd={precioNinoUsd}
       data-discount-usd={descuentoUsd}
+      data-discount-mode={discountMode}
     >
       <!-- Selector de moneda -->
       <div class="flex items-center justify-between gap-2">
@@ -184,7 +187,9 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
         {descuentoUsd > 0 && (
           <div class="flex items-center justify-between text-sm text-green-700 pt-1 border-t border-dashed border-[#d1fae5]">
             <span>{c.discount}</span>
-            <span class="font-semibold" data-discount-display>-${descuentoUsd.toFixed(0)}</span>
+            <span class="font-semibold" data-discount-display>
+              {discountMode === "percent" ? `-${descuentoUsd.toFixed(0)}%` : `-$${descuentoUsd.toFixed(0)}`}
+            </span>
           </div>
         )}
       </div>
@@ -446,6 +451,7 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
     let adultUsdBase = parseFloat(priceSection?.getAttribute("data-price-adult-usd") || "0");
     let childUsdBase = parseFloat(priceSection?.getAttribute("data-price-child-usd") || "0");
     let discountUsdBase = parseFloat(priceSection?.getAttribute("data-discount-usd") || "0");
+    const discountMode = (priceSection?.getAttribute("data-discount-mode") || "amount") as "amount" | "percent";
     const adultDisplayEl = document.querySelector("[data-price-adult-display]");
     const childDisplayEl = document.querySelector("[data-price-child-display]");
     const discountDisplayEl = document.querySelector("[data-discount-display]");
@@ -460,6 +466,10 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
 
     const formatPrice = (amount: number, currency: CurrencyKey) =>
       `${currencySymbol[currency]}${amount.toFixed(currencyDecimals[currency])}`;
+    const getDiscountUsd = (subtotalUsd: number) =>
+      discountMode === "percent"
+        ? subtotalUsd * (Math.max(0, discountUsdBase) / 100)
+        : discountUsdBase;
 
     // Contadores de pasajeros (declarados antes para que updateBtnTotal los capture)
     let adultos = 1;
@@ -470,7 +480,8 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
 
     const updateBtnTotal = (currency: CurrencyKey) => {
       const rate = rates[currency];
-      const total = Math.max(0, (adultos * adultUsdBase + ninos * childUsdBase - discountUsdBase) * rate);
+      const subtotalUsd = adultos * adultUsdBase + ninos * childUsdBase;
+      const total = Math.max(0, (subtotalUsd - getDiscountUsd(subtotalUsd)) * rate);
       if (btnTotalEl) btnTotalEl.textContent = ` — ${formatPrice(total, currency)}`;
       if (mobileBtnPriceEl) mobileBtnPriceEl.textContent = formatPrice(total, currency);
     };
@@ -479,8 +490,11 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
       const rate = rates[currency];
       if (adultDisplayEl) adultDisplayEl.textContent = formatPrice(adultUsdBase * rate, currency);
       if (childDisplayEl) childDisplayEl.textContent = formatPrice(childUsdBase * rate, currency);
-      if (discountDisplayEl && discountUsdBase > 0)
-        discountDisplayEl.textContent = `-${formatPrice(discountUsdBase * rate, currency)}`;
+      if (discountDisplayEl && discountUsdBase > 0) {
+        discountDisplayEl.textContent = discountMode === "percent"
+          ? `-${discountUsdBase.toFixed(0)}%`
+          : `-${formatPrice(discountUsdBase * rate, currency)}`;
+      }
       updateBtnTotal(currency);
     };
 
@@ -574,6 +588,7 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
         simboloMoneda: sym,
         decimalesMoneda: dec,
         descuento: discountUsdBase,
+        discountMode,
         fechaInicio,
         fechaFin,
       });

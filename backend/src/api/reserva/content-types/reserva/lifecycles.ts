@@ -21,15 +21,16 @@ async function sincronizarConSheets(id: number) {
     ? (servicio?.title ?? '')
     : (servicio?.nombre ?? '');
 
-  const precioAdulto = parseFloat(servicio?.adultUnitPrice) || 0;
-  const precioNino   = parseFloat(servicio?.childUnitPrice) || 0;
-
   const pagoTotal        = parseFloat(reserva.monto_final)       || 0;
   const descuento        = parseFloat(reserva.descuento)         || 0;
   const montoWeb         = parseFloat(reserva.monto_web)         || 0;
   const montoAgencia     = parseFloat(reserva.pago_restante)     || 0;
   const precioAdultoWeb  = parseFloat(reserva.precio_adulto_web) || 0;
   const precioNinoWeb    = parseFloat(reserva.precio_nino_web)   || 0;
+  const cantidadAdultos  = parseFloat(reserva.cantidad_adultos)  || 0;
+  const cantidadNinos    = parseFloat(reserva.cantidad_ninos)    || 0;
+  const precioAdulto     = cantidadAdultos > 0 ? precioAdultoWeb / 0.3 / cantidadAdultos : 0;
+  const precioNino       = cantidadNinos > 0 ? precioNinoWeb / 0.3 / cantidadNinos : 0;
 
   const entry = {
     fecha:             reserva.createdAt ?? new Date().toISOString(),
@@ -49,6 +50,7 @@ async function sincronizarConSheets(id: number) {
     fecha_inicio:      reserva.fecha_inicio ?? '',
     fecha_fin:         reserva.fecha_fin ?? '',
     hora_recojo:       reserva.turno ?? '',
+    vehiculo:          reserva.vehiculo_seleccionado ?? '',
     nombre_reserva:    nombreReserva,
     tipo_servicio:     esTour ? 'tour' : 'transporte',
     descuento:         descuento,

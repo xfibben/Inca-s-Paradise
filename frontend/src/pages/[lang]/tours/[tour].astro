@@ -8,6 +8,7 @@ import Footer from "../../../components/shared/Footer.astro";
 import BookingModal from "../../../components/tours/BookingModal.astro";
 import BookingCard from "../../../components/tours/BookingCard.astro";
 import Ribbon from "../../../components/shared/Ribbon.astro";
+import { formatPrice } from "../../../utils/currency";
 
 type SupportedLang = string;
 
@@ -638,6 +639,8 @@ if (firstDestinationSlug) {
         "fields[1]=title&" +
         "fields[2]=metaTitle&" +
         "fields[3]=metaDescription&" +
+        "fields[4]=adultUnitPrice&" +
+        "fields[5]=discount&" +
         "populate[heroSlideImages][fields][0]=url&" +
         "populate[heroSlideImages][fields][1]=alternativeText&" +
         "populate[heroSlideImages][fields][2]=formats";
@@ -661,6 +664,14 @@ if (firstDestinationSlug) {
 }
 const tourDetailCtaLabel =
   lang === "en" ? "View tour" : lang === "pt" ? "Ver tour" : "Ver tour";
+const priceFromLabel =
+  lang === "en" ? "From" :
+  lang === "pt" ? "Desde" :
+  lang === "fr" ? "Des" :
+  lang === "it" ? "Da" :
+  "Desde";
+const getDiscountedPrice = (price: number, discountPercent: number) =>
+  Math.max(0, price - (price * Math.max(0, discountPercent)) / 100);
 const moreToursCards = strapiMoreToursRaw
   .map((tour: any) => {
     const slug = cleanText(tour?.slug).toLowerCase();
@@ -670,6 +681,8 @@ const moreToursCards = strapiMoreToursRaw
       title: cleanText(tour?.metaTitle) || cleanText(tour?.title),
       description: cleanText(tour?.metaDescription),
       image: toCardImageFromTour(tour),
+      adultUnitPrice: Number(tour?.adultUnitPrice ?? 0),
+      discount: Number(tour?.discount ?? 0),
     };
   })
   .filter(Boolean)
@@ -1315,7 +1328,7 @@ const hasBookingCard = Boolean(
                         <article class="flex h-full flex-col overflow-hidden border border-[#e2e8f0] bg-white">
                           <a
                             href={`/${lang}/tours/${card.slug}`}
-                            class="block"
+                            class="relative block"
                             aria-label={card.title || tourDetailCtaLabel}
                           >
                             {card.image ? (
@@ -1327,6 +1340,11 @@ const hasBookingCard = Boolean(
                             ) : (
                               <div class="h-52 w-full bg-gray-200" />
                             )}
+                            {card.discount > 0 ? (
+                              <span class="absolute top-3 left-3 bg-[#1AA093] px-3 py-1 text-xs font-bold text-white rounded-full shadow">
+                                -{card.discount.toFixed(0)}%
+                              </span>
+                            ) : null}
                           </a>
                           <div class="flex flex-1 flex-col p-4 md:p-5">
                             {card.title ? (
@@ -1339,9 +1357,21 @@ const hasBookingCard = Boolean(
                                 {card.description}
                               </p>
                             ) : null}
+                            {card.adultUnitPrice > 0 ? (
+                              <div class="mt-4">
+                                {card.discount > 0 ? (
+                                  <p class="text-xs text-gray-400 line-through">
+                                    {formatPrice(card.adultUnitPrice, lang)}
+                                  </p>
+                                ) : null}
+                                <p class="text-base font-bold text-gray-900">
+                                  {priceFromLabel} {formatPrice(getDiscountedPrice(card.adultUnitPrice, card.discount), lang)}
+                                </p>
+                              </div>
+                            ) : null}
                             <a
                               href={`/${lang}/tours/${card.slug}`}
-                              class="mt-auto inline-flex w-fit self-start items-center justify-center border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-700 hover:text-white"
+                              class="mt-4 inline-flex w-fit self-start items-center justify-center border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-700 hover:text-white"
                             >
                               {tourDetailCtaLabel}
                             </a>
@@ -1420,6 +1450,7 @@ const hasBookingCard = Boolean(
               precioAdultoUsd={toNumber(sourceTour.adultUnitPrice) ?? 0}
               precioNinoUsd={toNumber(sourceTour.childUnitPrice) ?? 0}
               descuentoUsd={toNumber(sourceTour.discount) ?? 0}
+              discountMode="percent"
               duracionDias={toNumber(sourceTour.durationDays) ?? 1}
               calendarLocale={stickyCalendarLocale}
               calendarStart={stickyCalendarStart}

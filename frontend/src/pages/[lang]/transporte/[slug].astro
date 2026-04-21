@@ -414,6 +414,7 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
             precioAdultoUsd={adultPrice}
             precioNinoUsd={childPrice}
             descuentoUsd={discountPrice}
+            discountMode="percent"
             duracionDias={1}
             calendarLocale={calendarLocale}
             calendarStart={calendarStart}
@@ -430,8 +431,9 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
     <Footer currentLang={currentLang} t={t} />
 
     <!-- Inyecta datos del transporte para el BookingModal -->
-    <script is:inline define:vars={{ transporteDocumentId: transporte.documentId, transporteNumericId: transporte.id }}>
+    <script is:inline define:vars={{ transporteDocumentId: transporte.documentId, transporteNumericId: transporte.id, selectedVehiculoNombre }}>
       window.__transporteData = { documentId: transporteDocumentId, numericId: transporteNumericId };
+      window.__selectedVehicleName = selectedVehiculoNombre;
     </script>
 
 
@@ -462,6 +464,7 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
           // Actualiza nro de asientos y label con el nombre del vehículo seleccionado
           var nroAsientos = this.getAttribute('data-nro-asientos');
           var nombreVehiculo = this.getAttribute('data-nombre');
+          window.__selectedVehicleName = nombreVehiculo || '';
           var valorEl = document.getElementById('nro-asientos-valor');
           var labelEl = document.getElementById('nro-asientos-label');
           if (valorEl && labelEl) {
@@ -507,4 +510,3 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
 
   </body>
 </html>
-

@@ -8,6 +8,7 @@ interface PendingBooking {
   numero_documento?: string;
   nacionalidad?: string;
   tourNombre?: string;
+  vehiculo_seleccionado?: string | null;
   tourDocumentId?: string | null;
   transporteDocumentId?: string | null;
   fecha_inicio?: string;
@@ -172,6 +173,7 @@ export async function generarVoucherPDF(ticket: string, booking: PendingBooking 
   y += 4;
   seccion(`DETALLES DEL ${tipoServicio.toUpperCase()}`);
   fila(`${tipoServicio}:`, booking?.tourNombre || "—");
+  if (esTransporte && booking?.vehiculo_seleccionado) fila("Vehículo:", booking.vehiculo_seleccionado);
   if (destinoNombre) fila("Destino:", destinoNombre);
   fila("Fecha de inicio:", booking?.fecha_inicio || "—");
   fila("Fecha de fin:", booking?.fecha_fin || "—");

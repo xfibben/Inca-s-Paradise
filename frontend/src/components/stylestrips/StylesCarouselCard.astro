@@ -1,4 +1,6 @@
 ---
+import { formatPrice } from '../../utils/currency';
+
 interface Props {
     image: string;
     alt: string;
@@ -6,10 +8,14 @@ interface Props {
     metaTitle: string;
     durationDays: number;
     adultUnitPrice: number;
+    discount?: number;
+    currentLang?: string;
+    priceFromLabel?: string;
     href?: string;
 }
 
-const { image, alt, title, metaTitle, durationDays, adultUnitPrice, href = '#' } = Astro.props;
+const { image, alt, title, metaTitle, durationDays, adultUnitPrice, discount = 0, currentLang = 'es', priceFromLabel = 'Desde', href = '#' } = Astro.props;
+const discountedPrice = Math.max(0, adultUnitPrice - (adultUnitPrice * Math.max(0, discount)) / 100);
 ---
 
 <a href={href} class="flex-shrink-0 w-72 h-[450px] relative overflow-hidden cursor-pointer group snap-start">
@@ -19,11 +25,27 @@ const { image, alt, title, metaTitle, durationDays, adultUnitPrice, href = '#' }
         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
     />
     <div class="absolute inset-0 bg-gradient-to-b from-black/30 to-black/65 flex flex-col justify-between p-6 text-white">
+        {discount > 0 ? (
+            <span class="absolute top-4 left-4 bg-[#1AA093] px-3 py-1 text-xs font-bold text-white rounded-full shadow">
+                -{discount.toFixed(0)}%
+            </span>
+        ) : null}
         <span class="text-xs font-semibold uppercase tracking-wider">{durationDays} days</span>
         <div class="flex flex-col gap-2">
             <p class="text-lg font-bold leading-tight" style="font-family: 'Playfair Display', serif;">{title}</p>
             <p class="text-sm opacity-85 leading-relaxed">{metaTitle}</p>
-            <span class="text-sm font-semibold"> $/ {adultUnitPrice}</span>
+            {adultUnitPrice > 0 ? (
+                <div class="flex flex-col gap-1">
+                    {discount > 0 ? (
+                        <span class="text-xs text-white/60 line-through">{formatPrice(adultUnitPrice, currentLang)}</span>
+                    ) : null}
+                    <span class="text-sm font-semibold text-white">
+                        {priceFromLabel} {formatPrice(discountedPrice, currentLang)}
+                    </span>
+                </div>
+            ) : (
+                <span class="text-sm font-semibold text-white">{formatPrice(adultUnitPrice, currentLang)}</span>
+            )}
         </div>
     </div>
 </a>

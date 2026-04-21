@@ -4,12 +4,21 @@ import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import CarouselCard from '../../../components/stylestrips/StylesCarouselCard.astro';
 import { getTranslation, languages } from '../../../i18n';
+import { formatPrice } from '../../../utils/currency';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 
 const { lang, slug } = Astro.params;
 const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
 const t = getTranslation(currentLang);
+const priceFromLabel =
+  currentLang === 'en' ? 'From'
+  : currentLang === 'pt' ? 'Desde'
+  : currentLang === 'fr' ? 'Des'
+  : currentLang === 'it' ? 'Da'
+  : 'Desde';
+const getDiscountedPrice = (price: number, discountPercent: number) =>
+  Math.max(0, price - (price * Math.max(0, discountPercent)) / 100);
 
 const STRAPI_URL = import.meta.env.STRAPI_URL;
 const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL;
@@ -251,7 +260,22 @@ const middleDescriptionHtml = trip?.middle_description ? md.render(trip.middle_d
           <a href={`/${currentLang}/tours/${tour.slug}`} class="relative overflow-hidden cursor-pointer group" style={gridConfig}>
             <span class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={`background-image: url('${tourImageUrl}');`}></span>
             <span class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60 flex flex-col justify-end p-6 text-white">
+              {tour.discount > 0 ? (
+                <span class="absolute top-4 left-4 bg-[#1AA093] px-3 py-1 text-xs font-bold text-white rounded-full shadow">
+                  -{tour.discount.toFixed(0)}%
+                </span>
+              ) : null}
               <div class="text-2xl font-bold leading-tight" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</div>
+              {tour.adultUnitPrice > 0 ? (
+                <div class="mt-3">
+                  {tour.discount > 0 ? (
+                    <p class="text-xs text-white/60 line-through">{formatPrice(tour.adultUnitPrice, currentLang)}</p>
+                  ) : null}
+                  <p class="text-sm font-bold text-white">
+                    {priceFromLabel} {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), currentLang)}
+                  </p>
+                </div>
+              ) : null}
             </span>
           </a>
         );
@@ -288,7 +312,22 @@ const middleDescriptionHtml = trip?.middle_description ? md.render(trip.middle_d
               <img src={tourImageUrl} alt={tour.title} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
               <div class="absolute inset-0 bg-black/40 group-hover:bg-black/55 transition-colors duration-300"></div>
               <div class="absolute inset-0 flex flex-col justify-end p-4 text-white">
+                {tour.discount > 0 ? (
+                  <span class="absolute top-4 left-4 bg-[#1AA093] px-3 py-1 text-xs font-bold text-white rounded-full shadow">
+                    -{tour.discount.toFixed(0)}%
+                  </span>
+                ) : null}
                 <p class="font-bold text-sm leading-tight" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</p>
+                {tour.adultUnitPrice > 0 ? (
+                  <div class="mt-2">
+                    {tour.discount > 0 ? (
+                      <p class="text-xs text-white/60 line-through">{formatPrice(tour.adultUnitPrice, currentLang)}</p>
+                    ) : null}
+                    <p class="text-sm font-bold text-white">
+                      {priceFromLabel} {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), currentLang)}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </a>
           );
@@ -362,6 +401,9 @@ const middleDescriptionHtml = trip?.middle_description ? md.render(trip.middle_d
               metaTitle={tour.metaTitle ?? ''}
               durationDays={tour.durationDays ?? 0}
               adultUnitPrice={tour.adultUnitPrice ?? 0}
+              discount={tour.discount ?? 0}
+              currentLang={currentLang}
+              priceFromLabel={priceFromLabel}
               href={`/${currentLang}/tours/${tour.slug}`}
             />
           );
@@ -372,4 +414,3 @@ const middleDescriptionHtml = trip?.middle_description ? md.render(trip.middle_d
     <Footer {currentLang} {t} />
   </body>
 </html>
-

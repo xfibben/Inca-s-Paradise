@@ -18,11 +18,22 @@ Campos clave:
 - fechas
 - cantidades de pasajeros
 - precios y montos
+- `descuento`
+- `vehiculo_seleccionado`
 - `estado`
 - `estado_pago`
 - `ticket`
 - relacion con `tour` o `transportes`
 - relacion `oneToMany` con `pago`
+
+Semantica actual:
+
+- `descuento` en `reserva` se guarda como porcentaje
+- `vehiculo_seleccionado` se guarda cuando la reserva es de transporte
+- `precio_tour` guarda el total estimado del servicio ya con descuento aplicado
+- `precio_adulto_web` y `precio_nino_web` guardan el adelanto web por tipo de pasajero
+- `monto_web` se recalcula desde `precio_adulto_web + precio_nino_web`
+- `monto_final` se recalcula desde `monto_web + pago_restante`
 
 Estados relevantes:
 
@@ -36,6 +47,12 @@ Archivo:
 - [backend/src/api/pago/content-types/pago/schema.json](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/pago/content-types/pago/schema.json)
 
 Registra proveedor, metodo, moneda, monto, transaccion, orden y fecha de pago.
+
+Semantica actual:
+
+- `pago` no guarda descuento
+- `pago.monto` guarda el monto efectivamente cobrado en la pasarela
+- el descuento queda persistido en `reserva`, no en `pago`
 
 ## Flujo frontend
 
@@ -55,6 +72,12 @@ Secuencia:
    - al aprobar, el frontend llama `POST /api/pagos/confirmar`
 6. El backend captura el pago, crea la reserva y registra el pago.
 7. El frontend muestra el ticket y permite descargar comprobante.
+
+Detalle importante:
+
+- tours y transporte usan ahora `discount/descuento` como porcentaje
+- el frontend calcula el total final aplicando ese porcentaje
+- el valor porcentual tambien se persiste en `reserva.descuento`
 
 ## Rutas custom de pago
 
@@ -140,6 +163,8 @@ Puntos clave:
 - `estado` queda en `confirmada`
 - `estado_pago` queda en `pagado`
 - Luego se crea el registro en `pago`
+- en el flujo de pago tambien se envia `descuento` hacia `reserva`
+- en reservas de transporte tambien se persiste `vehiculo_seleccionado`
 
 ## Lifecycles de reserva
 
@@ -153,6 +178,27 @@ Responsabilidades:
 - calcular `monto_final`
 - mover `estado_pago` a `pago_completo` cuando corresponde
 - sincronizar la reserva a Google Sheets en `afterCreate` y `afterUpdate`
+
+Comportamiento actual del backend:
+
+- si el frontend ya envia `precio_tour`, `precio_adulto_web`, `precio_nino_web` o `monto_estimado`, el controlador de `reserva` respeta esos valores
+- esto evita recalculos incorrectos en transporte, donde el precio real depende del vehiculo elegido
+- si esos valores no llegan, el backend usa fallback contra el modelo relacionado
+
+## Descuentos
+
+Estado actual:
+
+- `tour-detalle.discount` se interpreta como porcentaje
+- `transporte.precios[].descuento` se interpreta como porcentaje
+- `reserva.descuento` se interpreta como porcentaje
+- `pago` no tiene campo de descuento
+
+Ejemplo:
+
+- `adultUnitPrice = 10`
+- `discount = 10`
+- total unitario con descuento = `9`
 
 ## Google Sheets
 
@@ -173,6 +219,12 @@ Uso:
 - Reenvia reservas existentes a Sheets
 - Sirve para recuperacion operativa si hubo fallos de sincronizacion
 
+Ajuste importante:
+
+- la sincronizacion ya no intenta leer precios unitarios inexistentes desde `transporte`
+- ahora deriva `precio_adulto` y `precio_nino` desde los montos web guardados en la reserva
+- si la reserva es de transporte, tambien envia `vehiculo` a Google Sheets
+
 ## Operacion del negocio
 
 ### Si un cliente pago y no aparece en Sheets
@@ -189,3 +241,7 @@ Uso:
 ### Si el pago fue total
 
 - El lifecycle puede mover `estado_pago` a `pago_completo` cuando `monto_final >= precio_tour`.
+
+## Riesgo residual
+
+- si una reserva de transporte antigua fue creada antes de persistir `vehiculo_seleccionado`, el backend seguira usando el primer item de `transporte.precios` como fallback si necesita recomponer montos
