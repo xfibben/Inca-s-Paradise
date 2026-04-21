@@ -34,7 +34,36 @@ try {
 }
 
 const title = data?.title ?? (currentLang === 'es' ? 'Términos y Condiciones' : 'Terms & Conditions');
-const description = data?.description ?? '';
+function richTextToMarkdown(value: any): string {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => richTextToMarkdown(item))
+      .filter(Boolean)
+      .join('\n\n');
+  }
+  if (!value || typeof value !== 'object') return '';
+
+  if (typeof value.text === 'string') return value.text;
+
+  if (Array.isArray(value.children)) {
+    return value.children
+      .map((child: any) => richTextToMarkdown(child))
+      .filter(Boolean)
+      .join('');
+  }
+
+  if (Array.isArray(value.content)) {
+    return value.content
+      .map((item: any) => richTextToMarkdown(item))
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  return '';
+}
+
+const description = richTextToMarkdown(data?.description ?? '');
 const seoTitle = data?.seoTitle ?? title;
 
 const fallbackDescriptions: Record<string, string> = {
@@ -46,10 +75,11 @@ const fallbackDescriptions: Record<string, string> = {
 };
 const seoDescription = data?.seoDescription || description || fallbackDescriptions[currentLang] || fallbackDescriptions.es;
 const md = new MarkdownIt({ html: true });
+const descriptionHtml = md.render(description);
 const sections: Array<{ title: string; renderedText: string }> = Array.isArray(data?.sections)
   ? data.sections.map((s: { title: string; text: string }) => ({
       title: s.title,
-      renderedText: md.render(typeof s.text === 'string' ? s.text : JSON.stringify(s.text)),
+      renderedText: md.render(richTextToMarkdown(s.text)),
     }))
   : [];
 
@@ -122,7 +152,10 @@ const terminosSchema = {
             {title}
           </h1>
           {description && (
-            <p class="text-base text-gray-600 leading-relaxed text-justify">{description}</p>
+            <div
+              class="prose prose-gray max-w-none text-gray-600 leading-relaxed text-justify prose-p:my-0 prose-p:leading-relaxed prose-headings:text-gray-900 prose-strong:text-gray-900 prose-li:text-gray-600 prose-blockquote:text-gray-600 prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e]"
+              set:html={descriptionHtml}
+            />
           )}
         </div>
 
@@ -135,7 +168,7 @@ const terminosSchema = {
                   {i + 1}. {section.title}
                 </h2>
                 <div
-                  class="prose prose-gray max-w-none text-gray-700 leading-relaxed text-justify"
+                  class="prose prose-gray max-w-none text-gray-700 leading-relaxed text-justify prose-p:leading-relaxed prose-headings:text-gray-900 prose-strong:text-gray-900 prose-li:text-gray-700 prose-blockquote:text-gray-700 prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e]"
                   set:html={section.renderedText}
                 />
               </div>
