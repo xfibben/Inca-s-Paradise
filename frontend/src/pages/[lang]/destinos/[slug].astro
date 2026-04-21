@@ -814,12 +814,20 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 			{hasCatalogSection ? (
 			<section class="bg-white">
 				<div class="mx-auto w-full max-w-7xl px-6 pb-14 md:pb-18 lg:pb-20">
-					<div class="mb-8 flex flex-wrap items-center gap-3 border-b border-gray-200 pb-4">
+					<div
+						class="mb-8 flex flex-wrap items-center gap-3 border-b border-gray-200 pb-4"
+						role="tablist"
+						aria-label={lang === "en" ? "Tour catalog tabs" : "Pestañas del catálogo de tours"}
+					>
 						<button
 							type="button"
 							class="inline-flex items-center justify-center border border-[#0b2b3a] bg-[#0b2b3a] px-5 py-2 text-xs font-semibold uppercase tracking-wide text-white transition"
 							data-catalog-tab="smallTrips"
+							id="catalog-tab-smallTrips"
+							role="tab"
+							aria-controls="catalog-panel-smallTrips"
 							aria-selected="true"
+							tabindex="0"
 						>
 							{smallTripsTabLabel}
 						</button>
@@ -827,7 +835,11 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 							type="button"
 							class="inline-flex items-center justify-center border border-[#0b2b3a] bg-white px-5 py-2 text-xs font-semibold uppercase tracking-wide text-[#0b2b3a] transition hover:bg-[#0b2b3a] hover:text-white"
 							data-catalog-tab="packages"
+							id="catalog-tab-packages"
+							role="tab"
+							aria-controls="catalog-panel-packages"
 							aria-selected="false"
+							tabindex="-1"
 						>
 							{packagesTabLabel}
 						</button>
@@ -836,8 +848,12 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 					<div
 						class="hidden grid gap-8 md:grid-cols-2 lg:grid-cols-4"
 						data-catalog-panel="packages"
+						id="catalog-panel-packages"
+						role="tabpanel"
+						aria-labelledby="catalog-tab-packages"
 						data-initial-count={String(packageInitialCount)}
 						data-step-count="4"
+						hidden
 					>
 						{packageItemsFlat.map((item, index) =>
 							item.type === "quote" ? (
@@ -907,6 +923,9 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 					<div
 						class="grid gap-2"
 						data-catalog-panel="smallTrips"
+						id="catalog-panel-smallTrips"
+						role="tabpanel"
+						aria-labelledby="catalog-tab-smallTrips"
 						data-initial-count={String(smallInitialCount)}
 						data-step-count={String(smallStepCount)}
 					>
@@ -945,14 +964,14 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 													{item.tourSlug ? (
 														<a
 															href={`/${lang}/tours/${item.tourSlug}`}
-															class="shrink-0 inline-flex items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff8e46]"
+															class="shrink-0 inline-flex items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-[#0b2b3a] transition hover:bg-[#ff8e46]"
 														>
 															{item.buttonLabel ?? tabReadMoreLabel}
 														</a>
 													) : (
 														<button
 															type="button"
-															class="shrink-0 inline-flex items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-white transition hover:bg-[#ff8e46]"
+															class="shrink-0 inline-flex items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-[#0b2b3a] transition hover:bg-[#ff8e46]"
 														>
 															{item.buttonLabel ?? tabReadMoreLabel}
 														</button>
@@ -1071,6 +1090,7 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 						const tab = button.dataset.catalogTab;
 						const isActive = tab === activeTab;
 						button.setAttribute("aria-selected", isActive ? "true" : "false");
+						button.setAttribute("tabindex", isActive ? "0" : "-1");
 						button.classList.toggle("bg-[#0b2b3a]", isActive);
 						button.classList.toggle("text-white", isActive);
 						button.classList.toggle("bg-white", !isActive);
@@ -1087,6 +1107,12 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 						if (!panelTab) return;
 						const isPanelActive = panelTab === activeTab;
 						panel.classList.toggle("hidden", !isPanelActive);
+						panel.setAttribute("aria-hidden", isPanelActive ? "false" : "true");
+						if (isPanelActive) {
+							panel.removeAttribute("hidden");
+						} else {
+							panel.setAttribute("hidden", "");
+						}
 
 						const cards = Array.from(
 							panel.querySelectorAll("[data-catalog-index]")
@@ -1174,4 +1200,3 @@ const hasBlogSection = Boolean(blogTitle || blogButton);
 		</script>
 	</body>
 </html>
-

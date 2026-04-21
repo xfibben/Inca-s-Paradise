@@ -79,7 +79,12 @@ function getImageSizeClass(year: number): string {
             </div>
 
             <!-- Review Opinion -->
-            <div class="max-h-56 md:max-h-72 overflow-y-auto pr-4 mb-8">
+            <div
+              class="max-h-56 md:max-h-72 overflow-y-auto pr-4 mb-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/40"
+              tabindex="0"
+              role="region"
+              aria-label={`Review content ${review.year}`}
+            >
               <p class="text-base md:text-lg lg:text-xl text-gray-100 leading-relaxed text-justify">
                 {review.opinion}
               </p>
