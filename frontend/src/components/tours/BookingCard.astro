@@ -153,9 +153,12 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
         <span class="text-xs font-medium uppercase tracking-wide text-[#64748b]">
           {c.currency}
         </span>
+        <label for="booking-currency-select" class="sr-only">{c.currency}</label>
         <select
+          id="booking-currency-select"
           data-currency-select
           data-default-currency={langCurrency}
+          aria-label={c.currency}
           class="rounded border border-[#cbd5e1] bg-white px-2 py-1 text-xs font-semibold text-[#1f2937] focus:outline-none focus:ring-1 focus:ring-[#1AA093]"
         >
           <option value="USD" selected={langCurrency === 'USD'}>USD ($)</option>
@@ -190,7 +193,7 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
         {duracion}
       </p>
 
-      <div class="flex items-center gap-1 text-[0.84rem] leading-[1.1] text-[#1AA093]">
+      <div class="flex items-center gap-1 text-[0.84rem] leading-[1.1] text-[#115e59]">
         <span class="mt-0.5 text-base">&#10003;</span>
         <span>{disponibilidad}</span>
       </div>
@@ -362,7 +365,7 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
       for (let i = 0; i < firstWeekday; i++) {
         const span = document.createElement("span");
         span.textContent = String(prevMonthDays - firstWeekday + i + 1);
-        span.className = "inline-flex h-8 items-center justify-center rounded text-xs text-[#94a3b8] bg-[#f1f5f9]";
+        span.className = "inline-flex h-8 items-center justify-center rounded text-xs text-[#475569] bg-[#e2e8f0]";
         gridEl.appendChild(span);
       }
 
@@ -381,7 +384,7 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
         if (isPast) {
           const span = document.createElement("span");
           span.textContent = String(day);
-          span.className = "inline-flex h-8 items-center justify-center rounded text-xs text-[#c0c9d4] bg-[#f1f5f9] line-through cursor-not-allowed";
+          span.className = "inline-flex h-8 items-center justify-center rounded text-xs text-[#475569] bg-[#e2e8f0] cursor-not-allowed";
           gridEl.appendChild(span);
         } else {
           const btn = document.createElement("button");
@@ -389,11 +392,11 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
           btn.textContent = String(day);
 
           if (isInRange) {
-            btn.className = "inline-flex h-8 items-center justify-center text-xs font-bold transition bg-[#1AA093] text-white";
+            btn.className = "inline-flex h-8 items-center justify-center text-xs font-bold transition bg-[#0f766e] text-white";
             if (isRangeStart) btn.classList.add("rounded-l-lg", "ring-2", "ring-[#032b43]");
             else if (isRangeEnd) btn.classList.add("rounded-r-lg", "ring-2", "ring-[#032b43]");
           } else {
-            btn.className = "inline-flex h-8 items-center justify-center rounded text-xs font-medium transition bg-[#e0f7f5] text-[#1AA093] hover:bg-[#1AA093] hover:text-white";
+            btn.className = "inline-flex h-8 items-center justify-center rounded text-xs font-medium transition bg-[#d1fae5] text-[#065f46] hover:bg-[#0f766e] hover:text-white";
             if (isToday) btn.classList.add("ring-2", "ring-[#032b43]");
           }
 
@@ -404,7 +407,7 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
             const reservaBtn = document.querySelector("[data-open-reserva]") as HTMLButtonElement | null;
             if (reservaBtn) {
               reservaBtn.disabled = false;
-              reservaBtn.className = "w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition bg-[#1AA093] hover:bg-[#1AA093] cursor-pointer";
+              reservaBtn.className = "w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition bg-[#0f766e] hover:bg-[#115e59] cursor-pointer";
             }
           });
           gridEl.appendChild(btn);
@@ -416,7 +419,7 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
       for (let i = 1; i <= trailingCells; i++) {
         const span = document.createElement("span");
         span.textContent = String(i);
-        span.className = "inline-flex h-8 items-center justify-center rounded text-xs text-[#94a3b8] bg-[#f1f5f9]";
+        span.className = "inline-flex h-8 items-center justify-center rounded text-xs text-[#475569] bg-[#e2e8f0]";
         gridEl.appendChild(span);
       }
     };
