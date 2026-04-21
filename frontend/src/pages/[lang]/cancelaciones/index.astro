@@ -48,7 +48,7 @@ const fallbackDescriptions: Record<string, string> = {
 };
 
 function richTextToMarkdown(value: any): string {
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') return value.replace(/\\n/g, '\n');
   if (Array.isArray(value)) {
     return value
       .map((item) => richTextToMarkdown(item))
@@ -57,7 +57,7 @@ function richTextToMarkdown(value: any): string {
   }
   if (!value || typeof value !== 'object') return '';
 
-  if (typeof value.text === 'string') return value.text;
+  if (typeof value.text === 'string') return value.text.replace(/\\n/g, '\n');
 
   if (Array.isArray(value.children)) {
     return value.children
