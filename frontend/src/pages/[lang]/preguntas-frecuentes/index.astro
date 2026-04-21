@@ -60,12 +60,41 @@ const fallbackDescriptions: Record<string, string> = {
   it: 'Rispondiamo alle domande più frequenti su prenotazioni, pagamenti, tour e trasporti per aiutarti a pianificare il viaggio con tranquillità.',
 };
 
+function richTextToMarkdown(value: any): string {
+  if (typeof value === 'string') return value.replace(/\\n/g, '\n');
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => richTextToMarkdown(item))
+      .filter(Boolean)
+      .join('\n\n');
+  }
+  if (!value || typeof value !== 'object') return '';
+
+  if (typeof value.text === 'string') return value.text.replace(/\\n/g, '\n');
+
+  if (Array.isArray(value.children)) {
+    return value.children
+      .map((child: any) => richTextToMarkdown(child))
+      .filter(Boolean)
+      .join('');
+  }
+
+  if (Array.isArray(value.content)) {
+    return value.content
+      .map((item: any) => richTextToMarkdown(item))
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  return '';
+}
+
 const title = data?.titulo ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
-const description = data?.descripcion ?? '';
+const description = richTextToMarkdown(data?.descripcion ?? '');
 const seoTitle = data?.metaTitle ?? title;
 const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
 const md = new MarkdownIt({ html: true });
-const descriptionHtml = md.render(typeof description === 'string' ? description : '');
+const descriptionHtml = md.render(description);
 
 const fallbackSections: Record<string, Array<{ question: string; answer: string }>> = {
   es: [
@@ -88,7 +117,7 @@ const sections = Array.isArray(data?.sections) && data.sections.length > 0
   ? data.sections.map((section: any) => {
       return {
         question: section?.pregunta ?? '',
-        renderedAnswer: md.render(typeof section?.respuesta === 'string' ? section.respuesta : '')
+        renderedAnswer: md.render(richTextToMarkdown(section?.respuesta))
       };
     })
   : (fallbackSections[currentLang] ?? fallbackSections.es).map((section) => ({
