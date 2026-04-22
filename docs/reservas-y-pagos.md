@@ -178,12 +178,66 @@ Responsabilidades:
 - calcular `monto_final`
 - mover `estado_pago` a `pago_completo` cuando corresponde
 - sincronizar la reserva a Google Sheets en `afterCreate` y `afterUpdate`
+- disparar envio de correos de reserva en `afterCreate`
 
 Comportamiento actual del backend:
 
 - si el frontend ya envia `precio_tour`, `precio_adulto_web`, `precio_nino_web` o `monto_estimado`, el controlador de `reserva` respeta esos valores
 - esto evita recalculos incorrectos en transporte, donde el precio real depende del vehiculo elegido
 - si esos valores no llegan, el backend usa fallback contra el modelo relacionado
+
+## Correos de reserva
+
+Archivo:
+
+- [backend/src/utils/reserva-email.ts](/Users/arturo/Documents/Inca-s-Paradise/backend/src/utils/reserva-email.ts)
+
+Comportamiento:
+
+- al crear una `reserva`, el backend envia 2 correos
+- un correo va a `RESEND_NOTIFY_EMAIL`
+- el otro va al `email` del cliente guardado en la reserva
+- ambos correos adjuntan el PDF `comprobante-{ticket}.pdf`
+- el envio corre desde el `afterCreate` de `reserva`, asi cubre reserva directa y reserva creada desde pago
+
+Contenido actual del correo:
+
+- encabezado con branding `INCA'S PARADISE`
+- logo cargado desde `frontend/public/favicon.svg`
+- secciones en tabla: datos del pasajero, datos de la reserva y resumen de pago
+- `Tipo de servicio` usa:
+  - `tourType` del `tour-detalle`: `Tour`, `Small Trip` o `Paquete`
+  - `tipos_transporte[].nombre` del `transporte` cuando la reserva es de transporte
+- el nombre del servicio es dinamico:
+  - `Nombre del tour`
+  - `Nombre del transporte`
+- si la reserva es de transporte, el correo muestra `Vehículo seleccionado`
+
+Datos usados:
+
+- pasajero: nombre, email, telefono, tipo_documento, numero_documento, nacionalidad
+- reserva: ticket, tipo de servicio, nombre del servicio, vehiculo, fechas, horario, cantidades, notas, estados
+- pago: moneda, descuento, precio total, monto estimado, monto pagado en web, precio web por adulto y niño, saldo pendiente, monto final
+
+Dependencias de datos:
+
+- para transporte el lifecycle debe popular `transportes.tipos_transporte`
+- para tours el campo usado es `tour.tourType`
+- el PDF adjunto se genera en backend con `jspdf`
+
+Variables de entorno:
+
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+- `RESEND_FROM_NAME`
+- `RESEND_NOTIFY_EMAIL`
+
+Gotchas:
+
+- `RESEND_FROM_EMAIL` debe usar un dominio verificado en Resend
+- si el dominio verificado es `incasparadise.com`, usar por ejemplo `reservas@incasparadise.com`
+- no usar `onboarding@resend.dev` fuera de pruebas iniciales
+- en Docker, las variables de Resend deben estar declaradas en `docker-compose.yaml` y `docker-compose.prod.yaml`
 
 ## Descuentos
 
