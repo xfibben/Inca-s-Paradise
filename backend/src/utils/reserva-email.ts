@@ -1,4 +1,6 @@
 import { jsPDF } from 'jspdf';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
 function texto(valor: unknown): string {
   if (valor === null || valor === undefined) return '-';
@@ -42,6 +44,24 @@ function obtenerServicio(reserva: any) {
   return { esTour, tipoServicio, nombreServicio };
 }
 
+function tipoTourLabel(valor: unknown): string {
+  if (valor === 'small_trip') return 'Small Trip';
+  if (valor === 'package') return 'Paquete';
+  return 'Tour';
+}
+
+function tipoServicioDetalle(reserva: any): string {
+  if (reserva?.tour) return tipoTourLabel(reserva.tour?.tourType);
+
+  const transporte = Array.isArray(reserva?.transportes) ? reserva.transportes[0] : null;
+  const tipos = Array.isArray(transporte?.tipos_transporte) ? transporte.tipos_transporte : [];
+  const nombres = tipos
+    .map((item: any) => texto(item?.nombre))
+    .filter((item: string) => item !== '-');
+
+  return nombres.length > 0 ? nombres.join(', ') : 'Transporte';
+}
+
 function simboloMoneda(moneda: unknown): string {
   if (moneda === 'PEN') return 'S/ ';
   if (moneda === 'EUR') return 'EUR ';
@@ -74,9 +94,36 @@ function bloqueTabla(titulo: string, filas: string): string {
   `;
 }
 
+async function logoCorreoDataUrl(): Promise<string> {
+  const filePath = path.resolve(process.cwd(), '..', 'frontend', 'public', 'favicon.svg');
+  const svg = await readFile(filePath, 'utf8');
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
+}
+
+function encabezadoCorreo(logo: string, titulo: string, subtitulo: string): string {
+  return `
+    <div style="margin: 0 0 24px 0; padding: 0 0 20px 0; border-bottom: 1px solid #dbe4e2;">
+      <table cellpadding="0" cellspacing="0" role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="width: 68px; vertical-align: middle;">
+            ${logo ? `<img src="${logo}" alt="INCA'S PARADISE" width="52" height="52" style="display: block; width: 52px; height: 52px;" />` : ''}
+          </td>
+          <td style="vertical-align: middle;">
+            <div style="font-size: 12px; letter-spacing: 1.6px; font-weight: 700; color: #1aa093;">INCA'S PARADISE</div>
+            <div style="font-size: 28px; line-height: 1.2; font-weight: 700; color: #1f2937; margin-top: 2px;">${escaparHtml(titulo)}</div>
+          </td>
+        </tr>
+      </table>
+      <p style="margin: 12px 0 0 0; color: #374151;">${escaparHtml(subtitulo)}</p>
+    </div>
+  `;
+}
+
 function construirDetalleCorreo(reserva: any) {
   const { esTour, tipoServicio, nombreServicio } = obtenerServicio(reserva);
+  const tipoServicioReal = tipoServicioDetalle(reserva);
   const moneda = reserva?.moneda_usuario ?? 'USD';
+  const labelNombreServicio = esTour ? 'Nombre del tour' : 'Nombre del transporte';
   const filasPasajero = [
     filaTabla('Nombre completo', reserva?.nombre),
     filaTabla('Correo electrónico', reserva?.email),
@@ -88,9 +135,9 @@ function construirDetalleCorreo(reserva: any) {
 
   const filasReserva = [
     filaTabla('Ticket', reserva?.ticket),
-    filaTabla('Tipo de servicio', tipoServicio),
-    filaTabla(tipoServicio, nombreServicio),
-    !esTour && reserva?.vehiculo_seleccionado ? filaTabla('Vehículo', reserva?.vehiculo_seleccionado) : '',
+    filaTabla('Tipo de servicio', tipoServicioReal),
+    filaTabla(labelNombreServicio, nombreServicio),
+    !esTour ? filaTabla('Vehículo seleccionado', reserva?.vehiculo_seleccionado) : '',
     filaTabla('Fecha de inicio', formatearFecha(reserva?.fecha_inicio)),
     filaTabla('Fecha de fin', formatearFecha(reserva?.fecha_fin)),
     filaTabla('Horario', reserva?.turno),
@@ -115,6 +162,7 @@ function construirDetalleCorreo(reserva: any) {
 
   return {
     tipoServicio,
+    tipoServicioReal,
     nombreServicio,
     pasajero: bloqueTabla('Datos del pasajero', filasPasajero),
     reserva: bloqueTabla('Datos de la reserva', filasReserva),
@@ -217,14 +265,13 @@ function generarPdfReserva(reserva: any): Buffer {
   return Buffer.from(doc.output('arraybuffer'));
 }
 
-function htmlCliente(reserva: any): string {
+function htmlCliente(reserva: any, logo: string): string {
   const detalle = construirDetalleCorreo(reserva);
 
   return `
     <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6; background: #f3f7f6; padding: 24px;">
       <div style="max-width: 760px; margin: 0 auto; background: #ffffff; border: 1px solid #dbe4e2; border-radius: 12px; padding: 28px;">
-        <h2 style="color: #1aa093; margin: 0 0 12px 0;">Confirmación de reserva</h2>
-        <p style="margin: 0 0 18px 0;">Hola ${escaparHtml(reserva?.nombre)}, tu reserva fue registrada correctamente. Adjuntamos el comprobante PDF.</p>
+        ${encabezadoCorreo(logo, 'Confirmación de reserva', `Hola ${texto(reserva?.nombre)}, tu reserva fue registrada correctamente. Adjuntamos el comprobante PDF.`)}
         ${detalle.pasajero}
         ${detalle.reserva}
         ${detalle.pago}
@@ -233,14 +280,13 @@ function htmlCliente(reserva: any): string {
   `;
 }
 
-function htmlAdmin(reserva: any): string {
+function htmlAdmin(reserva: any, logo: string): string {
   const detalle = construirDetalleCorreo(reserva);
 
   return `
     <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6; background: #f3f7f6; padding: 24px;">
       <div style="max-width: 760px; margin: 0 auto; background: #ffffff; border: 1px solid #dbe4e2; border-radius: 12px; padding: 28px;">
-        <h2 style="color: #1aa093; margin: 0 0 12px 0;">Nueva reserva recibida</h2>
-        <p style="margin: 0 0 18px 0;">Se registró una nueva reserva y el comprobante PDF va adjunto.</p>
+        ${encabezadoCorreo(logo, 'Nueva reserva recibida', 'Se registró una nueva reserva y el comprobante PDF va adjunto.')}
         ${detalle.pasajero}
         ${detalle.reserva}
         ${detalle.pago}
@@ -287,7 +333,7 @@ async function enviarCorreo(payload: {
 export async function enviarCorreosReserva(strapi: any, id: number) {
   const apiKey = process.env.RESEND_API_KEY ?? '';
   const fromEmail = process.env.RESEND_FROM_EMAIL ?? '';
-  const fromName = process.env.RESEND_FROM_NAME ?? "Inca's Paradise";
+  const fromName = (process.env.RESEND_FROM_NAME ?? "INCA'S PARADISE").toUpperCase();
   const notifyEmail = process.env.RESEND_NOTIFY_EMAIL ?? 'incasparadise@gmail.com';
 
   if (!apiKey || !fromEmail) {
@@ -297,7 +343,12 @@ export async function enviarCorreosReserva(strapi: any, id: number) {
 
   const reserva = await strapi.documents('api::reserva.reserva').findFirst({
     filters: { id: { $eq: id } },
-    populate: ['tour', 'transportes'],
+    populate: {
+      tour: true,
+      transportes: {
+        populate: ['tipos_transporte'],
+      },
+    },
   }) as any;
 
   if (!reserva) return;
@@ -305,13 +356,14 @@ export async function enviarCorreosReserva(strapi: any, id: number) {
   const pdfBuffer = generarPdfReserva(reserva);
   const pdfBase64 = pdfBuffer.toString('base64');
   const from = `${fromName} <${fromEmail}>`;
+  const logo = await logoCorreoDataUrl().catch(() => '');
 
   await enviarCorreo({
     apiKey,
     from,
     to: notifyEmail,
-    subject: `Nueva reserva ${texto(reserva.ticket)}`,
-    html: htmlAdmin(reserva),
+    subject: `INCA'S PARADISE - Nueva reserva ${texto(reserva.ticket)}`,
+    html: htmlAdmin(reserva, logo),
     pdfBase64,
     ticket: texto(reserva.ticket),
   });
@@ -321,8 +373,8 @@ export async function enviarCorreosReserva(strapi: any, id: number) {
       apiKey,
       from,
       to: String(reserva.email),
-      subject: `Confirmación de reserva ${texto(reserva.ticket)}`,
-      html: htmlCliente(reserva),
+      subject: `INCA'S PARADISE - Confirmación de reserva ${texto(reserva.ticket)}`,
+      html: htmlCliente(reserva, logo),
       pdfBase64,
       ticket: texto(reserva.ticket),
     });
