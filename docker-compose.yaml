@@ -54,6 +54,10 @@ services:
       PAYPAL_SECRET: ${PAYPAL_SECRET}
       PAYPAL_MODE: ${PAYPAL_MODE}
       PAYPAL_WEBHOOK_ID: ${PAYPAL_WEBHOOK_ID}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}
+      RESEND_FROM_NAME: ${RESEND_FROM_NAME}
+      RESEND_NOTIFY_EMAIL: ${RESEND_NOTIFY_EMAIL}
     # Auto-instalador con vacuna para Mac (.DS_Store)
     command: >
       sh -c "

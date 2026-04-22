@@ -1,3 +1,5 @@
+import { enviarCorreosReserva } from '../../../../utils/reserva-email';
+
 // Sincroniza reservas con Google Sheets vía Apps Script (gratis, sin Google Cloud)
 async function sincronizarConSheets(id: number) {
   const url = process.env.GOOGLE_APPS_SCRIPT_URL;
@@ -133,6 +135,9 @@ export default {
     setImmediate(() => {
       sincronizarConSheets(id).catch((err) =>
         strapi.log.error('[Sheets] Error en afterCreate:', err)
+      );
+      enviarCorreosReserva(strapi, id).catch((err) =>
+        strapi.log.error('[Correo] Error en afterCreate:', err)
       );
     });
   },

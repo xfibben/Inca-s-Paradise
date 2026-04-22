@@ -54,6 +54,10 @@ services:
       PAYPAL_MODE: ${PAYPAL_MODE}
       PAYPAL_WEBHOOK_ID: ${PAYPAL_WEBHOOK_ID}
       APIS_NET_PE_TOKEN: ${APIS_NET_PE_TOKEN}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}
+      RESEND_FROM_NAME: ${RESEND_FROM_NAME}
+      RESEND_NOTIFY_EMAIL: ${RESEND_NOTIFY_EMAIL}
     command: >
       sh -c "
       apk add --no-cache ca-certificates &&
