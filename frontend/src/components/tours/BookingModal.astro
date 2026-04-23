@@ -698,7 +698,7 @@ const t = translations[lang] ?? translations.es;
   </div>
 </div>
 
-<script is:inline define:vars={{ strapiUrl: import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337', odooUrl: import.meta.env.PUBLIC_ODOO_URL || 'http://localhost:8069', pagoTituloText: t.pagoTitulo, bookingTituloText: t.title, paypalClientId: import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || '', tourTitleVar: tourTitle, tourSlugVar: tourSlug, langVar: lang }}>
+<script is:inline define:vars={{ strapiUrl: import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337', odooUrl: import.meta.env.PUBLIC_ODOO_URL || '', pagoTituloText: t.pagoTitulo, bookingTituloText: t.title, paypalClientId: import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || '', tourTitleVar: tourTitle, tourSlugVar: tourSlug, langVar: lang }}>
   window.__strapiUrl = strapiUrl;
   window.__odooUrl = odooUrl;
   window.__pagoTituloText = pagoTituloText;
@@ -961,7 +961,8 @@ const t = translations[lang] ?? translations.es;
       const b = window.__pendingBooking;
       if (!b) throw new Error("Sin datos de reserva");
 
-      const odooUrl = window.__odooUrl ?? "http://localhost:8069";
+      const odooUrl = window.__odooUrl ?? "";
+      if (!odooUrl) throw new Error("PUBLIC_ODOO_URL no esta configurada");
       const toDatetime = (val: string) => val ? `${val}T00:00:00.000Z` : null;
 
       const res = await fetch(`${odooUrl}/incas/api/reservas`, {
@@ -1093,7 +1094,10 @@ const t = translations[lang] ?? translations.es;
             const montoPaypal = parseFloat((b.monto_total / tasaCambio).toFixed(2));
 
             const payload = { proveedor: "paypal", monto: montoPaypal, moneda: monedaPaypal };
-            const odooUrl = window.__odooUrl ?? "http://localhost:8069";
+            const odooUrl = window.__odooUrl ?? "";
+            if (!odooUrl) {
+              throw new Error("PUBLIC_ODOO_URL no esta configurada");
+            }
 
             // Guard: evitar llamar al backend con monto inválido
             if (!montoPaypal || montoPaypal <= 0) {

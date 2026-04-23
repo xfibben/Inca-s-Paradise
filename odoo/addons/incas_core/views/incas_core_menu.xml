@@ -5,7 +5,6 @@
         name="Inca's Paradise"
         sequence="10"
         web_icon="base,static/description/modules.png"
-        action="incas_reservas.action_incas_cotizaciones"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
     />
 
