@@ -77,6 +77,7 @@ docker compose -f docker-compose.prod.yaml up -d
 - confirmar ultimo commit con `git log -1 --oneline`
 - revisar que variables de entorno sigan presentes
 - confirmar que los contenedores hayan levantado correctamente
+- confirmar acceso a Odoo en `8069` para pruebas y `8070` para produccion
 
 ## Datos que conviene completar despues
 

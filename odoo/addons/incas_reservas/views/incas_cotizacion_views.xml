@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_cotizacion_list" model="ir.ui.view">
+        <field name="name">incas.cotizacion.list</field>
+        <field name="model">incas.cotizacion</field>
+        <field name="arch" type="xml">
+            <list string="Cotizaciones">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="fecha_cotizacion"/>
+                <field name="fecha_viaje"/>
+                <field name="idioma"/>
+                <field name="tipo_servicio"/>
+                <field name="tipo_tour"/>
+                <field name="estilo_transporte_id"/>
+                <field name="servicio_nombre"/>
+                <field name="precio_adulto"/>
+                <field name="precio_nino"/>
+                <field name="descuento"/>
+                <field name="cantidad_adultos"/>
+                <field name="cantidad_ninos"/>
+                <field name="monto_total"/>
+                <field name="moneda"/>
+                <field name="state"/>
+                <field name="responsable_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_cotizacion_search" model="ir.ui.view">
+        <field name="name">incas.cotizacion.search</field>
+        <field name="model">incas.cotizacion</field>
+        <field name="arch" type="xml">
+            <search string="Buscar cotizaciones">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="servicio_nombre"/>
+                <field name="state"/>
+                <field name="idioma"/>
+                <field name="tipo_servicio"/>
+                <field name="tipo_tour"/>
+                <field name="estilo_transporte_id"/>
+                <separator/>
+                <filter name="filter_borrador" string="Borrador" domain="[('state', '=', 'borrador')]"/>
+                <filter name="filter_aprobada" string="Aprobada" domain="[('state', '=', 'aprobada')]"/>
+                <separator/>
+                <filter name="group_state" string="Estado" domain="[]" context="{'group_by': 'state'}"/>
+                <filter name="group_idioma" string="Idioma" domain="[]" context="{'group_by': 'idioma'}"/>
+                <filter name="group_responsable" string="Responsable" domain="[]" context="{'group_by': 'responsable_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_cotizacion_form" model="ir.ui.view">
+        <field name="name">incas.cotizacion.form</field>
+        <field name="model">incas.cotizacion</field>
+        <field name="arch" type="xml">
+            <form string="Cotización">
+                <header>
+                    <button name="action_print_pdf" type="object" string="Exportar PDF"/>
+                    <button name="action_marcar_enviada" type="object" string="Marcar enviada" invisible="state != 'borrador'"/>
+                    <button name="action_marcar_aprobada" type="object" string="Aprobar" invisible="state not in ['borrador', 'enviada']"/>
+                    <button name="action_marcar_rechazada" type="object" string="Rechazar" invisible="state == 'rechazada'"/>
+                    <button name="action_cancelar" type="object" string="Cancelar" invisible="state == 'cancelada'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="borrador,enviada,aprobada,rechazada,cancelada"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="fecha_cotizacion"/>
+                            <field name="fecha_viaje"/>
+                            <field name="responsable_id"/>
+                        </group>
+                        <group>
+                            <field name="idioma"/>
+                            <field name="canal_venta"/>
+                            <field name="tipo_servicio"/>
+                            <field name="tipo_tour" invisible="tipo_servicio != 'tour'" required="tipo_servicio == 'tour'"/>
+                            <field name="estilo_transporte_id" invisible="tipo_servicio != 'transporte'" required="tipo_servicio == 'transporte'"/>
+                            <field name="servicio_id"/>
+                            <field name="precio_adulto_usd" invisible="1" force_save="1"/>
+                            <field name="precio_nino_usd" invisible="1" force_save="1"/>
+                            <field name="servicio_nombre" readonly="1" force_save="1"/>
+                            <field name="precio_adulto" readonly="1" force_save="1"/>
+                            <field name="precio_nino" readonly="1" force_save="1"/>
+                            <field name="descuento" readonly="1" force_save="1"/>
+                            <field name="cantidad_adultos"/>
+                            <field name="cantidad_ninos"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="cantidad_pasajeros" readonly="1"/>
+                            <field name="monto_total" readonly="1"/>
+                            <field name="moneda"/>
+                        </group>
+                        <group>
+                            <field name="reserva_count" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Observaciones">
+                            <field name="observaciones" placeholder="Detalle interno de la cotización"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_cotizaciones" model="ir.actions.act_window">
+        <field name="name">Cotizaciones</field>
+        <field name="res_model">incas.cotizacion</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_cotizacion_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_cotizaciones"
+        name="Cotizaciones"
+        parent="incas_core.menu_incas_reservas_root"
+        action="action_incas_cotizaciones"
+        sequence="10"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

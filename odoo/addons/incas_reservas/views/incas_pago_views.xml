@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_pago_list" model="ir.ui.view">
+        <field name="name">incas.pago.list</field>
+        <field name="model">incas.pago</field>
+        <field name="arch" type="xml">
+            <list string="Pagos">
+                <field name="reserva_id"/>
+                <field name="proveedor"/>
+                <field name="metodo"/>
+                <field name="moneda"/>
+                <field name="monto"/>
+                <field name="moneda_reserva"/>
+                <field name="monto_reserva"/>
+                <field name="estado"/>
+                <field name="transaccion_id"/>
+                <field name="orden_id"/>
+                <field name="fecha_pago"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_pago_form" model="ir.ui.view">
+        <field name="name">incas.pago.form</field>
+        <field name="model">incas.pago</field>
+        <field name="arch" type="xml">
+            <form string="Pago">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="reserva_id"/>
+                            <field name="proveedor"/>
+                            <field name="metodo"/>
+                            <field name="moneda"/>
+                            <field name="monto"/>
+                            <field name="moneda_reserva" readonly="1"/>
+                            <field name="monto_reserva" readonly="1"/>
+                            <field name="estado"/>
+                        </group>
+                        <group>
+                            <field name="transaccion_id"/>
+                            <field name="orden_id"/>
+                            <field name="codigo_respuesta"/>
+                            <field name="mensaje_respuesta"/>
+                            <field name="fecha_pago"/>
+                            <field name="ip_cliente"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="qr_url"/>
+                        <field name="qr_expiracion"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_incas_pago_search" model="ir.ui.view">
+        <field name="name">incas.pago.search</field>
+        <field name="model">incas.pago</field>
+        <field name="arch" type="xml">
+            <search string="Buscar pagos">
+                <field name="reserva_id"/>
+                <field name="proveedor"/>
+                <field name="metodo"/>
+                <field name="estado"/>
+                <filter name="group_proveedor" string="Proveedor" domain="[]" context="{'group_by': 'proveedor'}"/>
+                <filter name="group_estado" string="Estado" domain="[]" context="{'group_by': 'estado'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_incas_pagos" model="ir.actions.act_window">
+        <field name="name">Pagos</field>
+        <field name="res_model">incas.pago</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_pago_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_pagos"
+        name="Pagos"
+        parent="incas_core.menu_incas_reservas_root"
+        action="action_incas_pagos"
+        sequence="25"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+</odoo>
