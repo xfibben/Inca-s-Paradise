@@ -1,4 +1,5 @@
 import json
+import os
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
@@ -28,7 +29,9 @@ class IncasServicioCatalogo(models.Model):
         ],
         string="Tipo de tour",
     )
-    estilo_transporte_id = fields.Many2one("incas.estilo.transporte", string="Estilo de transporte")
+    estilo_transporte_id = fields.Many2one(
+        "incas.estilo.transporte", string="Estilo de transporte"
+    )
     precio_adulto = fields.Float(string="Precio adulto")
     precio_nino = fields.Float(string="Precio niño")
     descuento = fields.Float(string="Descuento")
@@ -44,7 +47,13 @@ class IncasServicioCatalogo(models.Model):
 
     @api.model
     def _get_strapi_base_url(self):
-        return self.env["ir.config_parameter"].sudo().get_param("incas_reservas.strapi_url") or "http://backend:1337"
+        return (
+            self.env["ir.config_parameter"]
+            .sudo()
+            .get_param("incas_reservas.strapi_url")
+            or os.getenv("STRAPI_URL")
+            or "http://backend:1336"
+        )
 
     @api.model
     def _fetch_strapi_records(self, endpoint, params):
@@ -141,12 +150,16 @@ class IncasServicioCatalogo(models.Model):
                 "slug": item.get("slug"),
                 "active": True,
             }
-            service = self.search([("tipo_servicio", "=", "tour"), ("strapi_id", "=", strapi_id)], limit=1)
+            service = self.search(
+                [("tipo_servicio", "=", "tour"), ("strapi_id", "=", strapi_id)], limit=1
+            )
             if service:
                 service.write(values)
             else:
                 self.create(values)
-        stale_records = self.search([("tipo_servicio", "=", "tour"), ("strapi_id", "not in", seen_ids)])
+        stale_records = self.search(
+            [("tipo_servicio", "=", "tour"), ("strapi_id", "not in", seen_ids)]
+        )
         if stale_records:
             stale_records.write({"active": False})
 
@@ -174,26 +187,39 @@ class IncasServicioCatalogo(models.Model):
             estilo = False
             tipos_transporte = item.get("tipos_transporte") or []
             if tipos_transporte:
-                estilo = estilo_model.search([("strapi_id", "=", tipos_transporte[0].get("id"))], limit=1)
+                estilo = estilo_model.search(
+                    [("strapi_id", "=", tipos_transporte[0].get("id"))], limit=1
+                )
             values = {
                 "name": item.get("nombre"),
                 "tipo_servicio": "transporte",
                 "tipo_tour": False,
                 "estilo_transporte_id": estilo.id if estilo else False,
-                "precio_adulto": float(((item.get("precios") or [{}])[0]).get("precioAdulto") or 0),
-                "precio_nino": float(((item.get("precios") or [{}])[0]).get("precioNino") or 0),
-                "descuento": float(((item.get("precios") or [{}])[0]).get("descuento") or 0),
+                "precio_adulto": float(
+                    ((item.get("precios") or [{}])[0]).get("precioAdulto") or 0
+                ),
+                "precio_nino": float(
+                    ((item.get("precios") or [{}])[0]).get("precioNino") or 0
+                ),
+                "descuento": float(
+                    ((item.get("precios") or [{}])[0]).get("descuento") or 0
+                ),
                 "strapi_id": strapi_id,
                 "strapi_document_id": item.get("documentId"),
                 "slug": item.get("slug"),
                 "active": True,
             }
-            service = self.search([("tipo_servicio", "=", "transporte"), ("strapi_id", "=", strapi_id)], limit=1)
+            service = self.search(
+                [("tipo_servicio", "=", "transporte"), ("strapi_id", "=", strapi_id)],
+                limit=1,
+            )
             if service:
                 service.write(values)
             else:
                 self.create(values)
-        stale_records = self.search([("tipo_servicio", "=", "transporte"), ("strapi_id", "not in", seen_ids)])
+        stale_records = self.search(
+            [("tipo_servicio", "=", "transporte"), ("strapi_id", "not in", seen_ids)]
+        )
         if stale_records:
             stale_records.write({"active": False})
 
