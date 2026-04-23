@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_pasajero_list" model="ir.ui.view">
+        <field name="name">incas.pasajero.list</field>
+        <field name="model">incas.pasajero</field>
+        <field name="arch" type="xml">
+            <list string="Pasajeros">
+                <field name="name"/>
+                <field name="reserva_id"/>
+                <field name="tipo_documento"/>
+                <field name="numero_documento"/>
+                <field name="nacionalidad"/>
+                <field name="fecha_nacimiento"/>
+                <field name="email"/>
+                <field name="telefono"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_pasajero_search" model="ir.ui.view">
+        <field name="name">incas.pasajero.search</field>
+        <field name="model">incas.pasajero</field>
+        <field name="arch" type="xml">
+            <search string="Buscar pasajeros">
+                <field name="name"/>
+                <field name="reserva_id"/>
+                <field name="numero_documento"/>
+                <field name="nacionalidad"/>
+                <separator/>
+                <filter name="group_reserva" string="Reserva" domain="[]" context="{'group_by': 'reserva_id'}"/>
+                <filter name="group_nacionalidad" string="Nacionalidad" domain="[]" context="{'group_by': 'nacionalidad'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_pasajero_form" model="ir.ui.view">
+        <field name="name">incas.pasajero.form</field>
+        <field name="model">incas.pasajero</field>
+        <field name="arch" type="xml">
+            <form string="Pasajero">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="reserva_id"/>
+                            <field name="nombres"/>
+                            <field name="apellidos"/>
+                            <field name="nacionalidad"/>
+                            <field name="fecha_nacimiento"/>
+                        </group>
+                        <group>
+                            <field name="tipo_documento"/>
+                            <field name="numero_documento"/>
+                            <field name="email"/>
+                            <field name="telefono"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="observaciones" placeholder="Notas internas del pasajero"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_pasajeros" model="ir.actions.act_window">
+        <field name="name">Pasajeros</field>
+        <field name="res_model">incas.pasajero</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_pasajero_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_pasajeros"
+        name="Pasajeros"
+        parent="incas_core.menu_incas_reservas_root"
+        action="action_incas_pasajeros"
+        sequence="30"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

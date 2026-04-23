@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="module_category_incas_paradise" model="ir.module.category">
+        <field name="name">Inca's Paradise</field>
+        <field name="description">Módulos internos para reservas, operaciones y gestión empresarial.</field>
+        <field name="sequence">36</field>
+    </record>
+
+    <record id="privilege_incas_administracion" model="res.groups.privilege">
+        <field name="name">Administración</field>
+        <field name="description">Privilegios administrativos del back office.</field>
+        <field name="category_id" ref="incas_core.module_category_incas_paradise"/>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="privilege_incas_reservas" model="res.groups.privilege">
+        <field name="name">Reservas</field>
+        <field name="description">Privilegios del equipo de reservas.</field>
+        <field name="category_id" ref="incas_core.module_category_incas_paradise"/>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="privilege_incas_operaciones" model="res.groups.privilege">
+        <field name="name">Operaciones</field>
+        <field name="description">Privilegios del equipo de operaciones.</field>
+        <field name="category_id" ref="incas_core.module_category_incas_paradise"/>
+        <field name="sequence">30</field>
+    </record>
+
+    <record id="privilege_incas_gerencia" model="res.groups.privilege">
+        <field name="name">Gerencia</field>
+        <field name="description">Privilegios de supervisión y consulta general.</field>
+        <field name="category_id" ref="incas_core.module_category_incas_paradise"/>
+        <field name="sequence">40</field>
+    </record>
+
+    <record id="group_incas_core_admin" model="res.groups">
+        <field name="name">Administrador BO</field>
+        <field name="privilege_id" ref="incas_core.privilege_incas_administracion"/>
+    </record>
+
+    <record id="group_incas_core_reservas" model="res.groups">
+        <field name="name">Reservas</field>
+        <field name="privilege_id" ref="incas_core.privilege_incas_reservas"/>
+    </record>
+
+    <record id="group_incas_core_operaciones" model="res.groups">
+        <field name="name">Operaciones</field>
+        <field name="privilege_id" ref="incas_core.privilege_incas_operaciones"/>
+    </record>
+
+    <record id="group_incas_core_gerencia" model="res.groups">
+        <field name="name">Gerencia</field>
+        <field name="privilege_id" ref="incas_core.privilege_incas_gerencia"/>
+    </record>
+</odoo>

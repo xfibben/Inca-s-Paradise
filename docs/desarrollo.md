@@ -18,12 +18,16 @@ Este documento resume como trabajar en el proyecto sin romper los flujos princip
 - PostgreSQL: `5432`
 - Strapi: `1337`
 - Astro: `4321`
+- Odoo: `8069`
+- PostgreSQL Odoo: `5433`
 
 ### Produccion segun compose
 
 - PostgreSQL: `5431`
 - Strapi: `1336`
 - Astro SSR: `4320`
+- Odoo: `8070`
+- PostgreSQL Odoo: `5434`
 
 ## Comandos
 

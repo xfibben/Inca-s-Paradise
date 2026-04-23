@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem
+        id="menu_incas_root"
+        name="Inca's Paradise"
+        sequence="10"
+        web_icon="base,static/description/modules.png"
+        action="incas_reservas.action_incas_cotizaciones"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_reservas_root"
+        name="Reservas"
+        parent="incas_core.menu_incas_root"
+        sequence="10"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_operaciones_root"
+        name="Operaciones"
+        parent="incas_core.menu_incas_root"
+        sequence="20"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_configuracion_root"
+        name="Configuración"
+        parent="incas_core.menu_incas_root"
+        sequence="90"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

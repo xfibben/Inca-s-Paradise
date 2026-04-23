@@ -87,6 +87,7 @@ services:
       NODE_ENV: ${NODE_ENV}
       STRAPI_URL: http://backend:1337
       PUBLIC_STRAPI_URL: http://localhost:1337
+      PUBLIC_ODOO_URL: http://localhost:8069
       PUBLIC_PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
       PUBLIC_GOOGLE_CLAIMS_FORM_URL: ${PUBLIC_GOOGLE_CLAIMS_FORM_URL}
       PUBLIC_RECAPTCHA_SITE_KEY: ${PUBLIC_RECAPTCHA_SITE_KEY}
@@ -99,3 +100,58 @@ services:
       fi;
       npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0
       "
+
+  # -----------------------------------------------------------
+  # 4. BASE DE DATOS DE ODOO - PRUEBAS
+  # -----------------------------------------------------------
+  odoo_db:
+    image: postgres:15-alpine
+    container_name: incas_odoo_db_test
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${ODOO_DB_NAME:-postgres}
+      POSTGRES_USER: ${ODOO_DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
+    volumes:
+      - odoo_db_data_test:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ODOO_DB_USER:-odoo} -d ${ODOO_DB_NAME:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # -----------------------------------------------------------
+  # 5. BACK OFFICE ODOO - PRUEBAS
+  # -----------------------------------------------------------
+  odoo:
+    image: odoo:19
+    container_name: incas_odoo_test
+    restart: unless-stopped
+    depends_on:
+      odoo_db:
+        condition: service_healthy
+    environment:
+      HOST: odoo_db
+      PORT: 5432
+      USER: ${ODOO_DB_USER:-odoo}
+      PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
+      PAYPAL_SECRET: ${PAYPAL_SECRET}
+      PAYPAL_MODE: ${PAYPAL_MODE}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}
+      RESEND_FROM_NAME: ${RESEND_FROM_NAME}
+      RESEND_NOTIFY_EMAIL: ${RESEND_NOTIFY_EMAIL}
+      GOOGLE_APPS_SCRIPT_URL: ${GOOGLE_APPS_SCRIPT_URL}
+    volumes:
+      - odoo_web_data_test:/var/lib/odoo
+      - ./odoo/addons:/mnt/extra-addons
+      - ./odoo/config/odoo.conf:/etc/odoo/odoo.conf
+    ports:
+      - "8069:8069"
+
+volumes:
+  odoo_db_data_test:
+  odoo_web_data_test:
