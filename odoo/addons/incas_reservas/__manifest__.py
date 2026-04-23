@@ -9,9 +9,11 @@
     "data": [
         "security/ir.model.access.csv",
         "data/incas_reservas_sequence.xml",
+        "reports/incas_reservas_reports.xml",
         "views/incas_servicio_catalogo_views.xml",
         "views/incas_cotizacion_views.xml",
         "views/incas_reserva_views.xml",
+        "views/incas_pago_views.xml",
         "views/incas_pasajero_views.xml",
     ],
     "application": False,

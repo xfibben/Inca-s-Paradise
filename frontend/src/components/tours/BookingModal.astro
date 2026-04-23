@@ -698,8 +698,9 @@ const t = translations[lang] ?? translations.es;
   </div>
 </div>
 
-<script is:inline define:vars={{ strapiUrl: import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337', pagoTituloText: t.pagoTitulo, bookingTituloText: t.title, paypalClientId: import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || '', tourTitleVar: tourTitle, tourSlugVar: tourSlug, langVar: lang }}>
+<script is:inline define:vars={{ strapiUrl: import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337', odooUrl: import.meta.env.PUBLIC_ODOO_URL || 'http://localhost:8069', pagoTituloText: t.pagoTitulo, bookingTituloText: t.title, paypalClientId: import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || '', tourTitleVar: tourTitle, tourSlugVar: tourSlug, langVar: lang }}>
   window.__strapiUrl = strapiUrl;
+  window.__odooUrl = odooUrl;
   window.__pagoTituloText = pagoTituloText;
   window.__bookingTituloText = bookingTituloText;
   window.__paypalClientId = paypalClientId;
@@ -749,8 +750,10 @@ const t = translations[lang] ?? translations.es;
       __tourData?: { numericId: number | null; documentId: string | null };
       __transporteData?: { numericId: number | null; documentId: string | null };
       __strapiUrl?: string;
+      __odooUrl?: string;
       __pendingBooking?: PendingBooking;
       __lastCompletedBooking?: PendingBooking; // copia persistente para el comprobante PDF
+      __lastCompletedBookingVoucherUrl?: string;
       __tourTitle?: string;
       __tourSlug?: string;
       __lang?: string;
@@ -954,26 +957,18 @@ const t = translations[lang] ?? translations.es;
     });
 
     // ── Función que crea la reserva en Strapi ──
-    async function crearReserva(metodoPago: string, proveedorPago: string): Promise<string> {
+    async function crearReserva(metodoPago: string, proveedorPago: string): Promise<{ ticket: string; voucherUrl?: string }> {
       const b = window.__pendingBooking;
       if (!b) throw new Error("Sin datos de reserva");
 
-      const strapiUrl = window.__strapiUrl ?? "http://localhost:1337";
+      const odooUrl = window.__odooUrl ?? "http://localhost:8069";
       const toDatetime = (val: string) => val ? `${val}T00:00:00.000Z` : null;
 
-      const esTransporte = !b.tourDocumentId && !b.tourNumericId;
-      const tourConnect = !esTransporte
-        ? (b.tourDocumentId ? { connect: [b.tourDocumentId] } : { connect: [{ id: b.tourNumericId }] })
-        : undefined;
-      const transporteConnect = esTransporte && (b.transporteDocumentId || b.transporteNumericId)
-        ? (b.transporteDocumentId ? { connect: [b.transporteDocumentId] } : { connect: [{ id: b.transporteNumericId }] })
-        : undefined;
-
-      const res = await fetch(`${strapiUrl}/api/reservas`, {
+      const res = await fetch(`${odooUrl}/incas/api/reservas`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          data: {
+          reservaData: {
             nombre: b.nombre, email: b.email, telefono: b.telefono,
             cantidad_adultos: b.cantidad_adultos, cantidad_ninos: b.cantidad_ninos,
             fecha_inicio: toDatetime(b.fecha_inicio), fecha_fin: toDatetime(b.fecha_fin),
@@ -981,18 +976,27 @@ const t = translations[lang] ?? translations.es;
             tipo_documento: b.tipo_documento, numero_documento: b.numero_documento,
             nacionalidad: b.nacionalidad,
             vehiculo_seleccionado: b.vehiculo_seleccionado ?? null,
-            ...(b.turno ? { turno: b.turno } : {}),
-            ...(tourConnect ? { tour: tourConnect } : {}),
-            ...(transporteConnect ? { transportes: transporteConnect } : {}),
-            moneda_usuario:    b.moneda,
-            precio_tour:       b.monto_original,
+            turno: b.turno,
+            idioma: window.__lang ?? "es",
+            tourDocumentId: b.tourDocumentId,
+            tourNumericId: b.tourNumericId,
+            transporteDocumentId: b.transporteDocumentId,
+            transporteNumericId: b.transporteNumericId,
+            precio_tour: b.monto_original,
             precio_adulto_web: b.precio_adulto_web,
-            precio_nino_web:   b.precio_nino_web,
-            monto_estimado:    b.monto_original,
+            precio_nino_web: b.precio_nino_web,
             descuento: b.descuento_usd,
-            estado: "confirmada",
-            estado_pago: "pagado",
+            monto_total: b.monto_total,
+            monto_original: b.monto_original,
+            moneda: b.moneda,
           },
+          pagoData: {
+            proveedor: proveedorPago,
+            metodo: metodoPago,
+            moneda: b.moneda,
+            monto: b.monto_total,
+            estado: "pagado",
+          }
         }),
       });
 
@@ -1004,29 +1008,10 @@ const t = translations[lang] ?? translations.es;
       }
 
       const json = JSON.parse(txt);
-      const ticket = json?.data?.ticket ?? "TICKET-00000000-00000";
-      const documentId = json?.data?.documentId ?? null;
-
-      // Registrar pago en background
-      if (documentId) {
-        fetch(`${strapiUrl}/api/pagos`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            data: {
-              reserva: { connect: [documentId] },
-              proveedor: proveedorPago,
-              metodo: metodoPago,
-              moneda: b.moneda,
-              monto: b.monto_total,
-              estado: "pagado",
-              fecha_pago: new Date().toISOString(),
-            },
-          }),
-        }).catch(() => {});
-      }
-
-      return ticket;
+      return {
+        ticket: json?.ticket ?? "TICKET-00000000-00000",
+        voucherUrl: json?.voucher_url,
+      };
     }
 
     // ── Manejador genérico de botones de pago ──
@@ -1039,7 +1024,8 @@ const t = translations[lang] ?? translations.es;
       const errorEl = document.getElementById("pago-error");
       if (errorEl) errorEl.classList.add("hidden");
       try {
-        const ticket = await crearReserva(metodoPago, proveedor);
+        const resultado = await crearReserva(metodoPago, proveedor);
+        const ticket = resultado.ticket;
         const completedBooking = window.__pendingBooking
           ? { ...window.__pendingBooking }
           : undefined;
@@ -1053,6 +1039,7 @@ const t = translations[lang] ?? translations.es;
         form?.reset();
         // Guardar copia antes de borrar para el comprobante PDF
         if (completedBooking) window.__lastCompletedBooking = completedBooking;
+        window.__lastCompletedBookingVoucherUrl = resultado.voucherUrl;
         emitBookingTicketCreated(ticket, proveedor, metodoPago, completedBooking);
         window.__pendingBooking = undefined;
       } catch (err) {
@@ -1106,7 +1093,7 @@ const t = translations[lang] ?? translations.es;
             const montoPaypal = parseFloat((b.monto_total / tasaCambio).toFixed(2));
 
             const payload = { proveedor: "paypal", monto: montoPaypal, moneda: monedaPaypal };
-            const strapiUrl = window.__strapiUrl ?? "http://localhost:1337";
+            const odooUrl = window.__odooUrl ?? "http://localhost:8069";
 
             // Guard: evitar llamar al backend con monto inválido
             if (!montoPaypal || montoPaypal <= 0) {
@@ -1114,9 +1101,9 @@ const t = translations[lang] ?? translations.es;
             }
 
             console.log("[PayPal] Enviando payload:", payload);
-            console.log("[PayPal] URL:", strapiUrl);
+            console.log("[PayPal] URL:", odooUrl);
 
-            const res = await fetch(`${strapiUrl}/api/pagos/iniciar`, {
+            const res = await fetch(`${odooUrl}/incas/api/pagos/iniciar`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload),
@@ -1138,9 +1125,7 @@ const t = translations[lang] ?? translations.es;
             if (!b) throw new Error("Sin datos de reserva");
             if (errorEl) errorEl.classList.add("hidden");
 
-            const esTransporte = !b.tourDocumentId && !b.tourNumericId;
-
-            const res = await fetch(`${window.__strapiUrl}/api/pagos/confirmar`, {
+            const res = await fetch(`${window.__odooUrl}/incas/api/pagos/confirmar`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -1159,11 +1144,12 @@ const t = translations[lang] ?? translations.es;
                   numero_documento: b.numero_documento,
                   nacionalidad: b.nacionalidad,
                   vehiculo_seleccionado: b.vehiculo_seleccionado ?? null,
-                  ...(b.turno ? { turno: b.turno } : {}),
-                  ...(!esTransporte && b.tourDocumentId ? { tour: { connect: [b.tourDocumentId] } } : {}),
-                  ...(!esTransporte && !b.tourDocumentId && b.tourNumericId ? { tour: { connect: [{ id: b.tourNumericId }] } } : {}),
-                  ...(esTransporte && b.transporteDocumentId ? { transportes: { connect: [b.transporteDocumentId] } } : {}),
-                  ...(esTransporte && !b.transporteDocumentId && b.transporteNumericId ? { transportes: { connect: [{ id: b.transporteNumericId }] } } : {}),
+                  turno: b.turno,
+                  idioma: window.__lang ?? "es",
+                  tourDocumentId: b.tourDocumentId,
+                  tourNumericId: b.tourNumericId,
+                  transporteDocumentId: b.transporteDocumentId,
+                  transporteNumericId: b.transporteNumericId,
                   monto_total: b.monto_total,
                   monto_original: b.monto_original,
                   precio_tour:       b.monto_original,
@@ -1183,7 +1169,7 @@ const t = translations[lang] ?? translations.es;
               return;
             }
 
-            const { ticket } = await res.json();
+            const { ticket, voucher_url } = await res.json();
             const completedBooking = window.__pendingBooking
               ? { ...window.__pendingBooking }
               : undefined;
@@ -1199,6 +1185,7 @@ const t = translations[lang] ?? translations.es;
             paypalBotonesRendered = false; // resetear para la próxima reserva
             // Guardar copia antes de borrar para el comprobante PDF
             if (completedBooking) window.__lastCompletedBooking = completedBooking;
+            window.__lastCompletedBookingVoucherUrl = voucher_url;
             emitBookingTicketCreated(ticket, "paypal", "paypal", completedBooking);
             window.__pendingBooking = undefined;
           },
@@ -1258,6 +1245,7 @@ const t = translations[lang] ?? translations.es;
       mobileCard?.classList.add("hidden");
       mobileBackdrop?.classList.add("hidden");
       document.body.style.overflow = "";
+      window.__lastCompletedBookingVoucherUrl = undefined;
     };
     successModal?.querySelector("[data-close-success]")?.addEventListener("click", closeAllModals);
     successModal?.addEventListener("click", (e) => { if (e.target === successModal) closeAllModals(); });
@@ -1277,6 +1265,11 @@ const t = translations[lang] ?? translations.es;
     const downloadVoucherBtn = successModal?.querySelector("[data-download-voucher]") as HTMLButtonElement | null;
     downloadVoucherBtn?.addEventListener("click", async () => {
       const ticket = successModal?.querySelector("[data-ticket-number]")?.textContent?.trim() || "TICKET";
+      const voucherUrl = window.__lastCompletedBookingVoucherUrl;
+      if (voucherUrl) {
+        window.open(voucherUrl, "_blank", "noopener,noreferrer");
+        return;
+      }
       const booking = window.__lastCompletedBooking;
       const { generarVoucherPDF } = await import("./voucher-pdf");
       await generarVoucherPDF(ticket, booking);

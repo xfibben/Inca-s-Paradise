@@ -69,6 +69,16 @@ class IncasServicioCatalogo(models.Model):
         return records
 
     @api.model
+    def _get_currency_rates(self):
+        base_url = self._get_strapi_base_url().rstrip("/")
+        with urlopen(f"{base_url}/api/pagos/tipo-cambio", timeout=15) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        return {
+            "PEN": float(payload.get("PEN") or 3.75),
+            "EUR": float(payload.get("EUR") or 0.92),
+        }
+
+    @api.model
     def _sync_estilos_transporte(self):
         estilo_model = self.env["incas.estilo.transporte"]
         records = self._fetch_strapi_records(

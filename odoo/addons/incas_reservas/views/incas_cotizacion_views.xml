@@ -57,6 +57,7 @@
         <field name="arch" type="xml">
             <form string="Cotización">
                 <header>
+                    <button name="action_print_pdf" type="object" string="Exportar PDF"/>
                     <button name="action_marcar_enviada" type="object" string="Marcar enviada" invisible="state != 'borrador'"/>
                     <button name="action_marcar_aprobada" type="object" string="Aprobar" invisible="state not in ['borrador', 'enviada']"/>
                     <button name="action_marcar_rechazada" type="object" string="Rechazar" invisible="state == 'rechazada'"/>
@@ -83,10 +84,12 @@
                             <field name="tipo_tour" invisible="tipo_servicio != 'tour'" required="tipo_servicio == 'tour'"/>
                             <field name="estilo_transporte_id" invisible="tipo_servicio != 'transporte'" required="tipo_servicio == 'transporte'"/>
                             <field name="servicio_id"/>
-                            <field name="servicio_nombre" readonly="1"/>
-                            <field name="precio_adulto" readonly="1"/>
-                            <field name="precio_nino" readonly="1"/>
-                            <field name="descuento" readonly="1"/>
+                            <field name="precio_adulto_usd" invisible="1" force_save="1"/>
+                            <field name="precio_nino_usd" invisible="1" force_save="1"/>
+                            <field name="servicio_nombre" readonly="1" force_save="1"/>
+                            <field name="precio_adulto" readonly="1" force_save="1"/>
+                            <field name="precio_nino" readonly="1" force_save="1"/>
+                            <field name="descuento" readonly="1" force_save="1"/>
                             <field name="cantidad_adultos"/>
                             <field name="cantidad_ninos"/>
                         </group>

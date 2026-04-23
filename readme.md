@@ -6,7 +6,7 @@ Plataforma de turismo para destinos en Peru con frontend SSR, CMS headless, rese
 
 - Frontend: Astro 5.17.1 + Tailwind CSS 4.2.1 + Flowbite 4.0.1
 - Backend: Strapi 5.37.1 + PostgreSQL 14
-- Back office: Odoo 18 + PostgreSQL 15
+- Back office: Odoo 19 + PostgreSQL 15
 - PDF: `jspdf`
 - Contenido multidioma: i18n local en Astro + locales de Strapi
 - Infraestructura local y productiva: Docker Compose
@@ -103,6 +103,7 @@ npm run dev
 
 El proyecto usa variables en el `.env` raiz y ejemplos parciales en:
 
+- [.env.example](/Users/arturo/Documents/Inca-s-Paradise/.env.example)
 - [frontend/.env.example](/Users/arturo/Documents/Inca-s-Paradise/frontend/.env.example)
 - [backend/.env.example](/Users/arturo/Documents/Inca-s-Paradise/backend/.env.example)
 
@@ -111,10 +112,15 @@ Variables clave:
 - Base de datos: `DB_NAME`, `DB_USER`, `DB_PASSWORD`
 - Base de datos Odoo: `ODOO_DB_NAME`, `ODOO_DB_USER`, `ODOO_DB_PASSWORD`
 - Strapi: `ADMIN_JWT_SECRET`, `API_TOKEN_SALT`, `APP_KEYS`, `JWT_SECRET`
-- Frontend: `PUBLIC_STRAPI_URL`, `PUBLIC_GTM_ID`, `PUBLIC_GA_MEASUREMENT_ID`
+- Frontend: `PUBLIC_STRAPI_URL`, `PUBLIC_ODOO_URL`, `PUBLIC_GTM_ID`, `PUBLIC_GA_MEASUREMENT_ID`
 - Google Sheets: `GOOGLE_APPS_SCRIPT_URL`
 - PayPal: `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `PAYPAL_MODE`, `PAYPAL_WEBHOOK_ID`
 - Cambio de moneda y documentos: `APIS_NET_PE_TOKEN`
+
+`PUBLIC_ODOO_URL` se define en el `.env` raiz del proyecto y se inyecta al frontend desde ambos archivos:
+
+- [docker-compose.yaml](/Users/arturo/Documents/Inca-s-Paradise/docker-compose.yaml)
+- [docker-compose.prod.yaml](/Users/arturo/Documents/Inca-s-Paradise/docker-compose.prod.yaml)
 
 ## Flujo general
 

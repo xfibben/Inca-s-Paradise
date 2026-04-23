@@ -87,6 +87,7 @@ services:
       NODE_ENV: ${NODE_ENV}
       STRAPI_URL: http://backend:1337
       PUBLIC_STRAPI_URL: http://localhost:1337
+      PUBLIC_ODOO_URL: http://localhost:8069
       PUBLIC_PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
       PUBLIC_GOOGLE_CLAIMS_FORM_URL: ${PUBLIC_GOOGLE_CLAIMS_FORM_URL}
       PUBLIC_RECAPTCHA_SITE_KEY: ${PUBLIC_RECAPTCHA_SITE_KEY}
@@ -136,6 +137,14 @@ services:
       PORT: 5432
       USER: ${ODOO_DB_USER:-odoo}
       PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
+      PAYPAL_SECRET: ${PAYPAL_SECRET}
+      PAYPAL_MODE: ${PAYPAL_MODE}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}
+      RESEND_FROM_NAME: ${RESEND_FROM_NAME}
+      RESEND_NOTIFY_EMAIL: ${RESEND_NOTIFY_EMAIL}
+      GOOGLE_APPS_SCRIPT_URL: ${GOOGLE_APPS_SCRIPT_URL}
     volumes:
       - odoo_web_data_test:/var/lib/odoo
       - ./odoo/addons:/mnt/extra-addons

@@ -18,6 +18,11 @@ access_incas_reserva_admin,access.incas.reserva.admin,model_incas_reserva,incas_
 access_incas_reserva_reservas,access.incas.reserva.reservas,model_incas_reserva,incas_core.group_incas_core_reservas,1,1,1,0
 access_incas_reserva_operaciones,access.incas.reserva.operaciones,model_incas_reserva,incas_core.group_incas_core_operaciones,1,1,0,0
 access_incas_reserva_gerencia,access.incas.reserva.gerencia,model_incas_reserva,incas_core.group_incas_core_gerencia,1,1,1,0
+access_incas_pago_system,access.incas.pago.system,model_incas_pago,base.group_system,1,1,1,1
+access_incas_pago_admin,access.incas.pago.admin,model_incas_pago,incas_core.group_incas_core_admin,1,1,1,1
+access_incas_pago_reservas,access.incas.pago.reservas,model_incas_pago,incas_core.group_incas_core_reservas,1,1,1,0
+access_incas_pago_operaciones,access.incas.pago.operaciones,model_incas_pago,incas_core.group_incas_core_operaciones,1,1,0,0
+access_incas_pago_gerencia,access.incas.pago.gerencia,model_incas_pago,incas_core.group_incas_core_gerencia,1,1,1,0
 access_incas_pasajero_system,access.incas.pasajero.system,model_incas_pasajero,base.group_system,1,1,1,1
 access_incas_pasajero_admin,access.incas.pasajero.admin,model_incas_pasajero,incas_core.group_incas_core_admin,1,1,1,1
 access_incas_pasajero_reservas,access.incas.pasajero.reservas,model_incas_pasajero,incas_core.group_incas_core_reservas,1,1,1,0

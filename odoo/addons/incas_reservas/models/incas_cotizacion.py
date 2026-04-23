@@ -64,6 +64,8 @@ class IncasCotizacion(models.Model):
         tracking=True,
     )
     servicio_nombre = fields.Char(string="Nombre del servicio", required=True, tracking=True)
+    precio_adulto_usd = fields.Float(string="Precio adulto base USD")
+    precio_nino_usd = fields.Float(string="Precio niño base USD")
     precio_adulto = fields.Float(string="Precio adulto", tracking=True)
     precio_nino = fields.Float(string="Precio niño", tracking=True)
     descuento = fields.Float(string="Descuento", tracking=True)
@@ -113,37 +115,87 @@ class IncasCotizacion(models.Model):
             descuento_monto = subtotal * ((record.descuento or 0) / 100)
             record.monto_total = subtotal - descuento_monto
 
+    def _convertir_desde_usd(self, monto_usd, moneda, rates):
+        if moneda == "PEN":
+            return monto_usd * rates["PEN"]
+        if moneda == "EUR":
+            return monto_usd * rates["EUR"]
+        return monto_usd
+
+    def _aplicar_moneda_desde_base(self):
+        rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
+        for record in self:
+            record.precio_adulto = record._convertir_desde_usd(record.precio_adulto_usd or 0, record.moneda, rates)
+            record.precio_nino = record._convertir_desde_usd(record.precio_nino_usd or 0, record.moneda, rates)
+
+    def _limpiar_servicio(self):
+        for record in self:
+            record.servicio_id = False
+            record.servicio_nombre = False
+            record.precio_adulto_usd = 0
+            record.precio_nino_usd = 0
+            record.precio_adulto = 0
+            record.precio_nino = 0
+            record.descuento = 0
+
+    @api.model
+    def _completar_datos_servicio(self, vals):
+        servicio_id = vals.get("servicio_id")
+        if not servicio_id:
+            return vals
+        servicio = self.env["incas.servicio.catalogo"].browse(servicio_id)
+        if not servicio.exists():
+            return vals
+        vals.setdefault("tipo_servicio", servicio.tipo_servicio)
+        vals.setdefault("tipo_tour", servicio.tipo_tour)
+        vals.setdefault("estilo_transporte_id", servicio.estilo_transporte_id.id)
+        vals.setdefault("servicio_nombre", servicio.name)
+        vals.setdefault("precio_adulto_usd", servicio.precio_adulto)
+        vals.setdefault("precio_nino_usd", servicio.precio_nino)
+        vals.setdefault("descuento", servicio.descuento)
+        moneda = vals.get("moneda") or "PEN"
+        rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
+        vals["precio_adulto"] = self._convertir_desde_usd(vals.get("precio_adulto_usd") or 0, moneda, rates)
+        vals["precio_nino"] = self._convertir_desde_usd(vals.get("precio_nino_usd") or 0, moneda, rates)
+        return vals
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             if vals.get("name", "Nuevo") == "Nuevo":
                 vals["name"] = self.env["ir.sequence"].next_by_code("incas.cotizacion") or "Nuevo"
+            self._completar_datos_servicio(vals)
         return super().create(vals_list)
+
+    def write(self, vals):
+        self._completar_datos_servicio(vals)
+        return super().write(vals)
 
     @api.onchange("tipo_servicio")
     def _onchange_tipo_servicio(self):
         for record in self:
-            record.servicio_id = False
-            record.servicio_nombre = False
-            record.precio_adulto = 0
-            record.precio_nino = 0
-            record.descuento = 0
             if record.tipo_servicio == "tour":
                 record.estilo_transporte_id = False
                 if not record.tipo_tour:
                     record.tipo_tour = "tour"
             elif record.tipo_servicio == "transporte":
                 record.tipo_tour = False
-                record.estilo_transporte_id = False
+            if not record.servicio_id:
+                record._limpiar_servicio()
+                continue
+            if record.servicio_id.tipo_servicio != record.tipo_servicio:
+                record._limpiar_servicio()
 
     @api.onchange("tipo_tour", "estilo_transporte_id")
     def _onchange_tipo_detalle_servicio(self):
         for record in self:
-            record.servicio_id = False
-            record.servicio_nombre = False
-            record.precio_adulto = 0
-            record.precio_nino = 0
-            record.descuento = 0
+            if not record.servicio_id:
+                record._limpiar_servicio()
+                continue
+            if record.tipo_servicio == "tour" and record.servicio_id.tipo_tour != record.tipo_tour:
+                record._limpiar_servicio()
+            if record.tipo_servicio == "transporte" and record.servicio_id.estilo_transporte_id != record.estilo_transporte_id:
+                record._limpiar_servicio()
 
     @api.onchange("servicio_id")
     def _onchange_servicio_id(self):
@@ -154,9 +206,14 @@ class IncasCotizacion(models.Model):
             record.tipo_tour = record.servicio_id.tipo_tour
             record.estilo_transporte_id = record.servicio_id.estilo_transporte_id
             record.servicio_nombre = record.servicio_id.name
-            record.precio_adulto = record.servicio_id.precio_adulto
-            record.precio_nino = record.servicio_id.precio_nino
+            record.precio_adulto_usd = record.servicio_id.precio_adulto
+            record.precio_nino_usd = record.servicio_id.precio_nino
             record.descuento = record.servicio_id.descuento
+            record._aplicar_moneda_desde_base()
+
+    @api.onchange("moneda")
+    def _onchange_moneda(self):
+        self._aplicar_moneda_desde_base()
 
     def action_marcar_enviada(self):
         self.write({"state": "enviada"})
@@ -169,3 +226,11 @@ class IncasCotizacion(models.Model):
 
     def action_cancelar(self):
         self.write({"state": "cancelada"})
+
+    def action_print_pdf(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_url",
+            "url": f"/incas/cotizacion/{self.id}/pdf",
+            "target": "self",
+        }

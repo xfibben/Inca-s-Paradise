@@ -244,6 +244,7 @@ Conectar operación, ventas y fidelización.
 - Ya existe el módulo `incas_reservas` como primera capa funcional.
 - El menú principal del BO es `Inca's Paradise`.
 - La base Odoo actual de trabajo es `odoo_incas`.
+- El flujo transaccional web ya empezó a migrarse desde Strapi hacia Odoo.
 
 ## Avance real implementado
 
@@ -382,6 +383,15 @@ Conectar operación, ventas y fidelización.
   - precio adulto
   - precio niño
   - descuento porcentual
+- Se dejó USD como moneda base interna para precios en cotización y reserva.
+- Se conectó Odoo al endpoint `GET /api/pagos/tipo-cambio` del backend para convertir precios en tiempo real a:
+  - `PEN`
+  - `USD`
+  - `EUR`
+- Al cambiar la moneda en cotización o reserva, se recalculan:
+  - `precio adulto`
+  - `precio niño`
+  - `monto total`
 - Se dejó documentada la estrategia futura de migración `Strapi -> Odoo`.
 - Se dejó documentado que transporte por vehículo sigue pendiente de modelado correcto en Odoo.
 - La primera fase a ejecutar será `Fase 0` y luego `Fase 1`.
@@ -393,3 +403,64 @@ Conectar operación, ventas y fidelización.
 3. Crear módulo base `incas_core`.
 4. Diseñar modelo de datos de `incas_reservas`.
 5. Implementar el primer flujo: cotización -> reserva.
+#### Flujo web operativo actual
+
+- Astro ya puede crear reservas directamente en Odoo.
+- Odoo expone endpoints públicos para:
+  - `GET /incas/api/pagos/tipo-cambio`
+  - `POST /incas/api/pagos/iniciar`
+  - `POST /incas/api/pagos/confirmar`
+  - `POST /incas/api/reservas`
+- Odoo genera:
+  - ticket
+  - reserva
+  - pago
+  - URL pública de comprobante PDF
+- Odoo guarda en la reserva snapshot de datos web:
+  - nombre
+  - email
+  - teléfono
+  - documento
+  - nacionalidad
+  - fecha inicio
+  - fecha fin
+  - turno
+  - vehículo seleccionado
+- Odoo sincroniza Google Sheets desde la propia reserva.
+- Odoo envía correos con Resend y adjunta el comprobante PDF.
+- Astro ya usa `PUBLIC_ODOO_URL` para el flujo transaccional.
+- `saldo_pendiente` quedó como único saldo operativo visible en reserva.
+- `pago_restante` queda solo por compatibilidad de datos y transición.
+- `PUBLIC_ODOO_URL` vive en el `.env` raíz del proyecto.
+- `PUBLIC_ODOO_URL` se inyecta al frontend desde:
+  - `docker-compose.yaml`
+  - `docker-compose.prod.yaml`
+- Strapi queda como CMS y catálogo fuente.
+- La conversión de moneda sigue tomando temporalmente `GET /api/pagos/tipo-cambio` del backend Strapi.
+
+#### Validación local hecha
+
+- Se probó `GET /incas/api/pagos/tipo-cambio` en Odoo.
+- Se probó `POST /incas/api/reservas` y devolvió:
+  - `ticket`
+  - `reserva_id`
+  - `voucher_url`
+- Se probó la URL pública del comprobante PDF y respondió `200 OK`.
+
+#### Pendientes inmediatos del flujo web
+
+- mover el tipo de cambio a Odoo para cortar la dependencia transaccional restante con Strapi
+- implementar IziPay real en Odoo
+- definir webhook de pagos en Odoo
+- afinar el HTML de correo si se requiere paridad visual más exacta con Strapi
+
+## Changelog
+
+### 2026-04-23
+
+- se creó el flujo público `Astro -> Odoo` para reservas y pagos
+- se agregaron endpoints públicos de Odoo para iniciar pago, confirmar pago, tipo de cambio y crear reserva
+- se movió la creación de ticket y reserva web a Odoo
+- se agregó URL pública con token para descargar el comprobante PDF de reserva
+- se inyectaron variables de PayPal, Resend, Google Sheets y `PUBLIC_ODOO_URL` en Docker Compose
+- se validó la creación real de una reserva web de prueba contra Odoo

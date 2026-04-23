@@ -92,6 +92,7 @@ services:
       NODE_ENV: production
       STRAPI_URL: http://backend:1336
       PUBLIC_STRAPI_URL: ${PUBLIC_STRAPI_URL}
+      PUBLIC_ODOO_URL: ${PUBLIC_ODOO_URL}
       PUBLIC_BACKEND_URL: ${PUBLIC_STRAPI_URL}
       PUBLIC_GTM_ID: ${PUBLIC_GTM_ID}
       PUBLIC_GA_MEASUREMENT_ID: ${PUBLIC_GA_MEASUREMENT_ID}
@@ -150,6 +151,14 @@ services:
       PORT: 5432
       USER: ${ODOO_DB_USER:-odoo}
       PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
+      PAYPAL_SECRET: ${PAYPAL_SECRET}
+      PAYPAL_MODE: ${PAYPAL_MODE}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}
+      RESEND_FROM_NAME: ${RESEND_FROM_NAME}
+      RESEND_NOTIFY_EMAIL: ${RESEND_NOTIFY_EMAIL}
+      GOOGLE_APPS_SCRIPT_URL: ${GOOGLE_APPS_SCRIPT_URL}
     volumes:
       - odoo_web_data_prod:/var/lib/odoo
       - ./odoo/addons:/mnt/extra-addons

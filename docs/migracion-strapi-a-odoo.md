@@ -15,8 +15,37 @@ Migrar el backend operativo desde Strapi hacia Odoo sin hacer una migracion dire
 
 - `Astro` sigue como frontend publico.
 - `Odoo` pasa a ser el backend operativo principal.
-- `Strapi` puede mantenerse temporalmente como CMS durante la transicion.
+- `Strapi` queda como CMS durante la transicion y luego solo como CMS si se mantiene.
 - Las integraciones deben hacerse por API, jobs o procesos de importacion controlados.
+
+## Flujo transaccional objetivo
+
+- `Strapi` crea y mantiene contenido.
+- `Astro` consulta contenido a Strapi.
+- `Astro` envía reservas y pagos a Odoo.
+- `Odoo` procesa:
+  - creación de reserva
+  - registro de pago
+  - ticket
+  - comprobante PDF
+  - correos
+  - sincronización a Google Sheets
+
+## Estado actual de la transición
+
+- El frontend ya quedó preparado para usar `PUBLIC_ODOO_URL` en el flujo de reservas y pagos.
+- `PUBLIC_ODOO_URL` debe definirse en el `.env` raíz.
+- `PUBLIC_ODOO_URL` se pasa al frontend desde `docker-compose.yaml` y `docker-compose.prod.yaml`.
+- Odoo ya expone:
+  - `GET /incas/api/pagos/tipo-cambio`
+  - `POST /incas/api/pagos/iniciar`
+  - `POST /incas/api/pagos/confirmar`
+  - `POST /incas/api/reservas`
+- Se validó localmente la creación real de una reserva pública en Odoo.
+- Odoo devuelve `ticket`, `reserva_id` y `voucher_url`.
+- El comprobante PDF público se entrega por URL con token.
+- Dependencia temporal restante:
+  - Odoo sigue leyendo el tipo de cambio desde Strapi por `GET /api/pagos/tipo-cambio`
 
 ## Orden recomendado de migracion
 
@@ -215,6 +244,8 @@ Desde `tipo-transporte` ya se están trayendo:
 - Se calcula con:
   - (`cantidad_adultos` * `precio_adulto`) + (`cantidad_ninos` * `precio_nino`)
   - menos `descuento` como porcentaje
+- `saldo_pendiente` es el saldo real actual en Odoo.
+- `pago_restante` se conserva solo por compatibilidad histórica con Strapi.
 
 ## Limitación actual importante
 
@@ -243,6 +274,8 @@ Desde `tipo-transporte` ya se están trayendo:
    - niños
    - descuento
    - vehículo seleccionado
+5. mover el tipo de cambio a Odoo para independizar por completo el flujo transaccional de Strapi
+6. implementar IziPay real en Odoo
 
 ## Fuentes oficiales
 
