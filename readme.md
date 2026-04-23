@@ -6,6 +6,7 @@ Plataforma de turismo para destinos en Peru con frontend SSR, CMS headless, rese
 
 - Frontend: Astro 5.17.1 + Tailwind CSS 4.2.1 + Flowbite 4.0.1
 - Backend: Strapi 5.37.1 + PostgreSQL 14
+- Back office: Odoo 18 + PostgreSQL 15
 - PDF: `jspdf`
 - Contenido multidioma: i18n local en Astro + locales de Strapi
 - Infraestructura local y productiva: Docker Compose
@@ -77,6 +78,8 @@ Servicios por defecto:
 - Frontend: `http://localhost:4321`
 - Backend Strapi: `http://localhost:1337`
 - PostgreSQL: `localhost:5432`
+- Odoo: `http://localhost:8069`
+- PostgreSQL Odoo: `localhost:5433`
 
 ### Opcion 2: Ejecucion por separado
 
@@ -106,6 +109,7 @@ El proyecto usa variables en el `.env` raiz y ejemplos parciales en:
 Variables clave:
 
 - Base de datos: `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+- Base de datos Odoo: `ODOO_DB_NAME`, `ODOO_DB_USER`, `ODOO_DB_PASSWORD`
 - Strapi: `ADMIN_JWT_SECRET`, `API_TOKEN_SALT`, `APP_KEYS`, `JWT_SECRET`
 - Frontend: `PUBLIC_STRAPI_URL`, `PUBLIC_GTM_ID`, `PUBLIC_GA_MEASUREMENT_ID`
 - Google Sheets: `GOOGLE_APPS_SCRIPT_URL`

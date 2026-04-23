@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_reserva_list" model="ir.ui.view">
+        <field name="name">incas.reserva.list</field>
+        <field name="model">incas.reserva</field>
+        <field name="arch" type="xml">
+            <list string="Reservas">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="fecha_reserva"/>
+                <field name="fecha_viaje"/>
+                <field name="tipo_servicio"/>
+                <field name="tipo_tour"/>
+                <field name="estilo_transporte_id"/>
+                <field name="servicio_nombre"/>
+                <field name="precio_adulto"/>
+                <field name="precio_nino"/>
+                <field name="descuento"/>
+                <field name="cantidad_adultos"/>
+                <field name="cantidad_ninos"/>
+                <field name="cantidad_pasajeros"/>
+                <field name="estado_reserva"/>
+                <field name="estado_pago"/>
+                <field name="saldo_pendiente"/>
+                <field name="responsable_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_reserva_search" model="ir.ui.view">
+        <field name="name">incas.reserva.search</field>
+        <field name="model">incas.reserva</field>
+        <field name="arch" type="xml">
+            <search string="Buscar reservas">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="servicio_nombre"/>
+                <field name="estado_reserva"/>
+                <field name="estado_pago"/>
+                <field name="fecha_viaje"/>
+                <field name="tipo_tour"/>
+                <field name="estilo_transporte_id"/>
+                <separator/>
+                <filter name="filter_pagado" string="Pagado" domain="[('estado_pago', '=', 'pagado')]"/>
+                <filter name="filter_pendiente" string="Pendiente" domain="[('estado_pago', '=', 'pendiente')]"/>
+                <separator/>
+                <filter name="group_estado_reserva" string="Estado de reserva" domain="[]" context="{'group_by': 'estado_reserva'}"/>
+                <filter name="group_estado_pago" string="Estado de pago" domain="[]" context="{'group_by': 'estado_pago'}"/>
+                <filter name="group_fecha_viaje" string="Fecha de viaje" domain="[]" context="{'group_by': 'fecha_viaje'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_reserva_form" model="ir.ui.view">
+        <field name="name">incas.reserva.form</field>
+        <field name="model">incas.reserva</field>
+        <field name="arch" type="xml">
+            <form string="Reserva">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="cotizacion_id"/>
+                            <field name="fecha_reserva"/>
+                            <field name="fecha_viaje"/>
+                            <field name="responsable_id"/>
+                        </group>
+                        <group>
+                            <field name="idioma"/>
+                            <field name="canal_venta"/>
+                            <field name="tipo_servicio"/>
+                            <field name="tipo_tour" invisible="tipo_servicio != 'tour'" required="tipo_servicio == 'tour'"/>
+                            <field name="estilo_transporte_id" invisible="tipo_servicio != 'transporte'" required="tipo_servicio == 'transporte'"/>
+                            <field name="servicio_id"/>
+                            <field name="servicio_nombre" readonly="1"/>
+                            <field name="precio_adulto" readonly="1"/>
+                            <field name="precio_nino" readonly="1"/>
+                            <field name="descuento" readonly="1"/>
+                            <field name="cantidad_adultos"/>
+                            <field name="cantidad_ninos"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="estado_reserva"/>
+                            <field name="estado_pago"/>
+                            <field name="cantidad_pasajeros" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="monto_total" readonly="1"/>
+                            <field name="monto_pagado"/>
+                            <field name="saldo_pendiente" readonly="1"/>
+                            <field name="moneda"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Pasajeros">
+                            <field name="pasajero_ids">
+                                <list editable="bottom">
+                                    <field name="nombres"/>
+                                    <field name="apellidos"/>
+                                    <field name="tipo_documento"/>
+                                    <field name="numero_documento"/>
+                                    <field name="nacionalidad"/>
+                                    <field name="fecha_nacimiento"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Observaciones">
+                            <field name="observaciones" placeholder="Coordinaciones, cambios y notas internas"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_incas_reserva_calendar" model="ir.ui.view">
+        <field name="name">incas.reserva.calendar</field>
+        <field name="model">incas.reserva</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendario de reservas" date_start="fecha_viaje" color="responsable_id">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="estado_reserva"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="action_incas_reservas" model="ir.actions.act_window">
+        <field name="name">Reservas</field>
+        <field name="res_model">incas.reserva</field>
+        <field name="view_mode">list,form,calendar</field>
+        <field name="search_view_id" ref="view_incas_reserva_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_reservas"
+        name="Reservas"
+        parent="incas_core.menu_incas_reservas_root"
+        action="action_incas_reservas"
+        sequence="20"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

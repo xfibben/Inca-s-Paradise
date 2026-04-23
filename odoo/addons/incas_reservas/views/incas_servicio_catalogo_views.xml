@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_servicio_catalogo_list" model="ir.ui.view">
+        <field name="name">incas.servicio.catalogo.list</field>
+        <field name="model">incas.servicio.catalogo</field>
+        <field name="arch" type="xml">
+            <list string="Catálogo de servicios">
+                <field name="name"/>
+                <field name="tipo_servicio"/>
+                <field name="tipo_tour"/>
+                <field name="estilo_transporte_id"/>
+                <field name="precio_adulto"/>
+                <field name="precio_nino"/>
+                <field name="descuento"/>
+                <field name="strapi_id"/>
+                <field name="slug"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_servicio_catalogo_search" model="ir.ui.view">
+        <field name="name">incas.servicio.catalogo.search</field>
+        <field name="model">incas.servicio.catalogo</field>
+        <field name="arch" type="xml">
+            <search string="Buscar servicios">
+                <field name="name"/>
+                <field name="tipo_servicio"/>
+                <field name="tipo_tour"/>
+                <field name="estilo_transporte_id"/>
+                <field name="slug"/>
+                <separator/>
+                <filter name="filter_tours" string="Tours" domain="[('tipo_servicio', '=', 'tour')]"/>
+                <filter name="filter_transportes" string="Transportes" domain="[('tipo_servicio', '=', 'transporte')]"/>
+                <separator/>
+                <filter name="group_tipo_servicio" string="Tipo de servicio" domain="[]" context="{'group_by': 'tipo_servicio'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_servicio_catalogo_form" model="ir.ui.view">
+        <field name="name">incas.servicio.catalogo.form</field>
+        <field name="model">incas.servicio.catalogo</field>
+        <field name="arch" type="xml">
+            <form string="Servicio">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="tipo_servicio"/>
+                            <field name="tipo_tour" invisible="tipo_servicio != 'tour'"/>
+                            <field name="estilo_transporte_id" invisible="tipo_servicio != 'transporte'"/>
+                            <field name="precio_adulto"/>
+                            <field name="precio_nino"/>
+                            <field name="descuento"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="strapi_id"/>
+                            <field name="strapi_document_id"/>
+                            <field name="slug"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_servicio_catalogo" model="ir.actions.act_window">
+        <field name="name">Catálogo de servicios</field>
+        <field name="res_model">incas.servicio.catalogo</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_servicio_catalogo_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_servicio_catalogo"
+        name="Catálogo de servicios"
+        parent="incas_core.menu_incas_configuracion_root"
+        action="action_incas_servicio_catalogo"
+        sequence="10"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

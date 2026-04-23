@@ -112,11 +112,60 @@ services:
     depends_on:
       - backend
 
+  # -----------------------------------------------------------
+  # 4. BASE DE DATOS DE ODOO - PRODUCCIÓN
+  # -----------------------------------------------------------
+  odoo_db:
+    image: postgres:15-alpine
+    container_name: incas_odoo_db_prod
+    restart: always
+    environment:
+      POSTGRES_DB: ${ODOO_DB_NAME:-postgres}
+      POSTGRES_USER: ${ODOO_DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
+    volumes:
+      - odoo_db_data_prod:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - incas_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ODOO_DB_USER:-odoo} -d ${ODOO_DB_NAME:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -----------------------------------------------------------
+  # 5. BACK OFFICE ODOO - PRODUCCIÓN
+  # -----------------------------------------------------------
+  odoo:
+    image: odoo:19
+    container_name: incas_odoo_prod
+    restart: always
+    depends_on:
+      odoo_db:
+        condition: service_healthy
+    environment:
+      HOST: odoo_db
+      PORT: 5432
+      USER: ${ODOO_DB_USER:-odoo}
+      PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
+    volumes:
+      - odoo_web_data_prod:/var/lib/odoo
+      - ./odoo/addons:/mnt/extra-addons
+      - ./odoo/config/odoo.conf:/etc/odoo/odoo.conf
+    networks:
+      - incas_network
+    ports:
+      - "0.0.0.0:8070:8069"
+
 volumes:
   postgres_data:
   backend_node_modules:
   frontend_node_modules:
   frontend_dist:
+  odoo_db_data_prod:
+  odoo_web_data_prod:
 
 networks:
   incas_network:

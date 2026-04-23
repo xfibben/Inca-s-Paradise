@@ -99,3 +99,50 @@ services:
       fi;
       npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0
       "
+
+  # -----------------------------------------------------------
+  # 4. BASE DE DATOS DE ODOO - PRUEBAS
+  # -----------------------------------------------------------
+  odoo_db:
+    image: postgres:15-alpine
+    container_name: incas_odoo_db_test
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${ODOO_DB_NAME:-postgres}
+      POSTGRES_USER: ${ODOO_DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
+    volumes:
+      - odoo_db_data_test:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ODOO_DB_USER:-odoo} -d ${ODOO_DB_NAME:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # -----------------------------------------------------------
+  # 5. BACK OFFICE ODOO - PRUEBAS
+  # -----------------------------------------------------------
+  odoo:
+    image: odoo:19
+    container_name: incas_odoo_test
+    restart: unless-stopped
+    depends_on:
+      odoo_db:
+        condition: service_healthy
+    environment:
+      HOST: odoo_db
+      PORT: 5432
+      USER: ${ODOO_DB_USER:-odoo}
+      PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
+    volumes:
+      - odoo_web_data_test:/var/lib/odoo
+      - ./odoo/addons:/mnt/extra-addons
+      - ./odoo/config/odoo.conf:/etc/odoo/odoo.conf
+    ports:
+      - "8069:8069"
+
+volumes:
+  odoo_db_data_test:
+  odoo_web_data_test:
