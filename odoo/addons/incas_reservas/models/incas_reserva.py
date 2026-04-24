@@ -286,16 +286,20 @@ class IncasReserva(models.Model):
             tour_numeric_id = tour_rel.get("id")
         if isinstance(transporte_rel, dict) and not transporte_numeric_id:
             transporte_numeric_id = transporte_rel.get("id")
-        servicio = False
-        if tour_document_id:
-            servicio = servicio_model.search([("tipo_servicio", "=", "tour"), ("strapi_document_id", "=", tour_document_id)], limit=1)
-        elif tour_numeric_id:
-            servicio = servicio_model.search([("tipo_servicio", "=", "tour"), ("strapi_id", "=", int(tour_numeric_id))], limit=1)
-        elif transporte_document_id:
-            servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("strapi_document_id", "=", transporte_document_id)], limit=1)
-        elif transporte_numeric_id:
-            servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("strapi_id", "=", int(transporte_numeric_id))], limit=1)
-        return servicio
+        for intento in range(2):
+            servicio = False
+            if tour_document_id:
+                servicio = servicio_model.search([("tipo_servicio", "=", "tour"), ("strapi_document_id", "=", tour_document_id)], limit=1)
+            elif tour_numeric_id:
+                servicio = servicio_model.search([("tipo_servicio", "=", "tour"), ("strapi_id", "=", int(tour_numeric_id))], limit=1)
+            elif transporte_document_id:
+                servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("strapi_document_id", "=", transporte_document_id)], limit=1)
+            elif transporte_numeric_id:
+                servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("strapi_id", "=", int(transporte_numeric_id))], limit=1)
+            if servicio or intento == 1:
+                return servicio
+            servicio_model.sync_from_strapi()
+        return False
 
     @api.model
     def _obtener_partner_web(self, reserva_data):

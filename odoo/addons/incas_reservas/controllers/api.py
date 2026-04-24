@@ -32,8 +32,11 @@ class IncasReservasApiController(http.Controller):
     def tipo_cambio(self, **kwargs):
         if request.httprequest.method == "OPTIONS":
             return options_response()
-        rates = request.env["incas.servicio.catalogo"].sudo()._get_currency_rates()
-        return response_json(rates)
+        try:
+            rates = request.env["incas.servicio.catalogo"].sudo()._get_currency_rates()
+            return response_json(rates)
+        except Exception as error:
+            return response_json({"error": {"message": str(error)}}, 500)
 
     @http.route("/incas/api/pagos/iniciar", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
     def iniciar_pago(self, **kwargs):
