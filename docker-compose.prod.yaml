@@ -155,7 +155,7 @@ services:
       PORT: 5432
       USER: ${ODOO_DB_USER:-odoo}
       PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
-      STRAPI_URL: http://backend:1337
+      STRAPI_URL: http://backend:1336
       PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
       PAYPAL_SECRET: ${PAYPAL_SECRET}
       PAYPAL_MODE: ${PAYPAL_MODE}
