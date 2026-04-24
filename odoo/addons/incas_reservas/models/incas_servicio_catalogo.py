@@ -1,5 +1,6 @@
 import json
 import os
+from urllib.error import URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
@@ -80,8 +81,11 @@ class IncasServicioCatalogo(models.Model):
     @api.model
     def _get_currency_rates(self):
         base_url = self._get_strapi_base_url().rstrip("/")
-        with urlopen(f"{base_url}/api/pagos/tipo-cambio", timeout=15) as response:
-            payload = json.loads(response.read().decode("utf-8"))
+        try:
+            with urlopen(f"{base_url}/api/pagos/tipo-cambio", timeout=15) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except (URLError, ValueError, json.JSONDecodeError):
+            payload = {}
         return {
             "PEN": float(payload.get("PEN") or 3.75),
             "EUR": float(payload.get("EUR") or 0.92),
