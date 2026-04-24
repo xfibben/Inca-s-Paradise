@@ -1,4 +1,5 @@
 import json
+import logging
 
 from urllib.error import HTTPError
 
@@ -6,6 +7,9 @@ from odoo import http
 from odoo.http import request
 
 from ..utils import capturar_orden_paypal, crear_orden_paypal, error_http_text
+
+
+_logger = logging.getLogger(__name__)
 
 
 def response_json(payload, status=200):
@@ -36,6 +40,7 @@ class IncasReservasApiController(http.Controller):
             rates = request.env["incas.servicio.catalogo"].sudo()._get_currency_rates()
             return response_json(rates)
         except Exception as error:
+            _logger.exception("Error en /incas/api/pagos/tipo-cambio")
             return response_json({"error": {"message": str(error)}}, 500)
 
     @http.route("/incas/api/pagos/iniciar", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
@@ -81,6 +86,7 @@ class IncasReservasApiController(http.Controller):
                 }
             )
         except Exception as error:
+            _logger.exception("Error en /incas/api/reservas")
             return response_json({"error": {"message": str(error)}}, 400)
 
     @http.route("/incas/api/pagos/confirmar", type="http", auth="public", methods=["POST", "OPTIONS"], csrf=False)
@@ -118,4 +124,5 @@ class IncasReservasApiController(http.Controller):
         except HTTPError as error:
             return response_json({"error": {"message": error_http_text(error)}}, 400)
         except Exception as error:
+            _logger.exception("Error en /incas/api/pagos/confirmar")
             return response_json({"error": {"message": str(error)}}, 500)
