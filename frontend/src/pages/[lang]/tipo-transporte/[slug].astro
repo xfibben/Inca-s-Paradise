@@ -6,6 +6,7 @@ import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import TipoTransporteTable from '../../../components/tipo-transporte/TipoTransporteTable.astro';
+import { strapiRichTextToMarkdown } from '../../../utils/strapiRichText';
 
 export function getStaticPaths() {
   return [];
@@ -133,7 +134,9 @@ for (const tp of transportes) {
 
 const vehiculos: VehiculoData[] = Array.from(vehiculosMap.values());
 const md = new MarkdownIt({ html: true });
-const descripcionHtml = tipoTransporte?.descripcion ? md.render(tipoTransporte.descripcion) : '';
+const descripcionHtml = tipoTransporte?.descripcion
+  ? md.render(strapiRichTextToMarkdown(tipoTransporte.descripcion))
+  : '';
 
 const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
   const preciosMap: Record<string, { precio: number; original: number | null }> = {};
@@ -304,4 +307,3 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
 
   </body>
 </html>
-

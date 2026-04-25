@@ -9,9 +9,6 @@
                 <field name="partner_id"/>
                 <field name="fecha_reserva"/>
                 <field name="fecha_viaje"/>
-                <field name="tipo_servicio"/>
-                <field name="tipo_tour"/>
-                <field name="estilo_transporte_id"/>
                 <field name="servicio_nombre"/>
                 <field name="precio_adulto"/>
                 <field name="precio_nino"/>
@@ -38,8 +35,6 @@
                 <field name="estado_reserva"/>
                 <field name="estado_pago"/>
                 <field name="fecha_viaje"/>
-                <field name="tipo_tour"/>
-                <field name="estilo_transporte_id"/>
                 <separator/>
                 <filter name="filter_pagado" string="Pagado" domain="[('estado_pago', '=', 'pagado')]"/>
                 <filter name="filter_pendiente" string="Pendiente" domain="[('estado_pago', '=', 'pendiente')]"/>
@@ -102,10 +97,6 @@
                         <group>
                             <field name="idioma"/>
                             <field name="canal_venta"/>
-                            <field name="tipo_servicio"/>
-                            <field name="tipo_tour" invisible="tipo_servicio != 'tour'" required="tipo_servicio == 'tour'"/>
-                            <field name="estilo_transporte_id" invisible="tipo_servicio != 'transporte'" required="tipo_servicio == 'transporte'"/>
-                            <field name="servicio_id"/>
                             <field name="precio_adulto_usd" invisible="1" force_save="1"/>
                             <field name="precio_nino_usd" invisible="1" force_save="1"/>
                             <field name="servicio_nombre" readonly="1" force_save="1"/>
@@ -134,6 +125,29 @@
                         </group>
                     </group>
                     <notebook>
+                        <page string="Paquete">
+                            <field name="paquete_linea_ids" readonly="1">
+                                <list>
+                                    <button name="action_open_popup" type="object" icon="fa-pencil-square-o" string="Editar"/>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="servicio_id"/>
+                                    <field name="moneda" readonly="1"/>
+                                    <field name="tipo_servicio" readonly="1"/>
+                                    <field name="tipo_tour" readonly="1" optional="hide"/>
+                                    <field name="estilo_transporte_id" readonly="1" optional="hide"/>
+                                    <field name="nombre"/>
+                                    <field name="precio_adulto"/>
+                                    <field name="precio_nino"/>
+                                    <field name="descuento"/>
+                                    <field name="precio_adulto_neto" readonly="1"/>
+                                    <field name="precio_nino_neto" readonly="1"/>
+                                    <field name="precio_adulto_usd" column_invisible="1" optional="hide"/>
+                                    <field name="precio_nino_usd" column_invisible="1" optional="hide"/>
+                                    <field name="precio_adulto_neto_usd" column_invisible="1" optional="hide"/>
+                                    <field name="precio_nino_neto_usd" column_invisible="1" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
                         <page string="Pagos">
                             <field name="pago_ids" context="{'default_reserva_id': id, 'default_moneda': moneda, 'default_monto': saldo_pendiente}">
                                 <list editable="bottom">

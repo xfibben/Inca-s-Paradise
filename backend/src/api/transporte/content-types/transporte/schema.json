@@ -165,12 +165,6 @@
       "component": "tours.inclusion-item",
       "repeatable": true
     },
-    "reservas": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::reserva.reserva",
-      "mappedBy": "transportes"
-    },
     "tipos_transporte": {
       "type": "relation",
       "relation": "manyToMany",

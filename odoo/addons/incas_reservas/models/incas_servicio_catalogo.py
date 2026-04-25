@@ -1,8 +1,7 @@
 import json
 import os
-from urllib.error import URLError
 from urllib.parse import urlencode
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 from odoo import api, fields, models
 
@@ -53,7 +52,7 @@ class IncasServicioCatalogo(models.Model):
             .sudo()
             .get_param("incas_reservas.strapi_url")
             or os.getenv("STRAPI_URL")
-            or "http://backend:1336"
+            or "http://backend:1337"
         )
 
     @api.model
@@ -79,17 +78,144 @@ class IncasServicioCatalogo(models.Model):
         return records
 
     @api.model
+    def _strapi_texto_json(self, valor):
+        if not valor:
+            return False
+        return json.dumps(valor, ensure_ascii=False, indent=2)
+
+    @api.model
+    def _upsert_servicio_base(self, dominio, values):
+        service = self.search(dominio, limit=1)
+        if service:
+            service.write(values)
+        else:
+            service = self.create(values)
+        return service
+
+    @api.model
     def _get_currency_rates(self):
-        base_url = self._get_strapi_base_url().rstrip("/")
-        try:
-            with urlopen(f"{base_url}/api/pagos/tipo-cambio", timeout=15) as response:
-                payload = json.loads(response.read().decode("utf-8"))
-        except (URLError, ValueError, json.JSONDecodeError):
-            payload = {}
+        self._asegurar_tasas_monitoreadas()
+        company = self.env.company
+        fecha = fields.Date.context_today(self)
+        currency_model = self.env["res.currency"].with_context(active_test=False)
+        usd_currency = currency_model.search([("name", "=", "USD")], limit=1)
+        pen_currency = currency_model.search([("name", "=", "PEN")], limit=1)
+        eur_currency = currency_model.search([("name", "=", "EUR")], limit=1)
+
+        if not usd_currency:
+            raise ValueError("No se encontró la moneda USD en Odoo")
+
+        # Las tarifas del frontend usan USD como base.
         return {
-            "PEN": float(payload.get("PEN") or 3.75),
-            "EUR": float(payload.get("EUR") or 0.92),
+            "PEN": float(usd_currency._convert(1.0, pen_currency, company, fecha)) if pen_currency else 3.75,
+            "EUR": float(usd_currency._convert(1.0, eur_currency, company, fecha)) if eur_currency else 0.92,
         }
+
+    @api.model
+    def _obtener_tasas_usd_desde_api(self):
+        token = os.getenv("APIS_NET_PE_TOKEN", "")
+        fecha = fields.Date.context_today(self)
+        fecha_texto = fields.Date.to_string(fecha)
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+        usd_pen = 3.75
+        try:
+            request = Request(
+                "https://apis.net.pe/v1/tipo-cambio/sbs/average",
+                headers=headers,
+                method="GET",
+            )
+            with urlopen(request, timeout=20) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            usd_pen = float(payload.get("venta") or 3.75)
+        except Exception:
+            usd_pen = 3.75
+
+        usd_eur = 0.92
+        try:
+            request = Request(
+                f"https://apis.net.pe/v1/tipo-cambio/sbs/accounting?date={fecha_texto}&currency=EUR",
+                headers=headers,
+                method="GET",
+            )
+            with urlopen(request, timeout=20) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            eur_pen = float(payload.get("venta") or 0)
+            if eur_pen > 0:
+                usd_eur = usd_pen / eur_pen
+        except Exception:
+            usd_eur = 0.92
+
+        return {
+            "USD": 1.0,
+            "PEN": usd_pen,
+            "EUR": usd_eur,
+        }
+
+    @api.model
+    def _asegurar_tasas_monitoreadas(self):
+        rate_model = self.env["res.currency.rate"].sudo()
+        currency_model = self.env["res.currency"].with_context(active_test=False)
+        fecha = fields.Date.context_today(self)
+        monedas = currency_model.search([("name", "in", ["USD", "PEN", "EUR"])])
+        if len(monedas) < 3:
+            return
+        for company in self.env["res.company"].sudo().search([]):
+            dominio = [
+                ("currency_id", "in", monedas.ids),
+                ("name", "=", fecha),
+                "|",
+                ("company_id", "=", False),
+                ("company_id", "=", company.id),
+            ]
+            if rate_model.search_count(dominio) >= len(monedas):
+                continue
+            self._cron_actualizar_tipos_cambio_odoo()
+            return
+
+    @api.model
+    def _cron_actualizar_tipos_cambio_odoo(self):
+        tasas_usd = self._obtener_tasas_usd_desde_api()
+        currency_model = self.env["res.currency"].with_context(active_test=False).sudo()
+        rate_model = self.env["res.currency.rate"].sudo()
+        fecha = fields.Date.context_today(self)
+        monedas = {
+            codigo: currency_model.search([("name", "=", codigo)], limit=1)
+            for codigo in ("USD", "PEN", "EUR")
+        }
+
+        for company in self.env["res.company"].sudo().search([]):
+            moneda_empresa = company.currency_id
+            valor_empresa_usd = tasas_usd.get(moneda_empresa.name)
+            if not moneda_empresa or not valor_empresa_usd:
+                continue
+            for codigo, currency in monedas.items():
+                if not currency:
+                    continue
+                valor_moneda_usd = tasas_usd.get(codigo)
+                if not valor_moneda_usd:
+                    continue
+                rate = valor_moneda_usd / valor_empresa_usd
+                valores = {
+                    "name": fecha,
+                    "currency_id": currency.id,
+                    "company_id": company.id,
+                    "rate": rate,
+                }
+                if "inverse_company_rate" in rate_model._fields and rate:
+                    valores["inverse_company_rate"] = 1.0 / rate
+                registro = rate_model.search(
+                    [
+                        ("currency_id", "=", currency.id),
+                        ("company_id", "=", company.id),
+                        ("name", "=", fecha),
+                    ],
+                    limit=1,
+                )
+                if registro:
+                    registro.write(valores)
+                else:
+                    rate_model.create(valores)
 
     @api.model
     def _sync_estilos_transporte(self):
@@ -124,15 +250,11 @@ class IncasServicioCatalogo(models.Model):
 
     @api.model
     def _sync_tours(self):
+        tour_model = self.env["incas.catalogo.tour"]
         records = self._fetch_strapi_records(
             "tour-detalles",
             {
-                "fields[0]": "title",
-                "fields[1]": "slug",
-                "fields[2]": "tourType",
-                "fields[3]": "adultUnitPrice",
-                "fields[4]": "childUnitPrice",
-                "fields[5]": "discount",
+                "populate": "*",
             },
         )
         seen_ids = []
@@ -154,13 +276,59 @@ class IncasServicioCatalogo(models.Model):
                 "slug": item.get("slug"),
                 "active": True,
             }
-            service = self.search(
-                [("tipo_servicio", "=", "tour"), ("strapi_id", "=", strapi_id)], limit=1
+            service = self._upsert_servicio_base(
+                [("tipo_servicio", "=", "tour"), ("strapi_id", "=", strapi_id)],
+                values,
             )
-            if service:
-                service.write(values)
+            detail_values = {
+                "destination_slug": item.get("destinationSlug"),
+                "destinos_data": self._strapi_texto_json(item.get("destinos")),
+                "estilos_data": self._strapi_texto_json(item.get("estilos")),
+                "meta_title": item.get("metaTitle"),
+                "meta_description": item.get("metaDescription"),
+                "seo_title": item.get("seoTitle"),
+                "seo_description": item.get("seoDescription"),
+                "seo_keywords": item.get("seoKeywords"),
+                "seo_canonical_url": item.get("seoCanonicalUrl"),
+                "seo_no_index": bool(item.get("seoNoIndex")),
+                "og_title": item.get("ogTitle"),
+                "og_description": item.get("ogDescription"),
+                "og_image_data": self._strapi_texto_json(item.get("ogImage")),
+                "twitter_title": item.get("twitterTitle"),
+                "twitter_description": item.get("twitterDescription"),
+                "twitter_image_data": self._strapi_texto_json(item.get("twitterImage")),
+                "hero_title": item.get("heroTitle"),
+                "hero_description": item.get("heroDescription"),
+                "hero_slide_images_data": self._strapi_texto_json(item.get("heroSlideImages")),
+                "highlights_title": item.get("highlightsTitle"),
+                "highlights_lead": item.get("highlightsLead"),
+                "highlights_question": item.get("highlightsQuestion"),
+                "highlights_cta_label": item.get("highlightsCtaLabel"),
+                "highlights_cta_url": item.get("highlightsCtaUrl"),
+                "highlights_items_data": self._strapi_texto_json(item.get("highlightsItems")),
+                "featured_title": item.get("featuredTitle"),
+                "featured_images_data": self._strapi_texto_json(item.get("featuredImages")),
+                "itinerary_title": item.get("itineraryTitle"),
+                "itinerary_item_label": item.get("itineraryItemLabel"),
+                "itinerary_expand_label": item.get("itineraryExpandLabel"),
+                "itinerary_collapse_label": item.get("itineraryCollapseLabel"),
+                "itinerary_items_data": self._strapi_texto_json(item.get("itineraryItems")),
+                "schedule_title": item.get("scheduleTitle"),
+                "schedule_items_data": self._strapi_texto_json(item.get("scheduleItems")),
+                "included_title": item.get("includedTitle"),
+                "included_items_data": self._strapi_texto_json(item.get("includedItems")),
+                "excluded_title": item.get("excludedTitle"),
+                "excluded_items_data": self._strapi_texto_json(item.get("excludedItems")),
+                "faq_title": item.get("faqTitle"),
+                "faq_items_data": self._strapi_texto_json(item.get("faqItems")),
+                "show_in_styles": bool(item.get("showInStyles")),
+                "duration_days": int(item.get("durationDays") or 0),
+            }
+            detail = tour_model.search([("servicio_id", "=", service.id)], limit=1)
+            if detail:
+                detail.write(detail_values)
             else:
-                self.create(values)
+                tour_model.create({"servicio_id": service.id, **detail_values})
         stale_records = self.search(
             [("tipo_servicio", "=", "tour"), ("strapi_id", "not in", seen_ids)]
         )
@@ -169,16 +337,11 @@ class IncasServicioCatalogo(models.Model):
 
     @api.model
     def _sync_transportes(self):
+        transporte_model = self.env["incas.catalogo.transporte"]
         records = self._fetch_strapi_records(
             "transportes",
             {
-                "fields[0]": "nombre",
-                "fields[1]": "slug",
-                "populate[tipos_transporte][fields][0]": "nombre",
-                "populate[tipos_transporte][fields][1]": "slug",
-                "populate[precios][fields][0]": "precioAdulto",
-                "populate[precios][fields][1]": "precioNino",
-                "populate[precios][fields][2]": "descuento",
+                "populate": "*",
             },
         )
         seen_ids = []
@@ -213,22 +376,42 @@ class IncasServicioCatalogo(models.Model):
                 "slug": item.get("slug"),
                 "active": True,
             }
-            service = self.search(
+            service = self._upsert_servicio_base(
                 [("tipo_servicio", "=", "transporte"), ("strapi_id", "=", strapi_id)],
-                limit=1,
+                values,
             )
-            if service:
-                service.write(values)
+            detail_values = {
+                "image_data": self._strapi_texto_json(item.get("image")),
+                "wallpaper_data": self._strapi_texto_json(item.get("wallpaper")),
+                "destino_origen_data": self._strapi_texto_json(item.get("destino_origen")),
+                "destino_llegada_data": self._strapi_texto_json(item.get("destino_llegada")),
+                "modelo_vehiculo": item.get("modelo_vehiculo"),
+                "duracion_viaje": item.get("duracion_viaje"),
+                "distancia": item.get("distancia"),
+                "descripcion_origen": item.get("descripcion_origen"),
+                "descripcion_llegada": item.get("descripcion_llegada"),
+                "descripcion": item.get("descripcion"),
+                "included_title": item.get("includedTitle"),
+                "included_items_data": self._strapi_texto_json(item.get("includedItems")),
+                "excluded_title": item.get("excludedTitle"),
+                "excluded_items_data": self._strapi_texto_json(item.get("excludedItems")),
+                "tipos_transporte_data": self._strapi_texto_json(item.get("tipos_transporte")),
+                "seo_title": item.get("seoTitle"),
+                "seo_description": item.get("seoDescription"),
+                "precios_data": self._strapi_texto_json(item.get("precios")),
+            }
+            detail = transporte_model.search([("servicio_id", "=", service.id)], limit=1)
+            if detail:
+                detail.write(detail_values)
             else:
-                self.create(values)
+                transporte_model.create({"servicio_id": service.id, **detail_values})
         stale_records = self.search(
             [("tipo_servicio", "=", "transporte"), ("strapi_id", "not in", seen_ids)]
         )
         if stale_records:
             stale_records.write({"active": False})
 
-    @api.model
-    def sync_from_strapi(self):
+    def sync_from_strapi(self, *args, **kwargs):
         self._sync_estilos_transporte()
         self._sync_tours()
         self._sync_transportes()

@@ -6,6 +6,7 @@ import { getTranslation, languages } from '../../../i18n';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import SEOHead from '../../../components/SEO/SEOHead.astro';
+import { strapiRichTextToMarkdown } from '../../../utils/strapiRichText';
 
 const { lang } = Astro.params;
 const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
@@ -81,11 +82,11 @@ const fallbackDescriptions: Record<string, string> = {
 };
 
 const title = data?.title ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
-const description = data?.description ?? '';
+const description = strapiRichTextToMarkdown(data?.description ?? '');
 const seoTitle = data?.metaTitle ?? title;
 const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
 const md = new MarkdownIt({ html: true });
-const descriptionHtml = md.render(typeof description === 'string' ? description : '');
+const descriptionHtml = md.render(description);
 const strapiPublicUrl = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
 
 const fallbackSections: Record<string, Array<{ title: string; text: string; imageUrl?: string }>> = {
@@ -138,7 +139,7 @@ const sections = Array.isArray(data?.sections) && data.sections.length > 0
       return {
         title: section?.title ?? '',
         imageUrl,
-        renderedText: md.render(typeof section?.text === 'string' ? section.text : '')
+        renderedText: md.render(strapiRichTextToMarkdown(section?.text ?? ''))
       };
     })
   : (fallbackSections[currentLang] ?? fallbackSections.es).map((section) => ({

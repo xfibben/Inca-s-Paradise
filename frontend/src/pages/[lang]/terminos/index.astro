@@ -6,6 +6,7 @@ import { getTranslation, languages } from '../../../i18n';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import SEOHead from '../../../components/SEO/SEOHead.astro';
+import { strapiRichTextToMarkdown } from '../../../utils/strapiRichText';
 
 const { lang } = Astro.params;
 const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
@@ -34,36 +35,7 @@ try {
 }
 
 const title = data?.title ?? (currentLang === 'es' ? 'Términos y Condiciones' : 'Terms & Conditions');
-function richTextToMarkdown(value: any): string {
-  if (typeof value === 'string') return value.replace(/\\n/g, '\n');
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => richTextToMarkdown(item))
-      .filter(Boolean)
-      .join('\n\n');
-  }
-  if (!value || typeof value !== 'object') return '';
-
-  if (typeof value.text === 'string') return value.text.replace(/\\n/g, '\n');
-
-  if (Array.isArray(value.children)) {
-    return value.children
-      .map((child: any) => richTextToMarkdown(child))
-      .filter(Boolean)
-      .join('');
-  }
-
-  if (Array.isArray(value.content)) {
-    return value.content
-      .map((item: any) => richTextToMarkdown(item))
-      .filter(Boolean)
-      .join('\n\n');
-  }
-
-  return '';
-}
-
-const description = richTextToMarkdown(data?.description ?? '');
+const description = strapiRichTextToMarkdown(data?.description ?? '');
 const seoTitle = data?.seoTitle ?? title;
 
 const fallbackDescriptions: Record<string, string> = {
@@ -79,7 +51,7 @@ const descriptionHtml = md.render(description);
 const sections: Array<{ title: string; renderedText: string }> = Array.isArray(data?.sections)
   ? data.sections.map((s: { title: string; text: string }) => ({
       title: s.title,
-      renderedText: md.render(richTextToMarkdown(s.text)),
+      renderedText: md.render(strapiRichTextToMarkdown(s.text)),
     }))
   : [];
 

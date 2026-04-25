@@ -498,9 +498,10 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
       updateBtnTotal(currency);
     };
 
-    // Tipo de cambio SBS (PEN) + EUR desde el backend — CORS deshabilitado en apis.net.pe
-    const strapiUrl = (window as any).__strapiUrl ?? import.meta.env.PUBLIC_STRAPI_URL ?? 'http://localhost:1337';
-    fetch(`${strapiUrl}/api/pagos/tipo-cambio`)
+    // El tipo de cambio sale desde Odoo usando las monedas configuradas en el sistema.
+    const odooUrl = (window as any).__odooUrl ?? import.meta.env.PUBLIC_ODOO_URL ?? "";
+    if (odooUrl) {
+      fetch(`${odooUrl}/incas/api/pagos/tipo-cambio`)
       .then((r) => r.json())
       .then((data: any) => {
         if (data?.PEN) rates.PEN = data.PEN;
@@ -515,6 +516,11 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
         const val = isCurrencyKey(defaultCur) ? defaultCur : "USD";
         updatePrices(val);
       });
+    } else {
+      const defaultCur = currencySelect?.getAttribute("data-default-currency") || "USD";
+      const val = isCurrencyKey(defaultCur) ? defaultCur : "USD";
+      updatePrices(val);
+    }
 
     // Permite al selector de vehículo actualizar los precios y descuento dinámicamente
     (window as any).updateBookingPrices = (newAdultUsd: number, newChildUsd: number, newDiscountUsd?: number) => {

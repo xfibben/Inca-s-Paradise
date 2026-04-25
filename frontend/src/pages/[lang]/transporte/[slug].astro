@@ -7,6 +7,7 @@ import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import BookingCard from '../../../components/tours/BookingCard.astro';
 import BookingModal from '../../../components/tours/BookingModal.astro';
+import { cleanTextValue, strapiRichTextToMarkdown } from '../../../utils/strapiRichText';
 
 export function getStaticPaths() {
   // SSR: rutas generadas dinámicamente; retornamos array vacío
@@ -145,18 +146,28 @@ const displayImageUrl = selectedPrecio?.imagenUrl ?? getImageUrl(transporte.imag
 const adultPrice = selectedPrecio?.precioAdulto ?? 0;
 const childPrice = selectedPrecio?.precioNino ?? 0;
 const discountPrice = selectedPrecio?.descuento ?? 0;
-const descripcion: string = transporte.descripcion ?? '';
+const descripcion = strapiRichTextToMarkdown(transporte.descripcion ?? '');
 const md = new MarkdownIt({ html: true });
 const descripcionHtml = descripcion ? md.render(descripcion) : '';
 
 // Incluye / No incluye
-const includedTitle = transporte.includedTitle ?? '';
+const includedTitle = cleanTextValue(transporte.includedTitle);
 const includedItems = Array.isArray(transporte.includedItems)
-  ? transporte.includedItems.map((i: any) => ({ text: i.text ?? '', icon: i.icon ?? '' })).filter((i: any) => i.text)
+  ? transporte.includedItems
+      .map((i: any) => ({
+        text: cleanTextValue(i.text),
+        icon: cleanTextValue(i.icon)
+      }))
+      .filter((i: any) => i.text)
   : [];
-const excludedTitle = transporte.excludedTitle ?? '';
+const excludedTitle = cleanTextValue(transporte.excludedTitle);
 const excludedItems = Array.isArray(transporte.excludedItems)
-  ? transporte.excludedItems.map((i: any) => ({ text: i.text ?? '', icon: i.icon ?? '' })).filter((i: any) => i.text)
+  ? transporte.excludedItems
+      .map((i: any) => ({
+        text: cleanTextValue(i.text),
+        icon: cleanTextValue(i.icon)
+      }))
+      .filter((i: any) => i.text)
   : [];
 const hasIncludedBlock = Boolean(includedTitle || includedItems.length);
 const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);

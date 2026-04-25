@@ -44,8 +44,7 @@ Migrar el backend operativo desde Strapi hacia Odoo sin hacer una migracion dire
 - Se validó localmente la creación real de una reserva pública en Odoo.
 - Odoo devuelve `ticket`, `reserva_id` y `voucher_url`.
 - El comprobante PDF público se entrega por URL con token.
-- Dependencia temporal restante:
-  - Odoo sigue leyendo el tipo de cambio desde Strapi por `GET /api/pagos/tipo-cambio`
+- El tipo de cambio ya vive en Odoo y se guarda en `res.currency.rate`.
 
 ## Orden recomendado de migracion
 
@@ -223,20 +222,51 @@ Desde `tipo-transporte` ya se están trayendo:
 
 ## Cómo quedó modelado hoy en Odoo
 
-- `Cotización` y `Reserva` usan catálogo local Odoo.
-- Ambas manejan:
-  - `tour o transporte`
-  - `tipo de tour`
-  - `estilo de transporte`
-  - `servicio`
-  - `nombre del servicio`
-  - `precio adulto`
-  - `precio niño`
-  - `descuento`
-  - `cantidad adultos`
-  - `cantidad niños`
-  - `monto total`
-- `Reserva` copia esos datos desde `Cotización`.
+- `Cotización` usa catálogo local Odoo.
+- La selección comercial ahora vive en líneas de `Paquete`.
+- Cada línea del paquete referencia un servicio base de Odoo.
+- Cada línea guarda un snapshot editable del contenido del servicio.
+- Ese snapshot es propio de la cotización y no modifica Strapi.
+- `Reserva` toma su resumen comercial desde `Cotización`.
+
+## Flujo funcional actual
+
+### Cotización
+
+- una cotización puede tener una o varias líneas en `Paquete`
+- cada línea puede ser `tour` o `transporte`
+- cada línea copia al crearse:
+  - nombre
+  - precios
+  - descuento
+  - contenido descriptivo
+  - itinerario o bloques equivalentes
+- luego ese contenido puede editarse solo para esa cotización
+
+### Reserva BO
+
+- la reserva se vincula a una cotización
+- la reserva toma desde la cotización:
+  - tipo resumido del servicio
+  - nombre comercial
+  - precios
+  - descuento
+  - importes convertidos por moneda
+
+### Reserva web
+
+- la web sigue permitiendo reservar un solo servicio
+- Odoo convierte esa selección en una cotización interna con una sola línea de paquete
+- después crea la reserva desde esa cotización
+- con eso el flujo web y el flujo BO usan el mismo modelo funcional
+
+## Regla de resumen
+
+- si la cotización tiene una sola línea:
+  - el resumen conserva `tour` o `transporte`
+- si la cotización tiene varias líneas:
+  - el resumen pasa a `paquete`
+- el monto total se calcula con la suma neta de líneas del paquete
 
 ## Regla de cálculo ya aplicada en Odoo
 

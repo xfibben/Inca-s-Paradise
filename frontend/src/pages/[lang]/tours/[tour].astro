@@ -9,6 +9,7 @@ import BookingModal from "../../../components/tours/BookingModal.astro";
 import BookingCard from "../../../components/tours/BookingCard.astro";
 import Ribbon from "../../../components/shared/Ribbon.astro";
 import { formatPrice } from "../../../utils/currency";
+import { cleanTextValue, strapiRichTextToMarkdown } from "../../../utils/strapiRichText";
 
 type SupportedLang = string;
 
@@ -544,13 +545,15 @@ const highlightsItems = Array.isArray(sourceTour.highlightsItems)
       .filter(Boolean)
       .map((item: any) => ({
         title: cleanText(item?.title),
-        descriptionHtml: md.render(item?.description ?? '')
+        descriptionHtml: md.render(strapiRichTextToMarkdown(item?.description ?? ''))
       }))
       .filter((item: any) => item.title || item.descriptionHtml)
   : [];
 const highlightsTitle = cleanText(sourceTour.highlightsTitle);
 const highlightsLead = sourceTour.highlightsLead ?? "";
-const highlightsLeadHtml = highlightsLead ? md.render(highlightsLead) : '';
+const highlightsLeadHtml = highlightsLead
+  ? md.render(strapiRichTextToMarkdown(highlightsLead))
+  : '';
 const highlightsQuestion = cleanText(sourceTour.highlightsQuestion);
 const heroSlides = Array.isArray(sourceTour.heroSlideImages?.data)
   ? sourceTour.heroSlideImages.data
@@ -705,7 +708,7 @@ const itineraryItems = Array.isArray(sourceTour.itineraryItems)
       .map((item: any, index: number) => ({
         title: cleanText(item?.title),
         highlight: cleanText(item?.highlight),
-        descriptionHtml: md.render(item?.description ?? ''),
+        descriptionHtml: md.render(strapiRichTextToMarkdown(item?.description ?? '')),
         optional: cleanText(item?.optional),
         images: toMediaRows(item?.image)
           .map((mediaItem: any) => ({
@@ -723,7 +726,7 @@ const itineraryItems = Array.isArray(sourceTour.itineraryItems)
           ? item.includes
               .map((includeEntry: any) => normalizeRow(includeEntry))
               .filter(Boolean)
-              .map((includeItem: any) => cleanText(includeItem?.text))
+              .map((includeItem: any) => cleanTextValue(includeItem?.text))
               .filter(Boolean)
           : []
       }))
@@ -740,7 +743,7 @@ const scheduleItems = Array.isArray(sourceTour.scheduleItems)
       .filter(Boolean)
       .map((item: any) => ({
         title: cleanText(item?.title),
-        contentHtml: md.render(item?.content ?? ''),
+        contentHtml: md.render(strapiRichTextToMarkdown(item?.content ?? '')),
       }))
       .filter((item: any) => item.title || item.contentHtml)
   : [];
@@ -756,8 +759,8 @@ const includedItems = Array.isArray(sourceTour.includedItems)
       .map((entry: any) => normalizeRow(entry))
       .filter(Boolean)
       .map((item: any) => ({
-        text: cleanText(item?.text),
-        icon: cleanText(item?.icon)
+        text: cleanTextValue(item?.text),
+        icon: cleanTextValue(item?.icon)
       }))
       .filter((item: any) => item.text)
   : [];
@@ -767,8 +770,8 @@ const excludedItems = Array.isArray(sourceTour.excludedItems)
       .map((entry: any) => normalizeRow(entry))
       .filter(Boolean)
       .map((item: any) => ({
-        text: cleanText(item?.text),
-        icon: cleanText(item?.icon)
+        text: cleanTextValue(item?.text),
+        icon: cleanTextValue(item?.icon)
       }))
       .filter((item: any) => item.text)
   : [];

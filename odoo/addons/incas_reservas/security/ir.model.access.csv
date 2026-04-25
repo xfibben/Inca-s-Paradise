@@ -13,6 +13,10 @@ access_incas_cotizacion_system,access.incas.cotizacion.system,model_incas_cotiza
 access_incas_cotizacion_admin,access.incas.cotizacion.admin,model_incas_cotizacion,incas_core.group_incas_core_admin,1,1,1,1
 access_incas_cotizacion_reservas,access.incas.cotizacion.reservas,model_incas_cotizacion,incas_core.group_incas_core_reservas,1,1,1,0
 access_incas_cotizacion_gerencia,access.incas.cotizacion.gerencia,model_incas_cotizacion,incas_core.group_incas_core_gerencia,1,1,1,0
+access_incas_cotizacion_paquete_linea_system,access.incas.cotizacion.paquete.linea.system,model_incas_cotizacion_paquete_linea,base.group_system,1,1,1,1
+access_incas_cotizacion_paquete_linea_admin,access.incas.cotizacion.paquete.linea.admin,model_incas_cotizacion_paquete_linea,incas_core.group_incas_core_admin,1,1,1,1
+access_incas_cotizacion_paquete_linea_reservas,access.incas.cotizacion.paquete.linea.reservas,model_incas_cotizacion_paquete_linea,incas_core.group_incas_core_reservas,1,1,1,0
+access_incas_cotizacion_paquete_linea_gerencia,access.incas.cotizacion.paquete.linea.gerencia,model_incas_cotizacion_paquete_linea,incas_core.group_incas_core_gerencia,1,1,1,0
 access_incas_reserva_system,access.incas.reserva.system,model_incas_reserva,base.group_system,1,1,1,1
 access_incas_reserva_admin,access.incas.reserva.admin,model_incas_reserva,incas_core.group_incas_core_admin,1,1,1,1
 access_incas_reserva_reservas,access.incas.reserva.reservas,model_incas_reserva,incas_core.group_incas_core_reservas,1,1,1,0
@@ -28,3 +32,7 @@ access_incas_pasajero_admin,access.incas.pasajero.admin,model_incas_pasajero,inc
 access_incas_pasajero_reservas,access.incas.pasajero.reservas,model_incas_pasajero,incas_core.group_incas_core_reservas,1,1,1,0
 access_incas_pasajero_operaciones,access.incas.pasajero.operaciones,model_incas_pasajero,incas_core.group_incas_core_operaciones,1,1,0,0
 access_incas_pasajero_gerencia,access.incas.pasajero.gerencia,model_incas_pasajero,incas_core.group_incas_core_gerencia,1,1,1,0
+access_res_currency_rate_incas_admin,access.res.currency.rate.incas.admin,base.model_res_currency_rate,incas_core.group_incas_core_admin,1,1,1,0
+access_res_currency_rate_incas_gerencia,access.res.currency.rate.incas.gerencia,base.model_res_currency_rate,incas_core.group_incas_core_gerencia,1,1,1,0
+access_res_currency_incas_admin,access.res.currency.incas.admin,base.model_res_currency,incas_core.group_incas_core_admin,1,0,0,0
+access_res_currency_incas_gerencia,access.res.currency.incas.gerencia,base.model_res_currency,incas_core.group_incas_core_gerencia,1,0,0,0
