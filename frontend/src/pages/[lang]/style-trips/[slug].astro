@@ -5,6 +5,7 @@ import Footer from '../../../components/shared/Footer.astro';
 import CarouselCard from '../../../components/stylestrips/StylesCarouselCard.astro';
 import { getTranslation, languages } from '../../../i18n';
 import { formatPrice } from '../../../utils/currency';
+import { strapiRichTextToMarkdown } from '../../../utils/strapiRichText';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 
@@ -109,7 +110,9 @@ const heroImageUrl = heroImage?.formats?.medium?.url
   : null;
 
 const md = new MarkdownIt({ html: true });
-const middleDescriptionHtml = trip?.middle_description ? md.render(trip.middle_description) : '';
+const middleDescriptionHtml = trip?.middle_description
+  ? md.render(strapiRichTextToMarkdown(trip.middle_description))
+  : '';
 ---
 
 <!DOCTYPE html>

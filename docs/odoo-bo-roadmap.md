@@ -258,6 +258,47 @@ Conectar operación, ventas y fidelización.
 
 ### Fase 1 iniciada
 
+## Flujo actual implementado en Odoo
+
+- `Cotización` pasó a ser la fuente de verdad del servicio vendido.
+- La pestaña `Paquete` en cotización maneja líneas locales editables.
+- Cada línea del paquete copia un snapshot del servicio sincronizado desde Strapi.
+- Ese snapshot incluye precios y contenido editable por cotización.
+- Editar una línea del paquete no modifica Strapi ni el catálogo local base.
+- El PDF `detalle paquete` sale desde el snapshot guardado en la línea de cotización.
+
+## Regla operativa actual
+
+- Si la cotización tiene una sola línea de paquete:
+  - el flujo se comporta como un `tour` o `transporte` individual
+  - se conserva el tipo del servicio original
+- Si la cotización tiene más de una línea de paquete:
+  - el flujo se comporta como `paquete`
+  - el resumen comercial se calcula como suma de líneas
+
+## Flujo reserva desde BO
+
+- Usuario crea o edita una `cotización`.
+- Usuario agrega una o varias líneas en `Paquete`.
+- Cada línea puede abrirse en una ventana modal para editar:
+  - nombre
+  - precios
+  - descuento
+  - descripciones
+  - itinerario
+  - bloques de contenido del tour o transporte
+- La `reserva` toma sus importes y resumen desde la `cotización`.
+- La `reserva` ya no debe considerarse la fuente primaria del servicio comercial.
+
+## Flujo reserva desde web
+
+- Astro envía la reserva a Odoo.
+- Odoo busca el servicio sincronizado en el catálogo local.
+- Odoo crea primero una `cotización` interna.
+- Esa cotización se crea con una sola línea en `Paquete`.
+- Luego Odoo crea la `reserva` asociada a esa cotización.
+- Con eso, el flujo web y el flujo BO comparten la misma base funcional.
+
 #### `incas_core`
 
 - Estructura base del BO.

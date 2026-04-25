@@ -4,6 +4,7 @@ from odoo.http import request
 from ..utils import (
     generar_pdf_desde_html,
     render_cotizacion_html,
+    render_cotizacion_paquete_html,
     render_reserva_html,
     texto,
 )
@@ -50,5 +51,19 @@ class IncasReservasPdfController(http.Controller):
                 ("Content-Type", "application/pdf"),
                 ("Content-Length", str(len(pdf))),
                 ("Content-Disposition", f'attachment; filename="cotizacion-{texto(cotizacion.name)}.pdf"'),
+            ],
+        )
+
+    @http.route("/incas/cotizacion/<int:cotizacion_id>/detalle-paquete-pdf", type="http", auth="user")
+    def cotizacion_paquete_pdf(self, cotizacion_id, **kwargs):
+        cotizacion = request.env["incas.cotizacion"].browse(cotizacion_id)
+        cotizacion.check_access("read")
+        pdf = generar_pdf_desde_html(render_cotizacion_paquete_html(cotizacion))
+        return request.make_response(
+            pdf,
+            headers=[
+                ("Content-Type", "application/pdf"),
+                ("Content-Length", str(len(pdf))),
+                ("Content-Disposition", f'attachment; filename="detalle-paquete-{texto(cotizacion.name)}.pdf"'),
             ],
         )

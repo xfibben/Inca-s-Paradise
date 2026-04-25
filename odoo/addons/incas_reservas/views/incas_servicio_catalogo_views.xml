@@ -43,6 +43,9 @@
         <field name="model">incas.servicio.catalogo</field>
         <field name="arch" type="xml">
             <form string="Servicio">
+                <header>
+                    <button name="sync_from_strapi" type="object" string="Sincronizar desde Strapi"/>
+                </header>
                 <sheet>
                     <group>
                         <group>

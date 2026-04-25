@@ -446,12 +446,6 @@
         }
       },
       "min": 1
-    },
-    "reservations": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::reserva.reserva",
-      "mappedBy": "tour"
     }
   }
 }

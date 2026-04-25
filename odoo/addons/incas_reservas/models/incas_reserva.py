@@ -3,8 +3,7 @@ from uuid import uuid4
 import os
 import json
 import logging
-from urllib.error import HTTPError
-from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
+from urllib.request import Request, urlopen
 
 from odoo import api, fields, models
 
@@ -28,6 +27,7 @@ class IncasReserva(models.Model):
     ticket = fields.Char(string="Ticket", copy=False, readonly=True, index=True, tracking=True)
     access_token = fields.Char(string="Token de acceso", copy=False, readonly=True, index=True)
     cotizacion_id = fields.Many2one("incas.cotizacion", string="Cotización", tracking=True)
+    paquete_linea_ids = fields.One2many(related="cotizacion_id.paquete_linea_ids", string="Líneas del paquete", readonly=True)
     partner_id = fields.Many2one("res.partner", string="Cliente principal", required=True, tracking=True)
     nombre = fields.Char(string="Nombre completo", tracking=True)
     email = fields.Char(string="Correo electrónico", tracking=True)
@@ -82,6 +82,7 @@ class IncasReserva(models.Model):
         [
             ("tour", "Tour"),
             ("transporte", "Transporte"),
+            ("paquete", "Paquete"),
         ],
         string="Tour o transporte",
         required=True,
@@ -262,6 +263,42 @@ class IncasReserva(models.Model):
             record.precio_nino = 0
             record.descuento = 0
 
+    def _aplicar_cotizacion(self, cotizacion):
+        self.ensure_one()
+        values = self._valores_desde_cotizacion(cotizacion)
+        for field_name, value in values.items():
+            self[field_name] = value
+        self._compute_monto_total()
+        self._compute_precio_tour()
+        self._compute_saldo_pendiente()
+        self._compute_pago_restante()
+        self._compute_monto_final()
+
+    @api.model
+    def _valores_desde_cotizacion(self, cotizacion):
+        resumen = cotizacion._get_resumen_servicio()
+        return {
+            "partner_id": cotizacion.partner_id,
+            "fecha_viaje": cotizacion.fecha_viaje,
+            "idioma": cotizacion.idioma,
+            "canal_venta": cotizacion.canal_venta,
+            "tipo_servicio": resumen["tipo_servicio"],
+            "tipo_tour": resumen["tipo_tour"],
+            "estilo_transporte_id": resumen["estilo_transporte_id"],
+            "servicio_id": resumen["servicio_id"],
+            "servicio_nombre": cotizacion.servicio_nombre or resumen["servicio_nombre"],
+            "precio_adulto_usd": resumen["precio_adulto_usd"],
+            "precio_nino_usd": resumen["precio_nino_usd"],
+            "precio_adulto": resumen["precio_adulto"],
+            "precio_nino": resumen["precio_nino"],
+            "descuento": resumen["descuento"],
+            "cantidad_adultos": cotizacion.cantidad_adultos,
+            "cantidad_ninos": cotizacion.cantidad_ninos,
+            "moneda": cotizacion.moneda,
+            "responsable_id": cotizacion.responsable_id,
+            "observaciones": cotizacion.observaciones,
+        }
+
     @api.model
     def _normalizar_fecha_web(self, valor):
         if not valor:
@@ -332,7 +369,10 @@ class IncasReserva(models.Model):
         moneda = reserva_data.get("moneda") or reserva_data.get("moneda_usuario") or "USD"
         fecha_inicio = self._normalizar_fecha_web(reserva_data.get("fecha_inicio"))
         fecha_fin = self._normalizar_fecha_web(reserva_data.get("fecha_fin"))
+        cotizacion = self._crear_cotizacion_web(reserva_data, partner, servicio, moneda, fecha_inicio)
+        resumen = cotizacion._get_resumen_servicio()
         valores = {
+            "cotizacion_id": cotizacion.id,
             "partner_id": partner.id,
             "nombre": reserva_data.get("nombre"),
             "email": reserva_data.get("email"),
@@ -347,21 +387,61 @@ class IncasReserva(models.Model):
             "vehiculo_seleccionado": reserva_data.get("vehiculo_seleccionado"),
             "idioma": reserva_data.get("idioma") or "es",
             "canal_venta": "web",
-            "servicio_id": servicio.id,
-            "tipo_servicio": servicio.tipo_servicio,
-            "tipo_tour": servicio.tipo_tour,
-            "estilo_transporte_id": servicio.estilo_transporte_id.id,
+            "servicio_id": resumen["servicio_id"].id,
+            "tipo_servicio": resumen["tipo_servicio"],
+            "tipo_tour": resumen["tipo_tour"],
+            "estilo_transporte_id": resumen["estilo_transporte_id"].id,
+            "servicio_nombre": resumen["servicio_nombre"],
             "cantidad_adultos": int(reserva_data.get("cantidad_adultos") or 1),
             "cantidad_ninos": int(reserva_data.get("cantidad_ninos") or 0),
             "moneda": moneda,
-            "descuento": float(reserva_data.get("descuento") or reserva_data.get("descuento_usd") or servicio.descuento or 0),
+            "precio_adulto_usd": resumen["precio_adulto_usd"],
+            "precio_nino_usd": resumen["precio_nino_usd"],
+            "precio_adulto": resumen["precio_adulto"],
+            "precio_nino": resumen["precio_nino"],
+            "descuento": resumen["descuento"],
             "precio_adulto_web": float(reserva_data.get("precio_adulto_web") or 0),
             "precio_nino_web": float(reserva_data.get("precio_nino_web") or 0),
             "origen_web": True,
             "observaciones": reserva_data.get("notas"),
         }
-        self._completar_datos_servicio(valores)
         return valores
+
+    @api.model
+    def _crear_cotizacion_web(self, reserva_data, partner, servicio, moneda, fecha_viaje):
+        cotizacion_model = self.env["incas.cotizacion"].sudo()
+        rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
+        descuento = float(reserva_data.get("descuento") or reserva_data.get("descuento_usd") or servicio.descuento or 0)
+        precio_adulto = self._convertir_desde_usd(servicio.precio_adulto or 0, moneda, rates)
+        precio_nino = self._convertir_desde_usd(servicio.precio_nino or 0, moneda, rates)
+        return cotizacion_model.create(
+            {
+                "partner_id": partner.id,
+                "fecha_viaje": fecha_viaje or self._normalizar_fecha_web(reserva_data.get("fecha_viaje")),
+                "idioma": reserva_data.get("idioma") or "es",
+                "canal_venta": "web",
+                "tipo_servicio": servicio.tipo_servicio,
+                "tipo_tour": servicio.tipo_tour,
+                "estilo_transporte_id": servicio.estilo_transporte_id.id,
+                "servicio_id": servicio.id,
+                "cantidad_adultos": int(reserva_data.get("cantidad_adultos") or 1),
+                "cantidad_ninos": int(reserva_data.get("cantidad_ninos") or 0),
+                "moneda": moneda,
+                "observaciones": reserva_data.get("notas"),
+                "paquete_linea_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "servicio_id": servicio.id,
+                            "precio_adulto": precio_adulto,
+                            "precio_nino": precio_nino,
+                            "descuento": descuento,
+                        },
+                    )
+                ],
+            }
+        )
 
     def _actualizar_pendientes(self):
         for record in self:
@@ -414,20 +494,8 @@ class IncasReserva(models.Model):
             }
             body = json.dumps({"entry": entry}).encode("utf-8")
             headers = {"Content-Type": "application/json"}
-
-            class NoRedirectHandler(HTTPRedirectHandler):
-                def redirect_request(self, req, fp, code, msg, headers, newurl):
-                    return None
-
-            opener = build_opener(NoRedirectHandler)
-            try:
-                first_request = Request(url, data=body, headers=headers, method="POST")
-                response = opener.open(first_request, timeout=20)
-                response.read()
-            except HTTPError as error:
-                redirect_url = error.headers.get("Location") or url
-                second_request = Request(redirect_url, data=body, headers=headers, method="POST")
-                urlopen(second_request, timeout=20).read()
+            request_data = Request(url, data=body, headers=headers, method="POST")
+            urlopen(request_data, timeout=20).read()
 
     def _enviar_correos_reserva(self):
         api_key = os.getenv("RESEND_API_KEY", "")
@@ -490,6 +558,35 @@ class IncasReserva(models.Model):
 
     @api.model
     def _completar_datos_servicio(self, vals):
+        cotizacion_id = vals.get("cotizacion_id")
+        if cotizacion_id:
+            cotizacion = self.env["incas.cotizacion"].browse(cotizacion_id)
+            if cotizacion.exists():
+                values = self._valores_desde_cotizacion(cotizacion)
+                vals.update(
+                    {
+                        "partner_id": values["partner_id"].id,
+                        "fecha_viaje": values["fecha_viaje"],
+                        "idioma": values["idioma"],
+                        "canal_venta": values["canal_venta"],
+                        "tipo_servicio": values["tipo_servicio"],
+                        "tipo_tour": values["tipo_tour"],
+                        "estilo_transporte_id": values["estilo_transporte_id"].id,
+                        "servicio_id": values["servicio_id"].id,
+                        "servicio_nombre": values["servicio_nombre"],
+                        "precio_adulto_usd": values["precio_adulto_usd"],
+                        "precio_nino_usd": values["precio_nino_usd"],
+                        "precio_adulto": values["precio_adulto"],
+                        "precio_nino": values["precio_nino"],
+                        "descuento": values["descuento"],
+                        "cantidad_adultos": values["cantidad_adultos"],
+                        "cantidad_ninos": values["cantidad_ninos"],
+                        "moneda": values["moneda"],
+                        "responsable_id": values["responsable_id"].id,
+                        "observaciones": values["observaciones"],
+                    }
+                )
+                return vals
         servicio_id = vals.get("servicio_id")
         if not servicio_id:
             return vals
@@ -512,6 +609,8 @@ class IncasReserva(models.Model):
     @api.onchange("tipo_servicio")
     def _onchange_tipo_servicio(self):
         for record in self:
+            if record.cotizacion_id or record.tipo_servicio == "paquete":
+                continue
             if record.tipo_servicio == "tour":
                 record.estilo_transporte_id = False
                 if not record.tipo_tour:
@@ -527,6 +626,8 @@ class IncasReserva(models.Model):
     @api.onchange("tipo_tour", "estilo_transporte_id")
     def _onchange_tipo_detalle_servicio(self):
         for record in self:
+            if record.cotizacion_id or record.tipo_servicio == "paquete":
+                continue
             if not record.servicio_id:
                 record._limpiar_servicio()
                 continue
@@ -538,6 +639,8 @@ class IncasReserva(models.Model):
     @api.onchange("servicio_id")
     def _onchange_servicio_id(self):
         for record in self:
+            if record.cotizacion_id:
+                continue
             if not record.servicio_id:
                 continue
             record.tipo_servicio = record.servicio_id.tipo_servicio
@@ -555,27 +658,45 @@ class IncasReserva(models.Model):
             cotizacion = record.cotizacion_id
             if not cotizacion:
                 continue
-            record.partner_id = cotizacion.partner_id
-            record.fecha_viaje = cotizacion.fecha_viaje
-            record.idioma = cotizacion.idioma
-            record.canal_venta = cotizacion.canal_venta
-            record.tipo_servicio = cotizacion.tipo_servicio
-            record.tipo_tour = cotizacion.tipo_tour
-            record.estilo_transporte_id = cotizacion.estilo_transporte_id
-            record.servicio_id = cotizacion.servicio_id
-            record.servicio_nombre = cotizacion.servicio_nombre
-            record.precio_adulto_usd = cotizacion.precio_adulto_usd
-            record.precio_nino_usd = cotizacion.precio_nino_usd
-            record.descuento = cotizacion.descuento
-            record.cantidad_adultos = cotizacion.cantidad_adultos
-            record.cantidad_ninos = cotizacion.cantidad_ninos
-            record.moneda = cotizacion.moneda
-            record.responsable_id = cotizacion.responsable_id
-            record.observaciones = cotizacion.observaciones
-            record._aplicar_moneda_desde_base()
+            record._aplicar_cotizacion(cotizacion)
+
+    @api.model
+    def default_get(self, fields_list):
+        values = super().default_get(fields_list)
+        cotizacion_id = self.env.context.get("default_cotizacion_id")
+        if cotizacion_id:
+            cotizacion = self.env["incas.cotizacion"].browse(cotizacion_id)
+            if cotizacion.exists():
+                resumen = self._valores_desde_cotizacion(cotizacion)
+                values.update(
+                    {
+                        "partner_id": resumen["partner_id"].id,
+                        "fecha_viaje": resumen["fecha_viaje"],
+                        "idioma": resumen["idioma"],
+                        "canal_venta": resumen["canal_venta"],
+                        "tipo_servicio": resumen["tipo_servicio"],
+                        "tipo_tour": resumen["tipo_tour"],
+                        "estilo_transporte_id": resumen["estilo_transporte_id"].id,
+                        "servicio_id": resumen["servicio_id"].id,
+                        "servicio_nombre": resumen["servicio_nombre"],
+                        "precio_adulto_usd": resumen["precio_adulto_usd"],
+                        "precio_nino_usd": resumen["precio_nino_usd"],
+                        "precio_adulto": resumen["precio_adulto"],
+                        "precio_nino": resumen["precio_nino"],
+                        "descuento": resumen["descuento"],
+                        "cantidad_adultos": resumen["cantidad_adultos"],
+                        "cantidad_ninos": resumen["cantidad_ninos"],
+                        "moneda": resumen["moneda"],
+                        "responsable_id": resumen["responsable_id"].id,
+                        "observaciones": resumen["observaciones"],
+                    }
+                )
+        return values
 
     @api.onchange("moneda")
     def _onchange_moneda(self):
+        if self.cotizacion_id:
+            return
         self._aplicar_moneda_desde_base()
 
     @api.model_create_multi

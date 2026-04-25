@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_catalogo_tour_list" model="ir.ui.view">
+        <field name="name">incas.catalogo.tour.list</field>
+        <field name="model">incas.catalogo.tour</field>
+        <field name="arch" type="xml">
+            <list string="Catálogo de tours">
+                <field name="name"/>
+                <field name="tipo_tour"/>
+                <field name="precio_adulto"/>
+                <field name="precio_nino"/>
+                <field name="descuento"/>
+                <field name="slug"/>
+                <field name="strapi_id"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_catalogo_tour_search" model="ir.ui.view">
+        <field name="name">incas.catalogo.tour.search</field>
+        <field name="model">incas.catalogo.tour</field>
+        <field name="arch" type="xml">
+            <search string="Buscar tours">
+                <field name="name"/>
+                <field name="tipo_tour"/>
+                <field name="slug"/>
+                <filter name="group_tipo_tour" string="Tipo de tour" domain="[]" context="{'group_by': 'tipo_tour'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_catalogo_tour_form" model="ir.ui.view">
+        <field name="name">incas.catalogo.tour.form</field>
+        <field name="model">incas.catalogo.tour</field>
+        <field name="arch" type="xml">
+            <form string="Tour">
+                <header>
+                    <button name="action_sync_from_strapi" type="object" string="Sincronizar desde Strapi"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="tipo_tour"/>
+                            <field name="precio_adulto"/>
+                            <field name="precio_nino"/>
+                            <field name="descuento"/>
+                            <field name="duration_days"/>
+                            <field name="show_in_styles"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="strapi_id"/>
+                            <field name="strapi_document_id"/>
+                            <field name="slug"/>
+                            <field name="destination_slug"/>
+                            <field name="servicio_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="SEO">
+                            <group>
+                                <group>
+                                    <field name="meta_title"/>
+                                    <field name="meta_description"/>
+                                    <field name="seo_title"/>
+                                    <field name="seo_description"/>
+                                    <field name="seo_keywords"/>
+                                    <field name="seo_canonical_url"/>
+                                    <field name="seo_no_index"/>
+                                </group>
+                                <group>
+                                    <field name="og_title"/>
+                                    <field name="og_description"/>
+                                    <field name="og_image_data" widget="text"/>
+                                    <field name="twitter_title"/>
+                                    <field name="twitter_description"/>
+                                    <field name="twitter_image_data" widget="text"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Hero y highlights">
+                            <group>
+                                <group>
+                                    <field name="hero_title"/>
+                                    <field name="hero_description"/>
+                                    <field name="hero_slide_images_data" widget="text"/>
+                                </group>
+                                <group>
+                                    <field name="highlights_title"/>
+                                    <field name="highlights_lead"/>
+                                    <field name="highlights_question"/>
+                                    <field name="highlights_cta_label"/>
+                                    <field name="highlights_cta_url"/>
+                                    <field name="highlights_items_data" widget="text"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Contenido">
+                            <group>
+                                <group>
+                                    <field name="featured_title"/>
+                                    <field name="featured_images_data" widget="text"/>
+                                    <field name="itinerary_title"/>
+                                    <field name="itinerary_item_label"/>
+                                    <field name="itinerary_expand_label"/>
+                                    <field name="itinerary_collapse_label"/>
+                                    <field name="itinerary_items_data" widget="text"/>
+                                </group>
+                                <group>
+                                    <field name="schedule_title"/>
+                                    <field name="schedule_items_data" widget="text"/>
+                                    <field name="included_title"/>
+                                    <field name="included_items_data" widget="text"/>
+                                    <field name="excluded_title"/>
+                                    <field name="excluded_items_data" widget="text"/>
+                                    <field name="faq_title"/>
+                                    <field name="faq_items_data" widget="text"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Relaciones">
+                            <group>
+                                <field name="destinos_data" widget="text"/>
+                                <field name="estilos_data" widget="text"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_catalogo_tour" model="ir.actions.act_window">
+        <field name="name">Tours</field>
+        <field name="res_model">incas.catalogo.tour</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_catalogo_tour_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_catalogo_tour"
+        name="Tours"
+        parent="incas_core.menu_incas_configuracion_root"
+        action="action_incas_catalogo_tour"
+        sequence="11"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

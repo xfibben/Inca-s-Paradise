@@ -47,6 +47,16 @@ def telefono_partner(partner):
     return getattr(partner, "phone", False) or getattr(partner, "mobile", False) or "-"
 
 
+def tiene_contenido(valor, ocultar_cero=False):
+    if valor in (None, False):
+        return False
+    if isinstance(valor, str):
+        return bool(valor.strip())
+    if ocultar_cero:
+        return numero(valor) != 0
+    return True
+
+
 def fila(label, value):
     return f"""
     <tr>
@@ -56,26 +66,45 @@ def fila(label, value):
     """
 
 
+def fila_si(label, value, render=None, ocultar_cero=False):
+    if not tiene_contenido(value, ocultar_cero=ocultar_cero):
+        return ""
+    return fila(label, render if render is not None else value)
+
+
 def bloque(titulo, filas):
+    filas_validas = [fila_html for fila_html in filas if fila_html]
+    if not filas_validas:
+        return ""
     return f"""
     <div class="section">
       <div class="section-title">{escape(titulo)}</div>
       <table>
-        {''.join(filas)}
+        {''.join(filas_validas)}
       </table>
     </div>
     """
 
 
 def nombre_servicio_label(tipo_servicio):
-    return "Nombre del tour" if tipo_servicio == "tour" else "Nombre del transporte"
+    if tipo_servicio == "tour":
+        return "Nombre del tour"
+    if tipo_servicio == "transporte":
+        return "Nombre del transporte"
+    return "Nombre del paquete"
 
 
 def tipo_servicio_titulo(tipo_servicio):
-    return "Tour" if tipo_servicio == "tour" else "Transporte"
+    if tipo_servicio == "tour":
+        return "Tour"
+    if tipo_servicio == "transporte":
+        return "Transporte"
+    return "Paquete"
 
 
 def detalle_tipo_servicio(record):
+    if record.tipo_servicio == "paquete":
+        return "Paquete"
     if record.tipo_servicio == "tour":
         if record.tipo_tour == "small_trip":
             return "Small Trip"
@@ -85,14 +114,21 @@ def detalle_tipo_servicio(record):
     return record.estilo_transporte_id.display_name
 
 
+def tipo_documento_valor(reserva):
+    if not reserva.tipo_documento:
+        return ""
+    if reserva.tipo_documento == "otro" and not reserva.numero_documento:
+        return ""
+    return (reserva.tipo_documento or "").upper()
+
+
 def bloque_pagos_reserva(reserva):
     filas = [
         fila("Moneda", reserva.moneda),
-        fila("Descuento", f"{numero(reserva.descuento):.2f}%"),
         fila("Precio total del servicio", monto(reserva.moneda, reserva.precio_tour)),
-        fila("Adelanto web", monto(reserva.moneda, reserva.monto_web)),
-        fila("Precio web adultos", monto(reserva.moneda, reserva.precio_adulto_web)),
-        fila("Precio web niños", monto(reserva.moneda, reserva.precio_nino_web)),
+        fila_si("Descuento aplicado", reserva.descuento, render=f"{numero(reserva.descuento):.2f}%", ocultar_cero=True),
+        fila("Total pagado", monto(reserva.moneda, reserva.monto_pagado)),
+        fila_si("Saldo pendiente", reserva.saldo_pendiente, render=monto(reserva.moneda, reserva.saldo_pendiente), ocultar_cero=True),
     ]
 
     pagos_agencia = reserva.pago_ids.sorted(lambda pago: (pago.fecha_pago or pago.create_date or fields.Datetime.now(), pago.id))
@@ -103,20 +139,10 @@ def bloque_pagos_reserva(reserva):
                 detalle = f"{detalle} / {texto(pago.fecha_pago)}"
             filas.append(
                 fila(
-                    f"Pago agencia {indice}",
+                    f"Detalle de pago {indice}",
                     f"{monto(reserva.moneda, pago.monto_reserva)} ({detalle})",
                 )
             )
-    else:
-        filas.append(fila("Pagos en agencia", "No registrados"))
-
-    filas.extend(
-        [
-            fila("Total pagado", monto(reserva.moneda, reserva.monto_pagado)),
-            fila("Saldo pendiente", monto(reserva.moneda, reserva.saldo_pendiente)),
-            fila("Monto final registrado", monto(reserva.moneda, reserva.monto_final)),
-        ]
-    )
     return bloque("RESUMEN DE PAGO", filas)
 
 
@@ -180,6 +206,12 @@ def html_base(titulo, codigo_label, codigo_valor, secciones):
             padding: 8px 10px;
             vertical-align: top;
           }}
+          .text-block {{
+            border: 1px solid #d1d5db;
+            padding: 10px 12px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+          }}
           .label {{
             background: #f8fafc;
             color: #475569;
@@ -212,13 +244,13 @@ def render_reserva_html(reserva):
                 "DATOS DEL PASAJERO",
                 [
                     fila("Cliente principal", reserva.nombre or reserva.partner_id.display_name),
-                    fila("Correo electrónico", reserva.email or reserva.partner_id.email),
-                    fila("Teléfono", reserva.telefono or telefono_partner(reserva.partner_id)),
-                    fila("Tipo de documento", (reserva.tipo_documento or "").upper()),
-                    fila("Número de documento", reserva.numero_documento),
-                    fila("Nacionalidad", reserva.nacionalidad),
-                    fila("Idioma", reserva.idioma),
-                    fila("Canal", reserva.canal_venta),
+                    fila_si("Correo electrónico", reserva.email or reserva.partner_id.email),
+                    fila_si("Teléfono", reserva.telefono or getattr(reserva.partner_id, "phone", False) or getattr(reserva.partner_id, "mobile", False)),
+                    fila_si("Tipo de documento", tipo_documento_valor(reserva)),
+                    fila_si("Número de documento", reserva.numero_documento),
+                    fila_si("Nacionalidad", reserva.nacionalidad),
+                    fila_si("Idioma", reserva.idioma),
+                    fila_si("Canal", reserva.canal_venta),
                 ],
             ),
             bloque(
@@ -226,13 +258,13 @@ def render_reserva_html(reserva):
                 [
                     fila("Tipo de servicio", detalle_tipo_servicio(reserva)),
                     fila(nombre_servicio_label(reserva.tipo_servicio), reserva.servicio_nombre),
-                    fila("Vehículo seleccionado", reserva.vehiculo_seleccionado if reserva.tipo_servicio == "transporte" else "-"),
-                    fila("Fecha de inicio", fecha(reserva.fecha_inicio or reserva.fecha_viaje)),
-                    fila("Fecha de fin", fecha(reserva.fecha_fin or reserva.fecha_viaje)),
-                    fila("Horario", reserva.turno),
+                    fila_si("Vehículo seleccionado", reserva.vehiculo_seleccionado if reserva.tipo_servicio == "transporte" else ""),
+                    fila_si("Fecha de inicio", reserva.fecha_inicio or reserva.fecha_viaje, render=fecha(reserva.fecha_inicio or reserva.fecha_viaje)),
+                    fila_si("Fecha de fin", reserva.fecha_fin or reserva.fecha_viaje, render=fecha(reserva.fecha_fin or reserva.fecha_viaje)),
+                    fila_si("Horario", reserva.turno),
                     fila("Adultos", reserva.cantidad_adultos),
-                    fila("Niños", reserva.cantidad_ninos),
-                    fila("Observaciones", reserva.observaciones),
+                    fila_si("Niños", reserva.cantidad_ninos, ocultar_cero=True),
+                    fila_si("Observaciones", reserva.observaciones),
                     fila("Estado de reserva", reserva.estado_reserva),
                     fila("Estado de pago", reserva.estado_pago),
                 ],
@@ -243,7 +275,19 @@ def render_reserva_html(reserva):
 
 
 def render_cotizacion_html(cotizacion):
-    tipo_servicio = tipo_servicio_titulo(cotizacion.tipo_servicio)
+    resumen = cotizacion._get_resumen_servicio()
+    tipo_servicio = tipo_servicio_titulo(resumen["tipo_servicio"])
+    if resumen["tipo_servicio"] == "paquete":
+        detalle_servicio = "Paquete"
+    elif resumen["tipo_servicio"] == "tour":
+        if resumen["tipo_tour"] == "small_trip":
+            detalle_servicio = "Small Trip"
+        elif resumen["tipo_tour"] == "package":
+            detalle_servicio = "Package"
+        else:
+            detalle_servicio = "Tour"
+    else:
+        detalle_servicio = resumen["estilo_transporte_id"].display_name
     return html_base(
         f"Comprobante de cotización de {tipo_servicio}",
         "CÓDIGO",
@@ -262,8 +306,8 @@ def render_cotizacion_html(cotizacion):
             bloque(
                 "DETALLES DE LA COTIZACIÓN",
                 [
-                    fila("Tipo de servicio", detalle_tipo_servicio(cotizacion)),
-                    fila(nombre_servicio_label(cotizacion.tipo_servicio), cotizacion.servicio_nombre),
+                    fila("Tipo de servicio", detalle_servicio),
+                    fila(nombre_servicio_label(resumen["tipo_servicio"]), resumen["servicio_nombre"]),
                     fila("Fecha de cotización", fecha(cotizacion.fecha_cotizacion)),
                     fila("Fecha de viaje", fecha(cotizacion.fecha_viaje)),
                     fila("Adultos", cotizacion.cantidad_adultos),
@@ -276,13 +320,128 @@ def render_cotizacion_html(cotizacion):
                 "RESUMEN DE PAGO",
                 [
                     fila("Moneda", cotizacion.moneda),
-                    fila("Descuento", f"{numero(cotizacion.descuento):.2f}%"),
-                    fila("Precio adulto", monto(cotizacion.moneda, cotizacion.precio_adulto)),
-                    fila("Precio niño", monto(cotizacion.moneda, cotizacion.precio_nino)),
+                    fila("Descuento", f"{numero(resumen['descuento']):.2f}%"),
+                    fila("Precio adulto", monto(cotizacion.moneda, resumen["precio_adulto"])),
+                    fila("Precio niño", monto(cotizacion.moneda, resumen["precio_nino"])),
                     fila("Monto total", monto(cotizacion.moneda, cotizacion.monto_total)),
                 ],
             ),
         ],
+    )
+
+
+def _json_lista(valor):
+    if not valor:
+        return []
+    try:
+        data = json.loads(valor)
+        return data if isinstance(data, list) else []
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return []
+
+
+def _texto_json_lista(valor, claves):
+    items = []
+    for item in _json_lista(valor):
+        if not isinstance(item, dict):
+            continue
+        for clave in claves:
+            texto_item = str(item.get(clave) or "").strip()
+            if texto_item:
+                items.append(texto_item)
+                break
+    return ", ".join(items)
+
+
+def _bloque_texto_largo(titulo, contenido):
+    if not contenido:
+        return ""
+    return f"""
+    <div class="section">
+      <div class="section-title">{escape(titulo)}</div>
+      <div class="text-block">{escape(texto(contenido))}</div>
+    </div>
+    """
+
+
+def _bloque_servicio_paquete(indice, linea):
+    servicio = linea.servicio_id
+    if servicio.tipo_servicio == "tour":
+        titulo = f"TOUR {indice}"
+        filas = [
+            fila("Nombre del tour", linea.nombre),
+            fila_si("Tipo de tour", linea.tipo_tour or servicio.tipo_tour),
+            fila_si("Slug", linea.slug or servicio.slug),
+            fila_si("Destinos", _texto_json_lista(linea.destinos_data, ["title", "nombre", "name"])),
+            fila_si("Estilos", _texto_json_lista(linea.estilos_data, ["title", "nombre", "name"])),
+            fila_si("Duración", linea.duration_days, render=f"{linea.duration_days} día(s)" if linea.duration_days else "", ocultar_cero=True),
+            fila_si("Precio adulto base", linea.precio_adulto_usd, render=monto("USD", linea.precio_adulto_usd), ocultar_cero=True),
+            fila_si("Precio niño base", linea.precio_nino_usd, render=monto("USD", linea.precio_nino_usd), ocultar_cero=True),
+            fila_si("Descuento", linea.descuento, render=f"{numero(linea.descuento):.2f}%", ocultar_cero=True),
+            fila_si("Precio adulto neto", linea.precio_adulto_neto_usd, render=monto("USD", linea.precio_adulto_neto_usd), ocultar_cero=True),
+            fila_si("Precio niño neto", linea.precio_nino_neto_usd, render=monto("USD", linea.precio_nino_neto_usd), ocultar_cero=True),
+        ]
+        secciones = [
+            bloque(titulo, filas),
+            _bloque_texto_largo("DESCRIPCIÓN HERO", linea.hero_description),
+            _bloque_texto_largo("HIGHLIGHTS", linea.highlights_lead),
+            _bloque_texto_largo("INCLUYE", _texto_json_lista(linea.included_items_data, ["text", "label", "title"])),
+            _bloque_texto_largo("NO INCLUYE", _texto_json_lista(linea.excluded_items_data, ["text", "label", "title"])),
+            _bloque_texto_largo("ITINERARIO", _texto_json_lista(linea.itinerary_items_data, ["title", "heading", "label"])),
+            _bloque_texto_largo("HORARIOS", _texto_json_lista(linea.schedule_items_data, ["title", "label", "time"])),
+        ]
+        return "".join([seccion for seccion in secciones if seccion])
+
+    titulo = f"TRANSPORTE {indice}"
+    filas = [
+        fila("Nombre del transporte", linea.nombre),
+        fila_si("Estilo de transporte", (linea.estilo_transporte_id or servicio.estilo_transporte_id).display_name),
+        fila_si("Slug", linea.slug or servicio.slug),
+        fila_si("Origen", _texto_json_lista(linea.destino_origen_data, ["title", "nombre", "name"])),
+        fila_si("Llegada", _texto_json_lista(linea.destino_llegada_data, ["title", "nombre", "name"])),
+        fila_si("Modelo de vehículo", linea.modelo_vehiculo),
+        fila_si("Duración del viaje", linea.duracion_viaje),
+        fila_si("Distancia", linea.distancia),
+        fila_si("Precio adulto base", linea.precio_adulto_usd, render=monto("USD", linea.precio_adulto_usd), ocultar_cero=True),
+        fila_si("Precio niño base", linea.precio_nino_usd, render=monto("USD", linea.precio_nino_usd), ocultar_cero=True),
+        fila_si("Descuento", linea.descuento, render=f"{numero(linea.descuento):.2f}%", ocultar_cero=True),
+        fila_si("Precio adulto neto", linea.precio_adulto_neto_usd, render=monto("USD", linea.precio_adulto_neto_usd), ocultar_cero=True),
+        fila_si("Precio niño neto", linea.precio_nino_neto_usd, render=monto("USD", linea.precio_nino_neto_usd), ocultar_cero=True),
+    ]
+    secciones = [
+        bloque(titulo, filas),
+        _bloque_texto_largo("DESCRIPCIÓN ORIGEN", linea.descripcion_origen),
+        _bloque_texto_largo("DESCRIPCIÓN LLEGADA", linea.descripcion_llegada),
+        _bloque_texto_largo("DESCRIPCIÓN", linea.descripcion),
+        _bloque_texto_largo("INCLUYE", _texto_json_lista(linea.included_items_data, ["text", "label", "title"])),
+        _bloque_texto_largo("NO INCLUYE", _texto_json_lista(linea.excluded_items_data, ["text", "label", "title"])),
+        _bloque_texto_largo("TIPOS DE TRANSPORTE", _texto_json_lista(linea.tipos_transporte_data, ["nombre", "title", "name"])),
+        _bloque_texto_largo("PRECIOS POR VEHÍCULO", _texto_json_lista(linea.precios_data, ["precioAdulto", "precioNino", "descuento"])),
+    ]
+    return "".join([seccion for seccion in secciones if seccion])
+
+
+def render_cotizacion_paquete_html(cotizacion):
+    lineas = cotizacion.paquete_linea_ids.sorted(lambda linea: (linea.sequence, linea.id))
+    secciones = [
+        bloque(
+            "DATOS DEL PAQUETE",
+            [
+                fila("Cotización", cotizacion.name),
+                fila("Cliente principal", cotizacion.partner_id.display_name),
+                fila_si("Fecha de viaje", fecha(cotizacion.fecha_viaje)),
+                fila("Cantidad de items", len(lineas)),
+                fila_si("Observaciones", cotizacion.observaciones),
+            ],
+        )
+    ]
+    for indice, linea in enumerate(lineas, start=1):
+        secciones.append(_bloque_servicio_paquete(indice, linea))
+    return html_base(
+        "Detalle informativo del paquete",
+        "COTIZACIÓN",
+        cotizacion.name,
+        secciones,
     )
 
 
