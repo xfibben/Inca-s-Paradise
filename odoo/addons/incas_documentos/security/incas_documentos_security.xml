@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('dms.group_dms_manager'))]"/>
+    </record>
+
+    <record id="incas_core.group_incas_core_admin" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('dms.group_dms_manager'))]"/>
+    </record>
+
+    <record id="incas_core.group_incas_core_gerencia" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('dms.group_dms_manager'))]"/>
+    </record>
+
+    <record id="incas_core.group_incas_core_reservas" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('dms.group_dms_user'))]"/>
+    </record>
+
+    <record id="incas_core.group_incas_core_operaciones" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('dms.group_dms_user'))]"/>
+    </record>
+</odoo>
