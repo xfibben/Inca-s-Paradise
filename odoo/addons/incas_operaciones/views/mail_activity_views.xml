@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_mail_activity_form_popup_inherit_incas_operaciones" model="ir.ui.view">
+        <field name="name">mail.activity.view.form.popup.incas.operaciones</field>
+        <field name="model">mail.activity</field>
+        <field name="inherit_id" ref="mail.mail_activity_view_form_popup"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[field[@name='date_deadline']]" position="after">
+                <group>
+                    <field name="estado_ejecucion" widget="badge" readonly="1"/>
+                    <field name="fecha_hora_inicio" readonly="1"/>
+                    <field name="fecha_hora_fin" readonly="1"/>
+                    <field name="duracion_minutos" readonly="1"/>
+                    <field name="duracion_horas" readonly="1"/>
+                </group>
+            </xpath>
+            <xpath expr="//button[@name='action_done']" position="replace">
+                <button
+                    string="Iniciar actividad"
+                    name="action_iniciar_actividad"
+                    type="object"
+                    class="btn-secondary"
+                    invisible="not id or active == False or estado_ejecucion != 'pendiente'"
+                />
+                <button
+                    string="Concluir actividad"
+                    name="action_concluir_actividad"
+                    type="object"
+                    class="btn-secondary"
+                    invisible="not id or active == False or estado_ejecucion != 'en_progreso'"
+                />
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_mail_activity_form_inherit_incas_operaciones" model="ir.ui.view">
+        <field name="name">mail.activity.view.form.incas.operaciones</field>
+        <field name="model">mail.activity</field>
+        <field name="inherit_id" ref="mail.mail_activity_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="before">
+                <header>
+                    <button
+                        string="Iniciar actividad"
+                        name="action_iniciar_actividad"
+                        type="object"
+                        class="btn-primary"
+                        invisible="active == False or estado_ejecucion != 'pendiente'"
+                    />
+                    <button
+                        string="Concluir actividad"
+                        name="action_concluir_actividad"
+                        type="object"
+                        class="btn-primary"
+                        invisible="active == False or estado_ejecucion != 'en_progreso'"
+                    />
+                </header>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_mail_activity_tree_inherit_incas_operaciones" model="ir.ui.view">
+        <field name="name">mail.activity.view.list.incas.operaciones</field>
+        <field name="model">mail.activity</field>
+        <field name="inherit_id" ref="mail.mail_activity_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_done']" position="replace">
+                <button name="action_concluir_actividad" type="object" string="Concluir" icon="fa-check"/>
+            </xpath>
+            <xpath expr="//field[@name='date_deadline']" position="after">
+                <field name="estado_ejecucion" widget="badge" optional="show"/>
+                <field name="fecha_hora_inicio" optional="hide"/>
+                <field name="fecha_hora_fin" optional="hide"/>
+                <field name="duracion_minutos" optional="show"/>
+            </xpath>
+            <xpath expr="//button[@name='action_done']" position="replace">
+                <button
+                    name="action_iniciar_actividad"
+                    type="object"
+                    string="Iniciar"
+                    icon="fa-play"
+                    invisible="active == False or estado_ejecucion != 'pendiente'"
+                />
+                <button
+                    name="action_concluir_actividad"
+                    type="object"
+                    string="Concluir"
+                    icon="fa-check"
+                    invisible="active == False or estado_ejecucion != 'en_progreso'"
+                />
+            </xpath>
+        </field>
+    </record>
+</odoo>

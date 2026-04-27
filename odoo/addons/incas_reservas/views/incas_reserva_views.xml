@@ -128,6 +128,7 @@
                         <page string="Paquete">
                             <field name="paquete_linea_ids" readonly="1">
                                 <list>
+                                    <field name="fecha"/>
                                     <button name="action_open_popup" type="object" icon="fa-pencil-square-o" string="Editar"/>
                                     <field name="sequence" widget="handle"/>
                                     <field name="servicio_id"/>

@@ -101,6 +101,7 @@
                         <page string="Paquete">
                             <field name="paquete_linea_ids">
                                 <list editable="bottom">
+                                    <field name="fecha"/>
                                     <button name="action_open_popup" type="object" icon="fa-pencil-square-o" string="Editar"/>
                                     <field name="sequence" widget="handle"/>
                                     <field name="servicio_id"/>
@@ -146,6 +147,7 @@
                 <sheet>
                     <group>
                         <group>
+                            <field name="fecha"/>
                             <field name="cotizacion_id" readonly="1"/>
                             <field name="servicio_id" readonly="1"/>
                             <field name="tipo_servicio" readonly="1"/>
