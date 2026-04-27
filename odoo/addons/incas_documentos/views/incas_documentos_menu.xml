@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem
+        id="menu_incas_documentos_root"
+        name="Documentos"
+        parent="incas_core.menu_incas_root"
+        sequence="80"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_documentos_archivos"
+        name="Archivos"
+        parent="menu_incas_documentos_root"
+        sequence="10"
+        action="dms.action_dms_file"
+        groups="base.group_system,dms.group_dms_user"
+    />
+
+    <menuitem
+        id="menu_incas_documentos_carpetas"
+        name="Carpetas"
+        parent="menu_incas_documentos_root"
+        sequence="20"
+        action="dms.action_dms_directory"
+        groups="base.group_system,dms.group_dms_user"
+    />
+
+    <menuitem
+        id="menu_incas_documentos_configuracion"
+        name="Configuración documental"
+        parent="incas_core.menu_incas_configuracion_root"
+        sequence="80"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_documentos_etiquetas"
+        name="Etiquetas"
+        parent="menu_incas_documentos_configuracion"
+        sequence="10"
+        action="dms.action_dms_tag"
+        groups="base.group_system,dms.group_dms_user"
+    />
+
+    <menuitem
+        id="menu_incas_documentos_categorias"
+        name="Categorías"
+        parent="menu_incas_documentos_configuracion"
+        sequence="20"
+        action="dms.action_dms_category"
+        groups="base.group_system,dms.group_dms_user"
+    />
+
+    <menuitem
+        id="menu_incas_documentos_almacenamientos"
+        name="Almacenamientos"
+        parent="menu_incas_documentos_configuracion"
+        sequence="30"
+        action="dms.action_dms_storage"
+        groups="base.group_system,dms.group_dms_manager"
+    />
+
+    <menuitem
+        id="menu_incas_documentos_grupos_acceso"
+        name="Grupos de acceso"
+        parent="menu_incas_documentos_configuracion"
+        sequence="40"
+        action="dms.action_dms_access_groups"
+        groups="base.group_system,dms.group_dms_manager"
+    />
+</odoo>
