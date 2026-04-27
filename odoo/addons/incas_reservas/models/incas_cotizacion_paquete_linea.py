@@ -9,6 +9,7 @@ class IncasCotizacionPaqueteLinea(models.Model):
     cotizacion_id = fields.Many2one("incas.cotizacion", string="Cotización", required=True, ondelete="cascade")
     moneda = fields.Selection(related="cotizacion_id.moneda", string="Moneda", readonly=True)
     sequence = fields.Integer(string="Secuencia", default=10)
+    fecha = fields.Date(string="Fecha")
     servicio_id = fields.Many2one("incas.servicio.catalogo", string="Servicio", required=True)
     tipo_servicio = fields.Selection(
         [
@@ -255,6 +256,9 @@ class IncasCotizacionPaqueteLinea(models.Model):
         for vals in vals_list:
             values = dict(vals)
             servicio_id = vals.get("servicio_id")
+            cotizacion = self.env["incas.cotizacion"].browse(values.get("cotizacion_id")) if values.get("cotizacion_id") else self.env["incas.cotizacion"]
+            if not values.get("fecha") and cotizacion:
+                values["fecha"] = cotizacion.fecha_viaje
             if not servicio_id:
                 processed_vals_list.append(self._preparar_vals_monetarios(values))
                 continue
@@ -274,6 +278,8 @@ class IncasCotizacionPaqueteLinea(models.Model):
         for record in self:
             values = dict(vals)
             servicio_id = values.get("servicio_id")
+            if not values.get("fecha") and record.cotizacion_id and not record.fecha:
+                values["fecha"] = record.cotizacion_id.fecha_viaje
             if servicio_id:
                 servicio = self.env["incas.servicio.catalogo"].browse(servicio_id)
                 if servicio.exists():
