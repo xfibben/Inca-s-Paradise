@@ -738,6 +738,7 @@ def _render_galeria(record, *valores, max_imagenes=4, mostrar_urls=False):
 
 def _detalle_precio_linea(linea):
     descuento = f"{numero(linea.descuento):.2f}%" if numero(linea.descuento) else "-"
+    mostrar_horario = tiene_contenido(getattr(linea, "horario", False))
     return f"""
     <div class="price-card">
       <div class="price-title">Resumen de fecha y precios</div>
@@ -745,6 +746,7 @@ def _detalle_precio_linea(linea):
         <thead>
           <tr>
             <th>Fecha</th>
+            {"<th>Horario</th>" if mostrar_horario else ""}
             <th>Moneda</th>
             <th>Precio adulto</th>
             <th>Precio niño</th>
@@ -756,6 +758,7 @@ def _detalle_precio_linea(linea):
         <tbody>
           <tr>
             <td>{escape(fecha(linea.fecha))}</td>
+            {f"<td>{escape(texto(linea.horario))}</td>" if mostrar_horario else ""}
             <td>{escape(texto(linea.moneda))}</td>
             <td>{escape(monto(linea.moneda, linea.precio_adulto))}</td>
             <td>{escape(monto(linea.moneda, linea.precio_nino))}</td>
@@ -842,7 +845,7 @@ def _bloque_tour_editorial(indice, linea, detalle):
     resumen = [
         f"<span class='story-kicker'>Tour {indice}</span>",
         f"<h2>{escape(texto(linea.nombre))}</h2>",
-        f"<div class='story-meta'>{escape(texto(linea.tipo_tour or detalle.tipo_tour or 'Tour'))} · {escape(fecha(linea.fecha))}</div>",
+        f"<div class='story-meta'>{escape(texto(linea.tipo_tour or detalle.tipo_tour or 'Tour'))} · {escape(fecha(linea.fecha))}{f' · {escape(texto(linea.horario))}' if tiene_contenido(getattr(linea, 'horario', False)) else ''}</div>",
         _parrafo_editorial(linea.hero_description or detalle.hero_description),
     ]
     cuerpo = [

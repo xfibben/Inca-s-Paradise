@@ -1,4 +1,5 @@
 from odoo import api, fields, models
+import json
 
 
 class IncasCotizacionPaqueteLinea(models.Model):
@@ -10,6 +11,7 @@ class IncasCotizacionPaqueteLinea(models.Model):
     moneda = fields.Selection(related="cotizacion_id.moneda", string="Moneda", readonly=True)
     sequence = fields.Integer(string="Secuencia", default=10)
     fecha = fields.Date(string="Fecha")
+    horario = fields.Char(string="Horario")
     servicio_id = fields.Many2one("incas.servicio.catalogo", string="Servicio", required=True)
     vehiculo_id = fields.Many2one("incas.catalogo.vehiculo", string="Vehículo")
     vehiculo_disponible_ids = fields.Many2many("incas.catalogo.vehiculo", compute="_compute_vehiculo_disponible_ids")
@@ -83,6 +85,31 @@ class IncasCotizacionPaqueteLinea(models.Model):
     descripcion = fields.Text(string="Descripción")
     tipos_transporte_data = fields.Text(string="Tipos de transporte")
     precios_data = fields.Text(string="Precios por vehículo")
+
+    def _horario_desde_schedule_items(self, schedule_items_data):
+        if not schedule_items_data:
+            return False
+        try:
+            items = json.loads(schedule_items_data) if isinstance(schedule_items_data, str) else schedule_items_data
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return False
+        if not isinstance(items, list):
+            return False
+        horarios = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            titulo = str(item.get("title") or "").strip()
+            hora_entrada = str(item.get("horaEntrada") or item.get("hora_entrada") or "").strip()
+            hora_salida = str(item.get("horaSalida") or item.get("hora_salida") or "").strip()
+            rango = " - ".join(valor for valor in [hora_entrada, hora_salida] if valor)
+            if titulo and rango:
+                horarios.append(f"{titulo}: {rango}")
+            elif titulo:
+                horarios.append(titulo)
+            elif rango:
+                horarios.append(rango)
+        return " | ".join(horarios) or False
 
     def _convertir_desde_usd(self, monto_usd, moneda=None):
         moneda = moneda or self.cotizacion_id.moneda or "USD"
@@ -271,6 +298,7 @@ class IncasCotizacionPaqueteLinea(models.Model):
             record.nombre = record.servicio_id.name
             for campo, valor in record._obtener_snapshot_servicio(record.servicio_id).items():
                 record[campo] = valor
+            record.horario = record._horario_desde_schedule_items(record.schedule_items_data)
             if record.servicio_id.tipo_servicio == "transporte":
                 record.vehiculo_id = record.servicio_id.obtener_vehiculo_transporte()
                 record._aplicar_tarifa_vehiculo()
@@ -323,6 +351,7 @@ class IncasCotizacionPaqueteLinea(models.Model):
                 snapshot = self._obtener_snapshot_servicio(servicio)
                 for campo, valor in snapshot.items():
                     values.setdefault(campo, valor)
+                values.setdefault("horario", self._horario_desde_schedule_items(values.get("schedule_items_data")))
             processed_vals_list.append(self._preparar_vals_monetarios(values))
         return super().create(processed_vals_list)
 
@@ -358,5 +387,6 @@ class IncasCotizacionPaqueteLinea(models.Model):
                     snapshot = record._obtener_snapshot_servicio(servicio)
                     for campo, valor in snapshot.items():
                         values.setdefault(campo, valor)
+                    values.setdefault("horario", record._horario_desde_schedule_items(values.get("schedule_items_data")))
             super(IncasCotizacionPaqueteLinea, record).write(record._preparar_vals_monetarios(values))
         return True
