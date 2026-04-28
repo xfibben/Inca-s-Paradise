@@ -80,7 +80,7 @@ def bloque(titulo, filas):
     <div class="section">
       <div class="section-title">{escape(titulo)}</div>
       <table>
-        {''.join(filas_validas)}
+        {"".join(filas_validas)}
       </table>
     </div>
     """
@@ -126,15 +126,32 @@ def bloque_pagos_reserva(reserva):
     filas = [
         fila("Moneda", reserva.moneda),
         fila("Precio total del servicio", monto(reserva.moneda, reserva.precio_tour)),
-        fila_si("Descuento aplicado", reserva.descuento, render=f"{numero(reserva.descuento):.2f}%", ocultar_cero=True),
+        fila_si(
+            "Descuento aplicado",
+            reserva.descuento,
+            render=f"{numero(reserva.descuento):.2f}%",
+            ocultar_cero=True,
+        ),
         fila("Total pagado", monto(reserva.moneda, reserva.monto_pagado)),
-        fila_si("Saldo pendiente", reserva.saldo_pendiente, render=monto(reserva.moneda, reserva.saldo_pendiente), ocultar_cero=True),
+        fila_si(
+            "Saldo pendiente",
+            reserva.saldo_pendiente,
+            render=monto(reserva.moneda, reserva.saldo_pendiente),
+            ocultar_cero=True,
+        ),
     ]
 
-    pagos_agencia = reserva.pago_ids.sorted(lambda pago: (pago.fecha_pago or pago.create_date or fields.Datetime.now(), pago.id))
+    pagos_agencia = reserva.pago_ids.sorted(
+        lambda pago: (
+            pago.fecha_pago or pago.create_date or fields.Datetime.now(),
+            pago.id,
+        )
+    )
     if pagos_agencia:
         for indice, pago in enumerate(pagos_agencia, start=1):
-            detalle = f"{texto(pago.proveedor)} / {texto(pago.metodo)} / {texto(pago.estado)}"
+            detalle = (
+                f"{texto(pago.proveedor)} / {texto(pago.metodo)} / {texto(pago.estado)}"
+            )
             if pago.fecha_pago:
                 detalle = f"{detalle} / {texto(pago.fecha_pago)}"
             filas.append(
@@ -227,7 +244,7 @@ def html_base(titulo, codigo_label, codigo_valor, secciones):
           <div class="ticket-label">{escape(codigo_label)}</div>
           <div class="ticket-value">{escape(texto(codigo_valor))}</div>
         </div>
-        {''.join(secciones)}
+        {"".join(secciones)}
       </body>
     </html>
     """
@@ -243,9 +260,19 @@ def render_reserva_html(reserva):
             bloque(
                 "DATOS DEL PASAJERO",
                 [
-                    fila("Cliente principal", reserva.nombre or reserva.partner_id.display_name),
-                    fila_si("Correo electrónico", reserva.email or reserva.partner_id.email),
-                    fila_si("Teléfono", reserva.telefono or getattr(reserva.partner_id, "phone", False) or getattr(reserva.partner_id, "mobile", False)),
+                    fila(
+                        "Cliente principal",
+                        reserva.nombre or reserva.partner_id.display_name,
+                    ),
+                    fila_si(
+                        "Correo electrónico", reserva.email or reserva.partner_id.email
+                    ),
+                    fila_si(
+                        "Teléfono",
+                        reserva.telefono
+                        or getattr(reserva.partner_id, "phone", False)
+                        or getattr(reserva.partner_id, "mobile", False),
+                    ),
                     fila_si("Tipo de documento", tipo_documento_valor(reserva)),
                     fila_si("Número de documento", reserva.numero_documento),
                     fila_si("Nacionalidad", reserva.nacionalidad),
@@ -257,10 +284,26 @@ def render_reserva_html(reserva):
                 f"DETALLES DEL {tipo_servicio.upper()}",
                 [
                     fila("Tipo de servicio", detalle_tipo_servicio(reserva)),
-                    fila(nombre_servicio_label(reserva.tipo_servicio), reserva.servicio_nombre),
-                    fila_si("Vehículo seleccionado", reserva.vehiculo_seleccionado if reserva.tipo_servicio == "transporte" else ""),
-                    fila_si("Fecha de inicio", reserva.fecha_inicio or reserva.fecha_viaje, render=fecha(reserva.fecha_inicio or reserva.fecha_viaje)),
-                    fila_si("Fecha de fin", reserva.fecha_fin or reserva.fecha_viaje, render=fecha(reserva.fecha_fin or reserva.fecha_viaje)),
+                    fila(
+                        nombre_servicio_label(reserva.tipo_servicio),
+                        reserva.servicio_nombre,
+                    ),
+                    fila_si(
+                        "Vehículo seleccionado",
+                        reserva.vehiculo_seleccionado
+                        if reserva.tipo_servicio == "transporte"
+                        else "",
+                    ),
+                    fila_si(
+                        "Fecha de inicio",
+                        reserva.fecha_inicio or reserva.fecha_viaje,
+                        render=fecha(reserva.fecha_inicio or reserva.fecha_viaje),
+                    ),
+                    fila_si(
+                        "Fecha de fin",
+                        reserva.fecha_fin or reserva.fecha_viaje,
+                        render=fecha(reserva.fecha_fin or reserva.fecha_viaje),
+                    ),
                     fila_si("Horario", reserva.turno),
                     fila("Adultos", reserva.cantidad_adultos),
                     fila_si("Niños", reserva.cantidad_ninos, ocultar_cero=True),
@@ -307,7 +350,10 @@ def render_cotizacion_html(cotizacion):
                 "DETALLES DE LA COTIZACIÓN",
                 [
                     fila("Tipo de servicio", detalle_servicio),
-                    fila(nombre_servicio_label(resumen["tipo_servicio"]), resumen["servicio_nombre"]),
+                    fila(
+                        nombre_servicio_label(resumen["tipo_servicio"]),
+                        resumen["servicio_nombre"],
+                    ),
                     fila("Fecha de cotización", fecha(cotizacion.fecha_cotizacion)),
                     fila("Fecha de viaje", fecha(cotizacion.fecha_viaje)),
                     fila("Adultos", cotizacion.cantidad_adultos),
@@ -321,9 +367,16 @@ def render_cotizacion_html(cotizacion):
                 [
                     fila("Moneda", cotizacion.moneda),
                     fila("Descuento", f"{numero(resumen['descuento']):.2f}%"),
-                    fila("Precio adulto", monto(cotizacion.moneda, resumen["precio_adulto"])),
-                    fila("Precio niño", monto(cotizacion.moneda, resumen["precio_nino"])),
-                    fila("Monto total", monto(cotizacion.moneda, cotizacion.monto_total)),
+                    fila(
+                        "Precio adulto",
+                        monto(cotizacion.moneda, resumen["precio_adulto"]),
+                    ),
+                    fila(
+                        "Precio niño", monto(cotizacion.moneda, resumen["precio_nino"])
+                    ),
+                    fila(
+                        "Monto total", monto(cotizacion.moneda, cotizacion.monto_total)
+                    ),
                 ],
             ),
         ],
@@ -353,6 +406,428 @@ def _texto_json_lista(valor, claves):
     return ", ".join(items)
 
 
+def _texto_json_item(item, claves):
+    if not isinstance(item, dict):
+        limpio = str(item or "").strip()
+        return limpio
+    for clave in claves:
+        valor = item.get(clave)
+        if isinstance(valor, str) and valor.strip():
+            return valor.strip()
+    return ""
+
+
+def _texto_json_detallado(item, claves_principales, claves_secundarias=None):
+    titulo = _texto_json_item(item, claves_principales)
+    if not claves_secundarias:
+        return titulo
+    detalle = _texto_json_item(item, claves_secundarias)
+    if titulo and detalle and detalle != titulo:
+        return f"{titulo}: {detalle}"
+    return titulo or detalle
+
+
+def _detalle_catalogo_linea(linea):
+    if linea.tipo_servicio == "tour":
+        return linea.env["incas.catalogo.tour"].search(
+            [("servicio_id", "=", linea.servicio_id.id)], limit=1
+        )
+    return linea.env["incas.catalogo.transporte"].search(
+        [("servicio_id", "=", linea.servicio_id.id)], limit=1
+    )
+
+
+def _strapi_base_url(record):
+    return (
+        record.env["ir.config_parameter"].sudo().get_param("incas_reservas.strapi_url")
+        or os.getenv("ODOO_STRAPI_CONECTION_URL")
+        or "https://api.incasparadise.com"
+    ).rstrip("/")
+
+
+def _normalizar_url_imagen(record, url):
+    if not url:
+        return ""
+    texto_url = str(url).strip()
+    if not texto_url:
+        return ""
+    if texto_url.startswith("data:image/"):
+        return texto_url
+    if texto_url.startswith("http://") or texto_url.startswith("https://"):
+        return texto_url
+    if texto_url.startswith("/"):
+        return f"{_strapi_base_url(record)}{texto_url}"
+    return f"{_strapi_base_url(record)}/{texto_url.lstrip('/')}"
+
+
+def _recoger_urls_imagen(valor, acumulado):
+    if not valor:
+        return
+    if isinstance(valor, str):
+        limpio = valor.strip()
+        if (
+            limpio.startswith("http://")
+            or limpio.startswith("https://")
+            or limpio.startswith("/")
+            or limpio.startswith("data:image/")
+        ):
+            acumulado.append(limpio)
+        return
+    if isinstance(valor, dict):
+        for clave in ("url", "src", "imageUrl", "image_url"):
+            url = valor.get(clave)
+            if isinstance(url, str) and url.strip():
+                acumulado.append(url.strip())
+        for contenido in valor.values():
+            if isinstance(contenido, (dict, list)):
+                _recoger_urls_imagen(contenido, acumulado)
+        return
+    if isinstance(valor, list):
+        for item in valor:
+            _recoger_urls_imagen(item, acumulado)
+
+
+def _extraer_urls_imagen(record, *valores):
+    urls = []
+    for valor in valores:
+        if not valor:
+            continue
+        data = valor
+        if isinstance(valor, str):
+            try:
+                data = json.loads(valor)
+            except (TypeError, ValueError, json.JSONDecodeError):
+                data = valor
+        _recoger_urls_imagen(data, urls)
+    urls_normalizadas = []
+    vistos = set()
+    for url in urls:
+        normalizada = _normalizar_url_imagen(record, url)
+        if not normalizada or normalizada in vistos:
+            continue
+        vistos.add(normalizada)
+        urls_normalizadas.append(normalizada)
+    return urls_normalizadas
+
+
+def _extraer_imagenes_data_uri(record, *valores, max_imagenes=4):
+    imagenes = []
+    contenidos_vistos = set()
+    for normalizada in _extraer_urls_imagen(record, *valores):
+        if normalizada.startswith("data:image/"):
+            if normalizada in contenidos_vistos:
+                continue
+            contenidos_vistos.add(normalizada)
+            imagenes.append(normalizada)
+            continue
+        try:
+            request = Request(
+                normalizada, headers={"User-Agent": "Mozilla/5.0"}, method="GET"
+            )
+            with urlopen(request, timeout=20) as response:
+                mime = response.headers.get_content_type() or "image/jpeg"
+                contenido = base64.b64encode(response.read()).decode("ascii")
+            data_uri = f"data:{mime};base64,{contenido}"
+            if data_uri in contenidos_vistos:
+                continue
+            contenidos_vistos.add(data_uri)
+            imagenes.append(data_uri)
+        except (HTTPError, OSError, ValueError):
+            continue
+        if len(imagenes) >= max_imagenes:
+            break
+    return imagenes
+
+
+def _render_lista_simple(items):
+    items_validos = [item for item in items if item]
+    if not items_validos:
+        return ""
+    return f"<ul class='editorial-list'>{''.join(f'<li>{escape(item)}</li>' for item in items_validos)}</ul>"
+
+
+def _render_itinerario(record, valor):
+    bloques = []
+    for item in _json_lista(valor):
+        if not isinstance(item, dict):
+            continue
+        titulo = _texto_json_item(item, ["title", "heading", "label", "name"])
+        detalle = _texto_json_item(
+            item, ["description", "content", "text", "body", "details"]
+        )
+        extra = _texto_json_item(item, ["highlight", "time", "duration", "subtitle"])
+        optional = _texto_json_item(item, ["optional"])
+        incluye = []
+        for entrada in item.get("includes") or []:
+            texto_incluye = _texto_json_item(
+                entrada, ["text", "label", "title", "name"]
+            )
+            if texto_incluye:
+                incluye.append(texto_incluye)
+        imagenes = _extraer_imagenes_data_uri(
+            record, item.get("image"), item.get("images")
+        )
+        partes = []
+        if titulo:
+            partes.append(f"<div class='timeline-title'>{escape(titulo)}</div>")
+        if extra:
+            partes.append(f"<div class='timeline-meta'>{escape(extra)}</div>")
+        if imagenes:
+            partes.append(
+                "<div class='timeline-gallery'>"
+                + "".join(
+                    f"<img src='{imagen}' alt='Imagen del itinerario'/>"
+                    for imagen in imagenes[:2]
+                )
+                + "</div>"
+            )
+        if detalle:
+            partes.append(f"<div class='timeline-text'>{escape(detalle)}</div>")
+        if incluye:
+            partes.append(_render_lista_simple(incluye))
+        if optional:
+            partes.append(f"<div class='timeline-note'>{escape(optional)}</div>")
+        if partes:
+            bloques.append(f"<div class='timeline-item'>{''.join(partes)}</div>")
+    return "".join(bloques)
+
+
+def _render_galeria(record, *valores, max_imagenes=4, mostrar_urls=False):
+    urls = _extraer_urls_imagen(record, *valores)
+    imagenes = _extraer_imagenes_data_uri(record, *valores, max_imagenes=max_imagenes)
+    if not imagenes and not urls:
+        return ""
+    fallback = ""
+    if urls and (not imagenes or mostrar_urls):
+        fallback = (
+            "<div class='image-url-fallback'>"
+            "<div class='image-url-title'>URLs de imagen</div>"
+            + "".join(
+                f"<div class='image-url-item'>{escape(url)}</div>"
+                for url in urls[:max_imagenes]
+            )
+            + "</div>"
+        )
+    return f"""
+    <div class="editorial-gallery">
+      {"".join(f'<div class="editorial-image"><img src="{imagen}" alt="Imagen del servicio"/></div>' for imagen in imagenes)}
+      {fallback}
+    </div>
+    """
+
+
+def _detalle_precio_linea(linea):
+    filas = [
+        fila("Fecha", fecha(linea.fecha)),
+        fila("Moneda", linea.moneda),
+        fila("Precio adulto", monto(linea.moneda, linea.precio_adulto)),
+        fila("Precio niño", monto(linea.moneda, linea.precio_nino)),
+        fila_si(
+            "Descuento",
+            linea.descuento,
+            render=f"{numero(linea.descuento):.2f}%",
+            ocultar_cero=True,
+        ),
+        fila("Precio adulto final", monto(linea.moneda, linea.precio_adulto_neto)),
+        fila("Precio niño final", monto(linea.moneda, linea.precio_nino_neto)),
+    ]
+    return f"""
+    <div class="price-card">
+      <div class="price-title">Precio del servicio</div>
+      <table class="price-table">
+        {"".join(filas)}
+      </table>
+    </div>
+    """
+
+
+def _seccion_editorial(titulo, contenido):
+    if not contenido:
+        return ""
+    return f"""
+    <section class="editorial-section">
+      <h3>{escape(titulo)}</h3>
+      {contenido}
+    </section>
+    """
+
+
+def _parrafo_editorial(texto_largo):
+    if not texto_largo:
+        return ""
+    return f"<p class='editorial-copy'>{escape(texto_largo)}</p>"
+
+
+def _bloque_tour_editorial(indice, linea, detalle):
+    highlights = [
+        _texto_json_detallado(
+            item, ["title", "label", "name"], ["description", "text", "body"]
+        )
+        for item in _json_lista(
+            linea.highlights_items_data or detalle.highlights_items_data
+        )
+    ]
+    incluye = [
+        _texto_json_detallado(item, ["text", "label", "title"], ["description", "body"])
+        for item in _json_lista(
+            linea.included_items_data or detalle.included_items_data
+        )
+    ]
+    no_incluye = [
+        _texto_json_detallado(item, ["text", "label", "title"], ["description", "body"])
+        for item in _json_lista(
+            linea.excluded_items_data or detalle.excluded_items_data
+        )
+    ]
+    horarios = [
+        _texto_json_detallado(
+            item, ["title", "label", "time"], ["description", "text", "body"]
+        )
+        for item in _json_lista(
+            linea.schedule_items_data or detalle.schedule_items_data
+        )
+    ]
+    galeria = _render_galeria(
+        linea,
+        linea.featured_images_data or detalle.featured_images_data,
+        max_imagenes=4,
+        mostrar_urls=True,
+    )
+    itinerario = _render_itinerario(
+        linea, linea.itinerary_items_data or detalle.itinerary_items_data
+    )
+    resumen = [
+        f"<span class='story-kicker'>Tour {indice}</span>",
+        f"<h2>{escape(texto(linea.nombre))}</h2>",
+        f"<div class='story-meta'>{escape(texto(linea.tipo_tour or detalle.tipo_tour or 'Tour'))} · {escape(fecha(linea.fecha))}</div>",
+        _parrafo_editorial(linea.hero_description or detalle.hero_description),
+    ]
+    cuerpo = [
+        _seccion_editorial(
+            linea.highlights_title
+            or detalle.highlights_title
+            or "Lo mejor de la experiencia",
+            _render_lista_simple(highlights)
+            or _parrafo_editorial(linea.highlights_lead or detalle.highlights_lead),
+        ),
+        _seccion_editorial(
+            linea.itinerary_title or detalle.itinerary_title or "Itinerario", itinerario
+        ),
+        _seccion_editorial(
+            linea.schedule_title or detalle.schedule_title or "Horarios",
+            _render_lista_simple(horarios),
+        ),
+        _seccion_editorial(
+            linea.included_title or detalle.included_title or "Incluye",
+            _render_lista_simple(incluye),
+        ),
+        _seccion_editorial(
+            linea.excluded_title or detalle.excluded_title or "No incluye",
+            _render_lista_simple(no_incluye),
+        ),
+    ]
+    return f"""
+    <article class="story-card">
+      <div class="story-cover">
+        {"".join([item for item in resumen if item])}
+      </div>
+      {galeria}
+      <div class="story-body">
+        {"".join([seccion for seccion in cuerpo if seccion])}
+      </div>
+      {_detalle_precio_linea(linea)}
+    </article>
+    """
+
+
+def _bloque_transporte_editorial(indice, linea, detalle):
+    incluye = [
+        _texto_json_detallado(item, ["text", "label", "title"], ["description", "body"])
+        for item in _json_lista(
+            linea.included_items_data or detalle.included_items_data
+        )
+    ]
+    no_incluye = [
+        _texto_json_detallado(item, ["text", "label", "title"], ["description", "body"])
+        for item in _json_lista(
+            linea.excluded_items_data or detalle.excluded_items_data
+        )
+    ]
+    tipos = [
+        _texto_json_detallado(
+            item, ["nombre", "title", "name"], ["description", "text", "body"]
+        )
+        for item in _json_lista(
+            linea.tipos_transporte_data or detalle.tipos_transporte_data
+        )
+    ]
+    vehiculo = linea.vehiculo_id or linea.servicio_id.obtener_vehiculo_transporte()
+    galeria = _render_galeria(
+        linea,
+        vehiculo.imagen_data if vehiculo else False,
+        linea.wallpaper_data or detalle.wallpaper_data,
+        linea.image_data or detalle.image_data,
+        max_imagenes=1,
+        mostrar_urls=True,
+    )
+    resumen = [
+        f"<span class='story-kicker'>Transporte {indice}</span>",
+        f"<h2>{escape(texto(linea.nombre))}</h2>",
+        f"<div class='story-meta'>{escape(texto((linea.estilo_transporte_id or detalle.estilo_transporte_id).display_name if (linea.estilo_transporte_id or detalle.estilo_transporte_id) else 'Transporte'))} · {escape(fecha(linea.fecha))}</div>",
+        _parrafo_editorial(linea.descripcion or detalle.descripcion),
+    ]
+    ruta = _render_lista_simple(
+        [
+            vehiculo.name if vehiculo else "",
+            _texto_json_lista(
+                linea.destino_origen_data or detalle.destino_origen_data,
+                ["title", "nombre", "name"],
+            ),
+            _texto_json_lista(
+                linea.destino_llegada_data or detalle.destino_llegada_data,
+                ["title", "nombre", "name"],
+            ),
+            linea.modelo_vehiculo or detalle.modelo_vehiculo,
+            linea.duracion_viaje or detalle.duracion_viaje,
+            linea.distancia or detalle.distancia,
+        ]
+    )
+    cuerpo = [
+        _seccion_editorial("Ruta y datos del servicio", ruta),
+        _seccion_editorial(
+            "Punto de origen",
+            _parrafo_editorial(linea.descripcion_origen or detalle.descripcion_origen),
+        ),
+        _seccion_editorial(
+            "Punto de llegada",
+            _parrafo_editorial(
+                linea.descripcion_llegada or detalle.descripcion_llegada
+            ),
+        ),
+        _seccion_editorial(
+            linea.included_title or detalle.included_title or "Incluye",
+            _render_lista_simple(incluye),
+        ),
+        _seccion_editorial(
+            linea.excluded_title or detalle.excluded_title or "No incluye",
+            _render_lista_simple(no_incluye),
+        ),
+        _seccion_editorial("Tipos de transporte", _render_lista_simple(tipos)),
+    ]
+    return f"""
+    <article class="story-card">
+      <div class="story-cover">
+        {"".join([item for item in resumen if item])}
+      </div>
+      {galeria}
+      <div class="story-body">
+        {"".join([seccion for seccion in cuerpo if seccion])}
+      </div>
+      {_detalle_precio_linea(linea)}
+    </article>
+    """
+
+
 def _bloque_texto_largo(titulo, contenido):
     if not contenido:
         return ""
@@ -365,84 +840,281 @@ def _bloque_texto_largo(titulo, contenido):
 
 
 def _bloque_servicio_paquete(indice, linea):
-    servicio = linea.servicio_id
-    if servicio.tipo_servicio == "tour":
-        titulo = f"TOUR {indice}"
-        filas = [
-            fila("Nombre del tour", linea.nombre),
-            fila_si("Tipo de tour", linea.tipo_tour or servicio.tipo_tour),
-            fila_si("Slug", linea.slug or servicio.slug),
-            fila_si("Destinos", _texto_json_lista(linea.destinos_data, ["title", "nombre", "name"])),
-            fila_si("Estilos", _texto_json_lista(linea.estilos_data, ["title", "nombre", "name"])),
-            fila_si("Duración", linea.duration_days, render=f"{linea.duration_days} día(s)" if linea.duration_days else "", ocultar_cero=True),
-            fila_si("Precio adulto base", linea.precio_adulto_usd, render=monto("USD", linea.precio_adulto_usd), ocultar_cero=True),
-            fila_si("Precio niño base", linea.precio_nino_usd, render=monto("USD", linea.precio_nino_usd), ocultar_cero=True),
-            fila_si("Descuento", linea.descuento, render=f"{numero(linea.descuento):.2f}%", ocultar_cero=True),
-            fila_si("Precio adulto neto", linea.precio_adulto_neto_usd, render=monto("USD", linea.precio_adulto_neto_usd), ocultar_cero=True),
-            fila_si("Precio niño neto", linea.precio_nino_neto_usd, render=monto("USD", linea.precio_nino_neto_usd), ocultar_cero=True),
-        ]
-        secciones = [
-            bloque(titulo, filas),
-            _bloque_texto_largo("DESCRIPCIÓN HERO", linea.hero_description),
-            _bloque_texto_largo("HIGHLIGHTS", linea.highlights_lead),
-            _bloque_texto_largo("INCLUYE", _texto_json_lista(linea.included_items_data, ["text", "label", "title"])),
-            _bloque_texto_largo("NO INCLUYE", _texto_json_lista(linea.excluded_items_data, ["text", "label", "title"])),
-            _bloque_texto_largo("ITINERARIO", _texto_json_lista(linea.itinerary_items_data, ["title", "heading", "label"])),
-            _bloque_texto_largo("HORARIOS", _texto_json_lista(linea.schedule_items_data, ["title", "label", "time"])),
-        ]
-        return "".join([seccion for seccion in secciones if seccion])
-
-    titulo = f"TRANSPORTE {indice}"
-    filas = [
-        fila("Nombre del transporte", linea.nombre),
-        fila_si("Estilo de transporte", (linea.estilo_transporte_id or servicio.estilo_transporte_id).display_name),
-        fila_si("Slug", linea.slug or servicio.slug),
-        fila_si("Origen", _texto_json_lista(linea.destino_origen_data, ["title", "nombre", "name"])),
-        fila_si("Llegada", _texto_json_lista(linea.destino_llegada_data, ["title", "nombre", "name"])),
-        fila_si("Modelo de vehículo", linea.modelo_vehiculo),
-        fila_si("Duración del viaje", linea.duracion_viaje),
-        fila_si("Distancia", linea.distancia),
-        fila_si("Precio adulto base", linea.precio_adulto_usd, render=monto("USD", linea.precio_adulto_usd), ocultar_cero=True),
-        fila_si("Precio niño base", linea.precio_nino_usd, render=monto("USD", linea.precio_nino_usd), ocultar_cero=True),
-        fila_si("Descuento", linea.descuento, render=f"{numero(linea.descuento):.2f}%", ocultar_cero=True),
-        fila_si("Precio adulto neto", linea.precio_adulto_neto_usd, render=monto("USD", linea.precio_adulto_neto_usd), ocultar_cero=True),
-        fila_si("Precio niño neto", linea.precio_nino_neto_usd, render=monto("USD", linea.precio_nino_neto_usd), ocultar_cero=True),
-    ]
-    secciones = [
-        bloque(titulo, filas),
-        _bloque_texto_largo("DESCRIPCIÓN ORIGEN", linea.descripcion_origen),
-        _bloque_texto_largo("DESCRIPCIÓN LLEGADA", linea.descripcion_llegada),
-        _bloque_texto_largo("DESCRIPCIÓN", linea.descripcion),
-        _bloque_texto_largo("INCLUYE", _texto_json_lista(linea.included_items_data, ["text", "label", "title"])),
-        _bloque_texto_largo("NO INCLUYE", _texto_json_lista(linea.excluded_items_data, ["text", "label", "title"])),
-        _bloque_texto_largo("TIPOS DE TRANSPORTE", _texto_json_lista(linea.tipos_transporte_data, ["nombre", "title", "name"])),
-        _bloque_texto_largo("PRECIOS POR VEHÍCULO", _texto_json_lista(linea.precios_data, ["precioAdulto", "precioNino", "descuento"])),
-    ]
-    return "".join([seccion for seccion in secciones if seccion])
+    detalle = _detalle_catalogo_linea(linea)
+    if linea.tipo_servicio == "tour":
+        return _bloque_tour_editorial(indice, linea, detalle)
+    return _bloque_transporte_editorial(indice, linea, detalle)
 
 
 def render_cotizacion_paquete_html(cotizacion):
-    lineas = cotizacion.paquete_linea_ids.sorted(lambda linea: (linea.sequence, linea.id))
-    secciones = [
-        bloque(
-            "DATOS DEL PAQUETE",
-            [
-                fila("Cotización", cotizacion.name),
-                fila("Cliente principal", cotizacion.partner_id.display_name),
-                fila_si("Fecha de viaje", fecha(cotizacion.fecha_viaje)),
-                fila("Cantidad de items", len(lineas)),
-                fila_si("Observaciones", cotizacion.observaciones),
-            ],
-        )
-    ]
-    for indice, linea in enumerate(lineas, start=1):
-        secciones.append(_bloque_servicio_paquete(indice, linea))
-    return html_base(
-        "Detalle informativo del paquete",
-        "COTIZACIÓN",
-        cotizacion.name,
-        secciones,
+    lineas = cotizacion.paquete_linea_ids.sorted(
+        lambda linea: (linea.sequence, linea.id)
     )
+    portada = f"""
+    <section class="package-hero">
+      <div class="package-hero-copy">
+        <div class="package-eyebrow">Detalle informativo del paquete</div>
+        <h1>{escape(texto(cotizacion.name))}</h1>
+        <p>Cliente: {escape(texto(cotizacion.partner_id.display_name))}</p>
+        <p>Fecha de viaje: {escape(fecha(cotizacion.fecha_viaje))}</p>
+        <p>Items del paquete: {len(lineas)}</p>
+        {f"<p>{escape(texto(cotizacion.observaciones))}</p>" if cotizacion.observaciones else ""}
+      </div>
+      <div class="package-hero-total">
+        <div class="ticket-label">Monto total</div>
+        <div class="ticket-value">{escape(monto(cotizacion.moneda, cotizacion.monto_total))}</div>
+      </div>
+    </section>
+    """
+    historias = "".join(
+        _bloque_servicio_paquete(indice, linea)
+        for indice, linea in enumerate(lineas, start=1)
+    )
+    cierre = f"""
+    <section class="package-total">
+      <div class="package-total-label">Monto total del paquete</div>
+      <div class="package-total-value">{escape(monto(cotizacion.moneda, cotizacion.monto_total))}</div>
+    </section>
+    """
+    return f"""
+    <html>
+      <head>
+        <meta charset="utf-8"/>
+        <style>
+          body {{
+            font-family: Arial, sans-serif;
+            color: #16302c;
+            background: #f6f1e8;
+            font-size: 13px;
+            margin: 26px;
+            line-height: 1.6;
+          }}
+          .package-hero {{
+            background: #e8f4f2;
+            color: #16302c;
+            padding: 28px;
+            border: 1px solid #1aa093;
+            margin-bottom: 24px;
+          }}
+          .package-eyebrow {{
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.6px;
+            color: #1aa093;
+            margin-bottom: 10px;
+            font-weight: 700;
+          }}
+          .package-hero h1 {{
+            font-size: 30px;
+            margin: 0 0 14px 0;
+            color: #153530;
+          }}
+          .package-hero p {{
+            margin: 0 0 6px 0;
+            color: #304744;
+          }}
+          .package-hero-total {{
+            margin-top: 18px;
+            background: #ffffff;
+            border: 1px solid #1aa093;
+            padding: 18px 20px;
+            width: 240px;
+          }}
+          .ticket-label {{
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+          }}
+          .ticket-value {{
+            font-size: 28px;
+            font-weight: 700;
+            color: #153530;
+          }}
+          .story-card {{
+            background: #ffffff;
+            overflow: hidden;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(22, 48, 44, 0.08);
+            border: 1px solid #e8ddd0;
+          }}
+          .story-cover {{
+            padding: 24px 26px 12px 26px;
+          }}
+          .story-kicker {{
+            display: inline-block;
+            color: #1aa093;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 1.4px;
+            margin-bottom: 8px;
+          }}
+          .story-cover h2 {{
+            font-size: 26px;
+            margin: 0 0 8px 0;
+            color: #153530;
+          }}
+          .story-meta {{
+            color: #5b6e6a;
+            font-size: 12px;
+            margin-bottom: 10px;
+          }}
+          .editorial-copy {{
+            margin: 0;
+            color: #304744;
+          }}
+          .editorial-gallery {{
+            padding: 0 20px 10px 20px;
+            font-size: 0;
+          }}
+          .editorial-image {{
+            display: inline-block;
+            width: 48%;
+            margin: 0 1% 12px 1%;
+            vertical-align: top;
+          }}
+          .editorial-image img {{
+            width: 100%;
+            height: 215px;
+            object-fit: cover;
+            border: 1px solid #e8ddd0;
+            display: block;
+          }}
+          .image-url-fallback {{
+            border: 1px solid #d6c7b7;
+            background: #fcfaf7;
+            padding: 12px;
+            color: #304744;
+            font-size: 11px;
+            line-height: 1.5;
+          }}
+          .image-url-title {{
+            color: #1aa093;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+          }}
+          .image-url-item {{
+            word-break: break-all;
+            margin-bottom: 4px;
+          }}
+          .story-body {{
+            padding: 4px 26px 10px 26px;
+          }}
+          .editorial-section {{
+            margin-bottom: 18px;
+          }}
+          .editorial-section h3 {{
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #1aa093;
+            margin: 0 0 8px 0;
+          }}
+          .editorial-list {{
+            margin: 0;
+            padding-left: 18px;
+          }}
+          .editorial-list li {{
+            margin-bottom: 6px;
+          }}
+          .timeline-item {{
+            border-top: 1px solid #e8ddd0;
+            padding: 10px 0;
+          }}
+          .timeline-item:first-child {{
+            border-top: 0;
+            padding-top: 0;
+          }}
+          .timeline-title {{
+            font-weight: 700;
+            color: #153530;
+            margin-bottom: 4px;
+          }}
+          .timeline-meta {{
+            color: #1aa093;
+            font-size: 12px;
+            margin-bottom: 4px;
+          }}
+          .timeline-gallery {{
+            font-size: 0;
+            margin: 10px 0 8px 0;
+          }}
+          .timeline-gallery img {{
+            width: 48%;
+            height: 160px;
+            object-fit: cover;
+            border: 1px solid #e8ddd0;
+            margin-right: 2%;
+            display: inline-block;
+          }}
+          .timeline-text {{
+            color: #304744;
+          }}
+          .timeline-note {{
+            margin-top: 8px;
+            color: #5b6e6a;
+            font-size: 12px;
+          }}
+          .price-card {{
+            background: #fcfaf7;
+            border-top: 1px solid #eee3d6;
+            padding: 18px 26px 24px 26px;
+          }}
+          .price-title {{
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #1aa093;
+            font-weight: 700;
+            margin-bottom: 10px;
+          }}
+          table {{
+            width: 100%;
+            border-collapse: collapse;
+          }}
+          .price-table td {{
+            border-bottom: 1px solid #eadfce;
+            padding: 9px 6px;
+            vertical-align: top;
+          }}
+          .price-table tr:last-child td {{
+            border-bottom: 0;
+          }}
+          .label {{
+            color: #64706d;
+            font-weight: 700;
+            width: 42%;
+          }}
+          .package-total {{
+            background: #153530;
+            color: #ffffff;
+            padding: 22px 26px;
+            text-align: right;
+            margin-top: 12px;
+          }}
+          .package-total-label {{
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            opacity: 0.82;
+            margin-bottom: 8px;
+          }}
+          .package-total-value {{
+            font-size: 30px;
+            font-weight: 700;
+          }}
+        </style>
+      </head>
+      <body>
+        {portada}
+        {historias}
+        {cierre}
+      </body>
+    </html>
+    """
 
 
 def generar_pdf_desde_html(html):
@@ -477,7 +1149,11 @@ def json_post(url, payload, headers=None):
 
 
 def _paypal_base_url():
-    return "https://api-m.paypal.com" if os.getenv("PAYPAL_MODE") == "live" else "https://api-m.sandbox.paypal.com"
+    return (
+        "https://api-m.paypal.com"
+        if os.getenv("PAYPAL_MODE") == "live"
+        else "https://api-m.sandbox.paypal.com"
+    )
 
 
 def get_paypal_access_token():
@@ -485,7 +1161,9 @@ def get_paypal_access_token():
     secret = os.getenv("PAYPAL_SECRET", "")
     if not client_id or not secret:
         raise ValueError("PAYPAL_CLIENT_ID y PAYPAL_SECRET son requeridos")
-    credenciales = base64.b64encode(f"{client_id}:{secret}".encode("utf-8")).decode("ascii")
+    credenciales = base64.b64encode(f"{client_id}:{secret}".encode("utf-8")).decode(
+        "ascii"
+    )
     request = Request(
         f"{_paypal_base_url()}/v1/oauth2/token",
         data=b"grant_type=client_credentials",
@@ -541,7 +1219,9 @@ def capturar_orden_paypal(order_id):
     )
     with urlopen(request, timeout=30) as response:
         payload = json.loads(response.read().decode("utf-8"))
-    capture = (((payload.get("purchase_units") or [{}])[0]).get("payments") or {}).get("captures") or [{}]
+    capture = (((payload.get("purchase_units") or [{}])[0]).get("payments") or {}).get(
+        "captures"
+    ) or [{}]
     capture_data = capture[0]
     return {
         "estado": "pagado" if capture_data.get("status") == "COMPLETED" else "fallido",
@@ -549,7 +1229,9 @@ def capturar_orden_paypal(order_id):
     }
 
 
-def enviar_correo_resend(api_key, from_email, to_email, subject, html, pdf_bytes, ticket):
+def enviar_correo_resend(
+    api_key, from_email, to_email, subject, html, pdf_bytes, ticket
+):
     if not api_key or not from_email or not to_email:
         return
     payload = {
@@ -578,7 +1260,9 @@ def enviar_correo_resend(api_key, from_email, to_email, subject, html, pdf_bytes
         with urlopen(request, timeout=30):
             return True
     except HTTPError as error:
-        raise ValueError(f"Resend respondió {error.code}: {error_http_text(error)}") from error
+        raise ValueError(
+            f"Resend respondió {error.code}: {error_http_text(error)}"
+        ) from error
 
 
 def html_correo_reserva(reserva, titulo, mensaje):

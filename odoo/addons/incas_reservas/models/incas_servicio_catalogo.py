@@ -51,8 +51,8 @@ class IncasServicioCatalogo(models.Model):
             self.env["ir.config_parameter"]
             .sudo()
             .get_param("incas_reservas.strapi_url")
-            or os.getenv("STRAPI_URL")
-            or "http://backend:1337"
+            or os.getenv("ODOO_STRAPI_CONECTION_URL")
+            or "https://api.incasparadise.com"
         )
 
     @api.model
@@ -85,12 +85,95 @@ class IncasServicioCatalogo(models.Model):
 
     @api.model
     def _upsert_servicio_base(self, dominio, values):
-        service = self.search(dominio, limit=1)
+        service = self.with_context(active_test=False).search(dominio, limit=1)
         if service:
             service.write(values)
         else:
             service = self.create(values)
         return service
+
+    @api.model
+    def _json_lista(self, valor):
+        if not valor:
+            return []
+        try:
+            data = json.loads(valor)
+            return data if isinstance(data, list) else []
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return []
+
+    def _obtener_detalle_transporte(self):
+        self.ensure_one()
+        if self.tipo_servicio != "transporte":
+            return self.env["incas.catalogo.transporte"]
+        return self.env["incas.catalogo.transporte"].search([("servicio_id", "=", self.id)], limit=1)
+
+    def _obtener_ids_strapi_vehiculos_transporte(self):
+        self.ensure_one()
+        detalle = self._obtener_detalle_transporte()
+        ids = []
+        for precio in self._json_lista(detalle.precios_data):
+            if not isinstance(precio, dict):
+                continue
+            for vehiculo in precio.get("vehiculo") or []:
+                if not isinstance(vehiculo, dict):
+                    continue
+                vehiculo_id = vehiculo.get("id")
+                if vehiculo_id and vehiculo_id not in ids:
+                    ids.append(vehiculo_id)
+        return ids
+
+    def obtener_vehiculos_transporte(self):
+        self.ensure_one()
+        if self.tipo_servicio != "transporte":
+            return self.env["incas.catalogo.vehiculo"]
+        vehiculo_model = self.env["incas.catalogo.vehiculo"]
+        ids_strapi = self._obtener_ids_strapi_vehiculos_transporte()
+        if not ids_strapi:
+            return vehiculo_model
+        return vehiculo_model.search([("strapi_id", "in", ids_strapi)])
+
+    def obtener_vehiculo_transporte(self, nombre=None, vehiculo_id=None):
+        self.ensure_one()
+        vehiculos = self.obtener_vehiculos_transporte()
+        if vehiculo_id:
+            vehiculo = vehiculos.filtered(lambda item: item.id == vehiculo_id)
+            if vehiculo:
+                return vehiculo[:1]
+        if nombre:
+            vehiculo = vehiculos.filtered(lambda item: item.name == nombre)
+            if vehiculo:
+                return vehiculo[:1]
+        return vehiculos[:1]
+
+    def obtener_tarifa_vehiculo_transporte(self, vehiculo):
+        self.ensure_one()
+        detalle = self._obtener_detalle_transporte()
+        vehiculo_strapi_id = vehiculo.strapi_id if vehiculo else False
+        vehiculo_nombre = vehiculo.name if vehiculo else False
+        for precio in self._json_lista(detalle.precios_data):
+            if not isinstance(precio, dict):
+                continue
+            for item in precio.get("vehiculo") or []:
+                if not isinstance(item, dict):
+                    continue
+                if vehiculo_strapi_id and item.get("id") == vehiculo_strapi_id:
+                    return {
+                        "precio_adulto": float(precio.get("precioAdulto") or 0),
+                        "precio_nino": float(precio.get("precioNino") or 0),
+                        "descuento": float(precio.get("descuento") or 0),
+                    }
+                if vehiculo_nombre and item.get("nombre") == vehiculo_nombre:
+                    return {
+                        "precio_adulto": float(precio.get("precioAdulto") or 0),
+                        "precio_nino": float(precio.get("precioNino") or 0),
+                        "descuento": float(precio.get("descuento") or 0),
+                    }
+        return {
+            "precio_adulto": self.precio_adulto or 0,
+            "precio_nino": self.precio_nino or 0,
+            "descuento": self.descuento or 0,
+        }
 
     @api.model
     def _get_currency_rates(self):
@@ -249,12 +332,58 @@ class IncasServicioCatalogo(models.Model):
             stale_records.write({"active": False})
 
     @api.model
+    def _sync_vehiculos(self):
+        vehiculo_model = self.env["incas.catalogo.vehiculo"]
+        records = self._fetch_strapi_records(
+            "vehiculos",
+            {
+                "populate": "*",
+            },
+        )
+        seen_ids = []
+        for item in records:
+            strapi_id = item.get("id")
+            if not strapi_id:
+                continue
+            seen_ids.append(strapi_id)
+            values = {
+                "name": item.get("nombre"),
+                "strapi_id": strapi_id,
+                "strapi_document_id": item.get("documentId"),
+                "descripcion": item.get("descripcion"),
+                "imagen_data": self._strapi_texto_json(item.get("imagen")),
+                "nro_asientos": int(item.get("nro_asientos") or 0),
+                "features_data": self._strapi_texto_json(item.get("features")),
+                "active": True,
+            }
+            vehiculo = vehiculo_model.search([("strapi_id", "=", strapi_id)], limit=1)
+            if vehiculo:
+                vehiculo.write(values)
+            else:
+                vehiculo_model.create(values)
+        stale_records = vehiculo_model.search([("strapi_id", "not in", seen_ids)])
+        if stale_records:
+            stale_records.write({"active": False})
+
+    @api.model
     def _sync_tours(self):
         tour_model = self.env["incas.catalogo.tour"]
         records = self._fetch_strapi_records(
             "tour-detalles",
             {
-                "populate": "*",
+                "populate[0]": "destinos",
+                "populate[1]": "estilos",
+                "populate[2]": "ogImage",
+                "populate[3]": "twitterImage",
+                "populate[4]": "heroSlideImages",
+                "populate[5]": "highlightsItems",
+                "populate[6]": "featuredImages.image",
+                "populate[7]": "itineraryItems.image",
+                "populate[8]": "itineraryItems.includes",
+                "populate[9]": "scheduleItems",
+                "populate[10]": "includedItems",
+                "populate[11]": "excludedItems",
+                "populate[12]": "faqItems",
             },
         )
         seen_ids = []
@@ -341,7 +470,14 @@ class IncasServicioCatalogo(models.Model):
         records = self._fetch_strapi_records(
             "transportes",
             {
-                "populate": "*",
+                "populate[0]": "image",
+                "populate[1]": "wallpaper",
+                "populate[2]": "destino_origen",
+                "populate[3]": "destino_llegada",
+                "populate[4]": "includedItems",
+                "populate[5]": "excludedItems",
+                "populate[6]": "tipos_transporte",
+                "populate[7]": "precios.vehiculo.imagen",
             },
         )
         seen_ids = []
@@ -413,6 +549,7 @@ class IncasServicioCatalogo(models.Model):
 
     def sync_from_strapi(self, *args, **kwargs):
         self._sync_estilos_transporte()
+        self._sync_vehiculos()
         self._sync_tours()
         self._sync_transportes()
         return True

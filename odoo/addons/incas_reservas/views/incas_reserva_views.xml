@@ -90,7 +90,9 @@
                             <field name="fecha_fin"/>
                             <field name="fecha_viaje"/>
                             <field name="turno"/>
-                            <field name="vehiculo_seleccionado" invisible="tipo_servicio != 'transporte'"/>
+                            <field name="vehiculo_disponible_ids" invisible="1"/>
+                            <field name="vehiculo_id" invisible="tipo_servicio != 'transporte'" domain="[('id', 'in', vehiculo_disponible_ids)]"/>
+                            <field name="vehiculo_seleccionado" invisible="1"/>
                             <field name="origen_web"/>
                             <field name="responsable_id"/>
                         </group>
@@ -132,6 +134,7 @@
                                     <button name="action_open_popup" type="object" icon="fa-pencil-square-o" string="Editar"/>
                                     <field name="sequence" widget="handle"/>
                                     <field name="servicio_id"/>
+                                    <field name="vehiculo_id" optional="hide"/>
                                     <field name="moneda" readonly="1"/>
                                     <field name="tipo_servicio" readonly="1"/>
                                     <field name="tipo_tour" readonly="1" optional="hide"/>

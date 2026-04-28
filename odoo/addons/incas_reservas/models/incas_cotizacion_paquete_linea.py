@@ -11,6 +11,8 @@ class IncasCotizacionPaqueteLinea(models.Model):
     sequence = fields.Integer(string="Secuencia", default=10)
     fecha = fields.Date(string="Fecha")
     servicio_id = fields.Many2one("incas.servicio.catalogo", string="Servicio", required=True)
+    vehiculo_id = fields.Many2one("incas.catalogo.vehiculo", string="Vehículo")
+    vehiculo_disponible_ids = fields.Many2many("incas.catalogo.vehiculo", compute="_compute_vehiculo_disponible_ids")
     tipo_servicio = fields.Selection(
         [
             ("tour", "Tour"),
@@ -53,9 +55,11 @@ class IncasCotizacionPaqueteLinea(models.Model):
     duration_days = fields.Integer(string="Duración en días")
     hero_title = fields.Char(string="Hero title")
     hero_description = fields.Text(string="Hero description")
+    hero_slide_images_data = fields.Text(string="Hero slide images")
     highlights_title = fields.Char(string="Highlights title")
     highlights_lead = fields.Text(string="Highlights lead")
     highlights_items_data = fields.Text(string="Highlights items")
+    featured_images_data = fields.Text(string="Featured images")
     itinerary_title = fields.Char(string="Itinerary title")
     itinerary_items_data = fields.Text(string="Itinerary items")
     schedule_title = fields.Char(string="Schedule title")
@@ -66,6 +70,8 @@ class IncasCotizacionPaqueteLinea(models.Model):
     excluded_items_data = fields.Text(string="Excluded items")
     faq_title = fields.Char(string="FAQ title")
     faq_items_data = fields.Text(string="FAQ items")
+    image_data = fields.Text(string="Imagen")
+    wallpaper_data = fields.Text(string="Wallpaper")
     destino_origen_data = fields.Text(string="Destino origen")
     destino_llegada_data = fields.Text(string="Destino llegada")
     modelo_vehiculo = fields.Char(string="Modelo de vehículo")
@@ -166,9 +172,11 @@ class IncasCotizacionPaqueteLinea(models.Model):
                     "duration_days": detalle.duration_days,
                     "hero_title": detalle.hero_title,
                     "hero_description": detalle.hero_description,
+                    "hero_slide_images_data": detalle.hero_slide_images_data,
                     "highlights_title": detalle.highlights_title,
                     "highlights_lead": detalle.highlights_lead,
                     "highlights_items_data": detalle.highlights_items_data,
+                    "featured_images_data": detalle.featured_images_data,
                     "itinerary_title": detalle.itinerary_title,
                     "itinerary_items_data": detalle.itinerary_items_data,
                     "schedule_title": detalle.schedule_title,
@@ -187,6 +195,8 @@ class IncasCotizacionPaqueteLinea(models.Model):
             return valores
         valores.update(
             {
+                "image_data": detalle.image_data,
+                "wallpaper_data": detalle.wallpaper_data,
                 "destino_origen_data": detalle.destino_origen_data,
                 "destino_llegada_data": detalle.destino_llegada_data,
                 "modelo_vehiculo": detalle.modelo_vehiculo,
@@ -216,6 +226,27 @@ class IncasCotizacionPaqueteLinea(models.Model):
             "target": "new",
         }
 
+    def _aplicar_tarifa_vehiculo(self):
+        for record in self:
+            if record.tipo_servicio != "transporte" or not record.servicio_id or not record.vehiculo_id:
+                continue
+            tarifa = record.servicio_id.obtener_tarifa_vehiculo_transporte(record.vehiculo_id)
+            record.precio_adulto_usd = tarifa["precio_adulto"]
+            record.precio_nino_usd = tarifa["precio_nino"]
+            record.descuento = tarifa["descuento"]
+            factor = 1 - ((record.descuento or 0) / 100)
+            record.precio_adulto_neto_usd = (record.precio_adulto_usd or 0) * factor
+            record.precio_nino_neto_usd = (record.precio_nino_usd or 0) * factor
+            record._actualizar_precios_desde_usd()
+
+    @api.depends("servicio_id", "tipo_servicio")
+    def _compute_vehiculo_disponible_ids(self):
+        for record in self:
+            if record.servicio_id and record.tipo_servicio == "transporte":
+                record.vehiculo_disponible_ids = record.servicio_id.obtener_vehiculos_transporte()
+            else:
+                record.vehiculo_disponible_ids = self.env["incas.catalogo.vehiculo"]
+
     @api.depends("servicio_id")
     def _compute_snapshot_servicio(self):
         for record in self:
@@ -236,15 +267,24 @@ class IncasCotizacionPaqueteLinea(models.Model):
             if not record.servicio_id:
                 continue
             record.nombre = record.servicio_id.name
-            record.precio_adulto_usd = record.servicio_id.precio_adulto
-            record.precio_nino_usd = record.servicio_id.precio_nino
-            record.descuento = record.servicio_id.descuento
             for campo, valor in record._obtener_snapshot_servicio(record.servicio_id).items():
                 record[campo] = valor
-            factor = 1 - ((record.descuento or 0) / 100)
-            record.precio_adulto_neto_usd = (record.precio_adulto_usd or 0) * factor
-            record.precio_nino_neto_usd = (record.precio_nino_usd or 0) * factor
-            record._actualizar_precios_desde_usd()
+            if record.servicio_id.tipo_servicio == "transporte":
+                record.vehiculo_id = record.servicio_id.obtener_vehiculo_transporte()
+                record._aplicar_tarifa_vehiculo()
+            else:
+                record.vehiculo_id = False
+                record.precio_adulto_usd = record.servicio_id.precio_adulto
+                record.precio_nino_usd = record.servicio_id.precio_nino
+                record.descuento = record.servicio_id.descuento
+                factor = 1 - ((record.descuento or 0) / 100)
+                record.precio_adulto_neto_usd = (record.precio_adulto_usd or 0) * factor
+                record.precio_nino_neto_usd = (record.precio_nino_usd or 0) * factor
+                record._actualizar_precios_desde_usd()
+
+    @api.onchange("vehiculo_id")
+    def _onchange_vehiculo_id(self):
+        self._aplicar_tarifa_vehiculo()
 
     @api.onchange("precio_adulto", "precio_nino", "descuento")
     def _onchange_precios_visibles(self):
@@ -265,9 +305,19 @@ class IncasCotizacionPaqueteLinea(models.Model):
             servicio = self.env["incas.servicio.catalogo"].browse(servicio_id)
             if servicio.exists():
                 values.setdefault("nombre", servicio.name)
-                values.setdefault("precio_adulto_usd", servicio.precio_adulto)
-                values.setdefault("precio_nino_usd", servicio.precio_nino)
-                values.setdefault("descuento", servicio.descuento)
+                vehiculo = False
+                if servicio.tipo_servicio == "transporte":
+                    vehiculo = servicio.obtener_vehiculo_transporte(vehiculo_id=values.get("vehiculo_id"))
+                    if vehiculo and not values.get("vehiculo_id"):
+                        values["vehiculo_id"] = vehiculo.id
+                    tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo)
+                    values.setdefault("precio_adulto_usd", tarifa["precio_adulto"])
+                    values.setdefault("precio_nino_usd", tarifa["precio_nino"])
+                    values.setdefault("descuento", tarifa["descuento"])
+                else:
+                    values.setdefault("precio_adulto_usd", servicio.precio_adulto)
+                    values.setdefault("precio_nino_usd", servicio.precio_nino)
+                    values.setdefault("descuento", servicio.descuento)
                 snapshot = self._obtener_snapshot_servicio(servicio)
                 for campo, valor in snapshot.items():
                     values.setdefault(campo, valor)
@@ -280,13 +330,29 @@ class IncasCotizacionPaqueteLinea(models.Model):
             servicio_id = values.get("servicio_id")
             if not values.get("fecha") and record.cotizacion_id and not record.fecha:
                 values["fecha"] = record.cotizacion_id.fecha_viaje
+            if values.get("vehiculo_id") and not servicio_id and record.servicio_id.tipo_servicio == "transporte":
+                vehiculo = record.servicio_id.obtener_vehiculo_transporte(vehiculo_id=values.get("vehiculo_id"))
+                tarifa = record.servicio_id.obtener_tarifa_vehiculo_transporte(vehiculo)
+                values.setdefault("precio_adulto_usd", tarifa["precio_adulto"])
+                values.setdefault("precio_nino_usd", tarifa["precio_nino"])
+                values.setdefault("descuento", tarifa["descuento"])
             if servicio_id:
                 servicio = self.env["incas.servicio.catalogo"].browse(servicio_id)
                 if servicio.exists():
                     values.setdefault("nombre", servicio.name)
-                    values.setdefault("precio_adulto_usd", servicio.precio_adulto)
-                    values.setdefault("precio_nino_usd", servicio.precio_nino)
-                    values.setdefault("descuento", servicio.descuento)
+                    vehiculo = False
+                    if servicio.tipo_servicio == "transporte":
+                        vehiculo = servicio.obtener_vehiculo_transporte(vehiculo_id=values.get("vehiculo_id"))
+                        if vehiculo and not values.get("vehiculo_id"):
+                            values["vehiculo_id"] = vehiculo.id
+                        tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo)
+                        values.setdefault("precio_adulto_usd", tarifa["precio_adulto"])
+                        values.setdefault("precio_nino_usd", tarifa["precio_nino"])
+                        values.setdefault("descuento", tarifa["descuento"])
+                    else:
+                        values.setdefault("precio_adulto_usd", servicio.precio_adulto)
+                        values.setdefault("precio_nino_usd", servicio.precio_nino)
+                        values.setdefault("descuento", servicio.descuento)
                     snapshot = record._obtener_snapshot_servicio(servicio)
                     for campo, valor in snapshot.items():
                         values.setdefault(campo, valor)
