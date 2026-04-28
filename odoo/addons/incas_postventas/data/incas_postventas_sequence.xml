@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_incas_postventa_caso" model="ir.sequence">
+        <field name="name">Caso post viaje</field>
+        <field name="code">incas.postventa.caso</field>
+        <field name="prefix">PV-%(y)s-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_incas_postventa_encuesta" model="ir.sequence">
+        <field name="name">Encuesta postventa</field>
+        <field name="code">incas.postventa.encuesta</field>
+        <field name="prefix">ENC-%(y)s-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_incas_postventa_reclamo" model="ir.sequence">
+        <field name="name">Reclamo postventa</field>
+        <field name="code">incas.postventa.reclamo</field>
+        <field name="prefix">REC-%(y)s-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_incas_postventa_accion" model="ir.sequence">
+        <field name="name">Accion correctiva postventa</field>
+        <field name="code">incas.postventa.accion</field>
+        <field name="prefix">AC-%(y)s-</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

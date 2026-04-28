@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_postventa_encuesta_list" model="ir.ui.view">
+        <field name="name">incas.postventa.encuesta.list</field>
+        <field name="model">incas.postventa.encuesta</field>
+        <field name="arch" type="xml">
+            <list string="Encuestas">
+                <field name="name"/>
+                <field name="reserva_id"/>
+                <field name="partner_id"/>
+                <field name="servicio_nombre"/>
+                <field name="estado"/>
+                <field name="fecha_envio"/>
+                <field name="fecha_respuesta"/>
+                <field name="nps"/>
+                <field name="satisfaccion_general"/>
+                <field name="requiere_accion"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_postventa_encuesta_search" model="ir.ui.view">
+        <field name="name">incas.postventa.encuesta.search</field>
+        <field name="model">incas.postventa.encuesta</field>
+        <field name="arch" type="xml">
+            <search string="Buscar encuestas">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="reserva_id"/>
+                <field name="servicio_nombre"/>
+                <field name="estado"/>
+                <separator/>
+                <filter name="filter_enviadas" string="Enviadas" domain="[('estado', '=', 'enviada')]"/>
+                <filter name="filter_respondidas" string="Respondidas" domain="[('estado', '=', 'respondida')]"/>
+                <filter name="filter_requiere_accion" string="Requiere accion" domain="[('requiere_accion', '=', True)]"/>
+                <separator/>
+                <filter name="group_estado" string="Estado" domain="[]" context="{'group_by': 'estado'}"/>
+                <filter name="group_servicio" string="Servicio" domain="[]" context="{'group_by': 'servicio_nombre'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_postventa_encuesta_form" model="ir.ui.view">
+        <field name="name">incas.postventa.encuesta.form</field>
+        <field name="model">incas.postventa.encuesta</field>
+        <field name="arch" type="xml">
+            <form string="Encuesta postventa">
+                <header>
+                    <button name="action_enviar" type="object" string="Marcar enviada" invisible="estado != 'no_enviada'"/>
+                    <button name="action_recordatorio" type="object" string="Registrar recordatorio" invisible="estado != 'enviada'"/>
+                    <button name="action_vencida" type="object" string="Marcar vencida" invisible="estado not in ['no_enviada', 'enviada']"/>
+                    <button name="action_crear_accion_correctiva" type="object" string="Crear accion correctiva" invisible="not requiere_accion"/>
+                    <field
+                        name="estado"
+                        widget="badge"
+                        decoration-muted="estado == 'no_enviada'"
+                        decoration-info="estado == 'enviada'"
+                        decoration-success="estado == 'respondida'"
+                        decoration-danger="estado == 'vencida'"
+                    />
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="caso_id"/>
+                            <field name="reserva_id"/>
+                            <field name="partner_id"/>
+                            <field name="servicio_nombre"/>
+                        </group>
+                        <group>
+                            <field name="fecha_envio"/>
+                            <field name="fecha_respuesta"/>
+                            <field name="fecha_recordatorio"/>
+                            <field name="requiere_accion"/>
+                        </group>
+                    </group>
+                    <group string="Calificacion">
+                        <group>
+                            <field name="nps"/>
+                            <field name="satisfaccion_general"/>
+                            <field name="puntualidad"/>
+                            <field name="atencion_guia"/>
+                            <field name="transporte"/>
+                        </group>
+                        <group>
+                            <field name="comunicacion_previa"/>
+                            <field name="cumplimiento_itinerario"/>
+                            <field name="seguridad"/>
+                            <field name="precio_calidad"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Comentario">
+                            <field name="comentario"/>
+                        </page>
+                        <page string="Acciones">
+                            <field name="accion_ids" context="{'default_encuesta_id': id}">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="tipo"/>
+                                    <field name="responsable_id"/>
+                                    <field name="fecha_compromiso"/>
+                                    <field name="estado"/>
+                                    <field name="resultado"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_postventa_encuestas" model="ir.actions.act_window">
+        <field name="name">Encuestas</field>
+        <field name="res_model">incas.postventa.encuesta</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_postventa_encuesta_search"/>
+    </record>
+</odoo>

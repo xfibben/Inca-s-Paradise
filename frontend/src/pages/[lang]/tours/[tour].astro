@@ -228,8 +228,7 @@ for (const baseUrl of STRAPI_BASE_URLS) {
       "populate[itineraryItems][populate][image][fields][1]=alternativeText&" +
       "populate[itineraryItems][populate][image][fields][2]=formats&" +
       "populate[itineraryItems][populate][includes][fields][0]=text&" +
-      "populate[scheduleItems][fields][0]=title&" +
-      "populate[scheduleItems][fields][1]=content&" +
+      "populate[scheduleItems]=*&" +
       "populate[includedItems][fields][0]=text&" +
       "populate[includedItems][fields][1]=icon&" +
       "populate[excludedItems][fields][0]=text&" +
@@ -300,8 +299,7 @@ if (lang !== "es") {
         "populate[itineraryItems][populate][image][fields][1]=alternativeText&" +
         "populate[itineraryItems][populate][image][fields][2]=formats&" +
         "populate[itineraryItems][populate][includes][fields][0]=text&" +
-        "populate[scheduleItems][fields][0]=title&" +
-        "populate[scheduleItems][fields][1]=content";
+        "populate[scheduleItems]=*";
 
       try {
         const res = await fetch(url);
@@ -497,6 +495,40 @@ if (sourceTour.documentId) {
 
 const cleanText = (value: any) =>
   typeof value === "string" ? value.trim() : "";
+const pickText = (row: any, keys: string[]) => {
+  for (const key of keys) {
+    const value = cleanTextValue(row?.[key]) || cleanText(row?.[key]);
+    if (value) return value;
+  }
+  return "";
+};
+const formatAmPmTime = (value: any) => {
+  const raw = cleanTextValue(value) || cleanText(value);
+  if (!raw) return "";
+
+  const match = raw.match(/^(\d{1,2})(?::(\d{1,2}))?(?::\d{1,2})?\s*(a\.?m\.?|p\.?m\.?)?$/i);
+  if (!match) return raw;
+
+  let hour = Number(match[1]);
+  const minute = Number(match[2] ?? 0);
+  const explicitPeriod = match[3]?.toLowerCase().replace(/\./g, "");
+
+  if (!Number.isFinite(hour) || !Number.isFinite(minute) || minute > 59) {
+    return raw;
+  }
+
+  let period = explicitPeriod?.toUpperCase();
+  if (period) {
+    if (hour > 12) hour = hour % 12 || 12;
+    if (hour === 0) hour = 12;
+  } else {
+    if (hour > 23) return raw;
+    period = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+  }
+
+  return `${hour}:${String(minute).padStart(2, "0")} ${period}`;
+};
 const humanizeSlug = (value: string) =>
   value
     .replace(/[-_]+/g, " ")
@@ -737,18 +769,41 @@ const itineraryItems = Array.isArray(sourceTour.itineraryItems)
   : [];
 const hasItinerarySection = itineraryItems.length > 0;
 
+const scheduleStartTimeKeys = [
+  "horaEntrada",
+  "hora_entrada",
+  "entryTime",
+  "entrada",
+  "startTime",
+  "horaInicio",
+  "hora_inicio",
+  "start",
+];
+const scheduleEndTimeKeys = [
+  "horaSalida",
+  "hora_salida",
+  "exitTime",
+  "salida",
+  "endTime",
+  "horaFin",
+  "hora_fin",
+  "end",
+];
 const scheduleItems = Array.isArray(sourceTour.scheduleItems)
   ? sourceTour.scheduleItems
       .map((entry: any) => normalizeRow(entry))
       .filter(Boolean)
       .map((item: any) => ({
         title: cleanText(item?.title),
-        contentHtml: md.render(strapiRichTextToMarkdown(item?.content ?? '')),
+        startTime: formatAmPmTime(pickText(item, scheduleStartTimeKeys)),
+        endTime: formatAmPmTime(pickText(item, scheduleEndTimeKeys)),
       }))
-      .filter((item: any) => item.title || item.contentHtml)
+      .filter((item: any) => item.title || item.startTime || item.endTime)
   : [];
 const hasScheduleSection = scheduleItems.length > 0;
 const scheduleTitle = cleanText(sourceTour.scheduleTitle);
+const scheduleStartLabel = lang === "en" ? "Entry" : "Entrada";
+const scheduleEndLabel = lang === "en" ? "Exit" : "Salida";
 const scheduleOptionTitles = scheduleItems
   .map((item: any) => item.title)
   .filter((value: string) => Boolean(value));
@@ -1184,12 +1239,16 @@ const hasBookingCard = Boolean(
                     {item.title ? (
                       <h3 class="mb-3 text-base md:text-lg font-bold text-gray-900">{item.title}</h3>
                     ) : null}
-                    {item.contentHtml ? (
-                      <div
-                        class="text-sm md:text-base leading-relaxed text-gray-700 [&_p]:mb-3 [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_[style*='text-align:center']]:text-center [&_[style*='text-align:right']]:text-right [&_[style*='text-align:left']]:text-left [&_img]:my-3 [&_img]:block [&_img]:clear-both [&_img]:float-none [&_img]:mx-auto [&_img]:h-auto [&_img]:w-full [&_img]:max-w-[560px] [&_img]:max-h-[340px] [&_img]:object-cover"
-                        set:html={item.contentHtml}
-                      />
-                    ) : null}
+                    <div class="grid grid-cols-2 gap-3">
+                      <div class="border border-[#e5e7eb] bg-[#f8fafc] p-3">
+                        <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#6b7280]">{scheduleStartLabel}</p>
+                        <p class="text-base font-bold text-gray-900">{item.startTime || "-"}</p>
+                      </div>
+                      <div class="border border-[#e5e7eb] bg-[#f8fafc] p-3">
+                        <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#6b7280]">{scheduleEndLabel}</p>
+                        <p class="text-base font-bold text-gray-900">{item.endTime || "-"}</p>
+                      </div>
+                    </div>
                   </article>
                 ))}
               </div>

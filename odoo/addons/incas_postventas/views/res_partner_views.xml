@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_partner_form_incas_postventa" model="ir.ui.view">
+        <field name="name">res.partner.form.incas.postventa</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Inca's Postventa">
+                    <group>
+                        <group string="Datos del cliente">
+                            <field name="incas_documento"/>
+                            <field name="incas_idioma"/>
+                            <field name="incas_cumpleanos"/>
+                            <field name="incas_reserva_count" readonly="1"/>
+                        </group>
+                        <group string="Satisfaccion">
+                            <field name="incas_satisfaccion_promedio" readonly="1"/>
+                            <field name="incas_ultima_encuesta" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="incas_preferencias" placeholder="Tipo de viaje, aventura, cultural, privado, grupal"/>
+                        <field name="incas_restricciones" placeholder="Salud, alimentacion, movilidad, alergias"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_incas_postventa_clientes" model="ir.actions.act_window">
+        <field name="name">Clientes enriquecidos</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
