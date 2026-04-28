@@ -235,6 +235,31 @@ def html_base(titulo, codigo_label, codigo_valor, secciones):
             font-weight: 700;
             width: 38%;
           }}
+          .package-summary-table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            background: #ffffff;
+          }}
+          .package-summary-table th,
+          .package-summary-table td {{
+            border: 1px solid #d1d5db;
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+          }}
+          .package-summary-table thead th {{
+            background: #1aa093;
+            color: #ffffff;
+            font-weight: 700;
+          }}
+          .package-summary-table tfoot td {{
+            background: #f5f8f7;
+            font-weight: 700;
+          }}
+          .package-summary-meta-table {{
+            margin-bottom: 12px;
+          }}
         </style>
       </head>
       <body>
@@ -362,25 +387,125 @@ def render_cotizacion_html(cotizacion):
                     fila("Estado", cotizacion.state),
                 ],
             ),
-            bloque(
-                "RESUMEN DE PAGO",
-                [
-                    fila("Moneda", cotizacion.moneda),
-                    fila("Descuento", f"{numero(resumen['descuento']):.2f}%"),
-                    fila(
-                        "Precio adulto",
-                        monto(cotizacion.moneda, resumen["precio_adulto"]),
-                    ),
-                    fila(
-                        "Precio niño", monto(cotizacion.moneda, resumen["precio_nino"])
-                    ),
-                    fila(
-                        "Monto total", monto(cotizacion.moneda, cotizacion.monto_total)
-                    ),
-                ],
-            ),
         ],
     )
+
+
+def _subtotal_linea_cotizacion(cotizacion, linea):
+    return ((cotizacion.cantidad_adultos or 0) * (linea.precio_adulto_neto or 0)) + (
+        (cotizacion.cantidad_ninos or 0) * (linea.precio_nino_neto or 0)
+    )
+
+
+def _tipo_linea_paquete(linea):
+    if linea.tipo_servicio == "tour":
+        if linea.tipo_tour == "small_trip":
+            return "Small Trip"
+        if linea.tipo_tour == "package":
+            return "Package"
+        return "Tour"
+    return texto(linea.estilo_transporte_id.display_name)
+
+
+def _vehiculo_linea_paquete(linea):
+    if linea.tipo_servicio != "transporte":
+        return ""
+    return linea.vehiculo_id.name or ""
+
+
+def _tabla_resumen_paquete(cotizacion):
+    lineas = cotizacion.paquete_linea_ids.sorted(
+        lambda linea: (linea.sequence, linea.id)
+    )
+    if not lineas:
+        return ""
+    filas = []
+    total = 0
+    for indice, linea in enumerate(lineas, start=1):
+        subtotal = _subtotal_linea_cotizacion(cotizacion, linea)
+        total += subtotal
+        filas.append(
+            f"""
+            <tr>
+              <td>{indice}</td>
+              <td>{escape(texto(linea.nombre))}</td>
+              <td>{escape(_tipo_linea_paquete(linea))}</td>
+              <td>{escape(fecha(linea.fecha))}</td>
+              <td>{escape(texto(_vehiculo_linea_paquete(linea)))}</td>
+              <td>{escape(monto(cotizacion.moneda, linea.precio_adulto_neto))}</td>
+              <td>{escape(monto(cotizacion.moneda, linea.precio_nino_neto))}</td>
+              <td>{escape(monto(cotizacion.moneda, subtotal))}</td>
+            </tr>
+            """
+        )
+    return f"""
+    <table class="package-summary-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Servicio</th>
+          <th>Tipo</th>
+          <th>Fecha</th>
+          <th>Vehículo</th>
+          <th>Adulto final</th>
+          <th>Niño final</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        {''.join(filas)}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="7">Monto total del paquete</td>
+          <td>{escape(monto(cotizacion.moneda, total))}</td>
+        </tr>
+      </tfoot>
+    </table>
+    """
+
+
+def _tabla_datos_resumen_paquete(cotizacion):
+    return f"""
+    <table class="package-summary-table package-summary-meta-table">
+      <tbody>
+        <tr>
+          <td class="label">Código</td>
+          <td>{escape(texto(cotizacion.name))}</td>
+          <td class="label">Cliente</td>
+          <td>{escape(texto(cotizacion.partner_id.display_name))}</td>
+        </tr>
+        <tr>
+          <td class="label">Fecha de viaje</td>
+          <td>{escape(fecha(cotizacion.fecha_viaje))}</td>
+          <td class="label">Items del paquete</td>
+          <td>{len(cotizacion.paquete_linea_ids)}</td>
+        </tr>
+        <tr>
+          <td class="label">Moneda</td>
+          <td>{escape(texto(cotizacion.moneda))}</td>
+          <td class="label">Monto total</td>
+          <td>{escape(monto(cotizacion.moneda, cotizacion.monto_total))}</td>
+        </tr>
+        <tr>
+          <td class="label">Observaciones</td>
+          <td colspan="3">{escape(texto(cotizacion.observaciones))}</td>
+        </tr>
+      </tbody>
+    </table>
+    """
+
+
+def _bloque_resumen_paquete_cotizacion(cotizacion):
+    tabla = _tabla_resumen_paquete(cotizacion)
+    if not tabla:
+        return ""
+    return f"""
+    <div class="section">
+      <div class="section-title">RESUMEN DEL PAQUETE</div>
+      {tabla}
+    </div>
+    """
 
 
 def _json_lista(valor):
@@ -460,6 +585,13 @@ def _normalizar_url_imagen(record, url):
     return f"{_strapi_base_url(record)}/{texto_url.lstrip('/')}"
 
 
+def _filtrar_urls_small(urls):
+    urls_small = [url for url in urls if "/small_" in url]
+    if urls_small:
+        return urls_small
+    return urls
+
+
 def _recoger_urls_imagen(valor, acumulado):
     if not valor:
         return
@@ -507,7 +639,7 @@ def _extraer_urls_imagen(record, *valores):
             continue
         vistos.add(normalizada)
         urls_normalizadas.append(normalizada)
-    return urls_normalizadas
+    return _filtrar_urls_small(urls_normalizadas)
 
 
 def _extraer_imagenes_data_uri(record, *valores, max_imagenes=4):
@@ -564,23 +696,11 @@ def _render_itinerario(record, valor):
             )
             if texto_incluye:
                 incluye.append(texto_incluye)
-        imagenes = _extraer_imagenes_data_uri(
-            record, item.get("image"), item.get("images")
-        )
         partes = []
         if titulo:
             partes.append(f"<div class='timeline-title'>{escape(titulo)}</div>")
         if extra:
             partes.append(f"<div class='timeline-meta'>{escape(extra)}</div>")
-        if imagenes:
-            partes.append(
-                "<div class='timeline-gallery'>"
-                + "".join(
-                    f"<img src='{imagen}' alt='Imagen del itinerario'/>"
-                    for imagen in imagenes[:2]
-                )
-                + "</div>"
-            )
         if detalle:
             partes.append(f"<div class='timeline-text'>{escape(detalle)}</div>")
         if incluye:
@@ -595,10 +715,10 @@ def _render_itinerario(record, valor):
 def _render_galeria(record, *valores, max_imagenes=4, mostrar_urls=False):
     urls = _extraer_urls_imagen(record, *valores)
     imagenes = _extraer_imagenes_data_uri(record, *valores, max_imagenes=max_imagenes)
-    if not imagenes and not urls:
+    if not imagenes:
         return ""
     fallback = ""
-    if urls and (not imagenes or mostrar_urls):
+    if urls and mostrar_urls:
         fallback = (
             "<div class='image-url-fallback'>"
             "<div class='image-url-title'>URLs de imagen</div>"
@@ -617,25 +737,33 @@ def _render_galeria(record, *valores, max_imagenes=4, mostrar_urls=False):
 
 
 def _detalle_precio_linea(linea):
-    filas = [
-        fila("Fecha", fecha(linea.fecha)),
-        fila("Moneda", linea.moneda),
-        fila("Precio adulto", monto(linea.moneda, linea.precio_adulto)),
-        fila("Precio niño", monto(linea.moneda, linea.precio_nino)),
-        fila_si(
-            "Descuento",
-            linea.descuento,
-            render=f"{numero(linea.descuento):.2f}%",
-            ocultar_cero=True,
-        ),
-        fila("Precio adulto final", monto(linea.moneda, linea.precio_adulto_neto)),
-        fila("Precio niño final", monto(linea.moneda, linea.precio_nino_neto)),
-    ]
+    descuento = f"{numero(linea.descuento):.2f}%" if numero(linea.descuento) else "-"
     return f"""
     <div class="price-card">
-      <div class="price-title">Precio del servicio</div>
+      <div class="price-title">Resumen de fecha y precios</div>
       <table class="price-table">
-        {"".join(filas)}
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Moneda</th>
+            <th>Precio adulto</th>
+            <th>Precio niño</th>
+            <th>Descuento</th>
+            <th>Adulto final</th>
+            <th>Niño final</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{escape(fecha(linea.fecha))}</td>
+            <td>{escape(texto(linea.moneda))}</td>
+            <td>{escape(monto(linea.moneda, linea.precio_adulto))}</td>
+            <td>{escape(monto(linea.moneda, linea.precio_nino))}</td>
+            <td>{escape(descuento)}</td>
+            <td>{escape(monto(linea.moneda, linea.precio_adulto_neto))}</td>
+            <td>{escape(monto(linea.moneda, linea.precio_nino_neto))}</td>
+          </tr>
+        </tbody>
       </table>
     </div>
     """
@@ -656,6 +784,21 @@ def _parrafo_editorial(texto_largo):
     if not texto_largo:
         return ""
     return f"<p class='editorial-copy'>{escape(texto_largo)}</p>"
+
+
+def _bloque_highlights_intro(pregunta, lead):
+    partes = []
+    if pregunta:
+        partes.append(f"<div class='story-question'>{escape(pregunta)}</div>")
+    if lead:
+        partes.append(_parrafo_editorial(lead))
+    if not partes:
+        return ""
+    return f"""
+    <section class="editorial-section story-intro">
+      {''.join(partes)}
+    </section>
+    """
 
 
 def _bloque_tour_editorial(indice, linea, detalle):
@@ -703,6 +846,10 @@ def _bloque_tour_editorial(indice, linea, detalle):
         _parrafo_editorial(linea.hero_description or detalle.hero_description),
     ]
     cuerpo = [
+        _bloque_highlights_intro(
+            linea.highlights_question or detalle.highlights_question,
+            linea.highlights_lead or detalle.highlights_lead,
+        ),
         _seccion_editorial(
             linea.highlights_title
             or detalle.highlights_title
@@ -1013,6 +1160,12 @@ def render_cotizacion_paquete_html(cotizacion):
             color: #1aa093;
             margin: 0 0 8px 0;
           }}
+          .story-question {{
+            font-size: 18px;
+            font-weight: 700;
+            color: #1aa093;
+            margin: 0 0 8px 0;
+          }}
           .editorial-list {{
             margin: 0;
             padding-left: 18px;
@@ -1080,6 +1233,14 @@ def render_cotizacion_paquete_html(cotizacion):
             padding: 9px 6px;
             vertical-align: top;
           }}
+          .price-table th {{
+            border-bottom: 1px solid #eadfce;
+            padding: 9px 6px;
+            vertical-align: top;
+            text-align: left;
+            color: #1aa093;
+            font-weight: 700;
+          }}
           .price-table tr:last-child td {{
             border-bottom: 0;
           }}
@@ -1094,6 +1255,18 @@ def render_cotizacion_paquete_html(cotizacion):
             padding: 22px 26px;
             text-align: right;
             margin-top: 12px;
+          }}
+          .package-summary {{
+            margin-top: 10px;
+            margin-bottom: 18px;
+          }}
+          .package-summary-title {{
+            color: #1aa093;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 0 10px 0;
+            font-weight: 700;
           }}
           .package-total-label {{
             font-size: 12px;
@@ -1110,6 +1283,11 @@ def render_cotizacion_paquete_html(cotizacion):
       </head>
       <body>
         {portada}
+        <section class="package-summary">
+          <div class="package-summary-title">Resumen del paquete</div>
+          {_tabla_datos_resumen_paquete(cotizacion)}
+          {_tabla_resumen_paquete(cotizacion)}
+        </section>
         {historias}
         {cierre}
       </body>

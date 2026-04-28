@@ -57,6 +57,7 @@ class IncasCotizacionPaqueteLinea(models.Model):
     hero_description = fields.Text(string="Hero description")
     hero_slide_images_data = fields.Text(string="Hero slide images")
     highlights_title = fields.Char(string="Highlights title")
+    highlights_question = fields.Char(string="Highlights question")
     highlights_lead = fields.Text(string="Highlights lead")
     highlights_items_data = fields.Text(string="Highlights items")
     featured_images_data = fields.Text(string="Featured images")
@@ -174,6 +175,7 @@ class IncasCotizacionPaqueteLinea(models.Model):
                     "hero_description": detalle.hero_description,
                     "hero_slide_images_data": detalle.hero_slide_images_data,
                     "highlights_title": detalle.highlights_title,
+                    "highlights_question": detalle.highlights_question,
                     "highlights_lead": detalle.highlights_lead,
                     "highlights_items_data": detalle.highlights_items_data,
                     "featured_images_data": detalle.featured_images_data,
