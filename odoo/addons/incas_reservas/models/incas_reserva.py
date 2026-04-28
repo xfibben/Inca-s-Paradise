@@ -288,9 +288,11 @@ class IncasReserva(models.Model):
     def _valores_desde_cotizacion(self, cotizacion):
         resumen = cotizacion._get_resumen_servicio()
         vehiculo = cotizacion.paquete_linea_ids[:1].vehiculo_id if len(cotizacion.paquete_linea_ids) == 1 else self.env["incas.catalogo.vehiculo"]
+        horario = cotizacion.paquete_linea_ids[:1].horario if len(cotizacion.paquete_linea_ids) == 1 else False
         return {
             "partner_id": cotizacion.partner_id,
             "fecha_viaje": cotizacion.fecha_viaje,
+            "turno": horario,
             "idioma": cotizacion.idioma,
             "canal_venta": cotizacion.canal_venta,
             "tipo_servicio": resumen["tipo_servicio"],
@@ -359,6 +361,16 @@ class IncasReserva(models.Model):
         return servicio.obtener_vehiculo_transporte(nombre=nombre)
 
     @api.model
+    def _buscar_horario_web(self, servicio, reserva_data):
+        nombre = (reserva_data.get("turno") or "").strip()
+        if not servicio or not nombre:
+            return self.env["incas.horario.opcion"]
+        return self.env["incas.horario.opcion"].sudo().search(
+            [("servicio_id", "=", servicio.id), ("name", "=", nombre)],
+            limit=1,
+        )
+
+    @api.model
     def _obtener_partner_web(self, reserva_data):
         partner_model = self.env["res.partner"].sudo()
         email = (reserva_data.get("email") or "").strip()
@@ -404,7 +416,6 @@ class IncasReserva(models.Model):
             "fecha_inicio": fecha_inicio,
             "fecha_fin": fecha_fin,
             "fecha_viaje": fecha_inicio or self._normalizar_fecha_web(reserva_data.get("fecha_viaje")),
-            "turno": reserva_data.get("turno"),
             "vehiculo_id": vehiculo.id,
             "vehiculo_seleccionado": vehiculo.name if vehiculo else reserva_data.get("vehiculo_seleccionado"),
             "idioma": reserva_data.get("idioma") or "es",
@@ -434,6 +445,7 @@ class IncasReserva(models.Model):
         cotizacion_model = self.env["incas.cotizacion"].sudo()
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
         vehiculo = self._buscar_vehiculo_web(servicio, reserva_data)
+        horario = self._buscar_horario_web(servicio, reserva_data)
         tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo) if servicio.tipo_servicio == "transporte" else {
             "precio_adulto": servicio.precio_adulto or 0,
             "precio_nino": servicio.precio_nino or 0,
@@ -463,6 +475,8 @@ class IncasReserva(models.Model):
                         {
                             "servicio_id": servicio.id,
                             "vehiculo_id": vehiculo.id,
+                            "horario": horario.name or reserva_data.get("turno"),
+                            "horario_id": horario.id,
                             "precio_adulto": precio_adulto,
                             "precio_nino": precio_nino,
                             "descuento": descuento,
@@ -596,6 +610,7 @@ class IncasReserva(models.Model):
                     {
                         "partner_id": values["partner_id"].id,
                         "fecha_viaje": values["fecha_viaje"],
+                        "turno": values["turno"],
                         "idioma": values["idioma"],
                         "canal_venta": values["canal_venta"],
                         "tipo_servicio": values["tipo_servicio"],
@@ -762,6 +777,7 @@ class IncasReserva(models.Model):
                     {
                         "partner_id": resumen["partner_id"].id,
                         "fecha_viaje": resumen["fecha_viaje"],
+                        "turno": resumen["turno"],
                         "idioma": resumen["idioma"],
                         "canal_venta": resumen["canal_venta"],
                         "tipo_servicio": resumen["tipo_servicio"],
