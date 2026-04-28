@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_postventa_accion_list" model="ir.ui.view">
+        <field name="name">incas.postventa.accion.list</field>
+        <field name="model">incas.postventa.accion</field>
+        <field name="arch" type="xml">
+            <list string="Acciones correctivas">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="reserva_id"/>
+                <field name="tipo"/>
+                <field name="responsable_id"/>
+                <field name="fecha_compromiso"/>
+                <field name="estado"/>
+                <field name="resultado"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_postventa_accion_search" model="ir.ui.view">
+        <field name="name">incas.postventa.accion.search</field>
+        <field name="model">incas.postventa.accion</field>
+        <field name="arch" type="xml">
+            <search string="Buscar acciones correctivas">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="tipo"/>
+                <field name="estado"/>
+                <separator/>
+                <filter name="filter_pendientes" string="Pendientes" domain="[('estado', 'in', ['pendiente', 'ejecucion'])]"/>
+                <filter name="filter_vencidas" string="Vencidas" domain="[('fecha_compromiso', '&lt;', context_today()), ('estado', 'in', ['pendiente', 'ejecucion'])]"/>
+                <separator/>
+                <filter name="group_estado" string="Estado" domain="[]" context="{'group_by': 'estado'}"/>
+                <filter name="group_tipo" string="Tipo" domain="[]" context="{'group_by': 'tipo'}"/>
+                <filter name="group_responsable" string="Responsable" domain="[]" context="{'group_by': 'responsable_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_postventa_accion_form" model="ir.ui.view">
+        <field name="name">incas.postventa.accion.form</field>
+        <field name="model">incas.postventa.accion</field>
+        <field name="arch" type="xml">
+            <form string="Accion correctiva">
+                <header>
+                    <button name="action_ejecutar" type="object" string="Ejecutar" invisible="estado != 'pendiente'"/>
+                    <button name="action_cumplir" type="object" string="Marcar cumplida" invisible="estado not in ['pendiente', 'ejecucion']"/>
+                    <button name="action_cerrar" type="object" string="Cerrar" invisible="estado != 'cumplida'"/>
+                    <button name="action_cancelar" type="object" string="Cancelar" invisible="estado in ['cerrada', 'cancelada']"/>
+                    <field
+                        name="estado"
+                        widget="badge"
+                        decoration-warning="estado == 'pendiente'"
+                        decoration-info="estado == 'ejecucion'"
+                        decoration-success="estado in ['cumplida', 'cerrada']"
+                        decoration-danger="estado == 'cancelada'"
+                    />
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="caso_id"/>
+                            <field name="encuesta_id"/>
+                            <field name="reclamo_id"/>
+                            <field name="partner_id"/>
+                            <field name="reserva_id"/>
+                        </group>
+                        <group>
+                            <field name="tipo"/>
+                            <field name="responsable_id"/>
+                            <field name="fecha_compromiso"/>
+                            <field name="resultado"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Descripcion">
+                            <field name="descripcion"/>
+                        </page>
+                        <page string="Evidencia">
+                            <field name="evidencia" placeholder="Referencia a correo, captura, comprobante o adjunto en el chatter"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_postventa_acciones" model="ir.actions.act_window">
+        <field name="name">Acciones correctivas</field>
+        <field name="res_model">incas.postventa.accion</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_postventa_accion_search"/>
+    </record>
+</odoo>

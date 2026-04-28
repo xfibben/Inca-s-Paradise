@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem
+        id="menu_incas_postventas_root"
+        name="Postventas"
+        parent="incas_core.menu_incas_root"
+        sequence="30"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_postventa_casos"
+        name="Casos post viaje"
+        parent="menu_incas_postventas_root"
+        action="action_incas_postventa_casos"
+        sequence="10"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_postventa_encuestas"
+        name="Encuestas"
+        parent="menu_incas_postventas_root"
+        action="action_incas_postventa_encuestas"
+        sequence="20"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_postventa_reclamos"
+        name="Reclamos / Libro de reclamaciones"
+        parent="menu_incas_postventas_root"
+        action="action_incas_postventa_reclamos"
+        sequence="30"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_postventa_acciones"
+        name="Acciones correctivas"
+        parent="menu_incas_postventas_root"
+        action="action_incas_postventa_acciones"
+        sequence="40"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_postventa_clientes"
+        name="Clientes enriquecidos"
+        parent="menu_incas_postventas_root"
+        action="action_incas_postventa_clientes"
+        sequence="50"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

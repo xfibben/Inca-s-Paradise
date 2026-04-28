@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_reserva_form_incas_postventa" model="ir.ui.view">
+        <field name="name">incas.reserva.form.incas.postventa</field>
+        <field name="model">incas.reserva</field>
+        <field name="inherit_id" ref="incas_reservas.view_incas_reserva_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_crear_caso_postventa" type="object" class="oe_stat_button" icon="fa-comments-o">
+                    <field name="postventa_caso_count" widget="statinfo" string="Postventa"/>
+                </button>
+            </xpath>
+        </field>
+    </record>
+</odoo>
