@@ -105,6 +105,7 @@
                                     <button name="action_open_popup" type="object" icon="fa-pencil-square-o" string="Editar"/>
                                     <field name="sequence" widget="handle"/>
                                     <field name="servicio_id"/>
+                                    <field name="vehiculo_id" optional="hide"/>
                                     <field name="moneda" readonly="1"/>
                                     <field name="tipo_servicio" readonly="1"/>
                                     <field name="tipo_tour" readonly="1" optional="hide"/>
@@ -150,6 +151,8 @@
                             <field name="fecha"/>
                             <field name="cotizacion_id" readonly="1"/>
                             <field name="servicio_id" readonly="1"/>
+                            <field name="vehiculo_disponible_ids" invisible="1"/>
+                            <field name="vehiculo_id" invisible="tipo_servicio != 'transporte'" domain="[('id', 'in', vehiculo_disponible_ids)]"/>
                             <field name="tipo_servicio" readonly="1"/>
                             <field name="tipo_tour" readonly="1" invisible="tipo_servicio != 'tour'"/>
                             <field name="estilo_transporte_id" readonly="1" invisible="tipo_servicio != 'transporte'"/>

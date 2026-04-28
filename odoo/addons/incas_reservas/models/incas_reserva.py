@@ -50,6 +50,8 @@ class IncasReserva(models.Model):
     fecha_fin = fields.Date(string="Fecha de fin", tracking=True)
     fecha_viaje = fields.Date(string="Fecha de viaje", tracking=True)
     turno = fields.Char(string="Horario", tracking=True)
+    vehiculo_id = fields.Many2one("incas.catalogo.vehiculo", string="Vehículo", tracking=True)
+    vehiculo_disponible_ids = fields.Many2many("incas.catalogo.vehiculo", compute="_compute_vehiculo_disponible_ids")
     vehiculo_seleccionado = fields.Char(string="Vehículo seleccionado", tracking=True)
     idioma = fields.Selection(
         [
@@ -172,6 +174,14 @@ class IncasReserva(models.Model):
             else:
                 record.cantidad_pasajeros = (record.cantidad_adultos or 0) + (record.cantidad_ninos or 0) or record.cotizacion_id.cantidad_pasajeros or 1
 
+    @api.depends("servicio_id", "tipo_servicio")
+    def _compute_vehiculo_disponible_ids(self):
+        for record in self:
+            if record.servicio_id and record.tipo_servicio == "transporte":
+                record.vehiculo_disponible_ids = record.servicio_id.obtener_vehiculos_transporte()
+            else:
+                record.vehiculo_disponible_ids = self.env["incas.catalogo.vehiculo"]
+
     @api.depends("cantidad_adultos", "cantidad_ninos", "precio_adulto", "precio_nino", "descuento")
     def _compute_monto_total(self):
         for record in self:
@@ -277,6 +287,7 @@ class IncasReserva(models.Model):
     @api.model
     def _valores_desde_cotizacion(self, cotizacion):
         resumen = cotizacion._get_resumen_servicio()
+        vehiculo = cotizacion.paquete_linea_ids[:1].vehiculo_id if len(cotizacion.paquete_linea_ids) == 1 else self.env["incas.catalogo.vehiculo"]
         return {
             "partner_id": cotizacion.partner_id,
             "fecha_viaje": cotizacion.fecha_viaje,
@@ -296,6 +307,8 @@ class IncasReserva(models.Model):
             "cantidad_ninos": cotizacion.cantidad_ninos,
             "moneda": cotizacion.moneda,
             "responsable_id": cotizacion.responsable_id,
+            "vehiculo_id": vehiculo,
+            "vehiculo_seleccionado": vehiculo.name if vehiculo else False,
             "observaciones": cotizacion.observaciones,
         }
 
@@ -339,6 +352,13 @@ class IncasReserva(models.Model):
         return False
 
     @api.model
+    def _buscar_vehiculo_web(self, servicio, reserva_data):
+        nombre = reserva_data.get("vehiculo_seleccionado")
+        if not servicio or servicio.tipo_servicio != "transporte":
+            return self.env["incas.catalogo.vehiculo"]
+        return servicio.obtener_vehiculo_transporte(nombre=nombre)
+
+    @api.model
     def _obtener_partner_web(self, reserva_data):
         partner_model = self.env["res.partner"].sudo()
         email = (reserva_data.get("email") or "").strip()
@@ -365,6 +385,7 @@ class IncasReserva(models.Model):
         servicio = self._buscar_servicio_web(reserva_data)
         if not servicio:
             raise ValueError("No se encontró el servicio en Odoo")
+        vehiculo = self._buscar_vehiculo_web(servicio, reserva_data)
         partner = self._obtener_partner_web(reserva_data)
         moneda = reserva_data.get("moneda") or reserva_data.get("moneda_usuario") or "USD"
         fecha_inicio = self._normalizar_fecha_web(reserva_data.get("fecha_inicio"))
@@ -384,7 +405,8 @@ class IncasReserva(models.Model):
             "fecha_fin": fecha_fin,
             "fecha_viaje": fecha_inicio or self._normalizar_fecha_web(reserva_data.get("fecha_viaje")),
             "turno": reserva_data.get("turno"),
-            "vehiculo_seleccionado": reserva_data.get("vehiculo_seleccionado"),
+            "vehiculo_id": vehiculo.id,
+            "vehiculo_seleccionado": vehiculo.name if vehiculo else reserva_data.get("vehiculo_seleccionado"),
             "idioma": reserva_data.get("idioma") or "es",
             "canal_venta": "web",
             "servicio_id": resumen["servicio_id"].id,
@@ -411,9 +433,15 @@ class IncasReserva(models.Model):
     def _crear_cotizacion_web(self, reserva_data, partner, servicio, moneda, fecha_viaje):
         cotizacion_model = self.env["incas.cotizacion"].sudo()
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
-        descuento = float(reserva_data.get("descuento") or reserva_data.get("descuento_usd") or servicio.descuento or 0)
-        precio_adulto = self._convertir_desde_usd(servicio.precio_adulto or 0, moneda, rates)
-        precio_nino = self._convertir_desde_usd(servicio.precio_nino or 0, moneda, rates)
+        vehiculo = self._buscar_vehiculo_web(servicio, reserva_data)
+        tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo) if servicio.tipo_servicio == "transporte" else {
+            "precio_adulto": servicio.precio_adulto or 0,
+            "precio_nino": servicio.precio_nino or 0,
+            "descuento": servicio.descuento or 0,
+        }
+        descuento = float(reserva_data.get("descuento") or reserva_data.get("descuento_usd") or tarifa["descuento"] or 0)
+        precio_adulto = self._convertir_desde_usd(tarifa["precio_adulto"] or 0, moneda, rates)
+        precio_nino = self._convertir_desde_usd(tarifa["precio_nino"] or 0, moneda, rates)
         return cotizacion_model.create(
             {
                 "partner_id": partner.id,
@@ -434,6 +462,7 @@ class IncasReserva(models.Model):
                         0,
                         {
                             "servicio_id": servicio.id,
+                            "vehiculo_id": vehiculo.id,
                             "precio_adulto": precio_adulto,
                             "precio_nino": precio_nino,
                             "descuento": descuento,
@@ -583,11 +612,30 @@ class IncasReserva(models.Model):
                         "cantidad_ninos": values["cantidad_ninos"],
                         "moneda": values["moneda"],
                         "responsable_id": values["responsable_id"].id,
+                        "vehiculo_id": values["vehiculo_id"].id,
+                        "vehiculo_seleccionado": values["vehiculo_seleccionado"],
                         "observaciones": values["observaciones"],
                     }
                 )
                 return vals
         servicio_id = vals.get("servicio_id")
+        if not servicio_id and vals.get("vehiculo_id") and len(self) == 1 and self.servicio_id and self.servicio_id.tipo_servicio == "transporte":
+            servicio = self.servicio_id
+            vehiculo = servicio.obtener_vehiculo_transporte(
+                nombre=vals.get("vehiculo_seleccionado"),
+                vehiculo_id=vals.get("vehiculo_id"),
+            )
+            if vehiculo and not vals.get("vehiculo_seleccionado"):
+                vals["vehiculo_seleccionado"] = vehiculo.name
+            tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo)
+            vals.setdefault("precio_adulto_usd", tarifa["precio_adulto"])
+            vals.setdefault("precio_nino_usd", tarifa["precio_nino"])
+            vals.setdefault("descuento", tarifa["descuento"])
+            moneda = vals.get("moneda") or self.moneda or "PEN"
+            rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
+            vals["precio_adulto"] = self._convertir_desde_usd(vals.get("precio_adulto_usd") or 0, moneda, rates)
+            vals["precio_nino"] = self._convertir_desde_usd(vals.get("precio_nino_usd") or 0, moneda, rates)
+            return vals
         if not servicio_id:
             return vals
         servicio = self.env["incas.servicio.catalogo"].browse(servicio_id)
@@ -597,9 +645,26 @@ class IncasReserva(models.Model):
         vals.setdefault("tipo_tour", servicio.tipo_tour)
         vals.setdefault("estilo_transporte_id", servicio.estilo_transporte_id.id)
         vals.setdefault("servicio_nombre", servicio.name)
-        vals.setdefault("precio_adulto_usd", servicio.precio_adulto)
-        vals.setdefault("precio_nino_usd", servicio.precio_nino)
-        vals.setdefault("descuento", servicio.descuento)
+        vehiculo = False
+        if servicio.tipo_servicio == "transporte":
+            vehiculo = servicio.obtener_vehiculo_transporte(
+                nombre=vals.get("vehiculo_seleccionado"),
+                vehiculo_id=vals.get("vehiculo_id"),
+            )
+            if vehiculo and not vals.get("vehiculo_id"):
+                vals["vehiculo_id"] = vehiculo.id
+            if vehiculo and not vals.get("vehiculo_seleccionado"):
+                vals["vehiculo_seleccionado"] = vehiculo.name
+            tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo)
+            vals.setdefault("precio_adulto_usd", tarifa["precio_adulto"])
+            vals.setdefault("precio_nino_usd", tarifa["precio_nino"])
+            vals.setdefault("descuento", tarifa["descuento"])
+        else:
+            vals.setdefault("vehiculo_id", False)
+            vals.setdefault("vehiculo_seleccionado", False)
+            vals.setdefault("precio_adulto_usd", servicio.precio_adulto)
+            vals.setdefault("precio_nino_usd", servicio.precio_nino)
+            vals.setdefault("descuento", servicio.descuento)
         moneda = vals.get("moneda") or "PEN"
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
         vals["precio_adulto"] = self._convertir_desde_usd(vals.get("precio_adulto_usd") or 0, moneda, rates)
@@ -647,9 +712,34 @@ class IncasReserva(models.Model):
             record.tipo_tour = record.servicio_id.tipo_tour
             record.estilo_transporte_id = record.servicio_id.estilo_transporte_id
             record.servicio_nombre = record.servicio_id.name
-            record.precio_adulto_usd = record.servicio_id.precio_adulto
-            record.precio_nino_usd = record.servicio_id.precio_nino
-            record.descuento = record.servicio_id.descuento
+            if record.servicio_id.tipo_servicio == "transporte":
+                record.vehiculo_id = record.servicio_id.obtener_vehiculo_transporte(
+                    nombre=record.vehiculo_seleccionado,
+                    vehiculo_id=record.vehiculo_id.id,
+                )
+                record.vehiculo_seleccionado = record.vehiculo_id.name if record.vehiculo_id else False
+                tarifa = record.servicio_id.obtener_tarifa_vehiculo_transporte(record.vehiculo_id)
+                record.precio_adulto_usd = tarifa["precio_adulto"]
+                record.precio_nino_usd = tarifa["precio_nino"]
+                record.descuento = tarifa["descuento"]
+            else:
+                record.vehiculo_id = False
+                record.vehiculo_seleccionado = False
+                record.precio_adulto_usd = record.servicio_id.precio_adulto
+                record.precio_nino_usd = record.servicio_id.precio_nino
+                record.descuento = record.servicio_id.descuento
+            record._aplicar_moneda_desde_base()
+
+    @api.onchange("vehiculo_id")
+    def _onchange_vehiculo_id(self):
+        for record in self:
+            if record.tipo_servicio != "transporte" or not record.servicio_id:
+                continue
+            record.vehiculo_seleccionado = record.vehiculo_id.name if record.vehiculo_id else False
+            tarifa = record.servicio_id.obtener_tarifa_vehiculo_transporte(record.vehiculo_id)
+            record.precio_adulto_usd = tarifa["precio_adulto"]
+            record.precio_nino_usd = tarifa["precio_nino"]
+            record.descuento = tarifa["descuento"]
             record._aplicar_moneda_desde_base()
 
     @api.onchange("cotizacion_id")
@@ -688,6 +778,8 @@ class IncasReserva(models.Model):
                         "cantidad_ninos": resumen["cantidad_ninos"],
                         "moneda": resumen["moneda"],
                         "responsable_id": resumen["responsable_id"].id,
+                        "vehiculo_id": resumen["vehiculo_id"].id,
+                        "vehiculo_seleccionado": resumen["vehiculo_seleccionado"],
                         "observaciones": resumen["observaciones"],
                     }
                 )
