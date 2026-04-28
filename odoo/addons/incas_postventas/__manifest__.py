@@ -1,0 +1,23 @@
+{
+    "name": "Inca's Paradise Postventas",
+    "summary": "Seguimiento de casos postventa, reclamos y atencion al cliente",
+    "version": "19.0.1.0.0",
+    "category": "Inca's Paradise",
+    "author": "Inca's Paradise",
+    "license": "LGPL-3",
+    "depends": ["incas_reservas", "incas_operaciones", "contacts", "mail"],
+    "data": [
+        "security/ir.model.access.csv",
+        "data/incas_postventas_sequence.xml",
+        "views/incas_postventa_legacy_views.xml",
+        "views/incas_postventa_caso_views.xml",
+        "views/incas_postventa_encuesta_views.xml",
+        "views/incas_postventa_reclamo_views.xml",
+        "views/incas_postventa_accion_views.xml",
+        "views/res_partner_views.xml",
+        "views/incas_reserva_views.xml",
+        "views/incas_postventas_menu.xml",
+    ],
+    "application": False,
+    "installable": True,
+}
