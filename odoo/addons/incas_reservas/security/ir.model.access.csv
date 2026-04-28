@@ -9,6 +9,11 @@ access_incas_servicio_catalogo_admin,access.incas.servicio.catalogo.admin,model_
 access_incas_servicio_catalogo_reservas,access.incas.servicio.catalogo.reservas,model_incas_servicio_catalogo,incas_core.group_incas_core_reservas,1,1,0,0
 access_incas_servicio_catalogo_operaciones,access.incas.servicio.catalogo.operaciones,model_incas_servicio_catalogo,incas_core.group_incas_core_operaciones,1,1,0,0
 access_incas_servicio_catalogo_gerencia,access.incas.servicio.catalogo.gerencia,model_incas_servicio_catalogo,incas_core.group_incas_core_gerencia,1,1,0,0
+access_incas_horario_opcion_system,access.incas.horario.opcion.system,model_incas_horario_opcion,base.group_system,1,1,1,1
+access_incas_horario_opcion_admin,access.incas.horario.opcion.admin,model_incas_horario_opcion,incas_core.group_incas_core_admin,1,1,1,1
+access_incas_horario_opcion_reservas,access.incas.horario.opcion.reservas,model_incas_horario_opcion,incas_core.group_incas_core_reservas,1,1,0,0
+access_incas_horario_opcion_operaciones,access.incas.horario.opcion.operaciones,model_incas_horario_opcion,incas_core.group_incas_core_operaciones,1,1,0,0
+access_incas_horario_opcion_gerencia,access.incas.horario.opcion.gerencia,model_incas_horario_opcion,incas_core.group_incas_core_gerencia,1,1,0,0
 access_incas_catalogo_vehiculo_system,access.incas.catalogo.vehiculo.system,model_incas_catalogo_vehiculo,base.group_system,1,1,1,1
 access_incas_catalogo_vehiculo_admin,access.incas.catalogo.vehiculo.admin,model_incas_catalogo_vehiculo,incas_core.group_incas_core_admin,1,1,1,1
 access_incas_catalogo_vehiculo_reservas,access.incas.catalogo.vehiculo.reservas,model_incas_catalogo_vehiculo,incas_core.group_incas_core_reservas,1,1,0,0

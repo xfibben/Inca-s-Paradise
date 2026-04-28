@@ -11,7 +11,8 @@ class IncasCotizacionPaqueteLinea(models.Model):
     moneda = fields.Selection(related="cotizacion_id.moneda", string="Moneda", readonly=True)
     sequence = fields.Integer(string="Secuencia", default=10)
     fecha = fields.Date(string="Fecha")
-    horario = fields.Char(string="Horario")
+    horario = fields.Text(string="Horario")
+    horario_id = fields.Many2one("incas.horario.opcion", string="Horario", domain="[('servicio_id', '=', servicio_id)]")
     servicio_id = fields.Many2one("incas.servicio.catalogo", string="Servicio", required=True)
     vehiculo_id = fields.Many2one("incas.catalogo.vehiculo", string="Vehículo")
     vehiculo_disponible_ids = fields.Many2many("incas.catalogo.vehiculo", compute="_compute_vehiculo_disponible_ids")
@@ -104,12 +105,19 @@ class IncasCotizacionPaqueteLinea(models.Model):
             hora_salida = str(item.get("horaSalida") or item.get("hora_salida") or "").strip()
             rango = " - ".join(valor for valor in [hora_entrada, hora_salida] if valor)
             if titulo and rango:
-                horarios.append(f"{titulo}: {rango}")
+                horarios.append(f"- {titulo}: {rango}")
             elif titulo:
-                horarios.append(titulo)
+                horarios.append(f"- {titulo}")
             elif rango:
-                horarios.append(rango)
-        return " | ".join(horarios) or False
+                horarios.append(f"- {rango}")
+        return "\n".join(horarios) or False
+
+    def _horario_por_defecto(self, servicio):
+        if not servicio:
+            return self.env["incas.horario.opcion"]
+        return self.env["incas.horario.opcion"].search(
+            [("servicio_id", "=", servicio.id)], order="sequence, id", limit=1
+        )
 
     def _convertir_desde_usd(self, monto_usd, moneda=None):
         moneda = moneda or self.cotizacion_id.moneda or "USD"
@@ -298,7 +306,8 @@ class IncasCotizacionPaqueteLinea(models.Model):
             record.nombre = record.servicio_id.name
             for campo, valor in record._obtener_snapshot_servicio(record.servicio_id).items():
                 record[campo] = valor
-            record.horario = record._horario_desde_schedule_items(record.schedule_items_data)
+            record.horario_id = record._horario_por_defecto(record.servicio_id)
+            record.horario = record.horario_id.name or False
             if record.servicio_id.tipo_servicio == "transporte":
                 record.vehiculo_id = record.servicio_id.obtener_vehiculo_transporte()
                 record._aplicar_tarifa_vehiculo()
@@ -315,6 +324,11 @@ class IncasCotizacionPaqueteLinea(models.Model):
     @api.onchange("vehiculo_id")
     def _onchange_vehiculo_id(self):
         self._aplicar_tarifa_vehiculo()
+
+    @api.onchange("horario_id")
+    def _onchange_horario_id(self):
+        for record in self:
+            record.horario = record.horario_id.name or False
 
     @api.onchange("precio_adulto", "precio_nino", "descuento")
     def _onchange_precios_visibles(self):
@@ -335,6 +349,12 @@ class IncasCotizacionPaqueteLinea(models.Model):
             servicio = self.env["incas.servicio.catalogo"].browse(servicio_id)
             if servicio.exists():
                 values.setdefault("nombre", servicio.name)
+                horario = self._horario_por_defecto(servicio)
+                if not values.get("horario_id") and horario:
+                    values["horario_id"] = horario.id
+                if values.get("horario_id"):
+                    horario = self.env["incas.horario.opcion"].browse(values["horario_id"])
+                    values["horario"] = horario.name or False
                 vehiculo = False
                 if servicio.tipo_servicio == "transporte":
                     vehiculo = servicio.obtener_vehiculo_transporte(vehiculo_id=values.get("vehiculo_id"))
@@ -351,7 +371,6 @@ class IncasCotizacionPaqueteLinea(models.Model):
                 snapshot = self._obtener_snapshot_servicio(servicio)
                 for campo, valor in snapshot.items():
                     values.setdefault(campo, valor)
-                values.setdefault("horario", self._horario_desde_schedule_items(values.get("schedule_items_data")))
             processed_vals_list.append(self._preparar_vals_monetarios(values))
         return super().create(processed_vals_list)
 
@@ -371,6 +390,12 @@ class IncasCotizacionPaqueteLinea(models.Model):
                 servicio = self.env["incas.servicio.catalogo"].browse(servicio_id)
                 if servicio.exists():
                     values.setdefault("nombre", servicio.name)
+                    horario = self._horario_por_defecto(servicio)
+                    if not values.get("horario_id") and horario:
+                        values["horario_id"] = horario.id
+                    if values.get("horario_id"):
+                        horario = self.env["incas.horario.opcion"].browse(values["horario_id"])
+                        values["horario"] = horario.name or False
                     vehiculo = False
                     if servicio.tipo_servicio == "transporte":
                         vehiculo = servicio.obtener_vehiculo_transporte(vehiculo_id=values.get("vehiculo_id"))
@@ -387,6 +412,8 @@ class IncasCotizacionPaqueteLinea(models.Model):
                     snapshot = record._obtener_snapshot_servicio(servicio)
                     for campo, valor in snapshot.items():
                         values.setdefault(campo, valor)
-                    values.setdefault("horario", record._horario_desde_schedule_items(values.get("schedule_items_data")))
+            elif values.get("horario_id"):
+                horario = self.env["incas.horario.opcion"].browse(values["horario_id"])
+                values["horario"] = horario.name or False
             super(IncasCotizacionPaqueteLinea, record).write(record._preparar_vals_monetarios(values))
         return True

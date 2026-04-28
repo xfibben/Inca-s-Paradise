@@ -102,6 +102,55 @@ class IncasServicioCatalogo(models.Model):
         except (TypeError, ValueError, json.JSONDecodeError):
             return []
 
+    def _horarios_desde_schedule_items(self, schedule_items_data):
+        if not schedule_items_data:
+            return []
+        if isinstance(schedule_items_data, str):
+            items = self._json_lista(schedule_items_data)
+        else:
+            items = schedule_items_data if isinstance(schedule_items_data, list) else []
+        horarios = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            titulo = str(item.get("title") or "").strip()
+            hora_entrada = str(
+                item.get("horaEntrada") or item.get("hora_entrada") or ""
+            ).strip()
+            hora_salida = str(
+                item.get("horaSalida") or item.get("hora_salida") or ""
+            ).strip()
+            rango = " - ".join(valor for valor in [hora_entrada, hora_salida] if valor)
+            if titulo and rango:
+                valor = f"{titulo}: {rango}"
+            elif titulo:
+                valor = titulo
+            else:
+                valor = rango
+            if valor and valor not in horarios:
+                horarios.append(valor)
+        return horarios
+
+    def _sync_horarios_servicio(self, servicio, schedule_items_data):
+        horario_model = self.env["incas.horario.opcion"]
+        existentes = horario_model.search([("servicio_id", "=", servicio.id)])
+        nombres = self._horarios_desde_schedule_items(schedule_items_data)
+        vistos = []
+        for indice, nombre in enumerate(nombres, start=1):
+            valores = {
+                "name": nombre,
+                "sequence": indice * 10,
+                "servicio_id": servicio.id,
+            }
+            horario = existentes.filtered(lambda item: item.name == nombre)[:1]
+            if horario:
+                horario.write(valores)
+                vistos.append(horario.id)
+            else:
+                nuevo = horario_model.create(valores)
+                vistos.append(nuevo.id)
+        (existentes - horario_model.browse(vistos)).unlink()
+
     def _obtener_detalle_transporte(self):
         self.ensure_one()
         if self.tipo_servicio != "transporte":
@@ -458,6 +507,7 @@ class IncasServicioCatalogo(models.Model):
                 detail.write(detail_values)
             else:
                 tour_model.create({"servicio_id": service.id, **detail_values})
+            self._sync_horarios_servicio(service, item.get("scheduleItems"))
         stale_records = self.search(
             [("tipo_servicio", "=", "tour"), ("strapi_id", "not in", seen_ids)]
         )
