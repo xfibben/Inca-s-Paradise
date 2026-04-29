@@ -1,6 +1,6 @@
 import json
 
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class IncasCatalogoTransporte(models.Model):
@@ -15,6 +15,11 @@ class IncasCatalogoTransporte(models.Model):
     destino_origen_data = fields.Text(string="Destino origen")
     destino_llegada_data = fields.Text(string="Destino llegada")
     modelo_vehiculo = fields.Char(string="Modelo de vehículo")
+    vehiculo_ids = fields.Many2many(
+        "incas.catalogo.vehiculo",
+        string="Vehículos",
+        compute="_compute_vehiculo_ids",
+    )
     duracion_viaje = fields.Char(string="Duración del viaje")
     distancia = fields.Char(string="Distancia")
     descripcion_origen = fields.Text(string="Descripción origen")
@@ -36,6 +41,11 @@ class IncasCatalogoTransporte(models.Model):
     def action_sync_from_strapi(self):
         self.env["incas.servicio.catalogo"].sync_from_strapi()
         return True
+
+    @api.depends("precios_data", "servicio_id")
+    def _compute_vehiculo_ids(self):
+        for record in self:
+            record.vehiculo_ids = record.servicio_id.obtener_vehiculos_transporte() if record.servicio_id else False
 
     def _json_legible(self, valor):
         if not valor:

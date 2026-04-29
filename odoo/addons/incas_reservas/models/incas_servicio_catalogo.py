@@ -102,6 +102,34 @@ class IncasServicioCatalogo(models.Model):
         except (TypeError, ValueError, json.JSONDecodeError):
             return []
 
+    @api.model
+    def _registros_relacion_strapi(self, valor):
+        if not valor:
+            return []
+        if isinstance(valor, dict) and "data" in valor:
+            valor = valor.get("data")
+        registros = valor if isinstance(valor, list) else [valor]
+        normalizados = []
+        for registro in registros:
+            if not isinstance(registro, dict):
+                continue
+            atributos = registro.get("attributes") if isinstance(registro.get("attributes"), dict) else {}
+            valores = {**atributos, **{key: value for key, value in registro.items() if key != "attributes"}}
+            normalizados.append(valores)
+        return normalizados
+
+    @api.model
+    def _vehiculos_desde_precio(self, precio):
+        if not isinstance(precio, dict):
+            return []
+        return self._registros_relacion_strapi(precio.get("vehiculo"))
+
+    @api.model
+    def _lista_precios_strapi(self, valor):
+        if not valor:
+            return []
+        return valor if isinstance(valor, list) else [valor]
+
     def _horarios_desde_schedule_items(self, schedule_items_data):
         if not schedule_items_data:
             return []
@@ -164,13 +192,24 @@ class IncasServicioCatalogo(models.Model):
         for precio in self._json_lista(detalle.precios_data):
             if not isinstance(precio, dict):
                 continue
-            for vehiculo in precio.get("vehiculo") or []:
-                if not isinstance(vehiculo, dict):
-                    continue
+            for vehiculo in self._vehiculos_desde_precio(precio):
                 vehiculo_id = vehiculo.get("id")
                 if vehiculo_id and vehiculo_id not in ids:
                     ids.append(vehiculo_id)
         return ids
+
+    def _obtener_document_ids_strapi_vehiculos_transporte(self):
+        self.ensure_one()
+        detalle = self._obtener_detalle_transporte()
+        document_ids = []
+        for precio in self._json_lista(detalle.precios_data):
+            if not isinstance(precio, dict):
+                continue
+            for vehiculo in self._vehiculos_desde_precio(precio):
+                document_id = vehiculo.get("documentId")
+                if document_id and document_id not in document_ids:
+                    document_ids.append(document_id)
+        return document_ids
 
     def obtener_vehiculos_transporte(self):
         self.ensure_one()
@@ -178,11 +217,16 @@ class IncasServicioCatalogo(models.Model):
             return self.env["incas.catalogo.vehiculo"]
         vehiculo_model = self.env["incas.catalogo.vehiculo"]
         ids_strapi = self._obtener_ids_strapi_vehiculos_transporte()
-        if not ids_strapi:
+        document_ids_strapi = self._obtener_document_ids_strapi_vehiculos_transporte()
+        if not ids_strapi and not document_ids_strapi:
             return vehiculo_model
-        return vehiculo_model.search([("strapi_id", "in", ids_strapi)])
+        return vehiculo_model.search([
+            "|",
+            ("strapi_id", "in", ids_strapi),
+            ("strapi_document_id", "in", document_ids_strapi),
+        ])
 
-    def obtener_vehiculo_transporte(self, nombre=None, vehiculo_id=None):
+    def obtener_vehiculo_transporte(self, nombre=None, vehiculo_id=None, vehiculo_actual=None, usar_default=True):
         self.ensure_one()
         vehiculos = self.obtener_vehiculos_transporte()
         if vehiculo_id:
@@ -193,20 +237,29 @@ class IncasServicioCatalogo(models.Model):
             vehiculo = vehiculos.filtered(lambda item: item.name == nombre)
             if vehiculo:
                 return vehiculo[:1]
-        return vehiculos[:1]
+        if vehiculo_actual and vehiculo_actual.id in vehiculos.ids:
+            return vehiculo_actual[:1]
+        if usar_default:
+            return vehiculos[:1]
+        return self.env["incas.catalogo.vehiculo"]
 
     def obtener_tarifa_vehiculo_transporte(self, vehiculo):
         self.ensure_one()
         detalle = self._obtener_detalle_transporte()
         vehiculo_strapi_id = vehiculo.strapi_id if vehiculo else False
         vehiculo_nombre = vehiculo.name if vehiculo else False
+        vehiculo_document_id = vehiculo.strapi_document_id if vehiculo else False
         for precio in self._json_lista(detalle.precios_data):
             if not isinstance(precio, dict):
                 continue
-            for item in precio.get("vehiculo") or []:
-                if not isinstance(item, dict):
-                    continue
+            for item in self._vehiculos_desde_precio(precio):
                 if vehiculo_strapi_id and item.get("id") == vehiculo_strapi_id:
+                    return {
+                        "precio_adulto": float(precio.get("precioAdulto") or 0),
+                        "precio_nino": float(precio.get("precioNino") or 0),
+                        "descuento": float(precio.get("descuento") or 0),
+                    }
+                if vehiculo_document_id and item.get("documentId") == vehiculo_document_id:
                     return {
                         "precio_adulto": float(precio.get("precioAdulto") or 0),
                         "precio_nino": float(precio.get("precioNino") or 0),
@@ -543,19 +596,20 @@ class IncasServicioCatalogo(models.Model):
                 estilo = estilo_model.search(
                     [("strapi_id", "=", tipos_transporte[0].get("id"))], limit=1
                 )
+            precios = self._lista_precios_strapi(item.get("precios") or item.get("precio"))
             values = {
                 "name": item.get("nombre"),
                 "tipo_servicio": "transporte",
                 "tipo_tour": False,
                 "estilo_transporte_id": estilo.id if estilo else False,
                 "precio_adulto": float(
-                    ((item.get("precios") or [{}])[0]).get("precioAdulto") or 0
+                    ((precios or [{}])[0]).get("precioAdulto") or 0
                 ),
                 "precio_nino": float(
-                    ((item.get("precios") or [{}])[0]).get("precioNino") or 0
+                    ((precios or [{}])[0]).get("precioNino") or 0
                 ),
                 "descuento": float(
-                    ((item.get("precios") or [{}])[0]).get("descuento") or 0
+                    ((precios or [{}])[0]).get("descuento") or 0
                 ),
                 "strapi_id": strapi_id,
                 "strapi_document_id": item.get("documentId"),
@@ -584,7 +638,7 @@ class IncasServicioCatalogo(models.Model):
                 "tipos_transporte_data": self._strapi_texto_json(item.get("tipos_transporte")),
                 "seo_title": item.get("seoTitle"),
                 "seo_description": item.get("seoDescription"),
-                "precios_data": self._strapi_texto_json(item.get("precios")),
+                "precios_data": self._strapi_texto_json(precios),
             }
             detail = transporte_model.search([("servicio_id", "=", service.id)], limit=1)
             if detail:

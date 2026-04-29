@@ -205,7 +205,15 @@
                             <field name="paquete_linea_ids">
                                 <list editable="bottom">
                                     <field name="servicio_id" />
-                                    <field name="vehiculo_id" optional="hide" />
+                                    <field
+                                        name="vehiculo_disponible_ids"
+                                        column_invisible="1"
+                                    />
+                                    <field
+                                        name="vehiculo_id"
+                                        invisible="tipo_servicio != 'transporte'"
+                                        domain="[('id', 'in', vehiculo_disponible_ids)]"
+                                    />
                                     <field name="fecha" />
                                     <field name="horario_id" />
                                     <button

@@ -387,6 +387,7 @@ def render_cotizacion_html(cotizacion):
                     fila("Estado", cotizacion.state),
                 ],
             ),
+            _tabla_lineas_cotizacion(cotizacion) if resumen["tipo_servicio"] == "paquete" else "",
         ],
     )
 
@@ -407,10 +408,65 @@ def _tipo_linea_paquete(linea):
     return texto(linea.estilo_transporte_id.display_name)
 
 
-def _vehiculo_linea_paquete(linea):
+def _vehiculo_record_linea_paquete(linea):
     if linea.tipo_servicio != "transporte":
+        return linea.env["incas.catalogo.vehiculo"]
+    if linea.vehiculo_id:
+        return linea.vehiculo_id
+    if linea.servicio_id:
+        return linea.servicio_id.obtener_vehiculo_transporte()
+    return linea.env["incas.catalogo.vehiculo"]
+
+
+def _vehiculo_linea_paquete(linea):
+    vehiculo = _vehiculo_record_linea_paquete(linea)
+    return vehiculo.name if vehiculo else ""
+
+
+def _tabla_lineas_cotizacion(cotizacion):
+    lineas = cotizacion.paquete_linea_ids.sorted(
+        lambda linea: (linea.sequence, linea.id)
+    )
+    if not lineas:
         return ""
-    return linea.vehiculo_id.name or ""
+    filas = []
+    for indice, linea in enumerate(lineas, start=1):
+        filas.append(
+            f"""
+            <tr>
+              <td>{indice}</td>
+              <td>{escape(texto(linea.nombre))}</td>
+              <td>{escape(_tipo_linea_paquete(linea))}</td>
+              <td>{escape(fecha(linea.fecha))}</td>
+              <td>{escape(texto(_vehiculo_linea_paquete(linea)))}</td>
+              <td>{escape(monto(cotizacion.moneda, linea.precio_adulto))}</td>
+              <td>{escape(monto(cotizacion.moneda, linea.precio_nino))}</td>
+              <td>{escape(f'{numero(linea.descuento):.2f}%' if numero(linea.descuento) else '-')}</td>
+            </tr>
+            """
+        )
+    return f"""
+    <div class="section">
+      <div class="section-title">LÍNEAS DEL PAQUETE</div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Servicio</th>
+            <th>Tipo</th>
+            <th>Fecha</th>
+            <th>Vehículo</th>
+            <th>Precio adulto</th>
+            <th>Precio niño</th>
+            <th>Descuento</th>
+          </tr>
+        </thead>
+        <tbody>
+          {''.join(filas)}
+        </tbody>
+      </table>
+    </div>
+    """
 
 
 def _tabla_resumen_paquete(cotizacion):
@@ -911,7 +967,7 @@ def _bloque_transporte_editorial(indice, linea, detalle):
             linea.tipos_transporte_data or detalle.tipos_transporte_data
         )
     ]
-    vehiculo = linea.vehiculo_id or linea.servicio_id.obtener_vehiculo_transporte()
+    vehiculo = _vehiculo_record_linea_paquete(linea)
     galeria = _render_galeria(
         linea,
         vehiculo.imagen_data if vehiculo else False,

@@ -10,6 +10,7 @@
                 <field name="precio_adulto"/>
                 <field name="precio_nino"/>
                 <field name="descuento"/>
+                <field name="vehiculo_ids" widget="many2many_tags"/>
                 <field name="slug"/>
                 <field name="strapi_id"/>
                 <field name="active"/>
@@ -46,7 +47,7 @@
                             <field name="precio_adulto"/>
                             <field name="precio_nino"/>
                             <field name="descuento"/>
-                            <field name="modelo_vehiculo"/>
+                            <field name="vehiculo_ids" readonly="1"/>
                             <field name="duracion_viaje"/>
                             <field name="distancia"/>
                             <field name="active"/>
