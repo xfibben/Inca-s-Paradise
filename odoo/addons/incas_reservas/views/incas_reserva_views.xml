@@ -158,7 +158,12 @@
                                     <button name="action_open_popup" type="object" icon="fa-pencil-square-o" string="Editar"/>
                                     <field name="sequence" widget="handle"/>
                                     <field name="servicio_id"/>
-                                    <field name="vehiculo_id" optional="hide"/>
+                                    <field name="vehiculo_disponible_ids" column_invisible="1"/>
+                                    <field
+                                        name="vehiculo_id"
+                                        invisible="tipo_servicio != 'transporte'"
+                                        domain="[('id', 'in', vehiculo_disponible_ids)]"
+                                    />
                                     <field name="moneda" readonly="1"/>
                                     <field name="tipo_servicio" readonly="1"/>
                                     <field name="tipo_tour" readonly="1" optional="hide"/>

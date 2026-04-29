@@ -23,6 +23,7 @@ build/
 public/uploads/
 
 AGENTS.md
+.codex/
 frontend/package-lock.json
 
 backend/.env.example

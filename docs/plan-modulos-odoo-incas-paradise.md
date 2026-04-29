@@ -1,134 +1,113 @@
 # Plan de módulos Odoo - Inca's Paradise
 
-## Objetivo del documento
+## Objetivo
 
-Definir el plan de crecimiento del back office de Inca's Paradise en Odoo 19, partiendo del avance real ya implementado en el repositorio y aterrizando los bloques operativos solicitados:
+Actualizar el plan del back office Odoo según el estado real del código en este repositorio.
 
-1. Información y asesoría
-2. Ventas
-3. Reservas
-4. Proveedores
-5. Operaciones
-6. Post venta
-7. Planificación
-8. Infraestructura, equipamiento y activos
-9. Gestión de personas
-10. Marketing
-11. Tesorería
+Este documento separa:
 
-La idea no es crear once módulos custom aislados sin criterio. La regla propuesta es:
+- lo ya construido
+- lo ya iniciado pero incompleto
+- lo que todavía falta implementar
 
-- usar módulos estándar de Odoo donde ya resuelven bien el problema
-- crear módulos `incas_*` solo para la lógica propia del negocio turístico
-- mantener `incas_reservas` como núcleo transaccional ya existente
+La regla sigue siendo la misma:
 
----
+- usar estándar de Odoo cuando resuelve bien
+- crear módulos `incas_*` solo para lógica turística propia
+- mantener `incas_reservas` como núcleo transaccional del negocio
 
-## Estado actual confirmado en el proyecto
+## Estado real verificado en el repo
 
-### Base técnica existente
+### Base técnica
 
-Ya existe en el repo:
+Ya existe:
 
 - `odoo/config/odoo.conf`
 - `odoo/addons/`
-- Docker Compose para Odoo test y producción
 - base de trabajo `odoo_incas`
+- despliegue con Docker Compose
 
 ### Módulos custom existentes
 
-Actualmente existen:
+Actualmente existen en código:
 
 - `incas_core`
 - `incas_reservas`
-- `dms`
 - `incas_documentos`
+- `incas_operaciones`
+- `incas_postventas`
 
-### Avance real verificado en `incas_core`
+También está incluido:
 
-`incas_core` ya cumple la base estructural del BO:
+- `dms`
+
+## Estado por módulo
+
+### 1. `incas_core`
+
+#### Ya implementado
 
 - menú raíz `Inca's Paradise`
 - menú `Reservas`
 - menú `Operaciones`
 - menú `Configuración`
-- grupos base para:
+- grupos base:
   - administración
   - reservas
   - operaciones
   - gerencia
 
-### Avance real verificado en documentos
+#### Falta
 
-Se agregó el módulo `dms` en `odoo/addons/dms` para gestionar archivos, carpetas, etiquetas, categorías, almacenamientos y grupos de acceso.
+- grupos más finos por proceso si crecen proveedores, tesorería, RRHH o marketing
+- matriz de permisos por módulo futuro
+- validación formal de roles por ambiente
 
-Para adaptarlo al back office de Inca's Paradise se creó el módulo puente `incas_documentos`.
+### 2. `incas_documentos` + `dms`
 
-`dms` queda como motor documental.
+#### Ya implementado
 
-`incas_documentos` queda como integración propia del proyecto.
+- integración de `dms` dentro del menú de Inca's Paradise
+- menú `Documentos`
+- accesos a:
+  - archivos
+  - carpetas
+  - etiquetas
+  - categorías
+  - almacenamientos
+  - grupos de acceso
+- herencia de permisos:
+  - administración y gerencia con permisos tipo manager
+  - reservas y operaciones con permisos tipo user
+- override sobre `dms.file`
+- ampliación del tamaño máximo permitido
+- habilitación práctica para subir videos quitando extensiones de video de la lista prohibida
 
-#### Ubicación funcional
+#### Ya resuelto a nivel de arquitectura
 
-Documentos no pertenece solo a Reservas, Proveedores, Operaciones o RRHH.
+- documentos queda como capa transversal
+- `dms` sigue siendo motor documental
+- `incas_documentos` queda como módulo puente del proyecto
 
-Debe tratarse como una capa transversal del BO porque será usada por varios módulos:
+#### Falta
 
-- reservas
-- pasajeros
-- proveedores
-- operaciones
-- post venta
-- tesorería
-- gestión de personas
-- infraestructura y activos
+- vincular documentos a modelos de negocio concretos:
+  - reserva
+  - pasajero
+  - proveedor
+  - operación
+  - personal
+  - activos
+- definir estructura de carpetas y etiquetas por proceso
+- checklist documental por reserva y por pasajero
 
-#### Integración realizada
+### 3. `incas_reservas`
 
-`incas_documentos` agrega:
+#### Estado
 
-- dependencia explícita con `incas_core`
-- dependencia explícita con `dms`
-- menú `Documentos` dentro de `Inca's Paradise`
-- acceso a `Archivos`
-- acceso a `Carpetas`
-- configuración documental dentro de `Inca's Paradise > Configuración`
-- acceso a `Etiquetas`
-- acceso a `Categorías`
-- acceso a `Almacenamientos`
-- acceso a `Grupos de acceso`
+Es el módulo más avanzado del BO y ya supera una base simple de reservas.
 
-#### Permisos integrados
-
-Los grupos del BO quedan conectados con los grupos de DMS:
-
-- `Administrador BO` obtiene permisos de `DMS Manager`
-- `Gerencia` obtiene permisos de `DMS Manager`
-- `Reservas` obtiene permisos de `DMS User`
-- `Operaciones` obtiene permisos de `DMS User`
-
-#### Uso esperado
-
-Documentos debe servir para gestionar:
-
-- vouchers
-- comprobantes de pago
-- documentos de pasajeros
-- pasaportes
-- DNI o documentos equivalentes
-- archivos de reserva
-- contratos con proveedores
-- confirmaciones operativas
-- evidencias de incidencias
-- archivos de post venta
-- documentos internos de personal
-- documentos de activos o vehículos
-
-### Avance real verificado en `incas_reservas`
-
-`incas_reservas` ya tiene una base funcional importante y no debe rehacerse.
-
-#### Modelos ya presentes
+#### Modelos implementados
 
 - `incas.cotizacion`
 - `incas.reserva`
@@ -137,12 +116,29 @@ Documentos debe servir para gestionar:
 - `incas.servicio.catalogo`
 - `incas.catalogo.tour`
 - `incas.catalogo.transporte`
+- `incas.catalogo.vehiculo`
 - `incas.estilo.transporte`
 - `incas.cotizacion.paquete.linea`
+- `incas.hotel`
+- `incas.hotel.tarifa`
+- `incas.extra`
+- `incas.extra.tarifa`
+- `incas.horario.opcion`
 
-#### Funcionalidad ya presente en cotización
+#### Ya implementado en catálogo y sincronización
 
-La cotización ya maneja:
+- catálogo local de tours
+- catálogo local de transportes
+- catálogo local de vehículos
+- catálogo unificado de servicios
+- sincronización desde Strapi
+- actualización de tours
+- actualización de transportes
+- actualización de vehículos
+- sincronización de horarios desde `scheduleItems`
+- soporte de tarifas de transporte por vehículo leyendo `precios[]`
+
+#### Ya implementado en cotización
 
 - cliente principal
 - fecha de cotización
@@ -157,39 +153,46 @@ La cotización ya maneja:
 - estilo de transporte
 - servicio
 - paquete con múltiples líneas
-- precio adulto base USD
-- precio niño base USD
-- precio adulto convertido
-- precio niño convertido
-- descuento porcentual
-- cantidad de adultos
-- cantidad de niños
-- cantidad de pasajeros
+- conteo de items del paquete
+- exportación PDF de cotización
+- exportación PDF de detalle de paquete
+- cantidad de adultos y niños
+- cantidad total de pasajeros
 - moneda:
   - PEN
   - USD
   - EUR
-- monto total calculado
-- estados de cotización:
+- cálculo de precios y totales
+- descuento porcentual
+- hotel opcional:
+  - hotel
+  - tarifa
+  - noches
+  - habitaciones
+  - monto hotel
+- extra opcional:
+  - extra
+  - tarifa
+  - unidad
+  - cantidad
+  - monto extra
+- responsable
+- observaciones
+- estados:
   - borrador
   - enviada
   - aprobada
   - rechazada
   - cancelada
-- responsable
-- observaciones
 - relación con reservas
 
-#### Funcionalidad ya presente en reserva
+#### Ya implementado en reserva
 
-La reserva ya maneja:
-
-- código de reserva
+- código interno
 - ticket
-- token de acceso
+- token de acceso público
 - relación con cotización
-- cliente principal
-- snapshot de datos del cliente web:
+- snapshot de datos web:
   - nombre
   - email
   - teléfono
@@ -201,7 +204,6 @@ La reserva ya maneja:
 - fecha de fin
 - fecha de viaje
 - turno
-- vehículo seleccionado
 - idioma
 - canal de venta
 - tipo de servicio
@@ -209,117 +211,179 @@ La reserva ya maneja:
 - estilo de transporte
 - servicio
 - nombre del servicio
-- precio adulto y niño base USD
-- precio adulto y niño en moneda operativa
-- descuento
-- cantidad de adultos
-- cantidad de niños
-- cantidad de pasajeros
-- moneda
+- vehículo sugerido y vehículo seleccionado
+- hotel y extra asociados
+- precios base USD
+- precios convertidos por moneda
+- descuento porcentual
+- cantidad de adultos y niños
+- cantidad total de pasajeros
 - monto total
 - monto pagado
 - saldo pendiente
 - pago restante
 - monto final
-- estados de reserva:
-  - reservado
-  - por coordinar
-  - falta pago
-  - pagado
-  - completado
-  - finalizado
-  - cancelado
-- estado de pago calculado:
-  - pendiente
-  - parcial
-  - pagado
-  - reembolsado
 - pagos relacionados
 - pasajeros relacionados
-- responsable
-- observaciones
-- marca de origen web
+- origen web
+- comprobante PDF interno
+- comprobante PDF público por token
 
-#### Capas ya presentes alrededor de reservas
+#### Ya implementado en pagos
 
-Además del modelo, ya existen:
+- modelo `incas.pago`
+- proveedor:
+  - efectivo
+  - izipay
+  - paypal
+- método:
+  - efectivo
+  - tarjeta
+  - yape_qr
+  - paypal
+- moneda del pago
+- conversión de monto a moneda de la reserva
+- estado:
+  - pendiente
+  - pagado
+  - fallido
+  - reembolsado
+- transacción, orden, QR, IP y fecha de pago
+- actualización de pendientes al crear o editar pagos
 
-- secuencia de cotización
+#### Ya implementado en API y web
+
+- `GET /incas/api/pagos/tipo-cambio`
+- `POST /incas/api/pagos/iniciar`
+- `POST /incas/api/pagos/confirmar`
+- `POST /incas/api/reservas`
+- creación de reserva web desde Odoo
+- inicio de orden PayPal
+- confirmación de pago PayPal
+- generación de `ticket`
+- devolución de `reserva_id`
+- devolución de `voucher_url`
+- comprobante público en:
+  - `/incas/public/reserva/<id>/pdf/<token>`
+
+#### Ya implementado en operación auxiliar del módulo
+
 - cron de tipo de cambio
-- vistas para:
-  - catálogo de servicios
-  - catálogo de tours
-  - catálogo de transportes
-  - tipo de cambio
-  - cotización
-  - reserva
-  - pago
-  - pasajero
-- reportes de reservas
-- controladores para API y vistas públicas
+- secuencias
+- vistas de back office
+- reportes PDF
+- correo con PDF adjunto
+- sincronización con Google Sheets desde reserva
 
-### Conclusión del estado actual
+#### Falta
 
-La empresa no está empezando desde cero.
+- modelar de forma nativa precios de transporte por vehículo dentro de Odoo sin depender de JSON sincronizado
+- reprogramaciones
+- auditoría fina de cambios operativos
+- checklist documental por reserva
+- motivos de cancelación
+- reglas más claras para cobranzas parciales y vencimientos
+- flujo formal de reembolsos
+- integración real IziPay
+- separar mejor operación comercial vs operación ejecutada
 
-Ya tiene resuelta una parte importante de:
+### 4. `incas_operaciones`
 
-- estructura base del BO
-- seguridad base
-- menú principal
-- catálogo operativo inicial
-- cotización
-- reserva
-- pagos básicos
-- pasajeros
-- voucher y salida documental base
-- integración web inicial
+#### Estado
 
-Por eso el siguiente paso correcto no es rehacer `incas_reservas`, sino ordenar el crecimiento alrededor de ese núcleo.
+Existe, pero todavía no resuelve la operación turística completa.
 
----
+#### Ya implementado
 
-## Criterio de arquitectura propuesto
+- extensión de `mail.activity`
+- estado de ejecución:
+  - pendiente
+  - en_progreso
+  - finalizada
+- fecha hora de inicio
+- fecha hora de fin
+- duración en minutos
+- duración en horas
+- botones para iniciar y concluir actividad desde popup, formulario y lista
 
-### Lo que debe quedar en módulos custom `incas_*`
+#### Lo que realmente cubre hoy
 
-Crear custom para:
+- seguimiento básico de ejecución sobre actividades
 
-- lógica turística propia
-- flujos operativos propios del negocio
-- estados específicos del proceso de viaje
-- cálculo de precios del negocio
-- integración entre web, reservas y operación
-- trazabilidad específica de reservas, proveedores y servicios
+#### Lo que falta para que sea un módulo de operaciones real
 
-### Lo que debe quedar en módulos estándar de Odoo
+- modelo de servicio operativo
+- agenda operativa por fecha
+- asignación de guía
+- asignación de conductor
+- asignación de proveedor
+- asignación de vehículo real
+- incidencias operativas
+- endosos
+- estados operativos por reserva o tramo
+- tablero diario o semanal de operaciones
 
-Reusar estándar para:
+### 5. `incas_postventas`
 
-- CRM
-- agenda
-- compras
-- contabilidad
-- RRHH
-- planificación
-- helpdesk
+#### Estado
+
+Ya no está solo planeado. Ya existe en código y tiene una base funcional real.
+
+#### Modelos implementados
+
+- `incas.postventa`
+- `incas.postventa.caso`
+- `incas.postventa.encuesta`
+- `incas.postventa.reclamo`
+- `incas.postventa.accion`
+
+#### Ya implementado
+
+- menú `Postventas`
+- casos post viaje
 - encuestas
-- marketing
-- mantenimiento
-- flota
-- inventario si realmente aplica
+- reclamos
+- acciones correctivas
+- extensión de `res.partner` con datos de cliente:
+  - documento
+  - idioma preferido
+  - cumpleaños
+  - preferencias
+  - restricciones
+  - satisfacción promedio
+  - última encuesta
+  - conteo de reservas
+- extensión de `incas.reserva`:
+  - relación con casos postventa
+  - contador
+  - acción para crear caso
+- creación automática de caso si una reserva pasa a `finalizado`
+- un caso único por reserva
+- encuestas con métricas:
+  - NPS
+  - satisfacción general
+  - puntualidad
+  - atención del guía
+  - transporte
+  - comunicación previa
+  - cumplimiento del itinerario
+  - seguridad
+  - relación precio/calidad
+- detección de encuestas que requieren acción
+- reclamos con prioridad, motivo, canal y cierre
+- acciones correctivas con responsable, tipo, estado y resultado
 
-### Regla principal
+#### Lo que falta
 
-No conviene crear módulos custom para reemplazar completamente apps estándar como CRM, Compras, HR o Contabilidad.
+- envío real automatizado de encuesta por correo o link público
+- portal o formulario público para responder encuesta
+- integración con libro de reclamaciones formal si aplica
+- SLA y alertas de postventa
+- métricas y dashboards ejecutivos
 
-Conviene extenderlas o apoyarse en ellas.
+## Módulos planeados que todavía no existen
 
----
-
-## Mapa propuesto de módulos
-
-### 1. Información y asesoría
+### 6. Información y asesoría
 
 #### Módulo propuesto
 
@@ -334,30 +398,17 @@ Conviene extenderlas o apoyarse en ellas.
 
 #### Objetivo
 
-Gestionar consultas, leads y primer contacto comercial antes de la cotización.
+Gestionar leads, consultas y primer contacto antes de cotizar.
 
-#### Alcance mínimo
+#### Falta por implementar
 
 - registro de consulta
-- canal de ingreso
-- idioma
-- destino o servicio de interés
+- pipeline inicial
 - asesor asignado
-- prioridad
-- SLA de respuesta
-- historial de contacto
-- conversión a cotización
+- SLA comercial
+- conversión de lead a cotización
 
-#### Entregables mínimos
-
-- modelo de consulta o extensión CRM
-- pipeline inicial de atención
-- conversión a `incas.cotizacion`
-- tablero por asesor
-
----
-
-### 2. Ventas
+### 7. Ventas
 
 #### Módulo propuesto
 
@@ -371,65 +422,17 @@ Gestionar consultas, leads y primer contacto comercial antes de la cotización.
 
 #### Objetivo
 
-Ordenar el pipeline comercial sobre la cotización ya existente.
+Ordenar la capa comercial alrededor de la cotización ya construida.
 
-#### Alcance mínimo
+#### Falta por implementar
 
 - etapas comerciales
-- seguimiento de cotizaciones
-- recordatorios
-- fecha de vencimiento
+- vencimiento de cotización
 - motivos de pérdida
-- conversión a reserva
-- indicadores de cierre
-
-#### Entregables mínimos
-
-- pipeline comercial
 - actividades automáticas
-- métricas de conversión
 - trazabilidad lead -> cotización -> reserva
 
-#### Nota
-
-No usar `sale_management` al inicio salvo que se decida migrar la cotización al flujo estándar de ventas de Odoo.
-
----
-
-### 3. Reservas
-
-#### Módulo existente
-
-- `incas_reservas`
-
-#### Base Odoo actual
-
-- `mail`
-- `contacts`
-
-#### Estado
-
-Ya implementado de forma importante.
-
-#### Lo que falta reforzar
-
-- reprogramaciones
-- cambios operativos con auditoría
-- checklist documental
-- control de saldo y vencimientos
-- motivos de cancelación
-- rooming o agrupación si el negocio lo necesita
-
-#### Entregables siguientes
-
-- versión ampliada de reservas
-- mejores estados internos
-- trazabilidad de cambios
-- relación más fuerte con operación
-
----
-
-### 4. Proveedores
+### 8. Proveedores
 
 #### Módulo propuesto
 
@@ -443,105 +446,19 @@ Ya implementado de forma importante.
 
 #### Objetivo
 
-Gestionar operadores, hoteles, transportistas, guías y partners operativos.
+Gestionar hoteles, operadores, transportistas, guías y otros proveedores.
 
-#### Alcance mínimo
+#### Falta por implementar
 
-- ficha de proveedor
+- ficha de proveedor operativo
 - clasificación por tipo
 - tarifas pactadas
 - vigencias
 - documentos
-- moneda
-- condiciones operativas
 - evaluación
+- relación con operaciones
 
-#### Entregables mínimos
-
-- catálogo de proveedores operativos
-- matriz de tarifas
-- documentos asociados
-- integración con operaciones
-
----
-
-### 5. Operaciones
-
-#### Módulo propuesto
-
-- `incas_operaciones`
-
-#### Base Odoo recomendada
-
-- `project`
-- `calendar`
-- `mail`
-
-#### Objetivo
-
-Transformar una reserva confirmada en un servicio operativo ejecutable.
-
-#### Alcance mínimo
-
-- creación de servicio operativo
-- agenda operativa
-- asignación de responsable interno
-- asignación de proveedor
-- asignación de guía
-- incidencias
-- endosos
-- cambios operativos
-- estado de ejecución
-
-#### Entregables mínimos
-
-- tablero de operaciones
-- agenda diaria o semanal
-- ficha de servicio operativo
-- bitácora de incidencias
-
-#### Prioridad
-
-Es el bloque más importante después de reservas.
-
----
-
-### 6. Post venta
-
-#### Módulo propuesto
-
-- `incas_postventa`
-
-#### Base Odoo recomendada
-
-- `survey`
-- `helpdesk`
-- `mail`
-
-#### Objetivo
-
-Dar seguimiento al cliente después del servicio.
-
-#### Alcance mínimo
-
-- encuestas
-- satisfacción
-- NPS
-- reclamos
-- compensaciones
-- cierre del caso
-- recuperación del cliente
-
-#### Entregables mínimos
-
-- caso post viaje
-- encuesta automática
-- métricas de satisfacción
-- relación con operación y reserva
-
----
-
-### 7. Planificación
+### 9. Planificación
 
 #### Módulo propuesto
 
@@ -555,25 +472,17 @@ Dar seguimiento al cliente después del servicio.
 
 #### Objetivo
 
-Gestionar capacidad operativa y carga futura.
+Controlar capacidad futura, disponibilidad y carga operativa.
 
-#### Alcance mínimo
+#### Falta por implementar
 
 - calendario maestro
 - capacidad por fecha
 - bloqueos
 - disponibilidad por rol
-- alertas por sobrecarga
+- alertas de sobrecarga
 
-#### Entregables mínimos
-
-- tablero de capacidad
-- calendario maestro de carga
-- alertas de saturación
-
----
-
-### 8. Infraestructura, equipamiento y activos
+### 10. Infraestructura, equipamiento y activos
 
 #### Módulo propuesto
 
@@ -583,30 +492,20 @@ Gestionar capacidad operativa y carga futura.
 
 - `maintenance`
 - `fleet`
-- `stock` solo si aplica
+- `stock` si aplica
 
 #### Objetivo
 
 Controlar activos usados en la operación turística.
 
-#### Alcance mínimo
-
-- vehículos
-- equipos
-- mantenimiento
-- disponibilidad
-- responsable
-- costo asociado
-
-#### Entregables mínimos
+#### Falta por implementar
 
 - catálogo de activos
 - mantenimiento preventivo
+- disponibilidad
 - relación activo -> operación
 
----
-
-### 9. Gestión de personas
+### 11. Gestión de personas
 
 #### Módulo propuesto
 
@@ -620,32 +519,9 @@ Controlar activos usados en la operación turística.
 
 #### Objetivo
 
-Gestionar personal interno y perfiles operativos.
+Gestionar personal interno, roles, idiomas, certificaciones y disponibilidad.
 
-#### Alcance mínimo
-
-- ficha de empleado
-- rol
-- documentos
-- disponibilidad
-- vacaciones
-- habilidades
-- idiomas
-- certificaciones
-
-#### Entregables mínimos
-
-- padrón de personal
-- disponibilidad operativa
-- perfil operativo por colaborador
-
-#### Nota
-
-Nómina solo después de validación legal peruana.
-
----
-
-### 10. Marketing
+### 12. Marketing
 
 #### Módulo propuesto
 
@@ -659,26 +535,9 @@ Nómina solo después de validación legal peruana.
 
 #### Objetivo
 
-Segmentar y activar campañas sobre leads y clientes.
+Segmentar leads y clientes para campañas y fidelización.
 
-#### Alcance mínimo
-
-- segmentación
-- campañas
-- automatizaciones
-- seguimiento de conversión
-- seguimiento post viaje
-
-#### Entregables mínimos
-
-- segmentos base
-- campañas iniciales
-- automatizaciones simples
-- reporte de conversión comercial
-
----
-
-### 11. Tesorería
+### 13. Tesorería
 
 #### Módulo propuesto
 
@@ -692,282 +551,184 @@ Segmentar y activar campañas sobre leads y clientes.
 
 #### Objetivo
 
-Controlar cobros, egresos, saldos y flujo básico de caja.
+Controlar caja, cobros, egresos y relación entre reserva, cobro y pago a proveedor.
 
-#### Alcance mínimo
+### 14. Facturación
 
-- saldo por reserva
-- cuenta por cobrar
-- cuenta por pagar
-- caja diaria
-- egresos operativos
-- conciliación básica
+#### Módulo propuesto
 
-#### Entregables mínimos
+- `incas_facturacion`
 
-- tablero de caja
-- control de saldos
-- relación reserva -> cobro -> pago a proveedor
+#### Base Odoo recomendada
 
----
+- `account`
+- localización Perú
 
-## Módulos base de Odoo recomendados
+#### Objetivo
 
-### Instalar primero
+Resolver comprobantes, tributación y flujo formal SUNAT.
 
-- `Contactos` (`contacts`)
-- `CRM` (`crm`)
-- `Calendario` (`calendar`)
-- `Compras` (`purchase`)
-- `Contabilidad` (`account`)
-- `Contabilidad avanzada` (`account_accountant`)
-- `Proyecto` (`project`)
-- `Encuestas` (`survey`)
+### 15. Integraciones
 
-### Instalar en segunda etapa
+#### Módulo propuesto
 
-- `Helpdesk` (`helpdesk`)
-- `Planificación` (`planning`)
-- `Empleados` (`hr`)
-- `Ausencias` (`hr_holidays`)
+- `incas_integraciones`
 
-### Instalar solo si aplica
+#### Objetivo
 
-- `Flota` (`fleet`)
-- `Mantenimiento` (`maintenance`)
-- `Inventario` (`stock`)
-- `Email Marketing` (`mass_mailing`)
-- `Automatización de marketing` (`marketing_automation`)
+Centralizar integraciones externas hoy dispersas entre módulos.
 
-### Gestión documental
+#### Alcance recomendado
 
-Si la instancia es Enterprise:
+- Strapi
+- PayPal
+- IziPay
+- Google Sheets
+- correo transaccional
 
-- `Documentos` (`documents`)
-
-Si la instancia es Community:
-
-- usar adjuntos estándar de Odoo
-- evaluar módulo tercero de gestión documental si realmente hace falta
-
-En este proyecto ya se agregó `dms`, por lo que la decisión práctica actual es:
-
-- usar `dms` como reemplazo funcional de `documents`
-- usar `incas_documentos` como módulo puente para integrarlo al menú y permisos de Inca's Paradise
-- no mezclar reglas de negocio dentro de `dms`
-- relacionar documentos con reservas, proveedores, operaciones y RRHH desde módulos `incas_*` cuando se implemente cada fase
-
----
-
-## Roadmap por fases propuesto
+## Roadmap actualizado por fases
 
 ### Fase 0
 
-#### Estado
+#### Ya hecho
 
-Prácticamente resuelta en lo esencial.
+- estructura técnica base
+- addons locales
+- menús y grupos base
+- capa documental inicial
 
-#### Ya logrado
+#### Falta
 
-- Docker
-- base Odoo separada
-- `odoo.conf`
-- estructura local de addons
-- módulo base `incas_core`
-- seguridad y menús iniciales
-
-#### Falta por cerrar
-
-- operación formal de backups
-- lineamientos de restore
+- backups y restore formalizados
 - checklist de despliegue
-- validación de roles por ambiente
+- endurecimiento de permisos por ambiente
 
----
+### Fase 1
 
-### Fase 1A
+#### Ya hecho
 
-#### Estado
-
-Iniciada y avanzada.
-
-#### Ya logrado
-
-- `incas_reservas`
-- cotización
-- reserva
-- pasajeros
+- núcleo de cotizaciones
+- núcleo de reservas
 - pagos básicos
-- ticket
-- reportes base
-- API web inicial
-- cron de tipo de cambio
+- API pública para web
+- PDF y voucher público
+- sync inicial con Strapi
+- sync con Google Sheets
+- hoteles y extras
+- paquetes
+- vehículos y tarifas leídas desde Strapi
 
-#### Falta por cerrar
+#### Falta
 
+- IziPay real
 - reprogramaciones
-- controles de saldo más visibles
 - checklist documental
-- trazabilidad fina de cambios
-- ampliación de controles internos de reserva
-
----
-
-### Fase 1B
-
-#### Objetivo
-
-Abrir la capa comercial previa a reserva.
-
-#### Módulos
-
-- `incas_informacion`
-- `incas_ventas`
-
-#### Resultado esperado
-
-Todo lead debe poder convertirse en cotización y medirse.
-
-#### Esta debería ser la siguiente fase
-
-Sí. Es la siguiente fase recomendada.
-
----
+- auditoría de cambios
+- cobranzas parciales más robustas
+- motivos de cancelación y reembolso
+- modelo local más fuerte para tarifas por vehículo
 
 ### Fase 2
 
-#### Objetivo
+#### Estado real
 
-Resolver ejecución operativa real del servicio.
+Iniciada parcialmente.
 
-#### Módulos
+#### Ya hecho
+
+- `incas_operaciones` básico sobre actividades
+
+#### Falta
 
 - `incas_proveedores`
-- `incas_operaciones`
-
-#### Resultado esperado
-
-Toda reserva confirmada debe producir una operación asignable, trazable y controlable.
-
-#### Prioridad
-
-Muy alta. Es la fase más crítica después del frente comercial.
-
----
+- operación ejecutable por reserva
+- agenda operativa real
+- incidencias y endosos
 
 ### Fase 3
 
-#### Objetivo
+#### Estado real
 
-Mejorar experiencia del cliente y capacidad interna.
+También iniciada parcialmente.
 
-#### Módulos
+#### Ya hecho
 
-- `incas_postventa`
+- `incas_postventas` con casos, encuestas, reclamos y acciones
+
+#### Falta
+
+- automatización real de encuestas
+- dashboards de satisfacción
 - `incas_planificacion`
-
-#### Resultado esperado
-
-- medir satisfacción
-- atender incidencias post viaje
-- planificar capacidad
-
----
 
 ### Fase 4
 
-#### Objetivo
-
-Formalizar el control económico y tributario.
-
-#### Módulos
+#### Falta completa
 
 - `incas_tesoreria`
 - `incas_facturacion`
-
-#### Resultado esperado
-
-- caja
-- cobranza
-- pagos operativos
-- conciliación
-- documentos tributarios
-
----
+- localización Perú
+- flujo tributario
 
 ### Fase 5
 
-#### Objetivo
-
-Controlar activos y, solo si aplica, inventario operativo.
-
-#### Módulo
+#### Falta completa
 
 - `incas_infraestructura`
 
----
-
 ### Fase 6
 
-#### Objetivo
-
-Ordenar personal y disponibilidad interna.
-
-#### Módulo
+#### Falta completa
 
 - `incas_rrhh`
 
----
-
 ### Fase 7
 
-#### Objetivo
-
-Escalar CRM, campañas y fidelización.
-
-#### Módulo
+#### Falta completa
 
 - `incas_marketing`
 
----
+## Orden recomendado de trabajo desde el estado actual
 
-## Orden recomendado de implementación
+### Prioridad inmediata
 
-### Etapa inmediata
+1. cerrar huecos de `incas_reservas`
+2. volver operativo `incas_operaciones`
+3. construir `incas_proveedores`
 
-1. reforzar `incas_reservas`
-2. construir `incas_informacion`
-3. construir `incas_ventas`
+### Prioridad alta siguiente
 
-### Etapa crítica siguiente
+4. automatizar y cerrar `incas_postventas`
+5. construir `incas_informacion`
+6. construir `incas_ventas`
 
-4. construir `incas_proveedores`
-5. construir `incas_operaciones`
+### Prioridad media
 
-### Etapa de control y servicio
-
-6. construir `incas_postventa`
 7. construir `incas_planificacion`
 8. construir `incas_tesoreria`
+9. construir `incas_facturacion`
 
-### Etapa de madurez
+### Prioridad posterior
 
-9. construir `incas_infraestructura`
-10. construir `incas_rrhh`
-11. construir `incas_marketing`
+10. construir `incas_infraestructura`
+11. construir `incas_rrhh`
+12. construir `incas_marketing`
 
----
+## Lista final actualizada de módulos
 
-## Lista final de módulos `incas_*` propuestos
+### Ya existentes
 
 - `incas_core`
 - `incas_documentos`
+- `incas_reservas`
+- `incas_operaciones`
+- `incas_postventas`
+
+### Pendientes
+
 - `incas_informacion`
 - `incas_ventas`
-- `incas_reservas`
 - `incas_proveedores`
-- `incas_operaciones`
-- `incas_postventa`
 - `incas_planificacion`
 - `incas_infraestructura`
 - `incas_rrhh`
@@ -976,25 +737,25 @@ Escalar CRM, campañas y fidelización.
 - `incas_facturacion`
 - `incas_integraciones`
 
----
-
 ## Conclusión ejecutiva
 
-El proyecto ya tiene construido el núcleo más delicado:
+El proyecto no está en fase conceptual.
+
+Ya tiene:
 
 - base técnica Odoo
-- menú y seguridad base
-- cotización
-- reserva
+- seguridad y menús base
+- capa documental
+- núcleo transaccional fuerte de reservas
+- API web operativa
 - pagos básicos
-- pasajeros
-- flujo web inicial
+- postventa inicial real
+- operaciones básicas sobre actividades
 
-La siguiente decisión correcta no es rehacer reservas, sino:
+Lo correcto ahora no es planear desde cero, sino reconocer el avance real y cerrar lo que falta en este orden:
 
-1. cerrar huecos de `incas_reservas`
-2. ordenar `información y asesoría`
-3. ordenar `ventas`
-4. después abrir `proveedores` y `operaciones`
-
-Ese es el camino más sólido para que Inca's Paradise pase de un flujo transaccional básico a un back office turístico completo dentro de Odoo.
+1. reforzar `incas_reservas`
+2. convertir `incas_operaciones` en operación turística real
+3. crear `incas_proveedores`
+4. cerrar automatización de `incas_postventas`
+5. recién después abrir capa comercial más completa con `incas_informacion` e `incas_ventas`

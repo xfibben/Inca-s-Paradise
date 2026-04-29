@@ -357,7 +357,10 @@ class IncasCotizacionPaqueteLinea(models.Model):
                     values["horario"] = horario.name or False
                 vehiculo = False
                 if servicio.tipo_servicio == "transporte":
-                    vehiculo = servicio.obtener_vehiculo_transporte(vehiculo_id=values.get("vehiculo_id"))
+                    vehiculo = servicio.obtener_vehiculo_transporte(
+                        vehiculo_id=values.get("vehiculo_id"),
+                        usar_default=not values.get("vehiculo_id"),
+                    )
                     if vehiculo and not values.get("vehiculo_id"):
                         values["vehiculo_id"] = vehiculo.id
                     tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo)
@@ -398,7 +401,11 @@ class IncasCotizacionPaqueteLinea(models.Model):
                         values["horario"] = horario.name or False
                     vehiculo = False
                     if servicio.tipo_servicio == "transporte":
-                        vehiculo = servicio.obtener_vehiculo_transporte(vehiculo_id=values.get("vehiculo_id"))
+                        vehiculo = servicio.obtener_vehiculo_transporte(
+                            vehiculo_id=values.get("vehiculo_id"),
+                            vehiculo_actual=record.vehiculo_id if record.servicio_id == servicio else False,
+                            usar_default=not values.get("vehiculo_id") and record.servicio_id != servicio,
+                        )
                         if vehiculo and not values.get("vehiculo_id"):
                             values["vehiculo_id"] = vehiculo.id
                         tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo)

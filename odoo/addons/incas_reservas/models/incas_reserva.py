@@ -468,7 +468,7 @@ class IncasReserva(models.Model):
         nombre = reserva_data.get("vehiculo_seleccionado")
         if not servicio or servicio.tipo_servicio != "transporte":
             return self.env["incas.catalogo.vehiculo"]
-        return servicio.obtener_vehiculo_transporte(nombre=nombre)
+        return servicio.obtener_vehiculo_transporte(nombre=nombre, usar_default=not nombre)
 
     @api.model
     def _buscar_horario_web(self, servicio, reserva_data):
@@ -792,6 +792,10 @@ class IncasReserva(models.Model):
             vehiculo = servicio.obtener_vehiculo_transporte(
                 nombre=vals.get("vehiculo_seleccionado"),
                 vehiculo_id=vals.get("vehiculo_id"),
+                vehiculo_actual=self.vehiculo_id if len(self) == 1 and self.servicio_id == servicio else False,
+                usar_default=not vals.get("vehiculo_id")
+                and not vals.get("vehiculo_seleccionado")
+                and not (len(self) == 1 and self.servicio_id == servicio and self.vehiculo_id),
             )
             if vehiculo and not vals.get("vehiculo_id"):
                 vals["vehiculo_id"] = vehiculo.id
