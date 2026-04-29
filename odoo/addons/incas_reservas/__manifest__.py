@@ -13,6 +13,8 @@
         "data/incas_currency_rate_cron.xml",
         "reports/incas_reservas_reports.xml",
         "views/incas_servicio_catalogo_views.xml",
+        "views/incas_hotel_views.xml",
+        "views/incas_extra_views.xml",
         "views/incas_catalogo_tour_views.xml",
         "views/incas_catalogo_transporte_views.xml",
         "views/incas_currency_rate_views.xml",

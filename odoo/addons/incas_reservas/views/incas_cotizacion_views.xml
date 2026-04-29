@@ -16,6 +16,12 @@
                 <field name="descuento" />
                 <field name="cantidad_adultos" />
                 <field name="cantidad_ninos" />
+                <field name="hotel_nombre" />
+                <field name="cantidad_noches" />
+                <field name="monto_hotel" />
+                <field name="extra_nombre" />
+                <field name="cantidad_extra" />
+                <field name="monto_extra" />
                 <field name="monto_total" />
                 <field name="paquete_item_count" />
                 <field name="moneda" />
@@ -163,17 +169,35 @@
                             />
                             <field name="cantidad_adultos" />
                             <field name="cantidad_ninos" />
+                            <field name="hotel_id" />
+                            <field name="hotel_tarifa_id" />
+                            <field name="fecha_check_in" />
+                            <field name="fecha_check_out" />
+                            <field name="cantidad_habitaciones" />
+                            <field name="extra_id" />
+                            <field name="extra_tarifa_id" />
+                            <field name="cantidad_extra" />
                         </group>
                     </group>
                     <group>
                         <group>
                             <field name="cantidad_pasajeros" readonly="1" />
+                            <field name="cantidad_noches" readonly="1" />
+                            <field name="hotel_precio_noche" readonly="1" force_save="1" />
+                            <field name="hotel_descuento" readonly="1" force_save="1" />
+                            <field name="monto_hotel" readonly="1" />
+                            <field name="extra_precio_unitario" readonly="1" force_save="1" />
+                            <field name="extra_descuento" readonly="1" force_save="1" />
+                            <field name="monto_extra" readonly="1" />
                             <field name="monto_total" readonly="1" />
                             <field name="paquete_item_count" readonly="1" />
                             <field name="moneda" />
                         </group>
                         <group>
                             <field name="reserva_count" readonly="1" />
+                            <field name="hotel_nombre" readonly="1" force_save="1" />
+                            <field name="extra_nombre" readonly="1" force_save="1" />
+                            <field name="extra_unidad" readonly="1" force_save="1" />
                         </group>
                     </group>
                     <notebook>

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_extra_list" model="ir.ui.view">
+        <field name="name">incas.extra.list</field>
+        <field name="model">incas.extra</field>
+        <field name="arch" type="xml">
+            <list string="Extras">
+                <field name="name"/>
+                <field name="codigo"/>
+                <field name="tipo_extra"/>
+                <field name="moneda_base"/>
+                <field name="tarifa_count"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_extra_search" model="ir.ui.view">
+        <field name="name">incas.extra.search</field>
+        <field name="model">incas.extra</field>
+        <field name="arch" type="xml">
+            <search string="Buscar extras">
+                <field name="name"/>
+                <field name="codigo"/>
+                <field name="tipo_extra"/>
+                <field name="partner_id"/>
+                <separator/>
+                <filter name="group_tipo_extra" string="Tipo de extra" domain="[]" context="{'group_by': 'tipo_extra'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_extra_form" model="ir.ui.view">
+        <field name="name">incas.extra.form</field>
+        <field name="model">incas.extra</field>
+        <field name="arch" type="xml">
+            <form string="Extra">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="codigo"/>
+                            <field name="tipo_extra"/>
+                            <field name="partner_id"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="moneda_base"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Tarifas">
+                            <field name="tarifa_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="fecha_desde"/>
+                                    <field name="fecha_hasta"/>
+                                    <field name="unidad"/>
+                                    <field name="precio_unitario_usd"/>
+                                    <field name="descuento"/>
+                                    <field name="active"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Descripción">
+                            <field name="descripcion"/>
+                        </page>
+                        <page string="Observaciones">
+                            <field name="observaciones"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_incas_extra_tarifa_list" model="ir.ui.view">
+        <field name="name">incas.extra.tarifa.list</field>
+        <field name="model">incas.extra.tarifa</field>
+        <field name="arch" type="xml">
+            <list string="Tarifas de extra">
+                <field name="extra_id"/>
+                <field name="name"/>
+                <field name="fecha_desde"/>
+                <field name="fecha_hasta"/>
+                <field name="unidad"/>
+                <field name="precio_unitario_usd"/>
+                <field name="descuento"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_extra_tarifa_search" model="ir.ui.view">
+        <field name="name">incas.extra.tarifa.search</field>
+        <field name="model">incas.extra.tarifa</field>
+        <field name="arch" type="xml">
+            <search string="Buscar tarifas de extra">
+                <field name="extra_id"/>
+                <field name="name"/>
+                <field name="unidad"/>
+                <separator/>
+                <filter name="group_extra" string="Extra" domain="[]" context="{'group_by': 'extra_id'}"/>
+                <filter name="group_unidad" string="Unidad" domain="[]" context="{'group_by': 'unidad'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_extra_tarifa_form" model="ir.ui.view">
+        <field name="name">incas.extra.tarifa.form</field>
+        <field name="model">incas.extra.tarifa</field>
+        <field name="arch" type="xml">
+            <form string="Tarifa de extra">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="extra_id"/>
+                            <field name="name"/>
+                            <field name="fecha_desde"/>
+                            <field name="fecha_hasta"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="unidad"/>
+                            <field name="precio_unitario_usd"/>
+                            <field name="descuento"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_extra" model="ir.actions.act_window">
+        <field name="name">Extras</field>
+        <field name="res_model">incas.extra</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_extra_search"/>
+    </record>
+
+    <record id="action_incas_extra_tarifa" model="ir.actions.act_window">
+        <field name="name">Tarifas de extra</field>
+        <field name="res_model">incas.extra.tarifa</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_extra_tarifa_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_extra"
+        name="Extras"
+        parent="incas_core.menu_incas_configuracion_root"
+        action="action_incas_extra"
+        sequence="17"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_extra_tarifa"
+        name="Tarifas de extra"
+        parent="incas_core.menu_incas_configuracion_root"
+        action="action_incas_extra_tarifa"
+        sequence="18"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

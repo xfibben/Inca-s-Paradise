@@ -121,6 +121,42 @@ class IncasReserva(models.Model):
     cantidad_adultos = fields.Integer(string="Cantidad adultos", default=1, required=True, tracking=True)
     cantidad_ninos = fields.Integer(string="Cantidad niños", default=0, required=True, tracking=True)
     cantidad_pasajeros = fields.Integer(string="Cantidad de pasajeros", compute="_compute_cantidad_pasajeros", store=True)
+    hotel_id = fields.Many2one("incas.hotel", string="Hotel", tracking=True)
+    hotel_tarifa_id = fields.Many2one(
+        "incas.hotel.tarifa",
+        string="Tarifa de hotel",
+        domain="[('hotel_id', '=', hotel_id)]",
+        tracking=True,
+    )
+    fecha_check_in = fields.Date(string="Check-in", tracking=True)
+    fecha_check_out = fields.Date(string="Check-out", tracking=True)
+    cantidad_noches = fields.Integer(string="Cantidad noches", compute="_compute_cantidad_noches", store=True)
+    cantidad_habitaciones = fields.Integer(string="Cantidad habitaciones", default=1, required=True, tracking=True)
+    hotel_nombre = fields.Char(string="Nombre del hotel", tracking=True)
+    hotel_precio_noche_usd = fields.Float(string="Precio noche hotel base USD", tracking=True)
+    hotel_precio_noche = fields.Float(string="Precio noche hotel", tracking=True)
+    hotel_descuento = fields.Float(string="Descuento hotel", tracking=True)
+    monto_hotel_usd = fields.Float(string="Monto hotel USD", compute="_compute_monto_hotel", store=True)
+    monto_hotel = fields.Float(string="Monto hotel", compute="_compute_monto_hotel", store=True, tracking=True)
+    extra_id = fields.Many2one("incas.extra", string="Extra", tracking=True)
+    extra_tarifa_id = fields.Many2one(
+        "incas.extra.tarifa",
+        string="Tarifa de extra",
+        domain="[('extra_id', '=', extra_id)]",
+        tracking=True,
+    )
+    extra_nombre = fields.Char(string="Nombre del extra", tracking=True)
+    extra_unidad = fields.Selection(
+        [("unidad", "Unidad"), ("persona", "Persona"), ("tramo", "Tramo"), ("dia", "Día")],
+        string="Unidad extra",
+        tracking=True,
+    )
+    cantidad_extra = fields.Integer(string="Cantidad extra", default=1, required=True, tracking=True)
+    extra_precio_unitario_usd = fields.Float(string="Precio unitario extra base USD", tracking=True)
+    extra_precio_unitario = fields.Float(string="Precio unitario extra", tracking=True)
+    extra_descuento = fields.Float(string="Descuento extra", tracking=True)
+    monto_extra_usd = fields.Float(string="Monto extra USD", compute="_compute_monto_extra", store=True)
+    monto_extra = fields.Float(string="Monto extra", compute="_compute_monto_extra", store=True, tracking=True)
     moneda = fields.Selection(
         [("PEN", "PEN"), ("USD", "USD"), ("EUR", "EUR")],
         string="Moneda",
@@ -182,12 +218,34 @@ class IncasReserva(models.Model):
             else:
                 record.vehiculo_disponible_ids = self.env["incas.catalogo.vehiculo"]
 
-    @api.depends("cantidad_adultos", "cantidad_ninos", "precio_adulto", "precio_nino", "descuento")
+    @api.depends("fecha_check_in", "fecha_check_out")
+    def _compute_cantidad_noches(self):
+        for record in self:
+            if record.fecha_check_in and record.fecha_check_out and record.fecha_check_out > record.fecha_check_in:
+                record.cantidad_noches = (record.fecha_check_out - record.fecha_check_in).days
+            else:
+                record.cantidad_noches = 0
+
+    @api.depends("cantidad_noches", "cantidad_habitaciones", "hotel_precio_noche_usd")
+    def _compute_monto_hotel(self):
+        rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
+        for record in self:
+            record.monto_hotel_usd = (record.cantidad_habitaciones or 0) * (record.cantidad_noches or 0) * (record.hotel_precio_noche_usd or 0)
+            record.monto_hotel = record._convertir_desde_usd(record.monto_hotel_usd, record.moneda, rates)
+
+    @api.depends("cantidad_extra", "extra_precio_unitario_usd")
+    def _compute_monto_extra(self):
+        rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
+        for record in self:
+            record.monto_extra_usd = (record.cantidad_extra or 0) * (record.extra_precio_unitario_usd or 0)
+            record.monto_extra = record._convertir_desde_usd(record.monto_extra_usd, record.moneda, rates)
+
+    @api.depends("cantidad_adultos", "cantidad_ninos", "precio_adulto", "precio_nino", "descuento", "monto_hotel", "monto_extra")
     def _compute_monto_total(self):
         for record in self:
             subtotal = ((record.cantidad_adultos or 0) * (record.precio_adulto or 0)) + ((record.cantidad_ninos or 0) * (record.precio_nino or 0))
             descuento_monto = subtotal * ((record.descuento or 0) / 100)
-            record.monto_total = subtotal - descuento_monto
+            record.monto_total = (subtotal - descuento_monto) + (record.monto_hotel or 0) + (record.monto_extra or 0)
 
     @api.depends("precio_tour", "monto_total", "monto_pagado")
     def _compute_saldo_pendiente(self):
@@ -252,6 +310,8 @@ class IncasReserva(models.Model):
         for record in self:
             record.precio_adulto = record._convertir_desde_usd(record.precio_adulto_usd or 0, record.moneda, rates)
             record.precio_nino = record._convertir_desde_usd(record.precio_nino_usd or 0, record.moneda, rates)
+            record.hotel_precio_noche = record._convertir_desde_usd(record.hotel_precio_noche_usd or 0, record.moneda, rates)
+            record.extra_precio_unitario = record._convertir_desde_usd(record.extra_precio_unitario_usd or 0, record.moneda, rates)
 
     @api.model
     def _generar_ticket(self):
@@ -272,6 +332,39 @@ class IncasReserva(models.Model):
             record.precio_adulto = 0
             record.precio_nino = 0
             record.descuento = 0
+
+    # Replica los datos del hotel desde la cotización para mantener el total consistente.
+    def _aplicar_tarifa_hotel(self):
+        rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
+        for record in self:
+            if not record.hotel_tarifa_id:
+                record.hotel_nombre = record.hotel_id.name or False
+                record.hotel_precio_noche_usd = 0
+                record.hotel_precio_noche = 0
+                record.hotel_descuento = 0
+                continue
+            record.hotel_id = record.hotel_tarifa_id.hotel_id
+            record.hotel_nombre = record.hotel_tarifa_id.hotel_id.name
+            record.hotel_precio_noche_usd = record.hotel_tarifa_id.obtener_precio_noche_neto_usd()
+            record.hotel_precio_noche = record._convertir_desde_usd(record.hotel_precio_noche_usd, record.moneda, rates)
+            record.hotel_descuento = record.hotel_tarifa_id.descuento or 0
+
+    def _aplicar_tarifa_extra(self):
+        rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
+        for record in self:
+            if not record.extra_tarifa_id:
+                record.extra_nombre = record.extra_id.name or False
+                record.extra_unidad = False
+                record.extra_precio_unitario_usd = 0
+                record.extra_precio_unitario = 0
+                record.extra_descuento = 0
+                continue
+            record.extra_id = record.extra_tarifa_id.extra_id
+            record.extra_nombre = record.extra_tarifa_id.extra_id.name
+            record.extra_unidad = record.extra_tarifa_id.unidad
+            record.extra_precio_unitario_usd = record.extra_tarifa_id.obtener_precio_unitario_neto_usd()
+            record.extra_precio_unitario = record._convertir_desde_usd(record.extra_precio_unitario_usd, record.moneda, rates)
+            record.extra_descuento = record.extra_tarifa_id.descuento or 0
 
     def _aplicar_cotizacion(self, cotizacion):
         self.ensure_one()
@@ -307,6 +400,23 @@ class IncasReserva(models.Model):
             "descuento": resumen["descuento"],
             "cantidad_adultos": cotizacion.cantidad_adultos,
             "cantidad_ninos": cotizacion.cantidad_ninos,
+            "hotel_id": cotizacion.hotel_id,
+            "hotel_tarifa_id": cotizacion.hotel_tarifa_id,
+            "fecha_check_in": cotizacion.fecha_check_in,
+            "fecha_check_out": cotizacion.fecha_check_out,
+            "cantidad_habitaciones": cotizacion.cantidad_habitaciones,
+            "hotel_nombre": cotizacion.hotel_nombre,
+            "hotel_precio_noche_usd": cotizacion.hotel_precio_noche_usd,
+            "hotel_precio_noche": cotizacion.hotel_precio_noche,
+            "hotel_descuento": cotizacion.hotel_descuento,
+            "extra_id": cotizacion.extra_id,
+            "extra_tarifa_id": cotizacion.extra_tarifa_id,
+            "extra_nombre": cotizacion.extra_nombre,
+            "extra_unidad": cotizacion.extra_unidad,
+            "cantidad_extra": cotizacion.cantidad_extra,
+            "extra_precio_unitario_usd": cotizacion.extra_precio_unitario_usd,
+            "extra_precio_unitario": cotizacion.extra_precio_unitario,
+            "extra_descuento": cotizacion.extra_descuento,
             "moneda": cotizacion.moneda,
             "responsable_id": cotizacion.responsable_id,
             "vehiculo_id": vehiculo,
@@ -625,6 +735,23 @@ class IncasReserva(models.Model):
                         "descuento": values["descuento"],
                         "cantidad_adultos": values["cantidad_adultos"],
                         "cantidad_ninos": values["cantidad_ninos"],
+                        "hotel_id": values["hotel_id"].id,
+                        "hotel_tarifa_id": values["hotel_tarifa_id"].id,
+                        "fecha_check_in": values["fecha_check_in"],
+                        "fecha_check_out": values["fecha_check_out"],
+                        "cantidad_habitaciones": values["cantidad_habitaciones"],
+                        "hotel_nombre": values["hotel_nombre"],
+                        "hotel_precio_noche_usd": values["hotel_precio_noche_usd"],
+                        "hotel_precio_noche": values["hotel_precio_noche"],
+                        "hotel_descuento": values["hotel_descuento"],
+                        "extra_id": values["extra_id"].id,
+                        "extra_tarifa_id": values["extra_tarifa_id"].id,
+                        "extra_nombre": values["extra_nombre"],
+                        "extra_unidad": values["extra_unidad"],
+                        "cantidad_extra": values["cantidad_extra"],
+                        "extra_precio_unitario_usd": values["extra_precio_unitario_usd"],
+                        "extra_precio_unitario": values["extra_precio_unitario"],
+                        "extra_descuento": values["extra_descuento"],
                         "moneda": values["moneda"],
                         "responsable_id": values["responsable_id"].id,
                         "vehiculo_id": values["vehiculo_id"].id,
@@ -792,6 +919,23 @@ class IncasReserva(models.Model):
                         "descuento": resumen["descuento"],
                         "cantidad_adultos": resumen["cantidad_adultos"],
                         "cantidad_ninos": resumen["cantidad_ninos"],
+                        "hotel_id": resumen["hotel_id"].id,
+                        "hotel_tarifa_id": resumen["hotel_tarifa_id"].id,
+                        "fecha_check_in": resumen["fecha_check_in"],
+                        "fecha_check_out": resumen["fecha_check_out"],
+                        "cantidad_habitaciones": resumen["cantidad_habitaciones"],
+                        "hotel_nombre": resumen["hotel_nombre"],
+                        "hotel_precio_noche_usd": resumen["hotel_precio_noche_usd"],
+                        "hotel_precio_noche": resumen["hotel_precio_noche"],
+                        "hotel_descuento": resumen["hotel_descuento"],
+                        "extra_id": resumen["extra_id"].id,
+                        "extra_tarifa_id": resumen["extra_tarifa_id"].id,
+                        "extra_nombre": resumen["extra_nombre"],
+                        "extra_unidad": resumen["extra_unidad"],
+                        "cantidad_extra": resumen["cantidad_extra"],
+                        "extra_precio_unitario_usd": resumen["extra_precio_unitario_usd"],
+                        "extra_precio_unitario": resumen["extra_precio_unitario"],
+                        "extra_descuento": resumen["extra_descuento"],
                         "moneda": resumen["moneda"],
                         "responsable_id": resumen["responsable_id"].id,
                         "vehiculo_id": resumen["vehiculo_id"].id,
@@ -807,6 +951,43 @@ class IncasReserva(models.Model):
             return
         self._aplicar_moneda_desde_base()
 
+    @api.onchange("hotel_id")
+    def _onchange_hotel_id(self):
+        for record in self:
+            if record.hotel_tarifa_id and record.hotel_tarifa_id.hotel_id != record.hotel_id:
+                record.hotel_tarifa_id = False
+            record.hotel_nombre = record.hotel_id.name or False
+            if not record.hotel_id:
+                record.hotel_tarifa_id = False
+                record.hotel_precio_noche_usd = 0
+                record.hotel_precio_noche = 0
+                record.hotel_descuento = 0
+
+    @api.onchange("hotel_tarifa_id")
+    def _onchange_hotel_tarifa_id(self):
+        self._aplicar_tarifa_hotel()
+        for record in self:
+            if record.hotel_tarifa_id:
+                record.fecha_check_in = record.fecha_check_in or record.fecha_inicio or record.fecha_viaje or record.hotel_tarifa_id.fecha_desde
+                record.fecha_check_out = record.fecha_check_out or record.fecha_fin or record.hotel_tarifa_id.fecha_hasta
+
+    @api.onchange("extra_id")
+    def _onchange_extra_id(self):
+        for record in self:
+            if record.extra_tarifa_id and record.extra_tarifa_id.extra_id != record.extra_id:
+                record.extra_tarifa_id = False
+            record.extra_nombre = record.extra_id.name or False
+            if not record.extra_id:
+                record.extra_tarifa_id = False
+                record.extra_unidad = False
+                record.extra_precio_unitario_usd = 0
+                record.extra_precio_unitario = 0
+                record.extra_descuento = 0
+
+    @api.onchange("extra_tarifa_id")
+    def _onchange_extra_tarifa_id(self):
+        self._aplicar_tarifa_extra()
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
@@ -817,11 +998,56 @@ class IncasReserva(models.Model):
             if not vals.get("access_token"):
                 vals["access_token"] = self._generar_access_token()
             self._completar_datos_servicio(vals)
+            self._completar_datos_hotel(vals)
+            self._completar_datos_extra(vals)
         return super().create(vals_list)
 
     def write(self, vals):
         self._completar_datos_servicio(vals)
+        self._completar_datos_hotel(vals)
+        self._completar_datos_extra(vals)
         return super().write(vals)
+
+    def _completar_datos_hotel(self, vals):
+        hotel_id = vals.get("hotel_id")
+        hotel_tarifa_id = vals.get("hotel_tarifa_id")
+        if not hotel_id and not hotel_tarifa_id:
+            return vals
+        tarifa = self.env["incas.hotel.tarifa"].browse(hotel_tarifa_id) if hotel_tarifa_id else self.env["incas.hotel.tarifa"]
+        hotel = self.env["incas.hotel"].browse(hotel_id) if hotel_id else tarifa.hotel_id
+        if tarifa and tarifa.exists():
+            vals.setdefault("hotel_id", tarifa.hotel_id.id)
+            vals["hotel_nombre"] = tarifa.hotel_id.name
+            vals["hotel_precio_noche_usd"] = tarifa.obtener_precio_noche_neto_usd()
+            vals["hotel_descuento"] = tarifa.descuento or 0
+            vals.setdefault("fecha_check_in", vals.get("fecha_inicio") or vals.get("fecha_viaje") or tarifa.fecha_desde)
+            vals.setdefault("fecha_check_out", vals.get("fecha_fin") or tarifa.fecha_hasta)
+        elif hotel and hotel.exists():
+            vals["hotel_nombre"] = hotel.name
+        moneda = vals.get("moneda") or (self.moneda if len(self) == 1 else "PEN") or "PEN"
+        rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
+        vals["hotel_precio_noche"] = self._convertir_desde_usd(vals.get("hotel_precio_noche_usd") or 0, moneda, rates)
+        return vals
+
+    def _completar_datos_extra(self, vals):
+        extra_id = vals.get("extra_id")
+        extra_tarifa_id = vals.get("extra_tarifa_id")
+        if not extra_id and not extra_tarifa_id:
+            return vals
+        tarifa = self.env["incas.extra.tarifa"].browse(extra_tarifa_id) if extra_tarifa_id else self.env["incas.extra.tarifa"]
+        extra = self.env["incas.extra"].browse(extra_id) if extra_id else tarifa.extra_id
+        if tarifa and tarifa.exists():
+            vals.setdefault("extra_id", tarifa.extra_id.id)
+            vals["extra_nombre"] = tarifa.extra_id.name
+            vals["extra_unidad"] = tarifa.unidad
+            vals["extra_precio_unitario_usd"] = tarifa.obtener_precio_unitario_neto_usd()
+            vals["extra_descuento"] = tarifa.descuento or 0
+        elif extra and extra.exists():
+            vals["extra_nombre"] = extra.name
+        moneda = vals.get("moneda") or (self.moneda if len(self) == 1 else "PEN") or "PEN"
+        rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
+        vals["extra_precio_unitario"] = self._convertir_desde_usd(vals.get("extra_precio_unitario_usd") or 0, moneda, rates)
+        return vals
 
     def action_print_pdf(self):
         self.ensure_one()

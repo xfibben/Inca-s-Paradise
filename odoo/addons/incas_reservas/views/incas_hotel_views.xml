@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_hotel_list" model="ir.ui.view">
+        <field name="name">incas.hotel.list</field>
+        <field name="model">incas.hotel</field>
+        <field name="arch" type="xml">
+            <list string="Hoteles">
+                <field name="name"/>
+                <field name="codigo"/>
+                <field name="categoria"/>
+                <field name="ciudad"/>
+                <field name="pais_id"/>
+                <field name="moneda_base"/>
+                <field name="tarifa_count"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_hotel_search" model="ir.ui.view">
+        <field name="name">incas.hotel.search</field>
+        <field name="model">incas.hotel</field>
+        <field name="arch" type="xml">
+            <search string="Buscar hoteles">
+                <field name="name"/>
+                <field name="codigo"/>
+                <field name="ciudad"/>
+                <field name="pais_id"/>
+                <field name="partner_id"/>
+                <separator/>
+                <filter name="group_ciudad" string="Ciudad" domain="[]" context="{'group_by': 'ciudad'}"/>
+                <filter name="group_categoria" string="Categoría" domain="[]" context="{'group_by': 'categoria'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_hotel_form" model="ir.ui.view">
+        <field name="name">incas.hotel.form</field>
+        <field name="model">incas.hotel</field>
+        <field name="arch" type="xml">
+            <form string="Hotel">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="codigo"/>
+                            <field name="categoria"/>
+                            <field name="partner_id"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="pais_id"/>
+                            <field name="ciudad"/>
+                            <field name="direccion"/>
+                            <field name="moneda_base"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="check_in_default"/>
+                            <field name="check_out_default"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Tarifas">
+                            <field name="tarifa_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="fecha_desde"/>
+                                    <field name="fecha_hasta"/>
+                                    <field name="tipo_habitacion"/>
+                                    <field name="regimen"/>
+                                    <field name="acomodacion"/>
+                                    <field name="precio_noche_usd"/>
+                                    <field name="descuento"/>
+                                    <field name="active"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Políticas">
+                            <field name="politicas"/>
+                        </page>
+                        <page string="Observaciones">
+                            <field name="observaciones"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_incas_hotel_tarifa_list" model="ir.ui.view">
+        <field name="name">incas.hotel.tarifa.list</field>
+        <field name="model">incas.hotel.tarifa</field>
+        <field name="arch" type="xml">
+            <list string="Tarifas de hotel">
+                <field name="hotel_id"/>
+                <field name="name"/>
+                <field name="fecha_desde"/>
+                <field name="fecha_hasta"/>
+                <field name="tipo_habitacion"/>
+                <field name="regimen"/>
+                <field name="acomodacion"/>
+                <field name="precio_noche_usd"/>
+                <field name="descuento"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_hotel_tarifa_search" model="ir.ui.view">
+        <field name="name">incas.hotel.tarifa.search</field>
+        <field name="model">incas.hotel.tarifa</field>
+        <field name="arch" type="xml">
+            <search string="Buscar tarifas de hotel">
+                <field name="hotel_id"/>
+                <field name="name"/>
+                <field name="tipo_habitacion"/>
+                <field name="regimen"/>
+                <field name="acomodacion"/>
+                <separator/>
+                <filter name="group_hotel" string="Hotel" domain="[]" context="{'group_by': 'hotel_id'}"/>
+                <filter name="group_regimen" string="Régimen" domain="[]" context="{'group_by': 'regimen'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_hotel_tarifa_form" model="ir.ui.view">
+        <field name="name">incas.hotel.tarifa.form</field>
+        <field name="model">incas.hotel.tarifa</field>
+        <field name="arch" type="xml">
+            <form string="Tarifa de hotel">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="hotel_id"/>
+                            <field name="name"/>
+                            <field name="fecha_desde"/>
+                            <field name="fecha_hasta"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="tipo_habitacion"/>
+                            <field name="regimen"/>
+                            <field name="acomodacion"/>
+                            <field name="incluye_impuestos"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="capacidad_adultos"/>
+                            <field name="capacidad_ninos"/>
+                            <field name="min_noches"/>
+                        </group>
+                        <group>
+                            <field name="precio_noche_usd"/>
+                            <field name="precio_nino_usd"/>
+                            <field name="precio_adulto_extra_usd"/>
+                            <field name="precio_nino_extra_usd"/>
+                            <field name="descuento"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_hotel" model="ir.actions.act_window">
+        <field name="name">Hoteles</field>
+        <field name="res_model">incas.hotel</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_hotel_search"/>
+    </record>
+
+    <record id="action_incas_hotel_tarifa" model="ir.actions.act_window">
+        <field name="name">Tarifas de hotel</field>
+        <field name="res_model">incas.hotel.tarifa</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_hotel_tarifa_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_hotel"
+        name="Hoteles"
+        parent="incas_core.menu_incas_configuracion_root"
+        action="action_incas_hotel"
+        sequence="15"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_hotel_tarifa"
+        name="Tarifas de hotel"
+        parent="incas_core.menu_incas_configuracion_root"
+        action="action_incas_hotel_tarifa"
+        sequence="16"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+</odoo>
