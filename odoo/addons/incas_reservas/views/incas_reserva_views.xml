@@ -95,14 +95,14 @@
                             <field name="fecha_inicio"/>
                             <field name="fecha_fin"/>
                             <field name="fecha_viaje"/>
-                            <field name="hotel_id"/>
-                            <field name="hotel_tarifa_id"/>
-                            <field name="fecha_check_in"/>
-                            <field name="fecha_check_out"/>
-                            <field name="cantidad_habitaciones"/>
-                            <field name="extra_id"/>
-                            <field name="extra_tarifa_id"/>
-                            <field name="cantidad_extra"/>
+                            <field name="hotel_id" invisible="1"/>
+                            <field name="hotel_tarifa_id" invisible="1"/>
+                            <field name="fecha_check_in" invisible="1"/>
+                            <field name="fecha_check_out" invisible="1"/>
+                            <field name="cantidad_habitaciones" invisible="1"/>
+                            <field name="extra_id" invisible="1"/>
+                            <field name="extra_tarifa_id" invisible="1"/>
+                            <field name="cantidad_extra" invisible="1"/>
                             <field name="vehiculo_disponible_ids" invisible="1"/>
                             <field name="vehiculo_id" invisible="tipo_servicio != 'transporte'" domain="[('id', 'in', vehiculo_disponible_ids)]"/>
                             <field name="vehiculo_seleccionado" invisible="1"/>
@@ -126,17 +126,17 @@
                         <group>
                             <field name="estado_reserva"/>
                             <field name="cantidad_pasajeros" readonly="1"/>
-                            <field name="cantidad_noches" readonly="1"/>
-                            <field name="hotel_nombre" readonly="1" force_save="1"/>
-                            <field name="extra_nombre" readonly="1" force_save="1"/>
-                            <field name="extra_unidad" readonly="1" force_save="1"/>
+                            <field name="cantidad_noches" readonly="1" invisible="1"/>
+                            <field name="hotel_nombre" readonly="1" force_save="1" invisible="1"/>
+                            <field name="extra_nombre" readonly="1" force_save="1" invisible="1"/>
+                            <field name="extra_unidad" readonly="1" force_save="1" invisible="1"/>
                         </group>
                         <group>
-                            <field name="hotel_precio_noche" readonly="1" force_save="1"/>
-                            <field name="hotel_descuento" readonly="1" force_save="1"/>
+                            <field name="hotel_precio_noche" readonly="1" force_save="1" invisible="1"/>
+                            <field name="hotel_descuento" readonly="1" force_save="1" invisible="1"/>
                             <field name="monto_hotel" readonly="1"/>
-                            <field name="extra_precio_unitario" readonly="1" force_save="1"/>
-                            <field name="extra_descuento" readonly="1" force_save="1"/>
+                            <field name="extra_precio_unitario" readonly="1" force_save="1" invisible="1"/>
+                            <field name="extra_descuento" readonly="1" force_save="1" invisible="1"/>
                             <field name="monto_extra" readonly="1"/>
                             <field name="monto_total" readonly="1"/>
                             <field name="precio_tour" readonly="1"/>
@@ -178,6 +178,40 @@
                                     <field name="precio_nino_usd" column_invisible="1" optional="hide"/>
                                     <field name="precio_adulto_neto_usd" column_invisible="1" optional="hide"/>
                                     <field name="precio_nino_neto_usd" column_invisible="1" optional="hide"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Hoteles">
+                            <field name="hotel_linea_ids" readonly="1">
+                                <list>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="hotel_id"/>
+                                    <field name="hotel_tarifa_id"/>
+                                    <field name="fecha_check_in"/>
+                                    <field name="fecha_check_out"/>
+                                    <field name="cantidad_noches"/>
+                                    <field name="cantidad_habitaciones"/>
+                                    <field name="moneda" readonly="1"/>
+                                    <field name="hotel_nombre"/>
+                                    <field name="hotel_precio_noche"/>
+                                    <field name="hotel_descuento"/>
+                                    <field name="monto_hotel"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Extras">
+                            <field name="extra_linea_ids" readonly="1">
+                                <list>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="extra_id"/>
+                                    <field name="extra_tarifa_id"/>
+                                    <field name="extra_nombre"/>
+                                    <field name="extra_unidad"/>
+                                    <field name="cantidad_extra"/>
+                                    <field name="moneda" readonly="1"/>
+                                    <field name="extra_precio_unitario"/>
+                                    <field name="extra_descuento"/>
+                                    <field name="monto_extra"/>
                                 </list>
                             </field>
                         </page>

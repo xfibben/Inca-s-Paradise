@@ -9,6 +9,8 @@ from . import incas_catalogo_vehiculo
 from . import incas_catalogo_tour
 from . import incas_catalogo_transporte
 from . import incas_cotizacion_paquete_linea
+from . import incas_cotizacion_hotel_linea
+from . import incas_cotizacion_extra_linea
 from . import incas_cotizacion
 from . import incas_reserva
 from . import incas_pago
