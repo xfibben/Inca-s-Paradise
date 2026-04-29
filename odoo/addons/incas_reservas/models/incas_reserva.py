@@ -3,9 +3,11 @@ from uuid import uuid4
 import os
 import json
 import logging
+import re
 from urllib.request import Request, urlopen
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 from ..utils import (
     enviar_correo_resend,
@@ -28,6 +30,8 @@ class IncasReserva(models.Model):
     access_token = fields.Char(string="Token de acceso", copy=False, readonly=True, index=True)
     cotizacion_id = fields.Many2one("incas.cotizacion", string="Cotización", tracking=True)
     paquete_linea_ids = fields.One2many(related="cotizacion_id.paquete_linea_ids", string="Líneas del paquete", readonly=True)
+    hotel_linea_ids = fields.One2many(related="cotizacion_id.hotel_linea_ids", string="Hoteles", readonly=True)
+    extra_linea_ids = fields.One2many(related="cotizacion_id.extra_linea_ids", string="Extras", readonly=True)
     partner_id = fields.Many2one("res.partner", string="Cliente principal", required=True, tracking=True)
     nombre = fields.Char(string="Nombre completo", tracking=True)
     email = fields.Char(string="Correo electrónico", tracking=True)
@@ -199,6 +203,23 @@ class IncasReserva(models.Model):
     pago_ids = fields.One2many("incas.pago", "reserva_id", string="Pagos")
     pago_count = fields.Integer(string="Cantidad de pagos", compute="_compute_pago_count")
     pasajero_ids = fields.One2many("incas.pasajero", "reserva_id", string="Pasajeros")
+    documento_directory_id = fields.Many2one("dms.directory", string="Carpeta documental", readonly=True, copy=False)
+    estado_documental = fields.Selection(
+        [
+            ("sin_pasajeros", "Sin pasajeros"),
+            ("pendiente", "Pendiente"),
+            ("parcial", "Parcial"),
+            ("completo", "Completo"),
+        ],
+        string="Estado documental",
+        compute="_compute_estado_documental",
+        store=True,
+    )
+    pasajeros_documentos_pendientes = fields.Integer(
+        string="Pasajeros con documentos pendientes",
+        compute="_compute_estado_documental",
+        store=True,
+    )
     origen_web = fields.Boolean(string="Origen web", default=False, tracking=True)
     active = fields.Boolean(default=True)
 
@@ -209,6 +230,112 @@ class IncasReserva(models.Model):
                 record.cantidad_pasajeros = len(record.pasajero_ids)
             else:
                 record.cantidad_pasajeros = (record.cantidad_adultos or 0) + (record.cantidad_ninos or 0) or record.cotizacion_id.cantidad_pasajeros or 1
+
+    @api.model
+    def _nombre_directorio_seguro(self, valor, fallback):
+        nombre = (valor or fallback or "").strip()
+        nombre = re.sub(r"[\\/:*?\"<>|]+", "-", nombre)
+        nombre = re.sub(r"\s+", " ", nombre).strip(" .-_")
+        return nombre or fallback
+
+    @api.model
+    def _obtener_directorio_raiz_pasajeros(self):
+        directory_model = self.env["dms.directory"].sudo()
+        pasajeros_directory = directory_model.search(
+            [("is_root_directory", "=", True), ("name", "=", "Pasajeros")],
+            limit=1,
+        )
+        if not pasajeros_directory:
+            storage = self.env["dms.storage"].sudo().search([], order="id", limit=1)
+            if not storage:
+                return self.env["dms.directory"]
+            pasajeros_directory = directory_model.create(
+                {
+                    "name": "Pasajeros",
+                    "storage_id": storage.id,
+                    "is_root_directory": True,
+                }
+            )
+        return pasajeros_directory
+
+    def _asegurar_carpeta_documental(self):
+        directory_model = self.env["dms.directory"].sudo()
+        pasajeros_directory = self._obtener_directorio_raiz_pasajeros()
+        if not pasajeros_directory:
+            return
+        for record in self:
+            nombre_carpeta = self._nombre_directorio_seguro(record.name, f"RESERVA-{record.id}")
+            directory = record.documento_directory_id
+            if directory:
+                valores = {}
+                if directory.parent_id != pasajeros_directory:
+                    valores["parent_id"] = pasajeros_directory.id
+                if directory.name != nombre_carpeta:
+                    valores["name"] = nombre_carpeta
+                if valores:
+                    directory.write(valores)
+                continue
+            existente = directory_model.search(
+                [("parent_id", "=", pasajeros_directory.id), ("name", "=", nombre_carpeta)],
+                limit=1,
+            )
+            if not existente:
+                existente = directory_model.create(
+                    {
+                        "name": nombre_carpeta,
+                        "parent_id": pasajeros_directory.id,
+                        "is_root_directory": False,
+                    }
+                )
+            record.documento_directory_id = existente.id
+
+    @api.model
+    def _separar_nombre_pasajero(self, nombre_completo):
+        partes = [parte for parte in (nombre_completo or "").split() if parte]
+        if len(partes) >= 4:
+            return " ".join(partes[:-2]), " ".join(partes[-2:])
+        if len(partes) == 3:
+            return " ".join(partes[:2]), partes[2]
+        if len(partes) == 2:
+            return partes[0], partes[1]
+        if len(partes) == 1:
+            return partes[0], "Principal"
+        return "Pasajero", "Principal"
+
+    def _asegurar_pasajero_principal(self):
+        pasajero_model = self.env["incas.pasajero"].sudo()
+        for record in self:
+            if record.pasajero_ids:
+                continue
+            nombre_base = record.nombre or record.partner_id.name or "Pasajero principal"
+            nombres, apellidos = self._separar_nombre_pasajero(nombre_base)
+            pasajero_model.create(
+                {
+                    "reserva_id": record.id,
+                    "nombres": nombres,
+                    "apellidos": apellidos,
+                    "tipo_documento": record.tipo_documento,
+                    "numero_documento": record.numero_documento,
+                    "nacionalidad": record.nacionalidad,
+                    "email": record.email or record.partner_id.email,
+                    "telefono": record.telefono or record.partner_id.phone,
+                }
+            )
+
+    @api.depends("pasajero_ids", "pasajero_ids.estado_documental")
+    def _compute_estado_documental(self):
+        for record in self:
+            pasajeros = record.pasajero_ids
+            pendientes = pasajeros.filtered(lambda pasajero: pasajero.estado_documental != "completo")
+            record.pasajeros_documentos_pendientes = len(pendientes)
+            if not pasajeros:
+                record.estado_documental = "sin_pasajeros"
+            elif len(pendientes) == len(pasajeros):
+                record.estado_documental = "pendiente"
+            elif pendientes:
+                record.estado_documental = "parcial"
+            else:
+                record.estado_documental = "completo"
 
     @api.depends("servicio_id", "tipo_servicio")
     def _compute_vehiculo_disponible_ids(self):
@@ -226,19 +353,27 @@ class IncasReserva(models.Model):
             else:
                 record.cantidad_noches = 0
 
-    @api.depends("cantidad_noches", "cantidad_habitaciones", "hotel_precio_noche_usd")
+    @api.depends("cantidad_noches", "cantidad_habitaciones", "hotel_precio_noche_usd", "hotel_linea_ids.monto_hotel_usd", "hotel_linea_ids.monto_hotel")
     def _compute_monto_hotel(self):
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
         for record in self:
-            record.monto_hotel_usd = (record.cantidad_habitaciones or 0) * (record.cantidad_noches or 0) * (record.hotel_precio_noche_usd or 0)
-            record.monto_hotel = record._convertir_desde_usd(record.monto_hotel_usd, record.moneda, rates)
+            if record.hotel_linea_ids:
+                record.monto_hotel_usd = sum(record.hotel_linea_ids.mapped("monto_hotel_usd"))
+                record.monto_hotel = sum(record.hotel_linea_ids.mapped("monto_hotel"))
+            else:
+                record.monto_hotel_usd = (record.cantidad_habitaciones or 0) * (record.cantidad_noches or 0) * (record.hotel_precio_noche_usd or 0)
+                record.monto_hotel = record._convertir_desde_usd(record.monto_hotel_usd, record.moneda, rates)
 
-    @api.depends("cantidad_extra", "extra_precio_unitario_usd")
+    @api.depends("cantidad_extra", "extra_precio_unitario_usd", "extra_linea_ids.monto_extra_usd", "extra_linea_ids.monto_extra")
     def _compute_monto_extra(self):
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
         for record in self:
-            record.monto_extra_usd = (record.cantidad_extra or 0) * (record.extra_precio_unitario_usd or 0)
-            record.monto_extra = record._convertir_desde_usd(record.monto_extra_usd, record.moneda, rates)
+            if record.extra_linea_ids:
+                record.monto_extra_usd = sum(record.extra_linea_ids.mapped("monto_extra_usd"))
+                record.monto_extra = sum(record.extra_linea_ids.mapped("monto_extra"))
+            else:
+                record.monto_extra_usd = (record.cantidad_extra or 0) * (record.extra_precio_unitario_usd or 0)
+                record.monto_extra = record._convertir_desde_usd(record.monto_extra_usd, record.moneda, rates)
 
     @api.depends("cantidad_adultos", "cantidad_ninos", "precio_adulto", "precio_nino", "descuento", "monto_hotel", "monto_extra")
     def _compute_monto_total(self):
@@ -1004,13 +1139,26 @@ class IncasReserva(models.Model):
             self._completar_datos_servicio(vals)
             self._completar_datos_hotel(vals)
             self._completar_datos_extra(vals)
-        return super().create(vals_list)
+        reservas = super().create(vals_list)
+        reservas._asegurar_carpeta_documental()
+        reservas._asegurar_pasajero_principal()
+        return reservas
 
     def write(self, vals):
         self._completar_datos_servicio(vals)
         self._completar_datos_hotel(vals)
         self._completar_datos_extra(vals)
-        return super().write(vals)
+        result = super().write(vals)
+        if any(campo in vals for campo in ["name"]):
+            self._asegurar_carpeta_documental()
+        return result
+
+    def action_ver_documentos(self):
+        self.ensure_one()
+        self._asegurar_carpeta_documental()
+        if not self.documento_directory_id:
+            raise UserError("No existe un directorio raíz en Documentos. Crea uno en el módulo Documentos primero.")
+        return self.documento_directory_id.action_dms_files_all_directory()
 
     def _completar_datos_hotel(self, vals):
         hotel_id = vals.get("hotel_id")

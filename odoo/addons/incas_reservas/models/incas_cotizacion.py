@@ -67,6 +67,8 @@ class IncasCotizacion(models.Model):
         tracking=True,
     )
     paquete_linea_ids = fields.One2many("incas.cotizacion.paquete.linea", "cotizacion_id", string="Líneas del paquete")
+    hotel_linea_ids = fields.One2many("incas.cotizacion.hotel.linea", "cotizacion_id", string="Hoteles")
+    extra_linea_ids = fields.One2many("incas.cotizacion.extra.linea", "cotizacion_id", string="Extras")
     paquete_tour_ids = fields.Many2many(
         "incas.servicio.catalogo",
         "incas_cotizacion_paquete_tour_rel",
@@ -276,19 +278,27 @@ class IncasCotizacion(models.Model):
             else:
                 record.cantidad_noches = 0
 
-    @api.depends("cantidad_noches", "cantidad_habitaciones", "hotel_precio_noche_usd")
+    @api.depends("cantidad_noches", "cantidad_habitaciones", "hotel_precio_noche_usd", "hotel_linea_ids.monto_hotel_usd", "hotel_linea_ids.monto_hotel")
     def _compute_monto_hotel(self):
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
         for record in self:
-            record.monto_hotel_usd = (record.cantidad_habitaciones or 0) * (record.cantidad_noches or 0) * (record.hotel_precio_noche_usd or 0)
-            record.monto_hotel = record._convertir_desde_usd(record.monto_hotel_usd, record.moneda, rates)
+            if record.hotel_linea_ids:
+                record.monto_hotel_usd = sum(record.hotel_linea_ids.mapped("monto_hotel_usd"))
+                record.monto_hotel = sum(record.hotel_linea_ids.mapped("monto_hotel"))
+            else:
+                record.monto_hotel_usd = (record.cantidad_habitaciones or 0) * (record.cantidad_noches or 0) * (record.hotel_precio_noche_usd or 0)
+                record.monto_hotel = record._convertir_desde_usd(record.monto_hotel_usd, record.moneda, rates)
 
-    @api.depends("cantidad_extra", "extra_precio_unitario_usd")
+    @api.depends("cantidad_extra", "extra_precio_unitario_usd", "extra_linea_ids.monto_extra_usd", "extra_linea_ids.monto_extra")
     def _compute_monto_extra(self):
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
         for record in self:
-            record.monto_extra_usd = (record.cantidad_extra or 0) * (record.extra_precio_unitario_usd or 0)
-            record.monto_extra = record._convertir_desde_usd(record.monto_extra_usd, record.moneda, rates)
+            if record.extra_linea_ids:
+                record.monto_extra_usd = sum(record.extra_linea_ids.mapped("monto_extra_usd"))
+                record.monto_extra = sum(record.extra_linea_ids.mapped("monto_extra"))
+            else:
+                record.monto_extra_usd = (record.cantidad_extra or 0) * (record.extra_precio_unitario_usd or 0)
+                record.monto_extra = record._convertir_desde_usd(record.monto_extra_usd, record.moneda, rates)
 
     @api.depends("cantidad_adultos", "cantidad_ninos", "precio_adulto", "precio_nino", "descuento", "monto_hotel", "monto_extra")
     def _compute_monto_total(self):
@@ -353,12 +363,16 @@ class IncasCotizacion(models.Model):
         if "moneda" in vals:
             for linea in self.mapped("paquete_linea_ids"):
                 linea._actualizar_precios_desde_usd(vals["moneda"])
+            self.mapped("hotel_linea_ids")._actualizar_precio_desde_usd(vals["moneda"])
+            self.mapped("extra_linea_ids")._actualizar_precio_desde_usd(vals["moneda"])
         return result
 
     @api.onchange("moneda")
     def _onchange_moneda(self):
         for record in self:
             record.paquete_linea_ids._actualizar_precios_desde_usd(record.moneda)
+            record.hotel_linea_ids._actualizar_precio_desde_usd(record.moneda)
+            record.extra_linea_ids._actualizar_precio_desde_usd(record.moneda)
             record.hotel_precio_noche = record._convertir_desde_usd(
                 record.hotel_precio_noche_usd or 0,
                 record.moneda,

@@ -524,6 +524,11 @@ def _tabla_resumen_paquete(cotizacion):
 def _tabla_datos_resumen_paquete(cotizacion):
     return f"""
     <table class="package-summary-table package-summary-meta-table">
+      <thead>
+        <tr>
+          <th colspan="4">Resumen del paquete</th>
+        </tr>
+      </thead>
       <tbody>
         <tr>
           <td class="label">Código</td>
@@ -1319,13 +1324,8 @@ def render_cotizacion_paquete_html(cotizacion):
             margin-top: 10px;
             margin-bottom: 18px;
           }}
-          .package-summary-title {{
-            color: #1aa093;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 0 0 10px 0;
-            font-weight: 700;
+          .package-summary .package-summary-meta-table {{
+            margin-bottom: 12px;
           }}
           .package-total-label {{
             font-size: 12px;
@@ -1343,7 +1343,6 @@ def render_cotizacion_paquete_html(cotizacion):
       <body>
         {portada}
         <section class="package-summary">
-          <div class="package-summary-title">Resumen del paquete</div>
           {_tabla_datos_resumen_paquete(cotizacion)}
           {_tabla_resumen_paquete(cotizacion)}
         </section>
