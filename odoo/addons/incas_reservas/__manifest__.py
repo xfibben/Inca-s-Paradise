@@ -5,7 +5,7 @@
     "category": "Inca's Paradise",
     "author": "Inca's Paradise",
     "license": "LGPL-3",
-    "depends": ["incas_core"],
+    "depends": ["incas_core", "incas_documentos"],
     "data": [
         "security/ir.model.access.csv",
         "security/incas_catalogo_access.xml",

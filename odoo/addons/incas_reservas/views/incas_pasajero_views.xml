@@ -9,6 +9,15 @@
                 <field name="reserva_id"/>
                 <field name="tipo_documento"/>
                 <field name="numero_documento"/>
+                <field name="documento_file_count"/>
+                <field
+                    name="estado_documental"
+                    widget="badge"
+                    decoration-danger="estado_documental == 'pendiente'"
+                    decoration-warning="estado_documental == 'parcial'"
+                    decoration-success="estado_documental == 'completo'"
+                />
+                <field name="faltantes_documentales"/>
                 <field name="nacionalidad"/>
                 <field name="fecha_nacimiento"/>
                 <field name="email"/>
@@ -26,9 +35,14 @@
                 <field name="reserva_id"/>
                 <field name="numero_documento"/>
                 <field name="nacionalidad"/>
+                <field name="estado_documental"/>
+                <separator/>
+                <filter name="filter_documental_completo" string="Documentación completa" domain="[('estado_documental', '=', 'completo')]"/>
+                <filter name="filter_documental_pendiente" string="Documentación pendiente" domain="[('estado_documental', '!=', 'completo')]"/>
                 <separator/>
                 <filter name="group_reserva" string="Reserva" domain="[]" context="{'group_by': 'reserva_id'}"/>
                 <filter name="group_nacionalidad" string="Nacionalidad" domain="[]" context="{'group_by': 'nacionalidad'}"/>
+                <filter name="group_estado_documental" string="Estado documental" domain="[]" context="{'group_by': 'estado_documental'}"/>
             </search>
         </field>
     </record>
@@ -38,10 +52,19 @@
         <field name="model">incas.pasajero</field>
         <field name="arch" type="xml">
             <form string="Pasajero">
+                <header>
+                    <button name="action_ver_documentos" type="object" string="Documentos"/>
+                </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_ver_documentos" type="object" class="oe_stat_button" icon="fa-folder-open">
+                            <field name="documento_file_count" widget="statinfo" string="Documentos"/>
+                        </button>
+                    </div>
                     <group>
                         <group>
                             <field name="reserva_id"/>
+                            <field name="documento_directory_id" invisible="1"/>
                             <field name="nombres"/>
                             <field name="apellidos"/>
                             <field name="nacionalidad"/>
@@ -50,9 +73,22 @@
                         <group>
                             <field name="tipo_documento"/>
                             <field name="numero_documento"/>
+                            <field name="documento_entregado"/>
+                            <field name="fecha_entrega_documento" readonly="not documento_entregado"/>
+                            <field name="documento_file_count" readonly="1"/>
+                            <field
+                                name="estado_documental"
+                                widget="badge"
+                                decoration-danger="estado_documental == 'pendiente'"
+                                decoration-warning="estado_documental == 'parcial'"
+                                decoration-success="estado_documental == 'completo'"
+                            />
                             <field name="email"/>
                             <field name="telefono"/>
                         </group>
+                    </group>
+                    <group>
+                        <field name="faltantes_documentales" readonly="1"/>
                     </group>
                     <group>
                         <field name="observaciones" placeholder="Notas internas del pasajero"/>

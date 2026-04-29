@@ -119,6 +119,8 @@ Es el módulo más avanzado del BO y ya supera una base simple de reservas.
 - `incas.catalogo.vehiculo`
 - `incas.estilo.transporte`
 - `incas.cotizacion.paquete.linea`
+- `incas.cotizacion.hotel.linea`
+- `incas.cotizacion.extra.linea`
 - `incas.hotel`
 - `incas.hotel.tarifa`
 - `incas.extra`
@@ -164,13 +166,15 @@ Es el módulo más avanzado del BO y ya supera una base simple de reservas.
   - EUR
 - cálculo de precios y totales
 - descuento porcentual
-- hotel opcional:
+- hoteles opcionales en múltiples líneas:
   - hotel
   - tarifa
+  - check-in
+  - check-out
   - noches
   - habitaciones
   - monto hotel
-- extra opcional:
+- extras opcionales en múltiples líneas:
   - extra
   - tarifa
   - unidad
@@ -212,7 +216,7 @@ Es el módulo más avanzado del BO y ya supera una base simple de reservas.
 - servicio
 - nombre del servicio
 - vehículo sugerido y vehículo seleccionado
-- hotel y extra asociados
+- hoteles y extras asociados por líneas de cotización
 - precios base USD
 - precios convertidos por moneda
 - descuento porcentual

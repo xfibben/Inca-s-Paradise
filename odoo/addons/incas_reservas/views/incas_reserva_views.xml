@@ -24,6 +24,15 @@
                 <field name="monto_extra"/>
                 <field name="estado_reserva"/>
                 <field name="estado_pago"/>
+                <field
+                    name="estado_documental"
+                    widget="badge"
+                    decoration-muted="estado_documental == 'sin_pasajeros'"
+                    decoration-danger="estado_documental == 'pendiente'"
+                    decoration-warning="estado_documental == 'parcial'"
+                    decoration-success="estado_documental == 'completo'"
+                />
+                <field name="pasajeros_documentos_pendientes"/>
                 <field name="saldo_pendiente"/>
                 <field name="responsable_id"/>
             </list>
@@ -40,13 +49,17 @@
                 <field name="servicio_nombre"/>
                 <field name="estado_reserva"/>
                 <field name="estado_pago"/>
+                <field name="estado_documental"/>
                 <field name="fecha_viaje"/>
                 <separator/>
                 <filter name="filter_pagado" string="Pagado" domain="[('estado_pago', '=', 'pagado')]"/>
                 <filter name="filter_pendiente" string="Pendiente" domain="[('estado_pago', '=', 'pendiente')]"/>
+                <filter name="filter_documental_completo" string="Documentación completa" domain="[('estado_documental', '=', 'completo')]"/>
+                <filter name="filter_documental_pendiente" string="Documentación pendiente" domain="[('estado_documental', 'in', ['pendiente', 'parcial'])]"/>
                 <separator/>
                 <filter name="group_estado_reserva" string="Estado de reserva" domain="[]" context="{'group_by': 'estado_reserva'}"/>
                 <filter name="group_estado_pago" string="Estado de pago" domain="[]" context="{'group_by': 'estado_pago'}"/>
+                <filter name="group_estado_documental" string="Estado documental" domain="[]" context="{'group_by': 'estado_documental'}"/>
                 <filter name="group_fecha_viaje" string="Fecha de viaje" domain="[]" context="{'group_by': 'fecha_viaje'}"/>
             </search>
         </field>
@@ -59,6 +72,7 @@
             <form string="Reserva">
                 <header>
                     <button name="action_nuevo_pago" type="object" string="Crear pago"/>
+                    <button name="action_ver_documentos" type="object" string="Documentos"/>
                     <button name="action_print_pdf" type="object" string="Exportar PDF"/>
                     <field
                         name="estado_pago"
@@ -68,11 +82,22 @@
                         decoration-info="estado_pago == 'parcial'"
                         decoration-danger="estado_pago == 'reembolsado'"
                     />
+                    <field
+                        name="estado_documental"
+                        widget="badge"
+                        decoration-muted="estado_documental == 'sin_pasajeros'"
+                        decoration-danger="estado_documental == 'pendiente'"
+                        decoration-warning="estado_documental == 'parcial'"
+                        decoration-success="estado_documental == 'completo'"
+                    />
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_ver_pagos" type="object" class="oe_stat_button" icon="fa-credit-card">
                             <field name="pago_count" widget="statinfo" string="Pagos"/>
+                        </button>
+                        <button name="action_ver_documentos" type="object" class="oe_stat_button" icon="fa-folder-open">
+                            <span class="o_stat_text">Documentos</span>
                         </button>
                     </div>
                     <div class="oe_title">
@@ -90,6 +115,7 @@
                             <field name="numero_documento"/>
                             <field name="nacionalidad"/>
                             <field name="cotizacion_id"/>
+                            <field name="documento_directory_id" invisible="1"/>
                             <field name="ticket" readonly="1"/>
                             <field name="fecha_reserva"/>
                             <field name="fecha_inicio"/>
@@ -126,6 +152,7 @@
                         <group>
                             <field name="estado_reserva"/>
                             <field name="cantidad_pasajeros" readonly="1"/>
+                            <field name="pasajeros_documentos_pendientes" readonly="1"/>
                             <field name="cantidad_noches" readonly="1" invisible="1"/>
                             <field name="hotel_nombre" readonly="1" force_save="1" invisible="1"/>
                             <field name="extra_nombre" readonly="1" force_save="1" invisible="1"/>
@@ -232,10 +259,22 @@
                         <page string="Pasajeros">
                             <field name="pasajero_ids">
                                 <list editable="bottom">
+                                    <button name="action_ver_documentos" type="object" string="Documentos" icon="fa-folder-open"/>
                                     <field name="nombres"/>
                                     <field name="apellidos"/>
                                     <field name="tipo_documento"/>
                                     <field name="numero_documento"/>
+                                    <field name="documento_entregado"/>
+                                    <field name="fecha_entrega_documento"/>
+                                    <field name="documento_file_count" readonly="1"/>
+                                    <field
+                                        name="estado_documental"
+                                        widget="badge"
+                                        decoration-danger="estado_documental == 'pendiente'"
+                                        decoration-warning="estado_documental == 'parcial'"
+                                        decoration-success="estado_documental == 'completo'"
+                                    />
+                                    <field name="faltantes_documentales"/>
                                     <field name="nacionalidad"/>
                                     <field name="fecha_nacimiento"/>
                                 </list>

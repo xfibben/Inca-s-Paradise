@@ -262,10 +262,12 @@ Conectar operación, ventas y fidelización.
 
 - `Cotización` pasó a ser la fuente de verdad del servicio vendido.
 - La pestaña `Paquete` en cotización maneja líneas locales editables.
+- La cotización ahora maneja pestañas separadas de `Hoteles` y `Extras` con listas editables al mismo nivel que `Paquete`.
 - Cada línea del paquete copia un snapshot del servicio sincronizado desde Strapi.
 - Ese snapshot incluye precios y contenido editable por cotización.
 - Editar una línea del paquete no modifica Strapi ni el catálogo local base.
 - El PDF `detalle paquete` sale desde el snapshot guardado en la línea de cotización.
+- El resumen del PDF `detalle paquete` se renderiza en formato tabla.
 
 ## Regla operativa actual
 
@@ -280,6 +282,8 @@ Conectar operación, ventas y fidelización.
 
 - Usuario crea o edita una `cotización`.
 - Usuario agrega una o varias líneas en `Paquete`.
+- Usuario puede agregar una o varias líneas en `Hoteles`.
+- Usuario puede agregar una o varias líneas en `Extras`.
 - Cada línea puede abrirse en una ventana modal para editar:
   - nombre
   - precios
@@ -287,6 +291,7 @@ Conectar operación, ventas y fidelización.
   - descripciones
   - itinerario
   - bloques de contenido del tour o transporte
+- Los montos de hotel y extra se calculan como suma de sus líneas.
 - La `reserva` toma sus importes y resumen desde la `cotización`.
 - La `reserva` ya no debe considerarse la fuente primaria del servicio comercial.
 
