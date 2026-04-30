@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_reserva_cambio_list" model="ir.ui.view">
+        <field name="name">incas.reserva.cambio.list</field>
+        <field name="model">incas.reserva.cambio</field>
+        <field name="arch" type="xml">
+            <list string="Solicitudes de cambio">
+                <field name="name"/>
+                <field name="reserva_id"/>
+                <field name="tipo_cambio"/>
+                <field name="fecha_efectiva"/>
+                <field
+                    name="estado"
+                    widget="badge"
+                    decoration-warning="estado == 'solicitado'"
+                    decoration-info="estado == 'aprobado'"
+                    decoration-success="estado == 'aplicado'"
+                    decoration-danger="estado == 'rechazado'"
+                />
+                <field name="aprobado_por_id"/>
+                <field name="aplicado_por_id"/>
+                <field name="create_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_reserva_cambio_search" model="ir.ui.view">
+        <field name="name">incas.reserva.cambio.search</field>
+        <field name="model">incas.reserva.cambio</field>
+        <field name="arch" type="xml">
+            <search string="Buscar solicitudes de cambio">
+                <field name="name"/>
+                <field name="reserva_id"/>
+                <field name="tipo_cambio"/>
+                <field name="estado"/>
+                <field name="fecha_efectiva"/>
+                <separator/>
+                <filter name="filter_reprogramacion" string="Reprogramación" domain="[('tipo_cambio', '=', 'reprogramacion')]"/>
+                <filter name="filter_cancelacion" string="Cancelación" domain="[('tipo_cambio', '=', 'cancelacion')]"/>
+                <filter name="filter_solicitado" string="Solicitado" domain="[('estado', '=', 'solicitado')]"/>
+                <filter name="filter_aprobado" string="Aprobado" domain="[('estado', '=', 'aprobado')]"/>
+                <separator/>
+                <filter name="group_tipo" string="Tipo" domain="[]" context="{'group_by': 'tipo_cambio'}"/>
+                <filter name="group_estado" string="Estado" domain="[]" context="{'group_by': 'estado'}"/>
+                <filter name="group_reserva" string="Reserva" domain="[]" context="{'group_by': 'reserva_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_reserva_cambio_form" model="ir.ui.view">
+        <field name="name">incas.reserva.cambio.form</field>
+        <field name="model">incas.reserva.cambio</field>
+        <field name="arch" type="xml">
+            <form string="Solicitud de cambio">
+                <header>
+                    <button name="action_enviar" type="object" string="Enviar" class="btn-primary" invisible="estado != 'borrador'"/>
+                    <button name="action_aprobar" type="object" string="Aprobar" class="btn-primary" invisible="estado != 'solicitado'"/>
+                    <button name="action_rechazar" type="object" string="Rechazar" class="btn-secondary" invisible="estado != 'solicitado'"/>
+                    <button name="action_aplicar" type="object" string="Aplicar" class="btn-primary" invisible="estado != 'aprobado'"/>
+                    <button name="action_ir_reserva" type="object" string="Ir a reserva" class="btn-secondary"/>
+                    <field
+                        name="estado"
+                        widget="badge"
+                        decoration-muted="estado == 'borrador'"
+                        decoration-warning="estado == 'solicitado'"
+                        decoration-info="estado == 'aprobado'"
+                        decoration-success="estado == 'aplicado'"
+                        decoration-danger="estado == 'rechazado'"
+                    />
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="reserva_id" readonly="estado != 'borrador'"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="tipo_cambio" readonly="estado != 'borrador'"/>
+                            <field name="fecha_efectiva"/>
+                        </group>
+                        <group>
+                            <field name="aprobado_por_id" readonly="1"/>
+                            <field name="fecha_aprobacion" readonly="1"/>
+                            <field name="aplicado_por_id" readonly="1"/>
+                            <field name="fecha_aplicacion" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="motivo" placeholder="Detalle del motivo"/>
+                    </group>
+                    <group string="Datos actuales">
+                        <group>
+                            <field name="fecha_viaje_anterior" readonly="1"/>
+                            <field name="fecha_inicio_anterior" readonly="1"/>
+                            <field name="fecha_fin_anterior" readonly="1"/>
+                            <field name="turno_anterior" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="monto_total_anterior" readonly="1"/>
+                            <field name="estado_reserva_anterior" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Datos solicitados">
+                        <group>
+                            <field name="fecha_viaje_nueva" invisible="tipo_cambio != 'reprogramacion'"/>
+                            <field name="fecha_inicio_nueva" invisible="tipo_cambio != 'reprogramacion'"/>
+                            <field name="fecha_fin_nueva" invisible="tipo_cambio != 'reprogramacion'"/>
+                            <field name="turno_nuevo" invisible="tipo_cambio != 'reprogramacion'"/>
+                        </group>
+                        <group>
+                            <field name="monto_total_nuevo" readonly="1"/>
+                            <field name="estado_reserva_nuevo" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="observaciones" placeholder="Observaciones internas"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_reserva_cambios" model="ir.actions.act_window">
+        <field name="name">Solicitudes de cambio</field>
+        <field name="res_model">incas.reserva.cambio</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_reserva_cambio_search"/>
+    </record>
+</odoo>

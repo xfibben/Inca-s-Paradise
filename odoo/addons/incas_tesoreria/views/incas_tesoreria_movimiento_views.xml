@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_tesoreria_movimiento_list" model="ir.ui.view">
+        <field name="name">incas.tesoreria.movimiento.list</field>
+        <field name="model">incas.tesoreria.movimiento</field>
+        <field name="arch" type="xml">
+            <list string="Movimientos de tesorería">
+                <field name="fecha"/>
+                <field name="name"/>
+                <field name="tipo"/>
+                <field name="categoria"/>
+                <field name="reserva_id"/>
+                <field name="partner_id"/>
+                <field name="moneda"/>
+                <field name="monto"/>
+                <field
+                    name="estado"
+                    widget="badge"
+                    decoration-warning="estado == 'borrador'"
+                    decoration-success="estado == 'confirmado'"
+                    decoration-danger="estado == 'anulado'"
+                />
+                <field name="responsable_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_tesoreria_movimiento_search" model="ir.ui.view">
+        <field name="name">incas.tesoreria.movimiento.search</field>
+        <field name="model">incas.tesoreria.movimiento</field>
+        <field name="arch" type="xml">
+            <search string="Buscar movimientos">
+                <field name="name"/>
+                <field name="fecha"/>
+                <field name="tipo"/>
+                <field name="categoria"/>
+                <field name="reserva_id"/>
+                <field name="partner_id"/>
+                <field name="estado"/>
+                <separator/>
+                <filter name="filter_ingresos" string="Ingresos" domain="[('tipo', '=', 'ingreso')]"/>
+                <filter name="filter_egresos" string="Egresos" domain="[('tipo', '=', 'egreso')]"/>
+                <filter name="filter_confirmados" string="Confirmados" domain="[('estado', '=', 'confirmado')]"/>
+                <separator/>
+                <filter name="group_tipo" string="Tipo" domain="[]" context="{'group_by': 'tipo'}"/>
+                <filter name="group_categoria" string="Categoría" domain="[]" context="{'group_by': 'categoria'}"/>
+                <filter name="group_moneda" string="Moneda" domain="[]" context="{'group_by': 'moneda'}"/>
+                <filter name="group_estado" string="Estado" domain="[]" context="{'group_by': 'estado'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_tesoreria_movimiento_form" model="ir.ui.view">
+        <field name="name">incas.tesoreria.movimiento.form</field>
+        <field name="model">incas.tesoreria.movimiento</field>
+        <field name="arch" type="xml">
+            <form string="Movimiento de tesorería">
+                <header>
+                    <button name="action_confirmar" type="object" string="Confirmar" class="btn-primary" invisible="estado != 'borrador'"/>
+                    <button name="action_anular" type="object" string="Anular" class="btn-secondary" invisible="estado == 'anulado'"/>
+                    <field
+                        name="estado"
+                        widget="badge"
+                        decoration-warning="estado == 'borrador'"
+                        decoration-success="estado == 'confirmado'"
+                        decoration-danger="estado == 'anulado'"
+                    />
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="fecha"/>
+                            <field name="tipo"/>
+                            <field name="categoria"/>
+                            <field name="moneda"/>
+                            <field name="monto"/>
+                        </group>
+                        <group>
+                            <field name="reserva_id"/>
+                            <field name="partner_id"/>
+                            <field name="responsable_id"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="descripcion" placeholder="Detalle del movimiento"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_tesoreria_movimientos" model="ir.actions.act_window">
+        <field name="name">Movimientos</field>
+        <field name="res_model">incas.tesoreria.movimiento</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_tesoreria_movimiento_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_tesoreria_root"
+        name="Tesorería"
+        parent="incas_core.menu_incas_root"
+        sequence="30"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia,incas_core.group_incas_core_reservas"
+    />
+
+    <menuitem
+        id="menu_incas_tesoreria_movimientos"
+        name="Movimientos"
+        parent="menu_incas_tesoreria_root"
+        action="action_incas_tesoreria_movimientos"
+        sequence="10"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia,incas_core.group_incas_core_reservas"
+    />
+</odoo>

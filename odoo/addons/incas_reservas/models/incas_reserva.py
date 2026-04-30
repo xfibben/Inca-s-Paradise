@@ -192,6 +192,7 @@ class IncasReserva(models.Model):
             ("parcial", "Parcial"),
             ("pagado", "Pagado"),
             ("reembolsado", "Reembolsado"),
+            ("cancelado", "Cancelado"),
         ],
         string="Estado de pago",
         compute="_compute_estado_pago",
@@ -203,6 +204,8 @@ class IncasReserva(models.Model):
     pago_ids = fields.One2many("incas.pago", "reserva_id", string="Pagos")
     pago_count = fields.Integer(string="Cantidad de pagos", compute="_compute_pago_count")
     pasajero_ids = fields.One2many("incas.pasajero", "reserva_id", string="Pasajeros")
+    cambio_ids = fields.One2many("incas.reserva.cambio", "reserva_id", string="Solicitudes de cambio")
+    cambio_count = fields.Integer(string="Cantidad de cambios", compute="_compute_cambio_count")
     documento_directory_id = fields.Many2one("dms.directory", string="Carpeta documental", readonly=True, copy=False)
     estado_documental = fields.Selection(
         [
@@ -413,14 +416,22 @@ class IncasReserva(models.Model):
         for record in self:
             record.pago_count = len(record.pago_ids)
 
+    @api.depends("cambio_ids")
+    def _compute_cambio_count(self):
+        for record in self:
+            record.cambio_count = len(record.cambio_ids)
+
     @api.depends("pago_ids.estado", "pago_ids.monto_reserva")
     def _compute_monto_pagado(self):
         for record in self:
             record.monto_pagado = sum(record.pago_ids.filtered(lambda pago: pago.estado == "pagado").mapped("monto_reserva"))
 
-    @api.depends("pago_ids.estado", "pago_ids.monto_reserva", "precio_tour", "monto_total")
+    @api.depends("estado_reserva", "pago_ids.estado", "pago_ids.monto_reserva", "precio_tour", "monto_total")
     def _compute_estado_pago(self):
         for record in self:
+            if record.estado_reserva == "cancelado":
+                record.estado_pago = "cancelado"
+                continue
             monto_objetivo = record.precio_tour or record.monto_total
             monto_pagado = sum(record.pago_ids.filtered(lambda pago: pago.estado == "pagado").mapped("monto_reserva"))
             estados = set(record.pago_ids.mapped("estado"))
@@ -1221,6 +1232,33 @@ class IncasReserva(models.Model):
                 "default_reserva_id": self.id,
                 "default_moneda": self.moneda,
                 "default_monto": self.saldo_pendiente or self.precio_tour or self.monto_total,
+            },
+        }
+
+    def action_ver_cambios(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Solicitudes de cambio",
+            "res_model": "incas.reserva.cambio",
+            "view_mode": "list,form",
+            "domain": [("reserva_id", "=", self.id)],
+            "context": {"default_reserva_id": self.id},
+            "target": "current",
+        }
+
+    def action_solicitar_cambio(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Nueva solicitud de cambio",
+            "res_model": "incas.reserva.cambio",
+            "view_mode": "form",
+            "target": "current",
+            "context": {
+                "default_reserva_id": self.id,
+                "default_motivo": "",
+                "default_tipo_cambio": "reprogramacion",
             },
         }
 
