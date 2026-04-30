@@ -70,6 +70,11 @@ access_incas_pasajero_admin,access.incas.pasajero.admin,model_incas_pasajero,inc
 access_incas_pasajero_reservas,access.incas.pasajero.reservas,model_incas_pasajero,incas_core.group_incas_core_reservas,1,1,1,0
 access_incas_pasajero_operaciones,access.incas.pasajero.operaciones,model_incas_pasajero,incas_core.group_incas_core_operaciones,1,1,0,0
 access_incas_pasajero_gerencia,access.incas.pasajero.gerencia,model_incas_pasajero,incas_core.group_incas_core_gerencia,1,1,1,0
+access_incas_reserva_cambio_system,access.incas.reserva.cambio.system,model_incas_reserva_cambio,base.group_system,1,1,1,1
+access_incas_reserva_cambio_admin,access.incas.reserva.cambio.admin,model_incas_reserva_cambio,incas_core.group_incas_core_admin,1,1,1,1
+access_incas_reserva_cambio_reservas,access.incas.reserva.cambio.reservas,model_incas_reserva_cambio,incas_core.group_incas_core_reservas,1,1,1,0
+access_incas_reserva_cambio_operaciones,access.incas.reserva.cambio.operaciones,model_incas_reserva_cambio,incas_core.group_incas_core_operaciones,1,1,0,0
+access_incas_reserva_cambio_gerencia,access.incas.reserva.cambio.gerencia,model_incas_reserva_cambio,incas_core.group_incas_core_gerencia,1,1,1,0
 access_res_currency_rate_incas_admin,access.res.currency.rate.incas.admin,base.model_res_currency_rate,incas_core.group_incas_core_admin,1,1,1,0
 access_res_currency_rate_incas_gerencia,access.res.currency.rate.incas.gerencia,base.model_res_currency_rate,incas_core.group_incas_core_gerencia,1,1,1,0
 access_res_currency_incas_admin,access.res.currency.incas.admin,base.model_res_currency,incas_core.group_incas_core_admin,1,0,0,0

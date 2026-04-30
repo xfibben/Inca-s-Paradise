@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_agenda_evento_calendar" model="ir.ui.view">
+        <field name="name">incas.agenda.evento.calendar</field>
+        <field name="model">incas.agenda.evento</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendario operativo" date_start="fecha_inicio" date_stop="fecha_fin" color="tipo_evento" event_open_popup="true">
+                <field name="name"/>
+                <field name="tipo_evento"/>
+                <field name="estado"/>
+                <field name="reserva_id"/>
+                <field name="responsable_id"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_incas_agenda_evento_list" model="ir.ui.view">
+        <field name="name">incas.agenda.evento.list</field>
+        <field name="model">incas.agenda.evento</field>
+        <field name="arch" type="xml">
+            <list string="Agenda operativa">
+                <field name="fecha_inicio"/>
+                <field name="fecha_fin"/>
+                <field name="name"/>
+                <field name="tipo_evento"/>
+                <field
+                    name="estado"
+                    widget="badge"
+                    decoration-warning="estado == 'pendiente'"
+                    decoration-info="estado == 'en_progreso'"
+                    decoration-success="estado == 'completado'"
+                    decoration-danger="estado == 'cancelado'"
+                />
+                <field name="reserva_id"/>
+                <field name="partner_id"/>
+                <field name="responsable_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_agenda_evento_search" model="ir.ui.view">
+        <field name="name">incas.agenda.evento.search</field>
+        <field name="model">incas.agenda.evento</field>
+        <field name="arch" type="xml">
+            <search string="Buscar eventos">
+                <field name="name"/>
+                <field name="tipo_evento"/>
+                <field name="estado"/>
+                <field name="reserva_id"/>
+                <field name="partner_id"/>
+                <field name="responsable_id"/>
+                <separator/>
+                <filter name="filter_reservas" string="Reservas" domain="[('tipo_evento', '=', 'reserva')]"/>
+                <filter name="filter_reuniones" string="Reuniones" domain="[('tipo_evento', '=', 'reunion')]"/>
+                <filter name="filter_pendientes" string="Pendientes" domain="[('estado', '=', 'pendiente')]"/>
+                <separator/>
+                <filter name="group_tipo" string="Tipo" domain="[]" context="{'group_by': 'tipo_evento'}"/>
+                <filter name="group_estado" string="Estado" domain="[]" context="{'group_by': 'estado'}"/>
+                <filter name="group_responsable" string="Responsable" domain="[]" context="{'group_by': 'responsable_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_agenda_evento_form" model="ir.ui.view">
+        <field name="name">incas.agenda.evento.form</field>
+        <field name="model">incas.agenda.evento</field>
+        <field name="arch" type="xml">
+            <form string="Evento operativo">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="tipo_evento"/>
+                            <field
+                                name="estado"
+                                widget="badge"
+                                decoration-warning="estado == 'pendiente'"
+                                decoration-info="estado == 'en_progreso'"
+                                decoration-success="estado == 'completado'"
+                                decoration-danger="estado == 'cancelado'"
+                            />
+                            <field name="reserva_id" readonly="tipo_evento == 'reserva'"/>
+                            <field name="partner_id"/>
+                        </group>
+                        <group>
+                            <field name="fecha_inicio"/>
+                            <field name="fecha_fin"/>
+                            <field name="all_day"/>
+                            <field name="responsable_id"/>
+                            <field name="color" widget="color_picker"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="notas" placeholder="Notas operativas"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_agenda_calendario" model="ir.actions.act_window">
+        <field name="name">Calendario</field>
+        <field name="res_model">incas.agenda.evento</field>
+        <field name="view_mode">calendar,list,form</field>
+        <field name="search_view_id" ref="view_incas_agenda_evento_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_operaciones_calendario"
+        name="Calendario"
+        parent="incas_core.menu_incas_operaciones_root"
+        action="action_incas_agenda_calendario"
+        sequence="10"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

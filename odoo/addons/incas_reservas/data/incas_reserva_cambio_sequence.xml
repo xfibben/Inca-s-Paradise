@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_incas_reserva_cambio" model="ir.sequence">
+        <field name="name">Secuencia solicitud de cambio</field>
+        <field name="code">incas.reserva.cambio</field>
+        <field name="prefix">CAM-%(year)s-</field>
+        <field name="padding">5</field>
+    </record>
+</odoo>

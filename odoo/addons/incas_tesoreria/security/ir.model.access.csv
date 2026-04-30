@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_incas_tesoreria_movimiento_system,access.incas.tesoreria.movimiento.system,model_incas_tesoreria_movimiento,base.group_system,1,1,1,1
+access_incas_tesoreria_movimiento_admin,access.incas.tesoreria.movimiento.admin,model_incas_tesoreria_movimiento,incas_core.group_incas_core_admin,1,1,1,1
+access_incas_tesoreria_movimiento_gerencia,access.incas.tesoreria.movimiento.gerencia,model_incas_tesoreria_movimiento,incas_core.group_incas_core_gerencia,1,1,1,0
+access_incas_tesoreria_movimiento_reservas,access.incas.tesoreria.movimiento.reservas,model_incas_tesoreria_movimiento,incas_core.group_incas_core_reservas,1,1,0,0
+access_incas_tesoreria_movimiento_operaciones,access.incas.tesoreria.movimiento.operaciones,model_incas_tesoreria_movimiento,incas_core.group_incas_core_operaciones,1,0,0,0

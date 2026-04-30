@@ -72,6 +72,7 @@
             <form string="Reserva">
                 <header>
                     <button name="action_nuevo_pago" type="object" string="Crear pago"/>
+                    <button name="action_solicitar_cambio" type="object" string="Solicitar cambio"/>
                     <button name="action_ver_documentos" type="object" string="Documentos"/>
                     <button name="action_print_pdf" type="object" string="Exportar PDF"/>
                     <field
@@ -95,6 +96,9 @@
                     <div class="oe_button_box" name="button_box">
                         <button name="action_ver_pagos" type="object" class="oe_stat_button" icon="fa-credit-card">
                             <field name="pago_count" widget="statinfo" string="Pagos"/>
+                        </button>
+                        <button name="action_ver_cambios" type="object" class="oe_stat_button" icon="fa-random">
+                            <field name="cambio_count" widget="statinfo" string="Cambios"/>
                         </button>
                         <button name="action_ver_documentos" type="object" class="oe_stat_button" icon="fa-folder-open">
                             <span class="o_stat_text">Documentos</span>
