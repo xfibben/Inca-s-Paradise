@@ -1,34 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="action_server_mail_activity_desaprobar_tarea" model="ir.actions.server">
+        <field name="name">Desaprobar tarea</field>
+        <field name="model_id" ref="mail.model_mail_activity"/>
+        <field name="state">code</field>
+        <field name="code">records.write({'revision_tarea': 'por_revisar'})</field>
+    </record>
+
     <record id="view_mail_activity_form_popup_inherit_incas_operaciones" model="ir.ui.view">
         <field name="name">mail.activity.view.form.popup.incas.operaciones</field>
         <field name="model">mail.activity</field>
         <field name="inherit_id" ref="mail.mail_activity_view_form_popup"/>
         <field name="arch" type="xml">
+            <xpath expr="//sheet/group[not(@invisible)][1]" position="before">
+                <div class="mb-3">
+                    <button
+                        string="Iniciar actividad"
+                        name="action_iniciar_actividad"
+                        type="object"
+                        class="btn btn-primary me-2"
+                        invisible="not id or estado_ejecucion != 'pendiente'"
+                    />
+                    <button
+                        string="Concluir actividad"
+                        name="action_concluir_actividad"
+                        type="object"
+                        class="btn btn-primary me-2"
+                        invisible="not id or estado_ejecucion != 'en_progreso'"
+                    />
+                    <button
+                        string="Aprobar tarea"
+                        name="action_aprobar_tarea"
+                        type="object"
+                        class="btn btn-primary me-2"
+                        invisible="estado_ejecucion != 'finalizada' or revision_tarea == 'aprobado'"
+                    />
+                    <button
+                        string="Desaprobar tarea"
+                        name="%(action_server_mail_activity_desaprobar_tarea)d"
+                        type="action"
+                        class="btn btn-secondary me-2"
+                        invisible="estado_ejecucion != 'finalizada' or revision_tarea != 'aprobado'"
+                    />
+                    <button
+                        string="Observar tarea"
+                        name="action_observar_tarea"
+                        type="object"
+                        class="btn btn-secondary"
+                        invisible="estado_ejecucion != 'finalizada'"
+                    />
+                </div>
+            </xpath>
+            <xpath expr="//field[@name='note']" position="replace">
+                <field
+                    name="note"
+                    class="oe-bordered-editor embedded-editor-height-4"
+                    placeholder="Detalle de la actividad"
+                    widget="html_mail"
+                />
+            </xpath>
             <xpath expr="//group[field[@name='date_deadline']]" position="after">
                 <group>
                     <field name="estado_ejecucion" widget="badge" readonly="1"/>
+                    <field name="revision_tarea" widget="badge" readonly="1"/>
+                    <field name="observacion_tarea" readonly="1"/>
                     <field name="fecha_hora_inicio" readonly="1"/>
                     <field name="fecha_hora_fin" readonly="1"/>
                     <field name="duracion_minutos" readonly="1"/>
                     <field name="duracion_horas" readonly="1"/>
                 </group>
-            </xpath>
-            <xpath expr="//button[@name='action_done']" position="replace">
-                <button
-                    string="Iniciar actividad"
-                    name="action_iniciar_actividad"
-                    type="object"
-                    class="btn-secondary"
-                    invisible="not id or active == False or estado_ejecucion != 'pendiente'"
-                />
-                <button
-                    string="Concluir actividad"
-                    name="action_concluir_actividad"
-                    type="object"
-                    class="btn-secondary"
-                    invisible="not id or active == False or estado_ejecucion != 'en_progreso'"
-                />
             </xpath>
         </field>
     </record>
@@ -54,7 +94,34 @@
                         class="btn-primary"
                         invisible="active == False or estado_ejecucion != 'en_progreso'"
                     />
+                    <button
+                        string="Aprobar tarea"
+                        name="action_aprobar_tarea"
+                        type="object"
+                        class="btn-primary"
+                        invisible="estado_ejecucion != 'finalizada' or revision_tarea == 'aprobado'"
+                    />
+                    <button
+                        string="Desaprobar tarea"
+                        name="%(action_server_mail_activity_desaprobar_tarea)d"
+                        type="action"
+                        class="btn-secondary"
+                        invisible="estado_ejecucion != 'finalizada' or revision_tarea != 'aprobado'"
+                    />
+                    <button
+                        string="Observar tarea"
+                        name="action_observar_tarea"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="estado_ejecucion != 'finalizada'"
+                    />
                 </header>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <group string="Calificación de tarea">
+                    <field name="revision_tarea" widget="badge" readonly="1"/>
+                    <field name="observacion_tarea" placeholder="Escriba el comentario"/>
+                </group>
             </xpath>
         </field>
     </record>
@@ -91,4 +158,153 @@
             </xpath>
         </field>
     </record>
+
+    <record id="view_mail_activity_tree_tareas_incas_operaciones" model="ir.ui.view">
+        <field name="name">mail.activity.view.list.tareas.incas.operaciones</field>
+        <field name="model">mail.activity</field>
+        <field name="arch" type="xml">
+            <list string="Tareas" create="0" delete="0">
+                <field name="res_name" string="Registro"/>
+                <field name="summary"/>
+                <field name="user_id"/>
+                <field name="date_deadline"/>
+                <field name="fecha_hora_fin"/>
+                <field name="duracion_minutos"/>
+                <field
+                    name="revision_tarea"
+                    widget="badge"
+                    decoration-success="revision_tarea == 'aprobado'"
+                    decoration-danger="revision_tarea == 'observado'"
+                    decoration-warning="revision_tarea == False or revision_tarea == 'por_revisar'"
+                />
+                <field name="observacion_tarea" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_mail_activity_form_tareas_incas_operaciones" model="ir.ui.view">
+        <field name="name">mail.activity.view.form.tareas.incas.operaciones</field>
+        <field name="model">mail.activity</field>
+        <field name="priority">99</field>
+        <field name="arch" type="xml">
+            <form string="Tarea" create="0" delete="0">
+                <header>
+                    <button
+                        string="Aprobar tarea"
+                        name="action_aprobar_tarea"
+                        type="object"
+                        class="btn-primary"
+                        invisible="estado_ejecucion != 'finalizada' or revision_tarea == 'aprobado'"
+                    />
+                    <button
+                        string="Desaprobar tarea"
+                        name="%(action_server_mail_activity_desaprobar_tarea)d"
+                        type="action"
+                        class="btn-secondary"
+                        invisible="estado_ejecucion != 'finalizada' or revision_tarea != 'aprobado'"
+                    />
+                    <button
+                        string="Observar tarea"
+                        name="action_observar_tarea"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="estado_ejecucion != 'finalizada'"
+                    />
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="summary" readonly="1"/>
+                            <field name="activity_type_id" readonly="1"/>
+                            <field name="user_id" readonly="1"/>
+                            <field name="date_deadline" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="estado_ejecucion" widget="badge" readonly="1"/>
+                            <field name="revision_tarea" widget="badge" readonly="1"/>
+                            <field name="fecha_hora_inicio" readonly="1"/>
+                            <field name="fecha_hora_fin" readonly="1"/>
+                            <field name="duracion_minutos" readonly="1"/>
+                            <field name="duracion_horas" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Comentario">
+                        <field name="note" readonly="not (estado_ejecucion == 'pendiente' and revision_tarea == 'observado')"/>
+                        <field name="observacion_tarea" placeholder="Escriba el comentario"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_mail_activity_calendar_tareas_incas_operaciones" model="ir.ui.view">
+        <field name="name">mail.activity.view.calendar.tareas.incas.operaciones</field>
+        <field name="model">mail.activity</field>
+        <field name="arch" type="xml">
+            <calendar string="Calendario de tareas" date_start="fecha_hora_fin" color="revision_tarea" event_open_popup="true">
+                <field name="summary"/>
+                <field name="user_id"/>
+                <field name="res_name"/>
+                <field name="revision_tarea"/>
+                <field name="observacion_tarea"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_mail_activity_search_tareas_incas_operaciones" model="ir.ui.view">
+        <field name="name">mail.activity.view.search.tareas.incas.operaciones</field>
+        <field name="model">mail.activity</field>
+        <field name="arch" type="xml">
+            <search string="Tareas">
+                <field name="summary"/>
+                <field name="user_id" string="Asignado a"/>
+                <field name="revision_tarea"/>
+                <filter name="filter_tareas_por_revisar" string="Falta revisar" domain="['|', ('revision_tarea', '=', False), ('revision_tarea', '=', 'por_revisar')]"/>
+                <filter name="filter_tareas_aprobadas" string="Aprobadas" domain="[('revision_tarea', '=', 'aprobado')]"/>
+                <filter name="filter_tareas_observadas" string="Observadas" domain="[('revision_tarea', '=', 'observado')]"/>
+                <filter name="filter_mis_tareas" string="Mis tareas" domain="[('user_id', '=', uid)]"/>
+                <filter name="group_user_id" string="Responsable" domain="[]" context="{'group_by': 'user_id'}"/>
+                <filter name="group_revision_tarea" string="Revisión" domain="[]" context="{'group_by': 'revision_tarea'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_mail_activity_tareas_incas_operaciones" model="ir.actions.act_window">
+        <field name="name">Tareas</field>
+        <field name="res_model">mail.activity</field>
+        <field name="view_mode">list,calendar,form</field>
+        <field name="search_view_id" ref="view_mail_activity_search_tareas_incas_operaciones"/>
+        <field name="domain">[('estado_ejecucion', '=', 'finalizada')]</field>
+        <field name="context">{'active_test': False}</field>
+    </record>
+
+    <record id="action_mail_activity_tareas_calendar_view_incas_operaciones" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">calendar</field>
+        <field name="view_id" ref="view_mail_activity_calendar_tareas_incas_operaciones"/>
+        <field name="act_window_id" ref="action_mail_activity_tareas_incas_operaciones"/>
+    </record>
+
+    <record id="action_mail_activity_tareas_list_view_incas_operaciones" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_mail_activity_tree_tareas_incas_operaciones"/>
+        <field name="act_window_id" ref="action_mail_activity_tareas_incas_operaciones"/>
+    </record>
+
+    <record id="action_mail_activity_tareas_form_view_incas_operaciones" model="ir.actions.act_window.view">
+        <field name="sequence" eval="3"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_mail_activity_form_tareas_incas_operaciones"/>
+        <field name="act_window_id" ref="action_mail_activity_tareas_incas_operaciones"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_operaciones_tareas"
+        name="Tareas"
+        parent="incas_core.menu_incas_operaciones_root"
+        action="action_mail_activity_tareas_incas_operaciones"
+        sequence="20"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
 </odoo>
