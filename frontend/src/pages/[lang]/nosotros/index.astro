@@ -83,7 +83,7 @@ const fallbackDescriptions: Record<string, string> = {
 
 const title = typeof data?.title === 'string' ? data.title.trim() : '';
 const description = strapiRichTextToMarkdown(data?.description ?? '');
-const seoTitle = data?.metaTitle ?? title || fallbackTitles[currentLang] ?? fallbackTitles.es;
+const seoTitle = data?.metaTitle ?? title ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
 const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
 const md = new MarkdownIt({ html: true });
 const descriptionHtml = md.render(description);
