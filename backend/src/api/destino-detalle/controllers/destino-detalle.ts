@@ -5,6 +5,7 @@
 import { factories } from "@strapi/strapi";
 
 type GenericRecord = Record<string, any>;
+const SUBCATEGORIA_TOUR_UID = "api::subcategoria-tour.subcategoria-tour" as any;
 
 function toMediaObject(value: any): GenericRecord | null {
   if (!value) return null;
@@ -161,9 +162,9 @@ export default factories.createCoreController(
           }
         }
 
-        const subcategorias = await strapi.documents("api::subcategoria-tour.subcategoria-tour").findMany({
+        const subcategorias = await (strapi as any).documents(SUBCATEGORIA_TOUR_UID).findMany({
           filters: { destino: { documentId: { $in: destinoDocumentIds } } } as any,
-          fields: ["nombre"],
+          fields: ["nombre"] as any,
           populate: {
             destino: { fields: ["documentId"] },
             tours: {

@@ -4,4 +4,4 @@
 
 import { factories } from '@strapi/strapi';
 
-export default factories.createCoreService('api::subcategoria-tour.subcategoria-tour');
+export default (factories as any).createCoreService('api::subcategoria-tour.subcategoria-tour');
