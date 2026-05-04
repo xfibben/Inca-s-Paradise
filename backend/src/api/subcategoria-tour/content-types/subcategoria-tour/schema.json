@@ -1,0 +1,50 @@
+{
+  "kind": "collectionType",
+  "collectionName": "subcategoria_tours",
+  "info": {
+    "singularName": "subcategoria-tour",
+    "pluralName": "subcategoria-tours",
+    "displayName": "Subcategoria Tour"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "nombre": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "destino": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::destino-detalle.destino-detalle",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "inversedBy": "subcategorias_tour"
+    },
+    "tours": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tour-detalle.tour-detalle",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "inversedBy": "subcategorias_tour"
+    }
+  }
+}

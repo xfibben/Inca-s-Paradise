@@ -64,6 +64,17 @@
       },
       "mappedBy": "tours"
     },
+    "subcategorias_tour": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::subcategoria-tour.subcategoria-tour",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "mappedBy": "tours"
+    },
     "metaTitle": {
       "type": "string",
       "pluginOptions": {

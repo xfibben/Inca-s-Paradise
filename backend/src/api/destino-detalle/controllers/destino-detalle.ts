@@ -112,6 +112,16 @@ function decorateResponseData(input: any) {
   return input;
 }
 
+function normalizeTourItem(tour: any) {
+  if (!tour || typeof tour !== "object") return null;
+  return {
+    documentId: tour.documentId ?? null,
+    title: tour.title ?? "",
+    slug: tour.slug ?? "",
+    heroSlideImages: Array.isArray(tour.heroSlideImages) ? tour.heroSlideImages : []
+  };
+}
+
 export default factories.createCoreController(
   "api::destino-detalle.destino-detalle",
   ({ strapi }) => ({
@@ -147,13 +157,64 @@ export default factories.createCoreController(
           for (const d of destinos) {
             const did = d.documentId;
             if (!toursByDestino[did]) toursByDestino[did] = [];
-            toursByDestino[did].push({ title: tour.title, slug: tour.slug, heroSlideImages: tour.heroSlideImages });
+            toursByDestino[did].push(normalizeTourItem(tour));
           }
+        }
+
+        const subcategorias = await strapi.documents("api::subcategoria-tour.subcategoria-tour").findMany({
+          filters: { destino: { documentId: { $in: destinoDocumentIds } } } as any,
+          fields: ["nombre"],
+          populate: {
+            destino: { fields: ["documentId"] },
+            tours: {
+              fields: ["title", "slug"],
+              populate: {
+                heroSlideImages: { fields: ["url", "alternativeText"] }
+              }
+            }
+          } as any,
+          status: "published",
+          ...(locale ? { locale } : {})
+        });
+
+        const subcategoriasByDestino: Record<string, any[]> = {};
+        const groupedTourKeysByDestino: Record<string, Set<string>> = {};
+
+        for (const subcategoria of (subcategorias as any[])) {
+          const destino = subcategoria?.destino;
+          const destinoDocumentId = destino?.documentId;
+          if (!destinoDocumentId) continue;
+
+          const toursRelacionados = Array.isArray(subcategoria?.tours)
+            ? subcategoria.tours.map(normalizeTourItem).filter(Boolean)
+            : [];
+
+          if (!subcategoriasByDestino[destinoDocumentId]) {
+            subcategoriasByDestino[destinoDocumentId] = [];
+          }
+
+          if (!groupedTourKeysByDestino[destinoDocumentId]) {
+            groupedTourKeysByDestino[destinoDocumentId] = new Set<string>();
+          }
+
+          toursRelacionados.forEach((tour: any) => {
+            const key = tour.documentId || tour.slug || tour.title;
+            if (key) groupedTourKeysByDestino[destinoDocumentId].add(key);
+          });
+
+          subcategoriasByDestino[destinoDocumentId].push({
+            nombre: subcategoria?.nombre ?? "",
+            tours: toursRelacionados
+          });
         }
 
         const decorated = decorateResponseData(data).map((item: any) => ({
           ...item,
-          tours: toursByDestino[item.documentId] ?? []
+          tours: (toursByDestino[item.documentId] ?? []).filter((tour: any) => {
+            const key = tour.documentId || tour.slug || tour.title;
+            return !groupedTourKeysByDestino[item.documentId]?.has(key);
+          }),
+          subcategorias_tour: subcategoriasByDestino[item.documentId] ?? []
         }));
 
         return { ...response, data: decorated };

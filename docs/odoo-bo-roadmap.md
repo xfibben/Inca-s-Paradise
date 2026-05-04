@@ -220,8 +220,10 @@ Conectar operación, ventas y fidelización.
 
 - `incas_core`
 - `incas_reservas`
+- `incas_documentos`
 - `incas_operaciones`
-- `incas_pagos`
+- `incas_postventas`
+- `incas_tesoreria`
 - `incas_facturacion`
 - `incas_rrhh`
 - `incas_integraciones`
@@ -240,11 +242,17 @@ Conectar operación, ventas y fidelización.
 - Existe estructura local de Odoo en el repo:
   - `odoo/config/odoo.conf`
   - `odoo/addons/`
-- Ya existe el módulo `incas_core` como base del BO.
-- Ya existe el módulo `incas_reservas` como primera capa funcional.
-- El menú principal del BO es `Inca's Paradise`.
 - La base Odoo actual de trabajo es `odoo_incas`.
-- El flujo transaccional web ya empezó a migrarse desde Strapi hacia Odoo.
+- El menú principal del BO es `Inca's Paradise`.
+- Módulos reales existentes en código:
+  - `incas_core`
+  - `incas_documentos`
+  - `incas_reservas`
+  - `incas_operaciones`
+  - `incas_postventas`
+  - `incas_tesoreria`
+- El flujo transaccional web `Astro -> Odoo` ya está operativo para reservas y pagos.
+- Strapi sigue siendo fuente de contenido y catálogo sincronizado.
 
 ## Avance real implementado
 
@@ -256,7 +264,53 @@ Conectar operación, ventas y fidelización.
 - Carpeta local de addons custom lista para crecer.
 - Separación técnica entre Strapi y Odoo mantenida.
 
-### Fase 1 iniciada
+### Fase 1 muy avanzada
+
+- `incas_core` ya define menú raíz, grupos y permisos base.
+- `incas_documentos` ya integra `dms` como capa documental transversal del BO.
+- `incas_reservas` ya cubre:
+  - catálogo local sincronizado desde Strapi
+  - cotizaciones
+  - reservas
+  - pasajeros
+  - pagos
+  - PDFs internos
+  - voucher público por token
+  - cotización interna automática para reservas web
+  - sincronización de Google Sheets
+  - correo de reserva
+- El tipo de cambio ya se sirve desde Odoo por `GET /incas/api/pagos/tipo-cambio`.
+- Las tasas se guardan en `res.currency.rate` y se actualizan desde API externa, no desde Strapi.
+
+### Fase 2 iniciada en nivel base
+
+- `incas_operaciones` ya existe.
+- Ya hay agenda operativa `incas.agenda.evento`.
+- La reserva ya sincroniza evento operativo automáticamente.
+- Ya existe capa de tareas sobre `mail.activity`.
+- Todavía no existe una capa completa de asignación de guías, operadores, proveedores e incidencias por tramo operativo.
+
+### Postventa ya iniciada
+
+- `incas_postventas` ya existe como módulo real.
+- Ya hay:
+  - casos postventa
+  - encuestas
+  - reclamos
+  - acciones correctivas
+- La reserva ya puede abrir o vincular caso postventa.
+- Falta automatización real de envío, SLA y cierre operativo formal.
+
+### Tesorería iniciada en nivel inicial
+
+- `incas_tesoreria` ya existe.
+- Ya hay modelo de movimientos de tesorería con:
+  - ingreso y egreso
+  - categoría
+  - moneda
+  - monto
+  - estado
+- Aún no equivale a una capa contable o fiscal completa.
 
 ## Flujo actual implementado en Odoo
 
@@ -376,11 +430,12 @@ Conectar operación, ventas y fidelización.
 
 ## Pendientes inmediatos
 
-- Crear flujo formal `cotización -> reserva`.
-- Modelar precios de transporte por vehículo en Odoo.
-- Dejar de tratar transporte como servicio de precio único.
-- Crear `incas_operaciones`.
-- Definir vouchers, pagos internos y reportes del BO.
+- cerrar huecos funcionales de `incas_reservas`
+- terminar automatización útil de `incas_operaciones`
+- cerrar `incas_postventas` con flujo operativo real
+- ampliar `incas_tesoreria` más allá del movimiento manual
+- definir módulo real de integraciones y jobs observables
+- preparar la capa de facturación Perú y SUNAT
 
 ## Nota crítica de migración
 
@@ -389,7 +444,13 @@ Conectar operación, ventas y fidelización.
   - extracción
   - transformación
   - importación
-- El mayor punto pendiente de modelado es transporte por vehículo, porque en Strapi el precio de transporte depende de `vehiculo`.
+- El mayor punto pendiente ya no es el precio por vehículo como dato.
+- Ese punto ya está modelado a nivel catálogo y selección comercial.
+- Lo pendiente ahora es endurecer la operación alrededor de ese dato:
+  - validaciones
+  - reglas de negocio
+  - reportes
+  - explotación operativa
 
 ## Historial de avance
 
@@ -430,25 +491,22 @@ Conectar operación, ventas y fidelización.
   - precio niño
   - descuento porcentual
 - Se dejó USD como moneda base interna para precios en cotización y reserva.
-- Se conectó Odoo al endpoint `GET /api/pagos/tipo-cambio` del backend para convertir precios en tiempo real a:
-  - `PEN`
-  - `USD`
-  - `EUR`
+- Se montó conversión de moneda en Odoo usando `res.currency.rate`.
 - Al cambiar la moneda en cotización o reserva, se recalculan:
   - `precio adulto`
   - `precio niño`
   - `monto total`
 - Se dejó documentada la estrategia futura de migración `Strapi -> Odoo`.
-- Se dejó documentado que transporte por vehículo sigue pendiente de modelado correcto en Odoo.
+- Se dejó documentado que el modelo de transporte requería contemplar vehículo.
 - La primera fase a ejecutar será `Fase 0` y luego `Fase 1`.
 
 ## Próximos pasos inmediatos
 
-1. Crear `odoo.conf`.
-2. Crear estructura `addons/`.
-3. Crear módulo base `incas_core`.
-4. Diseñar modelo de datos de `incas_reservas`.
-5. Implementar el primer flujo: cotización -> reserva.
+1. cerrar workflow completo `cotización -> reserva -> operación -> postventa`
+2. formalizar `incas_integraciones` para sync, logs, retries y monitoreo
+3. endurecer `incas_tesoreria` para caja real y conciliación básica
+4. preparar `incas_facturacion` con localización Perú y SUNAT
+
 #### Flujo web operativo actual
 
 - Astro ya puede crear reservas directamente en Odoo.
@@ -482,7 +540,7 @@ Conectar operación, ventas y fidelización.
   - `docker-compose.yaml`
   - `docker-compose.prod.yaml`
 - Strapi queda como CMS y catálogo fuente.
-- La conversión de moneda sigue tomando temporalmente `GET /api/pagos/tipo-cambio` del backend Strapi.
+- La conversión de moneda ya sale desde Odoo.
 
 #### Validación local hecha
 
@@ -495,10 +553,10 @@ Conectar operación, ventas y fidelización.
 
 #### Pendientes inmediatos del flujo web
 
-- mover el tipo de cambio a Odoo para cortar la dependencia transaccional restante con Strapi
 - implementar IziPay real en Odoo
 - definir webhook de pagos en Odoo
-- afinar el HTML de correo si se requiere paridad visual más exacta con Strapi
+- endurecer validaciones y observabilidad del flujo público
+- separar mejor integraciones externas en módulo dedicado si el flujo sigue creciendo
 
 ## Changelog
 

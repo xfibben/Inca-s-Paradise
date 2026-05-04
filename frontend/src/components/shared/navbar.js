@@ -5,6 +5,78 @@ function toSlug(name) {
   return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function normalizeRows(value) {
+  return Array.isArray(value?.data) ? value.data : Array.isArray(value) ? value : [];
+}
+
+function sortSubcategoriasAlphabetically(rows) {
+  return [...rows].sort((a, b) => {
+    const left = a?.attributes || a;
+    const right = b?.attributes || b;
+    return String(left?.nombre ?? '').localeCompare(String(right?.nombre ?? ''), undefined, {
+      sensitivity: 'base'
+    });
+  });
+}
+
+function sortToursAlphabetically(rows) {
+  return [...rows].sort((a, b) => {
+    const left = a?.attributes || a;
+    const right = b?.attributes || b;
+    return String(left?.title ?? '').localeCompare(String(right?.title ?? ''), undefined, {
+      sensitivity: 'base'
+    });
+  });
+}
+
+function renderDestinationToursHtml(destination, currentLang) {
+  if (!destination) {
+    return '<p class="text-sm text-gray-400 italic">Sin tours disponibles</p>';
+  }
+
+  const subcategorias = sortSubcategoriasAlphabetically(normalizeRows(destination.subcategorias_tour));
+  const toursSueltos = sortToursAlphabetically(normalizeRows(destination.tours));
+  let html = '';
+
+  subcategorias.forEach(subcategoria => {
+    const sub = subcategoria.attributes || subcategoria;
+    const tours = sortToursAlphabetically(normalizeRows(sub.tours));
+    if (!sub?.nombre || tours.length === 0) return;
+
+    html += `<div class="break-inside-avoid pb-3 border-b border-gray-100 last:border-0">
+      <p class="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">${escapeHtml(sub.nombre)}</p>
+      <div class="space-y-2">
+        ${tours.map(tour => {
+          const t = tour.attributes || tour;
+          return `<a href="/${currentLang}/tours/${escapeHtml(t.slug || toSlug(t.title))}" class="block font-semibold text-gray-800 text-sm hover:text-[#1AA093] transition">
+            ${escapeHtml(t.title)}
+          </a>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+
+  html += toursSueltos.map(tour => {
+    const t = tour.attributes || tour;
+    return `<div class="break-inside-avoid pb-3 border-b border-gray-100 last:border-0">
+      <a href="/${currentLang}/tours/${escapeHtml(t.slug || toSlug(t.title))}" class="font-semibold text-gray-800 text-sm hover:text-[#1AA093] transition">
+        ${escapeHtml(t.title)}
+      </a>
+    </div>`;
+  }).join('');
+
+  return html || '<p class="text-sm text-gray-400 italic">Sin tours disponibles</p>';
+}
+
 function buildLanguageUrl(languageCode) {
   const currentPath = window.location.pathname;
   const pathMatch = currentPath.match(/^\/[a-z]{2}(.*)/);
@@ -186,43 +258,20 @@ document.addEventListener('DOMContentLoaded', function () {
     const destination = destinations.find(d => d.slug === destSlug);
     if (!destination) return;
 
-    // Mostrar tours relacionados (Strapi v5: array directo; v4: { data: [] })
-    const toursRaw = destination.tours;
-    const relatedTours = Array.isArray(toursRaw?.data) ? toursRaw.data : Array.isArray(toursRaw) ? toursRaw : [];
     const currentLang = window.__currentLang || 'es';
-    document.getElementById('megamenu-tours').innerHTML = relatedTours.length
-      ? relatedTours.map(tour => {
-          const t = tour.attributes || tour;
-          return `<div class="pb-3 border-b border-gray-100 last:border-0">
-            <a href="/${currentLang}/tours/${t.slug || toSlug(t.title)}" class="font-semibold text-gray-800 text-sm hover:text-blue-600 transition">
-              ${t.title}
-            </a>
-          </div>`;
-        }).join('')
-      : '<p class="text-sm text-gray-400 italic">Sin tours disponibles</p>';
-
-    // Mostrar imagen desde galleryThumbnail
-    const img = document.getElementById('megamenu-image');
-    const thumb = destination.galleryThumbnail;
-    const thumbUrl = thumb?.url || thumb?.data?.attributes?.url || thumb?.data?.url;
-    if (thumbUrl) {
-      img.src = thumbUrl.startsWith('http') ? thumbUrl : `${window.__strapiPublicUrl}${thumbUrl}`;
-    }
-    
-    // Mostrar nombre del destino
-    document.getElementById('megamenu-dest-name').textContent = destination.title || '';
+    document.getElementById('megamenu-tours').innerHTML = renderDestinationToursHtml(destination, currentLang);
   }
 
   const destinationsList = window.__navbarDestinations || [];
   if (destinationsList.length > 0) {
     updateMegamenu(destinationsList[0].slug);
-    document.querySelector('[data-dest="' + destinationsList[0].slug + '"]')?.classList.add('bg-blue-50', 'text-blue-600');
+    document.querySelector('[data-dest="' + destinationsList[0].slug + '"]')?.classList.add('bg-[#e0f7f5]', 'text-[#1AA093]');
   }
   document.querySelectorAll('.destination-item').forEach(item => {
     item.addEventListener('mouseenter', () => {
       updateMegamenu(item.dataset.dest);
-      document.querySelectorAll('.destination-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-600'));
-      item.classList.add('bg-blue-50', 'text-blue-600');
+      document.querySelectorAll('.destination-item').forEach(i => i.classList.remove('bg-[#e0f7f5]', 'text-[#1AA093]'));
+      item.classList.add('bg-[#e0f7f5]', 'text-[#1AA093]');
     });
   });
 
@@ -241,11 +290,11 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.addEventListener('click', () => {
       const menu = btn.dataset.menu;
       document.querySelectorAll('.styles-menu-btn').forEach(b => {
-        b.classList.remove('border-blue-600', 'text-blue-600');
+        b.classList.remove('border-[#1AA093]', 'text-[#1AA093]');
         b.classList.add('border-transparent', 'text-gray-700');
       });
       btn.classList.remove('border-transparent', 'text-gray-700');
-      btn.classList.add('border-blue-600', 'text-blue-600');
+      btn.classList.add('border-[#1AA093]', 'text-[#1AA093]');
 
       document.querySelectorAll('.styles-menu-content').forEach(c => c.classList.add('hidden'));
       document.getElementById(`content-${menu}`)?.classList.remove('hidden');
@@ -282,14 +331,14 @@ document.addEventListener('DOMContentLoaded', function () {
   const firstSustKey = Object.keys(t.sustainability).find(k => !['title', 'images'].includes(k));
   if (firstSustKey) {
     updateSustainabilityMenu(firstSustKey);
-    document.querySelector(`[data-sustainability="${firstSustKey}"]`)?.classList.add('bg-blue-50', 'text-blue-600');
+    document.querySelector(`[data-sustainability="${firstSustKey}"]`)?.classList.add('bg-[#e0f7f5]', 'text-[#1AA093]');
   }
 
   document.querySelectorAll('.sustainability-item').forEach(item => {
     item.addEventListener('mouseenter', () => {
       updateSustainabilityMenu(item.dataset.sustainability);
-      document.querySelectorAll('.sustainability-item').forEach(i => i.classList.remove('bg-blue-50', 'text-blue-600'));
-      item.classList.add('bg-blue-50', 'text-blue-600');
+      document.querySelectorAll('.sustainability-item').forEach(i => i.classList.remove('bg-[#e0f7f5]', 'text-[#1AA093]'));
+      item.classList.add('bg-[#e0f7f5]', 'text-[#1AA093]');
     });
   });
 
@@ -356,17 +405,7 @@ document.addEventListener('DOMContentLoaded', function () {
       document.getElementById('mobile-dest-name').textContent = destination.title || '';
       
       const currentLang = window.__currentLang || 'es';
-      const toursRawMobile = destination.tours;
-      const relatedTours = Array.isArray(toursRawMobile?.data) ? toursRawMobile.data : Array.isArray(toursRawMobile) ? toursRawMobile : [];
-      const toursHtml = relatedTours.map(tour => {
-        const tr = tour.attributes || tour;
-        return `<div class="pb-2 border-b border-gray-300 last:border-0">
-          <a href="/${currentLang}/tours/${tr.slug || toSlug(tr.title)}" class="font-semibold text-gray-800 text-sm hover:text-blue-600 transition">
-            ${tr.title}
-          </a>
-        </div>`;
-      }).join('');
-      document.getElementById('mobile-dest-tours').innerHTML = toursHtml;
+      document.getElementById('mobile-dest-tours').innerHTML = renderDestinationToursHtml(destination, currentLang);
     });
   });
 
@@ -454,7 +493,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const sustDescEl = document.getElementById('mobile-sustainability-description');
       if (sustDescEl && !sustDescEl.parentElement?.querySelector('.back-btn')) {
         const backBtn = document.createElement('button');
-        backBtn.className = 'w-full text-left px-0 py-2 text-blue-600 text-sm hover:text-blue-800 transition mt-4 border-t border-gray-300 pt-3 back-btn';
+        backBtn.className = 'w-full text-left px-0 py-2 text-[#1AA093] text-sm hover:text-[#0e8a7e] transition mt-4 border-t border-gray-300 pt-3 back-btn';
         backBtn.textContent = '← Volver';
         backBtn.addEventListener('click', () => {
           mobileSustainabilityList?.classList.remove('hidden');
