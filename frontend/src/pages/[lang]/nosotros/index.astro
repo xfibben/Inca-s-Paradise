@@ -212,7 +212,7 @@ const pageSchema = {
           <h1 class="mb-4 text-3xl text-[#1AA093] md:text-4xl">{title}</h1>
           {description && (
             <div
-              class="prose prose-gray max-w-none text-black leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e]"
+              class="prose prose-gray max-w-none text-black leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline prose-img:mx-auto hover:prose-a:text-[#0e8a7e]"
               set:html={descriptionHtml}
             />
           )}
@@ -229,18 +229,20 @@ const pageSchema = {
                 isLastOddItem && 'md:col-span-2'
               ]}>
                 <div>
-                  <div class="mb-3 flex items-center gap-3 md:gap-4">
-                    {section.imageUrl ? (
-                      <img src={section.imageUrl} alt={section.title} class="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" loading="lazy" />
-                    ) : (
-                      <span class="block shrink-0 text-sm tracking-[0.28em] text-gray-400">
-                        {String(index + 1).padStart(2, '0')}
-                      </span>
-                    )}
-                    <h2 class="text-xl text-[#1AA093] md:text-2xl">{section.title}</h2>
-                  </div>
+                  {section.title && (
+                    <div class="mb-3 flex items-center gap-3 md:gap-4">
+                      {section.imageUrl ? (
+                        <img src={section.imageUrl} alt={section.title} class="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" loading="lazy" />
+                      ) : (
+                        <span class="block shrink-0 text-sm tracking-[0.28em] text-gray-400">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                      )}
+                      <h2 class="text-xl text-[#1AA093] md:text-2xl">{section.title}</h2>
+                    </div>
+                  )}
                   <div
-                    class="prose prose-gray max-w-none text-black leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:mt-0 prose-headings:mb-0 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e]"
+                    class="prose prose-gray max-w-none text-black leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:mt-0 prose-headings:mb-0 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline prose-img:mx-auto hover:prose-a:text-[#0e8a7e]"
                     set:html={section.renderedText}
                   />
                 </div>
