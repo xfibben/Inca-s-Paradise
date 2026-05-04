@@ -36,10 +36,19 @@ Actualmente existen en código:
 - `incas_documentos`
 - `incas_operaciones`
 - `incas_postventas`
+- `incas_tesoreria`
 
 También está incluido:
 
 - `dms`
+
+### Corte real mayo 2026
+
+- `incas_reservas` es el núcleo más maduro y ya sostiene el flujo web y BO.
+- `incas_operaciones` ya existe, pero todavía está en nivel agenda y tareas.
+- `incas_postventas` ya existe y tiene estructura funcional real.
+- `incas_tesoreria` ya existe, pero todavía es una base inicial de movimientos.
+- `incas_facturacion`, `incas_rrhh` e `incas_integraciones` todavía no existen como módulos reales en este repo.
 
 ## Estado por módulo
 

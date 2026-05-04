@@ -45,6 +45,15 @@ Migrar el backend operativo desde Strapi hacia Odoo sin hacer una migracion dire
 - Odoo devuelve `ticket`, `reserva_id` y `voucher_url`.
 - El comprobante PDF público se entrega por URL con token.
 - El tipo de cambio ya vive en Odoo y se guarda en `res.currency.rate`.
+- Las tasas se actualizan desde API externa y Odoo las expone al frontend.
+- La dependencia transaccional con Strapi ya no pasa por el tipo de cambio.
+- Módulos reales ya presentes en Odoo:
+  - `incas_core`
+  - `incas_documentos`
+  - `incas_reservas`
+  - `incas_operaciones`
+  - `incas_postventas`
+  - `incas_tesoreria`
 
 ## Orden recomendado de migracion
 
@@ -183,6 +192,10 @@ Actualmente el catálogo sincronizado en Odoo ya contempla:
 
 - Existe módulo `incas_core` como base del BO.
 - Existe módulo `incas_reservas` como primera implementación funcional.
+- Existe `incas_documentos` como capa transversal documental sobre `dms`.
+- Existe `incas_operaciones` como base de agenda y tareas operativas.
+- Existe `incas_postventas` como base de casos, encuestas, reclamos y acciones.
+- Existe `incas_tesoreria` como base inicial de movimientos de caja.
 - Ya existe catálogo local en Odoo para no depender de tablas externas.
 - Modelos ya creados en Odoo:
   - `incas.servicio.catalogo`
@@ -190,6 +203,9 @@ Actualmente el catálogo sincronizado en Odoo ya contempla:
   - `incas.cotizacion`
   - `incas.reserva`
   - `incas.pasajero`
+  - `incas.pago`
+  - `incas.catalogo.vehiculo`
+  - `incas.agenda.evento`
 
 ## Qué ya se está jalando desde Strapi
 
@@ -277,35 +293,36 @@ Desde `tipo-transporte` ya se están trayendo:
 - `saldo_pendiente` es el saldo real actual en Odoo.
 - `pago_restante` se conserva solo por compatibilidad histórica con Strapi.
 
-## Limitación actual importante
+## Limitaciones actuales importantes
 
 - En tours, el mapeo actual ya es correcto a nivel de precio adulto, precio niño y descuento.
-- En transportes, hoy se está tomando temporalmente la primera entrada de `precios[]`.
-- Eso es solo una etapa intermedia.
-- El modelo final debe contemplar precio de transporte por `vehiculo`.
+- En transportes, Odoo ya contempla vehículo y tarifas leídas desde `precios[]`.
+- Lo que falta no es el dato base sino endurecer su explotación operativa:
+  - validaciones
+  - procesos internos
+  - reportes
+  - consistencia entre reservas, operación y tesorería
+- IziPay sigue pendiente de implementación real.
+- Falta un módulo explícito de integraciones con jobs, logs, retry y monitoreo.
+- La media y parte del contenido editorial siguen viviendo en Strapi.
 
 ## Regla futura para la migración completa
 
-- No migrar transporte como servicio con precio único.
-- Crear en Odoo:
-  - modelo de vehículo
-  - relación entre transporte y vehículo
-  - precios por vehículo
-  - descuento por combinación de transporte y vehículo
+- No migrar contenido operativo leyendo tablas directas de Strapi.
+- Mantener:
+  - catálogo local Odoo
+  - trazabilidad por `strapi_id` y `documentId`
+  - reserva operativa naciendo en Odoo
 - Al migrar reservas de transporte, conservar también `vehiculo_seleccionado`.
 
 ## Siguiente paso recomendado
 
-1. crear modelo de vehículo en Odoo
-2. modelar precios de transporte por vehículo
-3. dejar de tratar transporte como un servicio de precio único
-4. migrar reservas conservando:
-   - adultos
-   - niños
-   - descuento
-   - vehículo seleccionado
-5. mover el tipo de cambio a Odoo para independizar por completo el flujo transaccional de Strapi
-6. implementar IziPay real en Odoo
+1. formalizar `incas_integraciones` para sync, logs y jobs observables
+2. completar `incas_operaciones` con asignaciones reales, incidencias y responsables externos
+3. cerrar `incas_postventas` con automatización de encuestas, SLA y seguimiento
+4. ampliar `incas_tesoreria` hacia caja real, conciliación y vínculo fuerte con pagos
+5. implementar IziPay real en Odoo
+6. preparar `incas_facturacion` con localización Perú y SUNAT
 
 ## Fuentes oficiales
 

@@ -307,6 +307,17 @@
       },
       "inversedBy": "destinos"
     },
+    "subcategorias_tour": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::subcategoria-tour.subcategoria-tour",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      },
+      "mappedBy": "destino"
+    },
     "transportes_origen": {
       "type": "relation",
       "relation": "manyToMany",

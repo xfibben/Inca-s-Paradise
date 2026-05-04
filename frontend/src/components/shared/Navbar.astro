@@ -88,6 +88,34 @@ function toSlug(name: string): string {
   return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
 }
 
+function normalizeRelatedTours(value: any) {
+  return Array.isArray(value?.data) ? value.data : Array.isArray(value) ? value : [];
+}
+
+function normalizeSubcategorias(value: any) {
+  return Array.isArray(value?.data) ? value.data : Array.isArray(value) ? value : [];
+}
+
+function sortSubcategoriasAlphabetically(rows: any[]) {
+  return [...rows].sort((a: any, b: any) => {
+    const left = a?.attributes || a;
+    const right = b?.attributes || b;
+    return String(left?.nombre ?? "").localeCompare(String(right?.nombre ?? ""), undefined, {
+      sensitivity: "base"
+    });
+  });
+}
+
+function sortToursAlphabetically(rows: any[]) {
+  return [...rows].sort((a: any, b: any) => {
+    const left = a?.attributes || a;
+    const right = b?.attributes || b;
+    return String(left?.title ?? "").localeCompare(String(right?.title ?? ""), undefined, {
+      sensitivity: "base"
+    });
+  });
+}
+
 let navStyleTrips: any[] = [];
 let navDestinations: any[] = [];
 let navTipoTransportes: any[] = [];
@@ -278,21 +306,48 @@ try {
                 <div class="w-1/3 bg-white p-6 border-r border-gray-200 overflow-y-auto">
                   <div id="megamenu-tours" class="space-y-3">
                     {(() => {
-                      // Mostrar tours relacionados del destino activo
                       const activeDest = navDestinations.length > 0 ? navDestinations[0] : null;
                       if (!activeDest) return null;
-                      const toursRaw = activeDest.tours;
-                      const initialTours = Array.isArray(toursRaw?.data) ? toursRaw.data : Array.isArray(toursRaw) ? toursRaw : [];
-                      return initialTours.map((tour: any) => {
-                        const attrs = tour.attributes || tour;
-                        return (
-                          <div class="pb-3 border-b border-gray-100 last:border-0">
-                            <a href={`/${currentLang}/tours/${attrs.slug}`} class="font-semibold text-gray-800 text-sm hover:text-blue-600 transition">
-                              {attrs.title}
-                            </a>
-                          </div>
-                        );
-                      });
+
+                      const subcategorias = sortSubcategoriasAlphabetically(normalizeSubcategorias(activeDest.subcategorias_tour));
+                      const toursSueltos = sortToursAlphabetically(normalizeRelatedTours(activeDest.tours));
+
+                      return (
+                        <>
+                          {subcategorias.map((subcategoria: any) => {
+                            const attrs = subcategoria.attributes || subcategoria;
+                            const tours = sortToursAlphabetically(normalizeRelatedTours(attrs.tours));
+                            if (!attrs.nombre || tours.length === 0) return null;
+
+                            return (
+                              <div class="pb-3 border-b border-gray-100 last:border-0">
+                                <p class="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">{attrs.nombre}</p>
+                                <div class="space-y-2">
+                                  {tours.map((tour: any) => {
+                                    const tourAttrs = tour.attributes || tour;
+                                    return (
+                                      <a href={`/${currentLang}/tours/${tourAttrs.slug || toSlug(tourAttrs.title)}`} class="block font-semibold text-gray-800 text-sm hover:text-blue-600 transition">
+                                        {tourAttrs.title}
+                                      </a>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {toursSueltos.map((tour: any) => {
+                            const attrs = tour.attributes || tour;
+                            return (
+                              <div class="pb-3 border-b border-gray-100 last:border-0">
+                                <a href={`/${currentLang}/tours/${attrs.slug || toSlug(attrs.title)}`} class="font-semibold text-gray-800 text-sm hover:text-blue-600 transition">
+                                  {attrs.title}
+                                </a>
+                              </div>
+                            );
+                          })}
+                        </>
+                      );
                     })()}
                   </div>
                 </div>
