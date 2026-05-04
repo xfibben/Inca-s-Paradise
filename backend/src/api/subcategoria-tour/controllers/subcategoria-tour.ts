@@ -4,4 +4,4 @@
 
 import { factories } from '@strapi/strapi';
 
-export default factories.createCoreController('api::subcategoria-tour.subcategoria-tour');
+export default (factories as any).createCoreController('api::subcategoria-tour.subcategoria-tour');
