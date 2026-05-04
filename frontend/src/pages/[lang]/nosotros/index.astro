@@ -81,9 +81,9 @@ const fallbackDescriptions: Record<string, string> = {
   it: 'Scopri di più su Inca\'s Paradise, il nostro modo di viaggiare e come accompagniamo ogni esperienza in Perù.',
 };
 
-const title = data?.title ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
+const title = typeof data?.title === 'string' ? data.title.trim() : '';
 const description = strapiRichTextToMarkdown(data?.description ?? '');
-const seoTitle = data?.metaTitle ?? title;
+const seoTitle = data?.metaTitle ?? title || fallbackTitles[currentLang] ?? fallbackTitles.es;
 const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
 const md = new MarkdownIt({ html: true });
 const descriptionHtml = md.render(description);
@@ -209,7 +209,7 @@ const pageSchema = {
     <main class="flex-1 pt-24 pb-16 bg-white">
       <div class="mx-auto max-w-5xl px-4">
         <div class="mb-6">
-          <h1 class="mb-4 text-3xl text-[#1AA093] md:text-4xl">{title}</h1>
+          {title && <h1 class="mb-4 text-3xl text-[#1AA093] md:text-4xl">{title}</h1>}
           {description && (
             <div
               class="prose prose-gray max-w-none text-black leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline prose-img:mx-auto hover:prose-a:text-[#0e8a7e]"
