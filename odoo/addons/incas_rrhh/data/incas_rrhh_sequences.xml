@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_incas_boleta" model="ir.sequence">
+        <field name="name">Boleta</field>
+        <field name="code">incas.boleta</field>
+        <field name="prefix">BOL/%(year)s/</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <record id="seq_incas_certificado_laboral" model="ir.sequence">
+        <field name="name">Certificado laboral</field>
+        <field name="code">incas.certificado.laboral</field>
+        <field name="prefix">CERT/%(year)s/</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

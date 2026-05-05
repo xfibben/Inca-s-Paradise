@@ -1,36 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="view_incas_rrhh_trabajadores_kanban" model="ir.ui.view">
-        <field name="name">res.users.incas.rrhh.trabajadores.kanban</field>
+    <record id="view_incas_trabajador_kanban" model="ir.ui.view">
+        <field name="name">incas.trabajador.kanban</field>
         <field name="model">res.users</field>
         <field name="arch" type="xml">
             <kanban string="Trabajadores">
-                <field name="image_128"/>
+                <field name="avatar_128"/>
                 <field name="name"/>
-                <field name="login"/>
                 <field name="email"/>
+                <field name="rol_rrhh"/>
+                <field name="puesto"/>
+                <field name="area"/>
+                <field name="fecha_ingreso"/>
+                <field name="estado_laboral"/>
                 <field name="active"/>
                 <templates>
                     <t t-name="card">
                         <main class="d-flex gap-3 align-items-start">
                             <aside>
-                                <field name="image_128" widget="image" class="rounded"/>
+                                <field name="avatar_128" widget="image" class="rounded"/>
                             </aside>
                             <section class="flex-grow-1">
                                 <div class="fw-bold fs-5">
                                     <field name="name"/>
                                 </div>
-                                <div class="text-muted">
-                                    <field name="login"/>
-                                </div>
-                                <div t-if="record.email.raw_value">
+                                <div t-if="record.email.raw_value" class="text-muted">
                                     <field name="email"/>
                                 </div>
+                                <div t-if="record.rol_rrhh.raw_value" class="mt-1">
+                                    Rol: <field name="rol_rrhh"/>
+                                </div>
+                                <div t-if="record.puesto.raw_value" class="text-muted">
+                                    <field name="puesto"/>
+                                </div>
+                                <div t-if="record.area.raw_value">
+                                    <field name="area"/>
+                                </div>
+                                <div t-if="record.fecha_ingreso.raw_value">
+                                    Ingreso: <field name="fecha_ingreso"/>
+                                </div>
                                 <div class="mt-2">
-                                    <field
-                                        name="active"
-                                        widget="boolean_toggle"
-                                    />
+                                    <field name="estado_laboral"/>
                                 </div>
                             </section>
                         </main>
@@ -40,58 +50,386 @@
         </field>
     </record>
 
-    <record id="view_incas_rrhh_trabajadores_list" model="ir.ui.view">
-        <field name="name">res.users.incas.rrhh.trabajadores.list</field>
+    <record id="view_incas_trabajador_list" model="ir.ui.view">
+        <field name="name">incas.trabajador.list</field>
         <field name="model">res.users</field>
         <field name="arch" type="xml">
             <list string="Trabajadores">
+                <field name="avatar_128" widget="image"/>
                 <field name="name"/>
-                <field name="login"/>
                 <field name="email"/>
-                <field name="company_id"/>
+                <field name="rol_rrhh"/>
+                <field name="puesto"/>
+                <field name="area"/>
+                <field name="fecha_ingreso"/>
+                <field name="horas_semanales"/>
+                <field name="sueldo_base"/>
+                <field name="estado_laboral"/>
                 <field name="active"/>
             </list>
         </field>
     </record>
 
-    <record id="view_incas_rrhh_trabajadores_search" model="ir.ui.view">
-        <field name="name">res.users.incas.rrhh.trabajadores.search</field>
+    <record id="view_incas_trabajador_search" model="ir.ui.view">
+        <field name="name">incas.trabajador.search</field>
         <field name="model">res.users</field>
         <field name="arch" type="xml">
             <search string="Buscar trabajadores">
                 <field name="name"/>
-                <field name="login"/>
-                <field name="email"/>
+                <field name="puesto"/>
+                <field name="area"/>
+                <field name="numero_documento"/>
                 <field name="company_id"/>
                 <separator/>
                 <filter name="filter_activos" string="Activos" domain="[('active', '=', True)]"/>
-                <filter name="filter_inactivos" string="Inactivos" domain="[('active', '=', False)]"/>
+                <filter name="filter_cesados" string="Cesados" domain="[('estado_laboral', '=', 'cesado')]"/>
                 <separator/>
-                <filter name="group_company" string="Compañía" domain="[]" context="{'group_by': 'company_id'}"/>
+                <filter name="group_area" string="Área" domain="[]" context="{'group_by': 'area'}"/>
+                <filter name="group_estado" string="Estado laboral" domain="[]" context="{'group_by': 'estado_laboral'}"/>
             </search>
         </field>
     </record>
 
-    <record id="action_incas_rrhh_trabajadores" model="ir.actions.act_window">
+    <record id="view_incas_trabajador_form" model="ir.ui.view">
+        <field name="name">incas.trabajador.form</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <form string="Trabajador">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Nombre del trabajador"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="puesto"/>
+                            <field name="area"/>
+                            <field name="rol_rrhh" readonly="1"/>
+                            <field name="company_id"/>
+                            <field name="login"/>
+                        </group>
+                        <group>
+                            <field name="estado_laboral"/>
+                            <field name="active"/>
+                            <field name="fecha_ingreso"/>
+                            <field name="fecha_cese" invisible="estado_laboral == 'activo'"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Datos personales">
+                            <group>
+                                <group>
+                                    <field name="tipo_documento"/>
+                                    <field name="numero_documento"/>
+                                    <field name="fecha_nacimiento"/>
+                                    <field name="nacionalidad"/>
+                                </group>
+                                <group>
+                                    <field name="email"/>
+                                    <field name="correo_personal"/>
+                                    <field name="correo_corporativo"/>
+                                    <field name="telefono"/>
+                                    <field name="direccion"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Datos laborales">
+                            <group>
+                                <group>
+                                    <field name="tipo_contrato"/>
+                                    <field name="fecha_inicio_contrato"/>
+                                    <field name="fecha_fin_contrato"/>
+                                    <field name="modalidad_trabajo"/>
+                                    <field name="frecuencia_pago"/>
+                                </group>
+                                <group>
+                                    <field name="horario_trabajo"/>
+                                    <field name="horas_semanales"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="sueldo_base" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Datos bancarios">
+                            <group>
+                                <group>
+                                    <field name="banco"/>
+                                    <field name="moneda_pago"/>
+                                    <field name="titular_cuenta"/>
+                                </group>
+                                <group>
+                                    <field name="numero_cuenta"/>
+                                    <field name="cci"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Boletas">
+                            <field name="boleta_ids" context="{'default_trabajador_id': id}">
+                                <list>
+                                    <field name="numero"/>
+                                    <field name="periodo_anio"/>
+                                    <field name="periodo_mes"/>
+                                    <field name="fecha_emision"/>
+                                    <field name="neto_pagar"/>
+                                    <field name="estado"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Certificados">
+                            <field name="certificado_ids" context="{'default_trabajador_id': id}">
+                                <list>
+                                    <field name="numero"/>
+                                    <field name="tipo"/>
+                                    <field name="fecha_emision"/>
+                                    <field name="dirigido_a"/>
+                                    <field name="estado"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notas">
+                            <field name="observaciones_rrhh"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_trabajador" model="ir.actions.act_window">
         <field name="name">Trabajadores</field>
         <field name="res_model">res.users</field>
         <field name="view_mode">kanban,list,form</field>
         <field name="domain">[('share', '=', False)]</field>
-        <field name="search_view_id" ref="view_incas_rrhh_trabajadores_search"/>
+        <field name="search_view_id" ref="view_incas_trabajador_search"/>
     </record>
 
-    <record id="action_incas_rrhh_trabajadores_kanban_view" model="ir.actions.act_window.view">
+    <record id="action_incas_trabajador_kanban_view" model="ir.actions.act_window.view">
         <field name="sequence" eval="1"/>
         <field name="view_mode">kanban</field>
-        <field name="view_id" ref="view_incas_rrhh_trabajadores_kanban"/>
-        <field name="act_window_id" ref="action_incas_rrhh_trabajadores"/>
+        <field name="view_id" ref="view_incas_trabajador_kanban"/>
+        <field name="act_window_id" ref="action_incas_trabajador"/>
     </record>
 
-    <record id="action_incas_rrhh_trabajadores_list_view" model="ir.actions.act_window.view">
+    <record id="action_incas_trabajador_list_view" model="ir.actions.act_window.view">
         <field name="sequence" eval="2"/>
         <field name="view_mode">list</field>
-        <field name="view_id" ref="view_incas_rrhh_trabajadores_list"/>
-        <field name="act_window_id" ref="action_incas_rrhh_trabajadores"/>
+        <field name="view_id" ref="view_incas_trabajador_list"/>
+        <field name="act_window_id" ref="action_incas_trabajador"/>
+    </record>
+
+    <record id="action_incas_trabajador_form_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="3"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_incas_trabajador_form"/>
+        <field name="act_window_id" ref="action_incas_trabajador"/>
+    </record>
+
+    <record id="view_incas_boleta_list" model="ir.ui.view">
+        <field name="name">incas.boleta.list</field>
+        <field name="model">incas.boleta</field>
+        <field name="arch" type="xml">
+            <list string="Boletas">
+                <field name="numero"/>
+                <field name="trabajador_id"/>
+                <field name="periodo_anio"/>
+                <field name="periodo_mes"/>
+                <field name="fecha_emision"/>
+                <field name="neto_pagar"/>
+                <field name="estado"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_boleta_search" model="ir.ui.view">
+        <field name="name">incas.boleta.search</field>
+        <field name="model">incas.boleta</field>
+        <field name="arch" type="xml">
+            <search string="Buscar boletas">
+                <field name="numero"/>
+                <field name="trabajador_id"/>
+                <field name="periodo_anio"/>
+                <field name="estado"/>
+                <separator/>
+                <filter name="filter_borrador" string="Borrador" domain="[('estado', '=', 'borrador')]"/>
+                <filter name="filter_pagada" string="Pagada" domain="[('estado', '=', 'pagada')]"/>
+                <separator/>
+                <filter name="group_trabajador" string="Trabajador" domain="[]" context="{'group_by': 'trabajador_id'}"/>
+                <filter name="group_estado" string="Estado" domain="[]" context="{'group_by': 'estado'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_boleta_form" model="ir.ui.view">
+        <field name="name">incas.boleta.form</field>
+        <field name="model">incas.boleta</field>
+        <field name="arch" type="xml">
+            <form string="Boleta">
+                <header>
+                    <button name="action_confirmar" string="Confirmar" type="object" class="btn-primary" invisible="estado != 'borrador'"/>
+                    <button name="action_marcar_pagada" string="Marcar pagada" type="object" class="btn-primary" invisible="estado not in ('confirmada', 'borrador')"/>
+                    <button name="action_borrador" string="Volver a borrador" type="object" invisible="estado == 'borrador'"/>
+                    <button name="action_anular" string="Anular" type="object" invisible="estado == 'anulada'"/>
+                    <button name="%(action_report_incas_boleta)d" string="Imprimir boleta" type="action" class="btn-secondary"/>
+                    <field name="estado" widget="statusbar" statusbar_visible="borrador,confirmada,pagada,anulada"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="numero" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="trabajador_id"/>
+                            <field name="company_id" readonly="1"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="periodo_anio"/>
+                            <field name="periodo_mes"/>
+                            <field name="fecha_emision"/>
+                            <field name="fecha_pago"/>
+                        </group>
+                    </group>
+                    <group string="Ingresos">
+                        <group>
+                            <field name="sueldo_base" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="asignacion_familiar" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="bonos" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                        <group>
+                            <field name="horas_extra" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="comisiones" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="otros_ingresos" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                    </group>
+                    <group string="Descuentos">
+                        <group>
+                            <field name="afp_onp" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="adelantos" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="prestamos" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                        <group>
+                            <field name="descuentos" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="otros_descuentos" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                    </group>
+                    <group string="Totales">
+                        <group>
+                            <field name="total_ingresos" readonly="1" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                            <field name="total_descuentos" readonly="1" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                        <group>
+                            <field name="neto_pagar" readonly="1" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="observaciones"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_boleta" model="ir.actions.act_window">
+        <field name="name">Boletas</field>
+        <field name="res_model">incas.boleta</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_boleta_search"/>
+    </record>
+
+    <record id="view_incas_certificado_laboral_list" model="ir.ui.view">
+        <field name="name">incas.certificado.laboral.list</field>
+        <field name="model">incas.certificado.laboral</field>
+        <field name="arch" type="xml">
+            <list string="Certificados laborales">
+                <field name="numero"/>
+                <field name="trabajador_id"/>
+                <field name="tipo"/>
+                <field name="fecha_emision"/>
+                <field name="dirigido_a"/>
+                <field name="estado"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_certificado_laboral_search" model="ir.ui.view">
+        <field name="name">incas.certificado.laboral.search</field>
+        <field name="model">incas.certificado.laboral</field>
+        <field name="arch" type="xml">
+            <search string="Buscar certificados">
+                <field name="numero"/>
+                <field name="trabajador_id"/>
+                <field name="tipo"/>
+                <field name="estado"/>
+                <separator/>
+                <filter name="filter_borrador" string="Borrador" domain="[('estado', '=', 'borrador')]"/>
+                <filter name="filter_emitido" string="Emitido" domain="[('estado', '=', 'emitido')]"/>
+                <separator/>
+                <filter name="group_trabajador" string="Trabajador" domain="[]" context="{'group_by': 'trabajador_id'}"/>
+                <filter name="group_tipo" string="Tipo" domain="[]" context="{'group_by': 'tipo'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_certificado_laboral_form" model="ir.ui.view">
+        <field name="name">incas.certificado.laboral.form</field>
+        <field name="model">incas.certificado.laboral</field>
+        <field name="arch" type="xml">
+            <form string="Certificado laboral">
+                <header>
+                    <button name="action_emitir" string="Emitir" type="object" class="btn-primary" invisible="estado != 'borrador'"/>
+                    <button name="action_borrador" string="Volver a borrador" type="object" invisible="estado == 'borrador'"/>
+                    <button name="action_anular" string="Anular" type="object" invisible="estado == 'anulado'"/>
+                    <button name="%(action_report_incas_certificado_laboral)d" string="Imprimir certificado" type="action" class="btn-secondary"/>
+                    <field name="estado" widget="statusbar" statusbar_visible="borrador,emitido,anulado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="numero" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="trabajador_id"/>
+                            <field name="company_id" readonly="1"/>
+                            <field name="tipo"/>
+                        </group>
+                        <group>
+                            <field name="fecha_emision"/>
+                            <field name="dirigido_a"/>
+                            <field name="firmante_id"/>
+                        </group>
+                    </group>
+                    <group string="Snapshot laboral">
+                        <group>
+                            <field name="fecha_ingreso_snapshot"/>
+                            <field name="puesto_snapshot"/>
+                        </group>
+                        <group>
+                            <field name="horas_semanales_snapshot"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="sueldo_snapshot" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="contenido_base" placeholder="Texto del certificado"/>
+                    </group>
+                    <group>
+                        <field name="observaciones"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_certificado_laboral" model="ir.actions.act_window">
+        <field name="name">Certificados</field>
+        <field name="res_model">incas.certificado.laboral</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_certificado_laboral_search"/>
     </record>
 
     <menuitem
@@ -106,8 +444,26 @@
         id="menu_incas_rrhh_trabajadores"
         name="Trabajadores"
         parent="menu_incas_rrhh_root"
-        action="action_incas_rrhh_trabajadores"
+        action="action_incas_trabajador"
         sequence="10"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_rrhh_boletas"
+        name="Boletas"
+        parent="menu_incas_rrhh_root"
+        action="action_incas_boleta"
+        sequence="20"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_rrhh_certificados"
+        name="Certificados"
+        parent="menu_incas_rrhh_root"
+        action="action_incas_certificado_laboral"
+        sequence="30"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
     />
 </odoo>
