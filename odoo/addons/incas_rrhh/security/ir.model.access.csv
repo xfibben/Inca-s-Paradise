@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_incas_boleta_system,access.incas.boleta.system,model_incas_boleta,base.group_system,1,1,1,1
+access_incas_boleta_admin,access.incas.boleta.admin,model_incas_boleta,incas_core.group_incas_core_admin,1,1,1,1
+access_incas_boleta_gerencia,access.incas.boleta.gerencia,model_incas_boleta,incas_core.group_incas_core_gerencia,1,1,1,0
+access_incas_certificado_laboral_system,access.incas.certificado.laboral.system,model_incas_certificado_laboral,base.group_system,1,1,1,1
+access_incas_certificado_laboral_admin,access.incas.certificado.laboral.admin,model_incas_certificado_laboral,incas_core.group_incas_core_admin,1,1,1,1
+access_incas_certificado_laboral_gerencia,access.incas.certificado.laboral.gerencia,model_incas_certificado_laboral,incas_core.group_incas_core_gerencia,1,1,1,0
+access_res_users_incas_rrhh_admin,access.res.users.incas.rrhh.admin,base.model_res_users,incas_core.group_incas_core_admin,1,1,1,0
+access_res_users_incas_rrhh_gerencia,access.res.users.incas.rrhh.gerencia,base.model_res_users,incas_core.group_incas_core_gerencia,1,1,0,0

@@ -7,6 +7,9 @@
     "license": "LGPL-3",
     "depends": ["incas_core"],
     "data": [
+        "security/ir.model.access.csv",
+        "data/incas_rrhh_sequences.xml",
+        "reports/incas_rrhh_reports.xml",
         "views/incas_rrhh_trabajadores_views.xml",
     ],
     "application": False,

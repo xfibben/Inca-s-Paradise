@@ -49,6 +49,13 @@
                         class="btn btn-secondary"
                         invisible="estado_ejecucion != 'finalizada'"
                     />
+                    <button
+                        string="Abrir tarea revisada"
+                        name="action_abrir_tarea_origen"
+                        type="object"
+                        class="btn btn-secondary"
+                        invisible="not es_revision_tarea or not tarea_origen_id"
+                    />
                 </div>
             </xpath>
             <xpath expr="//field[@name='note']" position="replace">
@@ -61,6 +68,8 @@
             </xpath>
             <xpath expr="//group[field[@name='date_deadline']]" position="after">
                 <group>
+                    <field name="es_revision_tarea" invisible="1"/>
+                    <field name="tarea_origen_id" invisible="1"/>
                     <field name="estado_ejecucion" widget="badge" readonly="1"/>
                     <field name="revision_tarea" widget="badge" readonly="1"/>
                     <field name="observacion_tarea" readonly="1"/>
@@ -115,10 +124,19 @@
                         class="btn-secondary"
                         invisible="estado_ejecucion != 'finalizada'"
                     />
+                    <button
+                        string="Abrir tarea revisada"
+                        name="action_abrir_tarea_origen"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="not es_revision_tarea or not tarea_origen_id"
+                    />
                 </header>
             </xpath>
             <xpath expr="//sheet" position="inside">
                 <group string="Calificación de tarea">
+                    <field name="es_revision_tarea" invisible="1"/>
+                    <field name="tarea_origen_id" invisible="1"/>
                     <field name="revision_tarea" widget="badge" readonly="1"/>
                     <field name="observacion_tarea" placeholder="Escriba el comentario"/>
                 </group>
@@ -210,8 +228,19 @@
                         class="btn-secondary"
                         invisible="estado_ejecucion != 'finalizada'"
                     />
+                    <button
+                        string="Abrir tarea revisada"
+                        name="action_abrir_tarea_origen"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="not es_revision_tarea or not tarea_origen_id"
+                    />
                 </header>
                 <sheet>
+                    <group invisible="1">
+                        <field name="es_revision_tarea"/>
+                        <field name="tarea_origen_id"/>
+                    </group>
                     <group>
                         <group>
                             <field name="summary" readonly="1"/>
@@ -237,6 +266,51 @@
         </field>
     </record>
 
+    <record id="view_mail_activity_form_without_access_inherit_incas_operaciones" model="ir.ui.view">
+        <field name="name">mail.activity.view.form.without.record.access.incas.operaciones</field>
+        <field name="model">mail.activity</field>
+        <field name="inherit_id" ref="mail.mail_activity_view_form_without_record_access"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='action_done_redirect_to_other']" position="attributes">
+                <attribute name="invisible">estado_ejecucion == 'finalizada'</attribute>
+            </xpath>
+            <xpath expr="//header" position="inside">
+                <button
+                    string="Aprobar tarea"
+                    name="action_aprobar_tarea"
+                    type="object"
+                    class="btn-primary"
+                    invisible="estado_ejecucion != 'finalizada' or revision_tarea == 'aprobado'"
+                />
+                <button
+                    string="Desaprobar tarea"
+                    name="action_desaprobar_tarea"
+                    type="object"
+                    class="btn-secondary"
+                    invisible="estado_ejecucion != 'finalizada' or revision_tarea != 'aprobado'"
+                />
+                <button
+                    string="Observar tarea"
+                    name="action_observar_tarea"
+                    type="object"
+                    class="btn-secondary"
+                    invisible="estado_ejecucion != 'finalizada'"
+                />
+            </xpath>
+            <xpath expr="//sheet/group" position="after">
+                <group string="Calificación de tarea">
+                    <field name="estado_ejecucion" widget="badge" readonly="1"/>
+                    <field name="revision_tarea" widget="badge" readonly="1"/>
+                    <field name="observacion_tarea" placeholder="Escriba el comentario"/>
+                    <field name="fecha_hora_inicio" readonly="1"/>
+                    <field name="fecha_hora_fin" readonly="1"/>
+                    <field name="duracion_minutos" readonly="1"/>
+                    <field name="duracion_horas" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
     <record id="view_mail_activity_calendar_tareas_incas_operaciones" model="ir.ui.view">
         <field name="name">mail.activity.view.calendar.tareas.incas.operaciones</field>
         <field name="model">mail.activity</field>
@@ -258,10 +332,13 @@
             <search string="Tareas">
                 <field name="summary"/>
                 <field name="user_id" string="Asignado a"/>
+                <field name="estado_ejecucion"/>
                 <field name="revision_tarea"/>
+                <separator string="Estado de revisión"/>
                 <filter name="filter_tareas_por_revisar" string="Falta revisar" domain="['|', ('revision_tarea', '=', False), ('revision_tarea', '=', 'por_revisar')]"/>
                 <filter name="filter_tareas_aprobadas" string="Aprobadas" domain="[('revision_tarea', '=', 'aprobado')]"/>
                 <filter name="filter_tareas_observadas" string="Observadas" domain="[('revision_tarea', '=', 'observado')]"/>
+                <separator string="Otros filtros"/>
                 <filter name="filter_mis_tareas" string="Mis tareas" domain="[('user_id', '=', uid)]"/>
                 <filter name="group_user_id" string="Responsable" domain="[]" context="{'group_by': 'user_id'}"/>
                 <filter name="group_revision_tarea" string="Revisión" domain="[]" context="{'group_by': 'revision_tarea'}"/>
@@ -274,8 +351,18 @@
         <field name="res_model">mail.activity</field>
         <field name="view_mode">list,calendar,form</field>
         <field name="search_view_id" ref="view_mail_activity_search_tareas_incas_operaciones"/>
-        <field name="domain">[('estado_ejecucion', '=', 'finalizada')]</field>
+        <field name="domain">[('estado_ejecucion', '=', 'finalizada'), ('es_revision_tarea', '=', False)]</field>
         <field name="context">{'active_test': False}</field>
+    </record>
+
+    <record id="mail.mail_activity_without_access_action" model="ir.actions.act_window">
+        <field name="name">Tareas por revisar</field>
+        <field name="res_model">mail.activity</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_mail_activity_search_tareas_incas_operaciones"/>
+        <field name="domain">['|', ('id', 'in', context.get('active_ids')), '&amp;', ('res_model', '=', False), ('user_id', '=', uid)]</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="target">main</field>
     </record>
 
     <record id="action_mail_activity_tareas_calendar_view_incas_operaciones" model="ir.actions.act_window.view">
@@ -297,6 +384,20 @@
         <field name="view_mode">form</field>
         <field name="view_id" ref="view_mail_activity_form_tareas_incas_operaciones"/>
         <field name="act_window_id" ref="action_mail_activity_tareas_incas_operaciones"/>
+    </record>
+
+    <record id="mail.mail_activity_action_without_access_view_tree" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_mail_activity_tree_tareas_incas_operaciones"/>
+        <field name="act_window_id" ref="mail.mail_activity_without_access_action"/>
+    </record>
+
+    <record id="mail.mail_activity_action_without_access_view_form" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_mail_activity_form_tareas_incas_operaciones"/>
+        <field name="act_window_id" ref="mail.mail_activity_without_access_action"/>
     </record>
 
     <menuitem
