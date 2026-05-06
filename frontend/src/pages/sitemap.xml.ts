@@ -3,24 +3,26 @@
 
 const baseUrl = "https://incasparadise.com";
 const STRAPI_URL = import.meta.env.STRAPI_URL || "http://localhost:1337";
-const langs = ["es", "en", "pt", "fr", "it"];
+const langs = ["es", "en", "pt"];
 
 // Mapeo de lang a locale de Strapi
 const langToLocale: Record<string, string> = {
   es: "es",
   en: "en",
   pt: "pt",
-  fr: "fr",
-  it: "it",
 };
 
 // Páginas estáticas por idioma
 const staticPages = [
   { path: "/",                              changefreq: "weekly",  priority: "1.0" },
+  { path: "/nosotros",                      changefreq: "monthly", priority: "0.7" },
   { path: "/destinos",                      changefreq: "monthly", priority: "0.8" },
   { path: "/tipo-transporte",               changefreq: "monthly", priority: "0.7" },
   { path: "/transporte",                    changefreq: "monthly", priority: "0.7" },
   { path: "/ofertas",                       changefreq: "weekly",  priority: "0.8" },
+  { path: "/preguntas-frecuentes",          changefreq: "monthly", priority: "0.6" },
+  { path: "/cancelaciones",                 changefreq: "yearly",  priority: "0.4" },
+  { path: "/politicas",                     changefreq: "yearly",  priority: "0.4" },
   { path: "/claims",                        changefreq: "yearly",  priority: "0.4" },
   { path: "/terminos",                      changefreq: "yearly",  priority: "0.3" },
 ];
