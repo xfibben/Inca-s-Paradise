@@ -819,12 +819,19 @@ class IncasReserva(models.Model):
             return
         if suscribir:
             self.message_subscribe(partner_ids=[partner.id])
-        self.message_post(
+        remitente = (
+            self.env.user.email_formatted
+            or self.env.company.email_formatted
+            or self.env.user.partner_id.email_formatted
+            or False
+        )
+        self.with_context(mail_notify_force_send=True).message_post(
             body=body_html,
             subject=subject,
             partner_ids=[partner.id],
             attachments=[(f"comprobante-{self.ticket}.pdf", pdf_bytes)],
-            message_type="comment",
+            email_from=remitente,
+            message_type="email",
             subtype_xmlid="mail.mt_comment",
         )
 
