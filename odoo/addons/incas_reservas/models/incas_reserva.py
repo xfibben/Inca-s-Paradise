@@ -805,8 +805,13 @@ class IncasReserva(models.Model):
         partner_model = self.env["res.partner"].sudo()
         partner = partner_model.search([("email", "=", email)], limit=1)
         if partner:
-            if nombre and not partner.name:
-                partner.write({"name": nombre})
+            valores = {}
+            if nombre and partner.name != nombre:
+                valores["name"] = nombre
+            if partner.email != email:
+                valores["email"] = email
+            if valores:
+                partner.write(valores)
             return partner
         return partner_model.create(
             {
@@ -815,23 +820,52 @@ class IncasReserva(models.Model):
             }
         )
 
-    def _enviar_correo_odoo(self, partner, subject, body_html, pdf_bytes, suscribir=False):
+    def _obtener_remitente_reserva(self):
         self.ensure_one()
-        if not partner or not partner.email:
-            return
-        if suscribir:
-            self.message_subscribe(partner_ids=[partner.id])
         remitente = (
-            self.env.user.email_formatted
-            or self.env.company.email_formatted
-            or self.env.user.partner_id.email_formatted
-            or False
-        )
+            self.env["ir.config_parameter"].sudo().get_param("mail.default.from")
+            or self.env.user.email
+            or self.env.company.email
+            or self.env.user.partner_id.email
+            or ""
+        ).strip()
+        return remitente or False
+
+    def _resolver_destinatario_cliente(self):
+        self.ensure_one()
+        email_cliente = (self.email or self.partner_id.email or "").strip()
+        if not email_cliente:
+            return self.env["res.partner"], False
+        partner_cliente = self.partner_id
+        if partner_cliente.email != email_cliente:
+            partner_cliente = self._obtener_partner_destinatario(
+                email_cliente,
+                self.nombre or self.partner_id.display_name,
+            )
+        return partner_cliente, email_cliente
+
+    def _enviar_correo_odoo(self, email_destino, subject, body_html, pdf_bytes, partner=False, suscribir=False):
+        self.ensure_one()
+        email_destino = (email_destino or "").strip()
+        if not email_destino:
+            return
+        if suscribir and partner:
+            self.message_subscribe(partner_ids=[partner.id])
+        remitente = self._obtener_remitente_reserva()
         reply_to = self._obtener_reply_to_reserva()
-        self.with_context(mail_notify_force_send=True).message_post(
+        _logger.info(
+            "Reserva %s: enviando correo a=%s asunto=%s remitente=%s reply_to=%s",
+            self.id,
+            email_destino,
+            subject,
+            remitente,
+            reply_to,
+        )
+        self.with_context(mail_notify_force_send=True, mail_post_autofollow=False).message_post(
             body=Markup(body_html),
             subject=subject,
-            partner_ids=[partner.id],
+            partner_ids=[partner.id] if partner else [],
+            outgoing_email_to=email_destino,
             attachments=[(f"comprobante-{self.ticket}.pdf", pdf_bytes)],
             email_from=remitente,
             reply_to=reply_to,
@@ -841,13 +875,7 @@ class IncasReserva(models.Model):
 
     def _obtener_reply_to_reserva(self):
         self.ensure_one()
-        default_from = (
-            self.env["ir.config_parameter"].sudo().get_param("mail.default.from")
-            or self.env.user.email
-            or self.env.company.email
-            or self.env.user.partner_id.email
-            or ""
-        ).strip()
+        default_from = self._obtener_remitente_reserva() or ""
         if "@" not in default_from:
             return default_from or False
         local, domain = default_from.split("@", 1)
@@ -859,20 +887,23 @@ class IncasReserva(models.Model):
             pdf = generar_pdf_desde_html(render_reserva_html(record))
             html_admin = html_correo_reserva(record, "Nueva reserva recibida", "Se registró una nueva reserva y el comprobante PDF va adjunto.")
             html_cliente = html_correo_reserva(record, "Confirmación de reserva", f"Hola {record.nombre or record.partner_id.display_name}, tu reserva fue registrada correctamente. Adjuntamos el comprobante PDF.")
-            partner_cliente = record.partner_id
-            if record.email and record.email != (record.partner_id.email or ""):
-                partner_cliente = record._obtener_partner_destinatario(record.email, record.nombre or record.partner_id.display_name)
-            elif record.email and not record.partner_id.email:
-                record.partner_id.write({"email": record.email})
+            partner_cliente, email_cliente = record._resolver_destinatario_cliente()
             if notify_email:
                 partner_admin = record._obtener_partner_destinatario(notify_email, "Notificaciones reservas")
-                record._enviar_correo_odoo(partner_admin, f"INCA'S PARADISE - Nueva reserva {record.ticket}", html_admin, pdf)
-            if partner_cliente and partner_cliente.email:
                 record._enviar_correo_odoo(
-                    partner_cliente,
+                    notify_email,
+                    f"INCA'S PARADISE - Nueva reserva {record.ticket}",
+                    html_admin,
+                    pdf,
+                    partner=partner_admin,
+                )
+            if email_cliente:
+                record._enviar_correo_odoo(
+                    email_cliente,
                     f"INCA'S PARADISE - Confirmación de reserva {record.ticket}",
                     html_cliente,
                     pdf,
+                    partner=partner_cliente,
                     suscribir=True,
                 )
 
