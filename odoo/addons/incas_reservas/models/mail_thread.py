@@ -17,14 +17,7 @@ class MailThread(models.AbstractModel):
         if reserva_id:
             email_from = message_dict.get("email_from")
             user_id = self._mail_find_user_for_gateway(email_from).id or self.env.uid
-            route = self._routing_check_route(
-                message,
-                message_dict,
-                ("incas.reserva", reserva_id, custom_values, user_id, None),
-                raise_exception=False,
-            )
-            if route:
-                return [route]
+            return [("incas.reserva", reserva_id, custom_values, user_id, None)]
         return super().message_route(
             message,
             message_dict,
