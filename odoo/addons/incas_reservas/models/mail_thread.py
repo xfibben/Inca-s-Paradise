@@ -18,6 +18,8 @@ class MailThread(models.AbstractModel):
             email_from = message_dict.get("email_from")
             user_id = self._mail_find_user_for_gateway(email_from).id or self.env.uid
             return [("incas.reserva", reserva_id, custom_values, user_id, None)]
+        if self._correo_monitoreado_en_destinatarios(emails):
+            return []
         return super().message_route(
             message,
             message_dict,
@@ -45,3 +47,18 @@ class MailThread(models.AbstractModel):
         ticket = match.group(1).upper()
         reserva = self.env["incas.reserva"].sudo().search([("ticket", "=", ticket)], limit=1)
         return reserva.id or False
+
+    @api.model
+    def _correo_monitoreado_en_destinatarios(self, emails):
+        default_from = (
+            self.env["ir.config_parameter"].sudo().get_param("mail.default.from")
+            or self.env.user.email
+            or self.env.company.email
+            or ""
+        ).strip().lower()
+        if not default_from:
+            return False
+        if any(email == default_from for email in emails):
+            return True
+        local = default_from.split("@", 1)[0]
+        return any(email.startswith(f"{local}+") for email in emails)
