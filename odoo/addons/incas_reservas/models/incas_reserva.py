@@ -6,6 +6,8 @@ import logging
 import re
 from urllib.request import Request, urlopen
 
+from markupsafe import Markup
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
@@ -827,8 +829,7 @@ class IncasReserva(models.Model):
         )
         reply_to = self._obtener_reply_to_reserva()
         self.with_context(mail_notify_force_send=True).message_post(
-            body=body_html,
-            body_is_html=True,
+            body=Markup(body_html),
             subject=subject,
             partner_ids=[partner.id],
             attachments=[(f"comprobante-{self.ticket}.pdf", pdf_bytes)],
