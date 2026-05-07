@@ -12,6 +12,8 @@ class MailThread(models.AbstractModel):
         recipients = message_dict.get("recipients") or message_dict.get("to") or ""
         emails = [email.lower().strip() for email in email_split(recipients)]
         reserva_id = self._extraer_reserva_id_desde_alias(emails)
+        if not reserva_id:
+            reserva_id = self._extraer_reserva_id_desde_asunto(message_dict.get("subject") or "")
         if reserva_id:
             email_from = message_dict.get("email_from")
             user_id = self._mail_find_user_for_gateway(email_from).id or self.env.uid
@@ -41,3 +43,12 @@ class MailThread(models.AbstractModel):
             if self.env["incas.reserva"].sudo().browse(reserva_id).exists():
                 return reserva_id
         return False
+
+    @api.model
+    def _extraer_reserva_id_desde_asunto(self, subject):
+        match = re.search(r"(TICKET-\d{8}-\d+)", subject or "", flags=re.IGNORECASE)
+        if not match:
+            return False
+        ticket = match.group(1).upper()
+        reserva = self.env["incas.reserva"].sudo().search([("ticket", "=", ticket)], limit=1)
+        return reserva.id or False
