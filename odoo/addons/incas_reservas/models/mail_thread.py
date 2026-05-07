@@ -18,15 +18,18 @@ class MailThread(models.AbstractModel):
             email_from = message_dict.get("email_from")
             user_id = self._mail_find_user_for_gateway(email_from).id or self.env.uid
             return [("incas.reserva", reserva_id, custom_values, user_id, None)]
-        if self._correo_monitoreado_en_destinatarios(emails):
-            return []
-        return super().message_route(
-            message,
-            message_dict,
-            model=model,
-            thread_id=thread_id,
-            custom_values=custom_values,
-        )
+        try:
+            return super().message_route(
+                message,
+                message_dict,
+                model=model,
+                thread_id=thread_id,
+                custom_values=custom_values,
+            )
+        except ValueError:
+            if self._correo_monitoreado_en_destinatarios(emails):
+                return []
+            raise
 
     @api.model
     def _extraer_reserva_id_desde_alias(self, emails):
