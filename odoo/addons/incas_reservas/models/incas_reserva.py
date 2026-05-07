@@ -827,6 +827,7 @@ class IncasReserva(models.Model):
         )
         self.with_context(mail_notify_force_send=True).message_post(
             body=body_html,
+            body_is_html=True,
             subject=subject,
             partner_ids=[partner.id],
             attachments=[(f"comprobante-{self.ticket}.pdf", pdf_bytes)],
