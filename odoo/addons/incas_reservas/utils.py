@@ -1502,14 +1502,17 @@ def enviar_correo_resend(
 
 
 def html_correo_reserva(reserva, titulo, mensaje):
-    detalle = render_reserva_html(reserva)
     return f"""
     <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.6; background: #f3f7f6; padding: 24px;">
       <div style="max-width: 760px; margin: 0 auto; background: #ffffff; border: 1px solid #dbe4e2; border-radius: 12px; padding: 28px;">
         <div style="font-size: 12px; letter-spacing: 1.6px; font-weight: 700; color: #1aa093;">INCA'S PARADISE</div>
         <div style="font-size: 28px; line-height: 1.2; font-weight: 700; color: #1f2937; margin-top: 2px;">{escape(titulo)}</div>
         <p style="margin: 12px 0 24px 0; color: #374151;">{escape(mensaje)}</p>
-        <div>{detalle}</div>
+        <div style="padding: 16px 18px; border: 1px solid #dbe4e2; border-radius: 10px; background: #f8fbfa; color: #374151;">
+          Ticket: <strong>{escape(texto(reserva.ticket))}</strong><br/>
+          Servicio: <strong>{escape(texto(reserva.servicio_nombre))}</strong><br/>
+          Fecha de viaje: <strong>{escape(fecha(reserva.fecha_inicio or reserva.fecha_viaje))}</strong>
+        </div>
       </div>
     </div>
     """
