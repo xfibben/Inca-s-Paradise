@@ -825,6 +825,7 @@ class IncasReserva(models.Model):
             or self.env.user.partner_id.email_formatted
             or False
         )
+        reply_to = self._obtener_reply_to_reserva()
         self.with_context(mail_notify_force_send=True).message_post(
             body=body_html,
             body_is_html=True,
@@ -832,9 +833,24 @@ class IncasReserva(models.Model):
             partner_ids=[partner.id],
             attachments=[(f"comprobante-{self.ticket}.pdf", pdf_bytes)],
             email_from=remitente,
+            reply_to=reply_to,
             message_type="email",
             subtype_xmlid="mail.mt_comment",
         )
+
+    def _obtener_reply_to_reserva(self):
+        self.ensure_one()
+        default_from = (
+            self.env["ir.config_parameter"].sudo().get_param("mail.default.from")
+            or self.env.user.email
+            or self.env.company.email
+            or self.env.user.partner_id.email
+            or ""
+        ).strip()
+        if "@" not in default_from:
+            return default_from or False
+        local, domain = default_from.split("@", 1)
+        return f"{local}+reserva-{self.id}@{domain}"
 
     def _enviar_correos_reserva(self):
         notify_email = os.getenv("RESEND_NOTIFY_EMAIL", "")
