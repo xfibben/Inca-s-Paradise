@@ -864,7 +864,7 @@ class IncasReserva(models.Model):
         self.with_context(mail_notify_force_send=True, mail_post_autofollow=False).message_post(
             body=Markup(body_html),
             subject=subject,
-            partner_ids=[partner.id] if partner else [],
+            partner_ids=[],
             outgoing_email_to=email_destino,
             attachments=[(f"comprobante-{self.ticket}.pdf", pdf_bytes)],
             email_from=remitente,
@@ -875,11 +875,7 @@ class IncasReserva(models.Model):
 
     def _obtener_reply_to_reserva(self):
         self.ensure_one()
-        default_from = self._obtener_remitente_reserva() or ""
-        if "@" not in default_from:
-            return default_from or False
-        local, domain = default_from.split("@", 1)
-        return f"{local}+reserva-{self.id}@{domain}"
+        return self._obtener_remitente_reserva()
 
     def _enviar_correos_reserva(self):
         notify_email = os.getenv("RESEND_NOTIFY_EMAIL", "")
