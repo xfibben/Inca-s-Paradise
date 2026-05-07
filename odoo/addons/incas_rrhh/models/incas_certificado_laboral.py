@@ -1,3 +1,7 @@
+import base64
+import mimetypes
+from pathlib import Path
+
 from odoo import api, fields, models
 
 
@@ -32,6 +36,25 @@ class IncasCertificadoLaboral(models.Model):
         default="borrador",
     )
     observaciones = fields.Text(string="Observaciones")
+
+    def _get_certificado_imagen_data_uri(self):
+        self.ensure_one()
+        report_dir = Path(__file__).resolve().parent.parent / "reports"
+        candidate_names = (
+            "certificado_imagen.png",
+            "certificado_imagen.jpg",
+            "certificado_imagen.jpeg",
+            "certificado_imagen.webp",
+        )
+
+        # La imagen se toma manualmente desde la carpeta del reporte.
+        for filename in candidate_names:
+            image_path = report_dir / filename
+            if image_path.is_file():
+                mime_type = mimetypes.guess_type(image_path.name)[0] or "image/png"
+                encoded = base64.b64encode(image_path.read_bytes()).decode("utf-8")
+                return f"data:{mime_type};base64,{encoded}"
+        return False
 
     @api.onchange("trabajador_id")
     def _onchange_trabajador_id(self):
