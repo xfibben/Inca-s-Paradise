@@ -110,6 +110,37 @@ function toAbsoluteMediaUrl(value: any) {
   return `${normalizedBase}${normalizedPath}`;
 }
 
+function toAbsoluteUrl(value: any, siteOrigin: string) {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return `${siteOrigin}${raw.startsWith("/") ? raw : `/${raw}`}`;
+}
+
+function toMediaMeta(value: any) {
+  const media = value?.data ?? value;
+  const row = media?.attributes ?? media ?? null;
+  if (!row) return null;
+
+  const preferredFormat =
+    row?.formats?.large ??
+    row?.formats?.medium ??
+    row?.formats?.small ??
+    null;
+  const src = toAbsoluteMediaUrl(row);
+  if (!src) return null;
+
+  const width = Number(preferredFormat?.width ?? row?.width ?? 0);
+  const height = Number(preferredFormat?.height ?? row?.height ?? 0);
+
+  return {
+    src,
+    alt: typeof row?.alternativeText === "string" ? row.alternativeText.trim() : "",
+    width: Number.isFinite(width) && width > 0 ? String(width) : "",
+    height: Number.isFinite(height) && height > 0 ? String(height) : "",
+  };
+}
+
 function toCardImageFromTour(tour: any) {
   const mediaRows = toMediaRows(tour?.heroSlideImages);
   const firstWithUrl = mediaRows.find((entry: any) => Boolean(toAbsoluteMediaUrl(entry)));
@@ -556,7 +587,7 @@ const seoTitle =
   cleanText(sourceTour.title) ||
   (lang === "en" ? "Tour details" : "Detalle del tour");
 const pageDescription =
-  cleanText(sourceTour.seoDescription) || cleanText(sourceTour.metaDescription);
+  cleanText(sourceTour.seoDescription);
 const seoKeywords = cleanText(sourceTour.seoKeywords);
 const seoNoIndex = Boolean(sourceTour.seoNoIndex);
 
@@ -565,7 +596,7 @@ const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(
   ""
 );
 const canonical =
-  cleanText(sourceTour.seoCanonicalUrl) ||
+  toAbsoluteUrl(sourceTour.seoCanonicalUrl, siteOrigin) ||
   `${siteOrigin}/${lang}/tours/${tourSlug}`;
 
 
@@ -593,19 +624,44 @@ const heroSlides = Array.isArray(sourceTour.heroSlideImages?.data)
   ? sourceTour.heroSlideImages
   : [];
 const firstHeroSlide = heroSlides[0];
-const highlightsImage = toAbsoluteMediaUrl(firstHeroSlide);
+const highlightsImageMeta = toMediaMeta(firstHeroSlide);
+const highlightsImage = highlightsImageMeta?.src || "";
 const highlightsImageAlt = cleanText(firstHeroSlide?.alternativeText) || highlightsTitle || seoTitle;
 const ogTitle = cleanText(sourceTour.ogTitle) || seoTitle;
 const ogDescription = cleanText(sourceTour.ogDescription) || pageDescription;
-const ogImage =
-  toAbsoluteMediaUrl(sourceTour.ogImage?.data ?? sourceTour.ogImage) ||
-  highlightsImage;
+const ogImageMeta = highlightsImageMeta;
+const ogImage = ogImageMeta?.src || "";
 const twitterTitle = cleanText(sourceTour.twitterTitle) || ogTitle;
 const twitterDescription =
   cleanText(sourceTour.twitterDescription) || ogDescription;
-const twitterImage =
-  toAbsoluteMediaUrl(sourceTour.twitterImage?.data ?? sourceTour.twitterImage) ||
-  ogImage;
+const twitterImageMeta = ogImageMeta;
+const twitterImage = twitterImageMeta?.src || "";
+const socialImageAlt =
+  highlightsImageAlt ||
+  seoTitle;
+const ogLocale =
+  lang === "es"
+    ? "es_PE"
+    : lang === "pt"
+    ? "pt_BR"
+    : lang === "fr"
+    ? "fr_FR"
+    : lang === "it"
+    ? "it_IT"
+    : "en_US";
+const alternateLanguages = allSupportedLangs
+  .map((targetLang) => {
+    const slug = cleanText(tourSlugs[targetLang]);
+    if (!slug) return null;
+    return {
+      lang: targetLang,
+      url: `${siteOrigin}/${targetLang}/tours/${slug}`,
+    };
+  })
+  .filter(Boolean);
+const xDefaultUrl =
+  alternateLanguages.find((entry: any) => entry.lang === "es")?.url ||
+  canonical;
 const highlightsCtaLabel = cleanText(sourceTour.highlightsCtaLabel);
 const highlightsCtaUrl = cleanText(sourceTour.highlightsCtaUrl);
 const hasHighlightsCta = Boolean(highlightsCtaLabel && highlightsCtaUrl);
@@ -904,17 +960,39 @@ const hasBookingCard = Boolean(
     <title>{seoTitle}</title>
     <meta name="description" content={pageDescription} />
     {seoKeywords ? <meta name="keywords" content={seoKeywords} /> : null}
-    {seoNoIndex ? <meta name="robots" content="noindex,nofollow" /> : null}
+    <meta
+      name="robots"
+      content={
+        seoNoIndex
+          ? "noindex,nofollow"
+          : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+      }
+    />
+    <meta
+      name="googlebot"
+      content={seoNoIndex ? "noindex,nofollow" : "index, follow, max-image-preview:large"}
+    />
+    <meta name="bingbot" content={seoNoIndex ? "noindex,nofollow" : "index, follow"} />
     <link rel="canonical" href={canonical} />
+    {alternateLanguages.map((entry: any) => (
+      <link rel="alternate" hrefLang={entry.lang} href={entry.url} />
+    ))}
+    <link rel="alternate" hrefLang="x-default" href={xDefaultUrl} />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Inca's Paradise" />
+    <meta property="og:locale" content={ogLocale} />
     <meta property="og:title" content={ogTitle} />
     <meta property="og:description" content={ogDescription} />
     <meta property="og:url" content={canonical} />
     {ogImage ? <meta property="og:image" content={ogImage} /> : null}
+    {ogImageMeta?.width ? <meta property="og:image:width" content={ogImageMeta.width} /> : null}
+    {ogImageMeta?.height ? <meta property="og:image:height" content={ogImageMeta.height} /> : null}
+    {ogImage ? <meta property="og:image:alt" content={socialImageAlt} /> : null}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={twitterTitle} />
     <meta name="twitter:description" content={twitterDescription} />
     {twitterImage ? <meta name="twitter:image" content={twitterImage} /> : null}
+    {twitterImage ? <meta name="twitter:image:alt" content={socialImageAlt} /> : null}
     <!-- Schema JSON-LD TouristTrip -->
     <script type="application/ld+json" set:html={JSON.stringify((() => {
       const schema: Record<string, any> = {
@@ -929,7 +1007,18 @@ const hasBookingCard = Boolean(
           "url": "https://incasparadise.com"
         }
       };
-      if (ogImage) schema["image"] = ogImage;
+      if (ogImage) {
+        schema["image"] = [
+          {
+            "@type": "ImageObject",
+            "url": ogImage,
+            "contentUrl": ogImage,
+            "caption": socialImageAlt,
+            ...(ogImageMeta?.width ? { "width": Number(ogImageMeta.width) } : {}),
+            ...(ogImageMeta?.height ? { "height": Number(ogImageMeta.height) } : {}),
+          }
+        ];
+      }
       if (sourceTour.durationDays) schema["duration"] = `P${sourceTour.durationDays}D`;
       if (sourceTour.adultUnitPrice) schema["offers"] = {
         "@type": "Offer",

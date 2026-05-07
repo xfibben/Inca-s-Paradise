@@ -1,24 +1,37 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8" ?>
 <odoo>
     <record id="action_report_incas_boleta" model="ir.actions.report">
         <field name="name">Boleta PDF</field>
         <field name="model">incas.boleta</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">incas_rrhh.report_incas_boleta_document</field>
-        <field name="report_file">incas_rrhh.report_incas_boleta_document</field>
+        <field
+            name="report_name"
+        >incas_rrhh.report_incas_boleta_document</field>
+        <field
+            name="report_file"
+        >incas_rrhh.report_incas_boleta_document</field>
         <field name="print_report_name">'Boleta - %s' % object.numero</field>
-        <field name="binding_model_id" ref="model_incas_boleta"/>
+        <field name="binding_model_id" ref="model_incas_boleta" />
         <field name="binding_type">report</field>
     </record>
 
-    <record id="action_report_incas_certificado_laboral" model="ir.actions.report">
+    <record
+        id="action_report_incas_certificado_laboral"
+        model="ir.actions.report"
+    >
         <field name="name">Certificado laboral PDF</field>
         <field name="model">incas.certificado.laboral</field>
         <field name="report_type">qweb-pdf</field>
-        <field name="report_name">incas_rrhh.report_incas_certificado_laboral_document</field>
-        <field name="report_file">incas_rrhh.report_incas_certificado_laboral_document</field>
-        <field name="print_report_name">'Certificado - %s' % object.numero</field>
-        <field name="binding_model_id" ref="model_incas_certificado_laboral"/>
+        <field
+            name="report_name"
+        >incas_rrhh.report_incas_certificado_laboral_document</field>
+        <field
+            name="report_file"
+        >incas_rrhh.report_incas_certificado_laboral_document</field>
+        <field
+            name="print_report_name"
+        >'Certificado - %s' % object.numero</field>
+        <field name="binding_model_id" ref="model_incas_certificado_laboral" />
         <field name="binding_type">report</field>
     </record>
 
@@ -84,75 +97,95 @@
                 width: 38%;
             }
             .incas-certificate {
-                border: 8px solid #d7c38a;
-                padding: 34px 42px;
-                min-height: 960px;
+                padding: 8px 28px 0 28px;
+                min-height: 1030px;
                 position: relative;
-                background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%);
+                background: #ffffff;
             }
             .incas-certificate:before {
-                content: "";
-                position: absolute;
-                inset: 12px;
-                border: 1px solid #d7c38a;
+                content: none;
             }
             .incas-certificate-body {
                 position: relative;
                 z-index: 1;
-                text-align: center;
+                padding: 0 54px 0 78px;
+            }
+            .incas-certificate-header {
+                min-height: 220px;
+                position: relative;
+            }
+            .incas-certificate-image {
+                display: block;
+                max-height: 400px;
+                margin: 0 auto 8px auto;
             }
             .incas-certificate-kicker {
-                letter-spacing: 4px;
-                font-size: 12px;
-                color: #8b6b2e;
-                margin-bottom: 16px;
+                font-size: 16px;
+                font-style: italic;
+                font-family: Georgia, "Times New Roman", serif;
+                color: #2f4f75;
+                line-height: 1.3;
+                margin-bottom: 4px;
+                text-align: center;
             }
             .incas-certificate-title {
-                font-size: 34px;
+                font-size: 32px;
                 font-weight: 700;
-                color: #1aa093;
-                margin-bottom: 10px;
+                font-style: italic;
+                font-family: Georgia, "Times New Roman", serif;
+                color: #2f4f75;
+                line-height: 1.2;
+                margin-bottom: 12px;
+                text-align: center;
             }
             .incas-certificate-subtitle {
-                font-size: 16px;
-                color: #4b5563;
-                margin-bottom: 28px;
+                width: 145px;
+                height: 3px;
+                background: #dcb64a;
+                margin: 0 auto 24px auto;
             }
             .incas-certificate-name {
-                font-size: 30px;
-                font-weight: 700;
-                color: #111827;
-                margin: 18px 0;
+                display: none;
             }
             .incas-certificate-text {
-                font-size: 15px;
-                line-height: 1.8;
+                font-size: 16px;
+                line-height: 1.6;
                 text-align: justify;
-                margin: 0 auto 18px auto;
-                max-width: 620px;
+                margin: 0 0 14px 0;
+                max-width: none;
             }
             .incas-certificate-period {
                 font-size: 16px;
-                font-weight: 700;
-                color: #8b6b2e;
-                margin: 18px 0 24px 0;
+                line-height: 1.6;
+                margin: 0 0 14px 0;
+                color: #1f2937;
             }
             .incas-certificate-footer {
-                margin-top: 54px;
+                margin-top: 34px;
                 text-align: center;
             }
             .incas-sign-line {
-                width: 240px;
-                border-top: 1px solid #6b7280;
-                margin: 0 auto 8px auto;
+                display: none;
             }
             .incas-sign-name {
                 font-weight: 700;
                 color: #111827;
+                font-size: 16px;
             }
             .incas-sign-role {
                 color: #4b5563;
-                font-size: 12px;
+                font-size: 16px;
+            }
+            .incas-certificate-label {
+                font-weight: 700;
+                font-size: 16px;
+                margin-bottom: 8px;
+            }
+            .incas-certificate-date {
+                font-size: 16px;
+                text-align: right;
+                margin-top: 24px;
+                margin-bottom: 34px;
             }
         </style>
     </template>
@@ -162,51 +195,112 @@
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
                     <div class="page incas-page">
-                        <t t-call="incas_rrhh.report_incas_rrhh_common_styles"/>
+                        <t
+                            t-call="incas_rrhh.report_incas_rrhh_common_styles"
+                        />
                         <div class="incas-title">Inca's Paradise</div>
                         <div class="incas-subtitle">Boleta de pago</div>
                         <div class="incas-code-box">
                             <div class="incas-code-label">NÚMERO</div>
-                            <div class="incas-code-value"><span t-field="o.numero"/></div>
+                            <div class="incas-code-value"><span
+                                    t-field="o.numero"
+                                /></div>
                         </div>
 
                         <div class="incas-section">
-                            <div class="incas-section-title">DATOS DEL TRABAJADOR</div>
+                            <div
+                                class="incas-section-title"
+                            >DATOS DEL TRABAJADOR</div>
                             <table class="incas-table">
-                                <tr><td class="incas-label">Trabajador</td><td><span t-field="o.trabajador_id"/></td></tr>
-                                <tr><td class="incas-label">Puesto</td><td><span t-field="o.trabajador_id.puesto"/></td></tr>
-                                <tr><td class="incas-label">Área</td><td><span t-field="o.trabajador_id.area"/></td></tr>
-                                <tr><td class="incas-label">Fecha de ingreso</td><td><span t-field="o.trabajador_id.fecha_ingreso"/></td></tr>
+                                <tr><td class="incas-label">Trabajador</td><td
+                                    ><span
+                                            t-field="o.trabajador_id"
+                                        /></td></tr>
+                                <tr><td class="incas-label">Puesto</td><td><span
+                                            t-field="o.trabajador_id.puesto"
+                                        /></td></tr>
+                                <tr><td class="incas-label">Área</td><td><span
+                                            t-field="o.trabajador_id.area"
+                                        /></td></tr>
+                                <tr><td
+                                        class="incas-label"
+                                    >Fecha de ingreso</td><td><span
+                                            t-field="o.trabajador_id.fecha_ingreso"
+                                        /></td></tr>
                             </table>
                         </div>
 
                         <div class="incas-section">
                             <div class="incas-section-title">PERÍODO</div>
                             <table class="incas-table">
-                                <tr><td class="incas-label">Año</td><td><span t-field="o.periodo_anio"/></td></tr>
-                                <tr><td class="incas-label">Mes</td><td><span t-field="o.periodo_mes"/></td></tr>
-                                <tr><td class="incas-label">Fecha de emisión</td><td><span t-field="o.fecha_emision"/></td></tr>
-                                <tr><td class="incas-label">Fecha de pago</td><td><span t-field="o.fecha_pago"/></td></tr>
+                                <tr><td class="incas-label">Año</td><td><span
+                                            t-field="o.periodo_anio"
+                                        /></td></tr>
+                                <tr><td class="incas-label">Mes</td><td><span
+                                            t-field="o.periodo_mes"
+                                        /></td></tr>
+                                <tr><td
+                                        class="incas-label"
+                                    >Fecha de emisión</td><td><span
+                                            t-field="o.fecha_emision"
+                                        /></td></tr>
+                                <tr><td
+                                        class="incas-label"
+                                    >Fecha de pago</td><td><span
+                                            t-field="o.fecha_pago"
+                                        /></td></tr>
                             </table>
                         </div>
 
                         <div class="incas-section">
-                            <div class="incas-section-title">RESUMEN DE PAGO</div>
+                            <div
+                                class="incas-section-title"
+                            >RESUMEN DE PAGO</div>
                             <table class="incas-table">
-                                <tr><td class="incas-label">Sueldo base</td><td><span t-field="o.sueldo_base"/></td></tr>
-                                <tr><td class="incas-label">Asignación familiar</td><td><span t-field="o.asignacion_familiar"/></td></tr>
-                                <tr><td class="incas-label">Bonos</td><td><span t-field="o.bonos"/></td></tr>
-                                <tr><td class="incas-label">Horas extra</td><td><span t-field="o.horas_extra"/></td></tr>
-                                <tr><td class="incas-label">Comisiones</td><td><span t-field="o.comisiones"/></td></tr>
-                                <tr><td class="incas-label">Otros ingresos</td><td><span t-field="o.otros_ingresos"/></td></tr>
-                                <tr><td class="incas-label">Total ingresos</td><td><span t-field="o.total_ingresos"/></td></tr>
-                                <tr><td class="incas-label">AFP / ONP</td><td><span t-field="o.afp_onp"/></td></tr>
-                                <tr><td class="incas-label">Adelantos</td><td><span t-field="o.adelantos"/></td></tr>
-                                <tr><td class="incas-label">Préstamos</td><td><span t-field="o.prestamos"/></td></tr>
-                                <tr><td class="incas-label">Descuentos</td><td><span t-field="o.descuentos"/></td></tr>
-                                <tr><td class="incas-label">Otros descuentos</td><td><span t-field="o.otros_descuentos"/></td></tr>
-                                <tr><td class="incas-label">Total descuentos</td><td><span t-field="o.total_descuentos"/></td></tr>
-                                <tr><td class="incas-label">Neto a pagar</td><td><span t-field="o.neto_pagar"/></td></tr>
+                                <tr><td class="incas-label">Sueldo base</td><td
+                                    ><span t-field="o.sueldo_base" /></td></tr>
+                                <tr><td
+                                        class="incas-label"
+                                    >Asignación familiar</td><td><span
+                                            t-field="o.asignacion_familiar"
+                                        /></td></tr>
+                                <tr><td class="incas-label">Bonos</td><td><span
+                                            t-field="o.bonos"
+                                        /></td></tr>
+                                <tr><td class="incas-label">Horas extra</td><td
+                                    ><span t-field="o.horas_extra" /></td></tr>
+                                <tr><td class="incas-label">Comisiones</td><td
+                                    ><span t-field="o.comisiones" /></td></tr>
+                                <tr><td
+                                        class="incas-label"
+                                    >Otros ingresos</td><td><span
+                                            t-field="o.otros_ingresos"
+                                        /></td></tr>
+                                <tr><td
+                                        class="incas-label"
+                                    >Total ingresos</td><td><span
+                                            t-field="o.total_ingresos"
+                                        /></td></tr>
+                                <tr><td class="incas-label">AFP / ONP</td><td
+                                    ><span t-field="o.afp_onp" /></td></tr>
+                                <tr><td class="incas-label">Adelantos</td><td
+                                    ><span t-field="o.adelantos" /></td></tr>
+                                <tr><td class="incas-label">Préstamos</td><td
+                                    ><span t-field="o.prestamos" /></td></tr>
+                                <tr><td class="incas-label">Descuentos</td><td
+                                    ><span t-field="o.descuentos" /></td></tr>
+                                <tr><td
+                                        class="incas-label"
+                                    >Otros descuentos</td><td><span
+                                            t-field="o.otros_descuentos"
+                                        /></td></tr>
+                                <tr><td
+                                        class="incas-label"
+                                    >Total descuentos</td><td><span
+                                            t-field="o.total_descuentos"
+                                        /></td></tr>
+                                <tr><td class="incas-label">Neto a pagar</td><td
+                                    ><span t-field="o.neto_pagar" /></td></tr>
                             </table>
                         </div>
                     </div>
@@ -220,36 +314,100 @@
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
                     <div class="page incas-page">
-                        <t t-call="incas_rrhh.report_incas_rrhh_common_styles"/>
+                        <t
+                            t-call="incas_rrhh.report_incas_rrhh_common_styles"
+                        />
+                        <t
+                            t-set="certificado_imagen"
+                            t-value="o._get_certificado_imagen_data_uri()"
+                        />
                         <div class="incas-certificate">
                             <div class="incas-certificate-body">
-                                <div class="incas-certificate-kicker">INCA'S PARADISE</div>
-                                <div class="incas-certificate-title">Certificado de Trabajo</div>
-                                <div class="incas-certificate-subtitle">Constancia laboral emitida por la empresa</div>
-                                <div class="incas-certificate-name"><span t-field="o.trabajador_id"/></div>
+                                <div class="incas-certificate-header">
+                                    <img
+                                        t-if="certificado_imagen"
+                                        t-att-src="certificado_imagen"
+                                        class="incas-certificate-image"
+                                        alt="Imagen del certificado"
+                                    />
+                                </div>
+                                <div
+                                    class="incas-certificate-kicker"
+                                >Certificado de</div>
+                                <div class="incas-certificate-title">
+                                    <t
+                                        t-if="o.tipo == 'practicas'"
+                                    >prácticas pre-profesionales</t>
+                                    <t
+                                        t-elif="o.tipo == 'ingresos'"
+                                    >ingresos</t>
+                                    <t t-else="">trabajo</t>
+                                </div>
+                                <div class="incas-certificate-subtitle" />
                                 <div class="incas-certificate-text">
-                                    Por medio del presente, se deja constancia que la persona anteriormente indicada ha laborado en Inca's Paradise desempeñando el cargo de <strong><span t-esc="o.puesto_snapshot or 'trabajador/a'"/></strong>.
+                                    La que suscribe, Gerente General de la empresa INCA'S PARADISE TRAVEL AGENCY E.I.R.L. con RUC: 20601022207.
                                 </div>
-                                <div class="incas-certificate-period">
-                                    Período laboral: desde <span t-field="o.fecha_ingreso_snapshot"/> hasta <t t-if="o.fecha_cese_snapshot"><span t-field="o.fecha_cese_snapshot"/></t><t t-else="">la actualidad</t>
+                                <div
+                                    class="incas-certificate-label"
+                                >Certifica que:</div>
+                                <div class="incas-certificate-text">
+                                    <span t-field="o.trabajador_id" />
+                                    <t t-if="o.puesto_snapshot">, <span
+                                            t-esc="o.puesto_snapshot"
+                                        /></t>
+                                    <t
+                                        t-if="o.fecha_ingreso_snapshot or o.fecha_cese_snapshot"
+                                    >
+                                        , ha prestado servicios desde
+                                        <span
+                                            t-field="o.fecha_ingreso_snapshot"
+                                        />
+                                        hasta
+                                        <t t-if="o.fecha_cese_snapshot"><span
+                                                t-field="o.fecha_cese_snapshot"
+                                            /></t>
+                                        <t t-else="">la actualidad</t>
+                                    </t>
+                                    <t t-if="o.horas_semanales_snapshot">
+                                        , con una jornada de <span
+                                            t-esc="o.horas_semanales_snapshot"
+                                        /> horas semanales
+                                    </t>.
                                 </div>
-                                <div class="incas-certificate-text" t-if="o.contenido_base">
-                                    <span t-field="o.contenido_base"/>
+                                <div
+                                    class="incas-certificate-text"
+                                    t-if="o.contenido_base"
+                                >
+                                    <span t-field="o.contenido_base" />
                                 </div>
-                                <div class="incas-certificate-text" t-if="o.dirigido_a">
-                                    Se expide el presente documento a solicitud del interesado para ser presentado ante <strong><span t-field="o.dirigido_a"/></strong>.
+                                <div
+                                    class="incas-certificate-text"
+                                    t-if="o.dirigido_a"
+                                >
+                                    Se expide el presente documento a solicitud del interesado para ser presentado ante <strong
+                                    ><span t-field="o.dirigido_a" /></strong>.
                                 </div>
-                                <div class="incas-certificate-text" t-if="not o.dirigido_a">
+                                <div
+                                    class="incas-certificate-text"
+                                    t-if="not o.dirigido_a"
+                                >
                                     Se expide el presente documento a solicitud del interesado para los fines que estime convenientes.
                                 </div>
-                                <div class="incas-certificate-text" style="text-align: center;">
-                                    Emitido el <span t-field="o.fecha_emision"/>.
+                                <div class="incas-certificate-date">
+                                    <span t-field="o.fecha_emision" />
                                 </div>
                                 <div class="incas-certificate-footer">
-                                    <div class="incas-sign-line"></div>
-                                    <div class="incas-sign-name"><span t-field="o.firmante_id"/></div>
-                                    <div class="incas-sign-role">Firmante autorizado</div>
-                                    <div class="incas-code-label" style="margin-top: 12px;">Código: <span t-field="o.numero"/></div>
+                                    <div
+                                        class="incas-sign-name"
+                                        style="margin-top: 30px;"
+                                    ><span t-field="o.firmante_id" /></div>
+                                    <div
+                                        class="incas-sign-role"
+                                    >Firmante autorizado</div>
+                                    <div
+                                        class="incas-code-label"
+                                        style="margin-top: 12px;"
+                                    >Código: <span t-field="o.numero" /></div>
                                 </div>
                             </div>
                         </div>
