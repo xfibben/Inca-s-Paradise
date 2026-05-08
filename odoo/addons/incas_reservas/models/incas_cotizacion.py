@@ -137,6 +137,7 @@ class IncasCotizacion(models.Model):
         default="USD",
         tracking=True,
     )
+    precio_grupal = fields.Float(string="Precio grupal", compute="_compute_precio_grupal", inverse="_inverse_precio_grupal", store=True, tracking=True)
     monto_total = fields.Float(string="Monto total", compute="_compute_monto_total", store=True, tracking=True)
     state = fields.Selection(
         [
@@ -300,12 +301,64 @@ class IncasCotizacion(models.Model):
                 record.monto_extra_usd = (record.cantidad_extra or 0) * (record.extra_precio_unitario_usd or 0)
                 record.monto_extra = record._convertir_desde_usd(record.monto_extra_usd, record.moneda, rates)
 
+    @api.depends(
+        "cantidad_adultos",
+        "cantidad_ninos",
+        "precio_adulto",
+        "precio_nino",
+        "descuento",
+        "paquete_linea_ids.precio_adulto_neto",
+        "paquete_linea_ids.precio_nino_neto",
+    )
+    def _compute_precio_grupal(self):
+        for record in self:
+            record.precio_grupal = record._obtener_precio_grupal_actual()
+
     @api.depends("cantidad_adultos", "cantidad_ninos", "precio_adulto", "precio_nino", "descuento", "monto_hotel", "monto_extra")
     def _compute_monto_total(self):
         for record in self:
             subtotal = ((record.cantidad_adultos or 0) * (record.precio_adulto or 0)) + ((record.cantidad_ninos or 0) * (record.precio_nino or 0))
             descuento_monto = subtotal * ((record.descuento or 0) / 100)
             record.monto_total = (subtotal - descuento_monto) + (record.monto_hotel or 0) + (record.monto_extra or 0)
+
+    def _obtener_precio_grupal_actual(self):
+        self.ensure_one()
+        if self.paquete_linea_ids:
+            return sum(
+                ((self.cantidad_adultos or 0) * (linea.precio_adulto_neto or 0))
+                + ((self.cantidad_ninos or 0) * (linea.precio_nino_neto or 0))
+                for linea in self.paquete_linea_ids
+            )
+        subtotal = ((self.cantidad_adultos or 0) * (self.precio_adulto or 0)) + ((self.cantidad_ninos or 0) * (self.precio_nino or 0))
+        descuento_monto = subtotal * ((self.descuento or 0) / 100)
+        return subtotal - descuento_monto
+
+    # Reparte el total objetivo entre las líneas para que el paquete cierre con el nuevo precio grupal.
+    def _inverse_precio_grupal(self):
+        for record in self:
+            if not record.paquete_linea_ids:
+                continue
+            cantidad_adultos = record.cantidad_adultos or 0
+            cantidad_ninos = record.cantidad_ninos or 0
+            if cantidad_adultos <= 0 and cantidad_ninos <= 0:
+                continue
+            total_objetivo = max(record.precio_grupal or 0, 0)
+            suma_factores = sum(1 - ((linea.descuento or 0) / 100) for linea in record.paquete_linea_ids)
+            if suma_factores <= 0:
+                continue
+            divisor = suma_factores * (cantidad_adultos + cantidad_ninos)
+            if cantidad_ninos <= 0:
+                divisor = suma_factores * cantidad_adultos
+            if divisor <= 0:
+                continue
+            precio_comun = total_objetivo / divisor
+            for linea in record.paquete_linea_ids:
+                linea.write(
+                    {
+                        "precio_adulto": precio_comun,
+                        "precio_nino": precio_comun if cantidad_ninos > 0 else 0,
+                    }
+                )
 
     def _convertir_desde_usd(self, monto_usd, moneda, rates):
         if moneda == "PEN":

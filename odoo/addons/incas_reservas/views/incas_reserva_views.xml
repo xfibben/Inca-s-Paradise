@@ -22,6 +22,7 @@
                 <field name="extra_nombre"/>
                 <field name="cantidad_extra"/>
                 <field name="monto_extra"/>
+                <field name="precio_grupal"/>
                 <field name="estado_reserva"/>
                 <field name="estado_pago"/>
                 <field
@@ -178,6 +179,7 @@
                             <field name="monto_pagado" readonly="1"/>
                             <field name="saldo_pendiente" readonly="1"/>
                             <field name="moneda"/>
+                            <field name="precio_grupal" readonly="1"/>
                         </group>
                     </group>
                     <notebook>
