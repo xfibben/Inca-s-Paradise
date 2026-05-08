@@ -72,6 +72,8 @@
                                     <field name="regimen"/>
                                     <field name="acomodacion"/>
                                     <field name="precio_noche_usd"/>
+                                    <field name="precio_conf_usd"/>
+                                    <field name="precio_fit_usd"/>
                                     <field name="descuento"/>
                                     <field name="active"/>
                                 </list>
@@ -102,6 +104,8 @@
                 <field name="regimen"/>
                 <field name="acomodacion"/>
                 <field name="precio_noche_usd"/>
+                <field name="precio_conf_usd"/>
+                <field name="precio_fit_usd"/>
                 <field name="descuento"/>
                 <field name="active"/>
             </list>
@@ -154,6 +158,8 @@
                         </group>
                         <group>
                             <field name="precio_noche_usd"/>
+                            <field name="precio_conf_usd"/>
+                            <field name="precio_fit_usd"/>
                             <field name="precio_nino_usd"/>
                             <field name="precio_adulto_extra_usd"/>
                             <field name="precio_nino_extra_usd"/>

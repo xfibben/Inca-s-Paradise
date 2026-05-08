@@ -172,6 +172,7 @@
                             <field name="cantidad_ninos" />
                             <field name="hotel_id" invisible="1" />
                             <field name="hotel_tarifa_id" invisible="1" />
+                            <field name="hotel_tipo_tarifario" invisible="1" />
                             <field name="fecha_check_in" invisible="1" />
                             <field name="fecha_check_out" invisible="1" />
                             <field name="cantidad_habitaciones" invisible="1" />
@@ -278,9 +279,13 @@
                                     <field name="sequence" widget="handle" />
                                     <field name="hotel_id" />
                                     <field name="hotel_tarifa_id" />
+                                    <field name="hotel_precio_ip" readonly="1" />
+                                    <field name="hotel_precio_conf_fit" readonly="1" />
+                                    <field name="hotel_precio_rack" readonly="1" />
+                                    <field name="tipo_tarifario" />
                                     <field name="fecha_check_in" />
                                     <field name="fecha_check_out" />
-                                    <field name="cantidad_noches" readonly="1" />
+                                    <field name="cantidad_noches" />
                                     <field name="cantidad_habitaciones" />
                                     <field name="moneda" readonly="1" />
                                     <field name="hotel_nombre" />

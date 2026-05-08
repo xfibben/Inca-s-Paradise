@@ -51,7 +51,9 @@ class IncasHotelTarifa(models.Model):
     capacidad_adultos = fields.Integer(string="Capacidad adultos", default=2, required=True)
     capacidad_ninos = fields.Integer(string="Capacidad niños", default=0, required=True)
     min_noches = fields.Integer(string="Noches mínimas", default=1, required=True)
-    precio_noche_usd = fields.Float(string="Precio por noche base", required=True, default=0)
+    precio_noche_usd = fields.Float(string="Precio IP", required=True, default=0)
+    precio_conf_usd = fields.Float(string="Precio CONF FIT", default=0)
+    precio_fit_usd = fields.Float(string="Precio Rack", default=0)
     precio_nino_usd = fields.Float(string="Precio niño base", default=0)
     precio_adulto_extra_usd = fields.Float(string="Precio adulto extra base", default=0)
     precio_nino_extra_usd = fields.Float(string="Precio niño extra base", default=0)
@@ -75,6 +77,8 @@ class IncasHotelTarifa(models.Model):
         "capacidad_ninos",
         "min_noches",
         "precio_noche_usd",
+        "precio_conf_usd",
+        "precio_fit_usd",
         "precio_nino_usd",
         "precio_adulto_extra_usd",
         "precio_nino_extra_usd",
@@ -88,6 +92,8 @@ class IncasHotelTarifa(models.Model):
                 raise ValidationError("Las noches mínimas deben ser al menos 1.")
             if (
                 record.precio_noche_usd < 0
+                or record.precio_conf_usd < 0
+                or record.precio_fit_usd < 0
                 or record.precio_nino_usd < 0
                 or record.precio_adulto_extra_usd < 0
                 or record.precio_nino_extra_usd < 0
@@ -107,8 +113,16 @@ class IncasHotelTarifa(models.Model):
             return (monto_base or 0) / rates["EUR"]
         return monto_base or 0
 
-    # Devuelve la tarifa neta en USD para reutilizar el mismo criterio en cotización y reserva.
-    def obtener_precio_noche_neto_usd(self):
+    def obtener_precio_noche_usd_por_tarifario(self, tipo_tarifario="ip"):
         self.ensure_one()
-        precio_noche_usd = self._convertir_base_a_usd(self.precio_noche_usd or 0)
+        if tipo_tarifario == "conf":
+            return self._convertir_base_a_usd(self.precio_conf_usd or 0)
+        if tipo_tarifario == "fit":
+            return self._convertir_base_a_usd(self.precio_fit_usd or 0)
+        return self._convertir_base_a_usd(self.precio_noche_usd or 0)
+
+    # Devuelve la tarifa neta en USD para reutilizar el mismo criterio en cotización y reserva.
+    def obtener_precio_noche_neto_usd(self, tipo_tarifario="ip"):
+        self.ensure_one()
+        precio_noche_usd = self.obtener_precio_noche_usd_por_tarifario(tipo_tarifario)
         return precio_noche_usd * (1 - ((self.descuento or 0) / 100))
