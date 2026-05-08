@@ -19,8 +19,8 @@ class IncasHotel(models.Model):
     name = fields.Char(string="Nombre", required=True)
     codigo = fields.Char(string="Código")
     partner_id = fields.Many2one("res.partner", string="Proveedor")
-    categoria = fields.Char(string="Categoría legacy")
-    categoria_id = fields.Many2one("incas.hotel.categoria", string="Categoría", ondelete="restrict")
+    categoria = fields.Char(string="Categoría")
+    categoria_id = fields.Many2one("incas.hotel.categoria", string="Categoría", compute="_compute_categoria_id", inverse="_inverse_categoria_id")
     pais_id = fields.Many2one("res.country", string="País")
     ciudad = fields.Char(string="Ciudad")
     direccion = fields.Char(string="Dirección")
@@ -43,39 +43,26 @@ class IncasHotel(models.Model):
             record.tarifa_count = len(record.tarifa_ids)
 
     def init(self):
-        self.env.cr.execute(
-            """
-            INSERT INTO incas_hotel_categoria (name, sequence, active, create_uid, create_date, write_uid, write_date)
-            SELECT data.name, data.sequence, TRUE, 1, NOW(), 1, NOW()
-            FROM (
-                VALUES
-                    ('1 estrella', 10),
-                    ('2 estrellas', 20),
-                    ('3 estrellas', 30),
-                    ('4 estrellas', 40),
-                    ('5 estrellas', 50),
-                    ('Boutique', 60),
-                    ('Luxury', 70)
-            ) AS data(name, sequence)
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM incas_hotel_categoria categoria
-                WHERE categoria.name = data.name
-            )
-            """
-        )
         for codigo, nombre in self._CATEGORIAS_LEGACY.items():
             self.env.cr.execute(
                 """
-                UPDATE incas_hotel hotel
-                   SET categoria_id = categoria.id
-                  FROM incas_hotel_categoria categoria
-                 WHERE hotel.categoria = %s
-                   AND categoria.name = %s
-                   AND hotel.categoria_id IS NULL
+                UPDATE incas_hotel
+                   SET categoria = %s
+                 WHERE categoria = %s
                 """,
-                (codigo, nombre),
+                (nombre, codigo),
             )
+
+    def _compute_categoria_id(self):
+        categorias = self.env["incas.hotel.categoria"].search([])
+        categorias_por_nombre = {categoria.name: categoria for categoria in categorias}
+        for record in self:
+            nombre = self._CATEGORIAS_LEGACY.get(record.categoria, record.categoria)
+            record.categoria_id = categorias_por_nombre.get(nombre, self.env["incas.hotel.categoria"])
+
+    def _inverse_categoria_id(self):
+        for record in self:
+            record.categoria = record.categoria_id.name or False
 
     def create(self, vals_list):
         for vals in vals_list:
@@ -85,6 +72,7 @@ class IncasHotel(models.Model):
             elif categoria_id and not vals.get("categoria"):
                 categoria = self.env["incas.hotel.categoria"].browse(categoria_id)
                 vals["categoria"] = categoria.name
+            vals.pop("categoria_id", None)
         return super().create(vals_list)
 
     def write(self, vals):
@@ -94,4 +82,5 @@ class IncasHotel(models.Model):
             elif not vals.get("categoria"):
                 categoria = self.env["incas.hotel.categoria"].browse(vals["categoria_id"])
                 vals = dict(vals, categoria=categoria.name)
+            vals.pop("categoria_id", None)
         return super().write(vals)
