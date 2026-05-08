@@ -128,6 +128,7 @@
                             <field name="fecha_viaje"/>
                             <field name="hotel_id" invisible="1"/>
                             <field name="hotel_tarifa_id" invisible="1"/>
+                            <field name="hotel_tipo_tarifario"/>
                             <field name="fecha_check_in" invisible="1"/>
                             <field name="fecha_check_out" invisible="1"/>
                             <field name="cantidad_habitaciones" invisible="1"/>
@@ -220,6 +221,7 @@
                                     <field name="sequence" widget="handle"/>
                                     <field name="hotel_id"/>
                                     <field name="hotel_tarifa_id"/>
+                                    <field name="tipo_tarifario"/>
                                     <field name="fecha_check_in"/>
                                     <field name="fecha_check_out"/>
                                     <field name="cantidad_noches"/>

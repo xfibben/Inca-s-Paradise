@@ -133,6 +133,13 @@ class IncasReserva(models.Model):
         domain="[('hotel_id', '=', hotel_id)]",
         tracking=True,
     )
+    hotel_tipo_tarifario = fields.Selection(
+        [("ip", "IP"), ("conf", "CONF FIT"), ("fit", "Rack")],
+        string="Tarifario hotel",
+        default="ip",
+        required=True,
+        tracking=True,
+    )
     fecha_check_in = fields.Date(string="Check-in", tracking=True)
     fecha_check_out = fields.Date(string="Check-out", tracking=True)
     cantidad_noches = fields.Integer(string="Cantidad noches", compute="_compute_cantidad_noches", store=True)
@@ -503,7 +510,7 @@ class IncasReserva(models.Model):
                 continue
             record.hotel_id = record.hotel_tarifa_id.hotel_id
             record.hotel_nombre = record.hotel_tarifa_id.hotel_id.name
-            record.hotel_precio_noche_usd = record.hotel_tarifa_id.obtener_precio_noche_neto_usd()
+            record.hotel_precio_noche_usd = record.hotel_tarifa_id.obtener_precio_noche_neto_usd(record.hotel_tipo_tarifario)
             record.hotel_precio_noche = record._convertir_desde_usd(record.hotel_precio_noche_usd, record.moneda, rates)
             record.hotel_descuento = record.hotel_tarifa_id.descuento or 0
 
@@ -560,6 +567,7 @@ class IncasReserva(models.Model):
             "cantidad_ninos": cotizacion.cantidad_ninos,
             "hotel_id": cotizacion.hotel_id,
             "hotel_tarifa_id": cotizacion.hotel_tarifa_id,
+            "hotel_tipo_tarifario": cotizacion.hotel_tipo_tarifario,
             "fecha_check_in": cotizacion.fecha_check_in,
             "fecha_check_out": cotizacion.fecha_check_out,
             "cantidad_habitaciones": cotizacion.cantidad_habitaciones,
@@ -1172,6 +1180,7 @@ class IncasReserva(models.Model):
                         "cantidad_ninos": resumen["cantidad_ninos"],
                         "hotel_id": resumen["hotel_id"].id,
                         "hotel_tarifa_id": resumen["hotel_tarifa_id"].id,
+                        "hotel_tipo_tarifario": resumen["hotel_tipo_tarifario"],
                         "fecha_check_in": resumen["fecha_check_in"],
                         "fecha_check_out": resumen["fecha_check_out"],
                         "cantidad_habitaciones": resumen["cantidad_habitaciones"],
@@ -1221,6 +1230,10 @@ class IncasReserva(models.Model):
             if record.hotel_tarifa_id:
                 record.fecha_check_in = record.fecha_check_in or record.fecha_inicio or record.fecha_viaje or record.hotel_tarifa_id.fecha_desde
                 record.fecha_check_out = record.fecha_check_out or record.fecha_fin or record.hotel_tarifa_id.fecha_hasta
+
+    @api.onchange("hotel_tipo_tarifario")
+    def _onchange_hotel_tipo_tarifario(self):
+        self._aplicar_tarifa_hotel()
 
     @api.onchange("extra_id")
     def _onchange_extra_id(self):
@@ -1273,8 +1286,9 @@ class IncasReserva(models.Model):
         return self.documento_directory_id.action_dms_files_all_directory()
 
     def _completar_datos_hotel(self, vals):
-        hotel_id = vals.get("hotel_id")
-        hotel_tarifa_id = vals.get("hotel_tarifa_id")
+        hotel_id = vals.get("hotel_id") or (self.hotel_id.id if len(self) == 1 else False)
+        hotel_tarifa_id = vals.get("hotel_tarifa_id") or (self.hotel_tarifa_id.id if len(self) == 1 else False)
+        tipo_tarifario = vals.get("hotel_tipo_tarifario") or (self.hotel_tipo_tarifario if len(self) == 1 else "ip") or "ip"
         if not hotel_id and not hotel_tarifa_id:
             return vals
         tarifa = self.env["incas.hotel.tarifa"].browse(hotel_tarifa_id) if hotel_tarifa_id else self.env["incas.hotel.tarifa"]
@@ -1282,7 +1296,8 @@ class IncasReserva(models.Model):
         if tarifa and tarifa.exists():
             vals.setdefault("hotel_id", tarifa.hotel_id.id)
             vals["hotel_nombre"] = tarifa.hotel_id.name
-            vals["hotel_precio_noche_usd"] = tarifa.obtener_precio_noche_neto_usd()
+            vals.setdefault("hotel_tipo_tarifario", tipo_tarifario)
+            vals["hotel_precio_noche_usd"] = tarifa.obtener_precio_noche_neto_usd(tipo_tarifario)
             vals["hotel_descuento"] = tarifa.descuento or 0
             vals.setdefault("fecha_check_in", vals.get("fecha_inicio") or vals.get("fecha_viaje") or tarifa.fecha_desde)
             vals.setdefault("fecha_check_out", vals.get("fecha_fin") or tarifa.fecha_hasta)
