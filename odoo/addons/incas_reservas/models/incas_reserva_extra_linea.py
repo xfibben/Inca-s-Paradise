@@ -1,25 +1,18 @@
 from odoo import api, fields, models
 
 
-class IncasCotizacionExtraLinea(models.Model):
-    _name = "incas.cotizacion.extra.linea"
-    _description = "Línea de extra de cotización"
+class IncasReservaExtraLinea(models.Model):
+    _name = "incas.reserva.extra.linea"
+    _description = "Línea de extra de reserva"
     _order = "sequence, id"
 
-    cotizacion_id = fields.Many2one("incas.cotizacion", string="Cotización", required=True, ondelete="cascade")
-    moneda = fields.Selection(related="cotizacion_id.moneda", string="Moneda", readonly=True)
+    reserva_id = fields.Many2one("incas.reserva", string="Reserva", required=True, ondelete="cascade")
+    moneda = fields.Selection(related="reserva_id.moneda", string="Moneda", readonly=True)
     sequence = fields.Integer(string="Secuencia", default=10)
     extra_id = fields.Many2one("incas.extra", string="Extra", required=True)
-    extra_tarifa_id = fields.Many2one(
-        "incas.extra.tarifa",
-        string="Tarifa de extra",
-        domain="[('extra_id', '=', extra_id)]",
-    )
+    extra_tarifa_id = fields.Many2one("incas.extra.tarifa", string="Tarifa de extra", domain="[('extra_id', '=', extra_id)]")
     extra_nombre = fields.Char(string="Extra", required=True)
-    extra_unidad = fields.Selection(
-        [("unidad", "Unidad"), ("persona", "Persona"), ("tramo", "Tramo"), ("dia", "Día")],
-        string="Unidad",
-    )
+    extra_unidad = fields.Selection([("unidad", "Unidad"), ("persona", "Persona"), ("tramo", "Tramo"), ("dia", "Día")], string="Unidad")
     cantidad_extra = fields.Integer(string="Cantidad", default=1, required=True)
     extra_precio_unitario_usd = fields.Float(string="Precio unitario base USD", default=0)
     extra_precio_unitario = fields.Float(string="Precio unitario", default=0)
@@ -27,14 +20,14 @@ class IncasCotizacionExtraLinea(models.Model):
     monto_extra_usd = fields.Float(string="Monto extra USD", compute="_compute_monto_extra", store=True)
     monto_extra = fields.Float(string="Monto extra", compute="_compute_monto_extra", store=True)
 
-    @api.depends("cantidad_extra", "extra_precio_unitario_usd", "cotizacion_id.moneda")
+    @api.depends("cantidad_extra", "extra_precio_unitario_usd", "reserva_id.moneda")
     def _compute_monto_extra(self):
         for record in self:
             record.monto_extra_usd = (record.cantidad_extra or 0) * (record.extra_precio_unitario_usd or 0)
             record.monto_extra = record._convertir_desde_usd(record.monto_extra_usd)
 
     def _convertir_desde_usd(self, monto_usd, moneda=None):
-        moneda = moneda or self.cotizacion_id.moneda or "USD"
+        moneda = moneda or self.reserva_id.moneda or "USD"
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
         if moneda == "PEN":
             return (monto_usd or 0) * rates["PEN"]
@@ -83,12 +76,12 @@ class IncasCotizacionExtraLinea(models.Model):
         for record in self:
             values = dict(vals)
             record._completar_datos(values)
-            super(IncasCotizacionExtraLinea, record).write(values)
+            super(IncasReservaExtraLinea, record).write(values)
         return True
 
     def _completar_datos(self, vals):
-        extra_id = vals.get("extra_id")
-        tarifa_id = vals.get("extra_tarifa_id")
+        extra_id = vals.get("extra_id") or (self.extra_id.id if len(self) == 1 else False)
+        tarifa_id = vals.get("extra_tarifa_id") or (self.extra_tarifa_id.id if len(self) == 1 else False)
         tarifa = self.env["incas.extra.tarifa"].browse(tarifa_id) if tarifa_id else self.env["incas.extra.tarifa"]
         extra = self.env["incas.extra"].browse(extra_id) if extra_id else tarifa.extra_id
         if tarifa and tarifa.exists():
@@ -99,7 +92,7 @@ class IncasCotizacionExtraLinea(models.Model):
             vals["extra_descuento"] = tarifa.descuento or 0
         elif extra and extra.exists():
             vals["extra_nombre"] = extra.name
-        cotizacion = self.env["incas.cotizacion"].browse(vals.get("cotizacion_id")) if vals.get("cotizacion_id") else self.cotizacion_id
-        moneda = (cotizacion.moneda if cotizacion else False) or "USD"
+        reserva = self.env["incas.reserva"].browse(vals.get("reserva_id")) if vals.get("reserva_id") else self.reserva_id
+        moneda = (reserva.moneda if reserva else False) or "USD"
         vals["extra_precio_unitario"] = self._convertir_desde_usd(vals.get("extra_precio_unitario_usd") or 0, moneda)
         return vals

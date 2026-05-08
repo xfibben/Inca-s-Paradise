@@ -342,59 +342,9 @@ def render_reserva_html(reserva):
     )
 
 
-def render_cotizacion_html(cotizacion):
-    resumen = cotizacion._get_resumen_servicio()
-    tipo_servicio = tipo_servicio_titulo(resumen["tipo_servicio"])
-    if resumen["tipo_servicio"] == "paquete":
-        detalle_servicio = "Paquete"
-    elif resumen["tipo_servicio"] == "tour":
-        if resumen["tipo_tour"] == "small_trip":
-            detalle_servicio = "Small Trip"
-        elif resumen["tipo_tour"] == "package":
-            detalle_servicio = "Package"
-        else:
-            detalle_servicio = "Tour"
-    else:
-        detalle_servicio = resumen["estilo_transporte_id"].display_name
-    return html_base(
-        f"Comprobante de cotización de {tipo_servicio}",
-        "CÓDIGO",
-        cotizacion.name,
-        [
-            bloque(
-                "DATOS DEL CLIENTE",
-                [
-                    fila("Cliente principal", cotizacion.partner_id.display_name),
-                    fila("Correo electrónico", cotizacion.partner_id.email),
-                    fila("Teléfono", telefono_partner(cotizacion.partner_id)),
-                    fila("Idioma", cotizacion.idioma),
-                    fila("Canal", cotizacion.canal_venta),
-                ],
-            ),
-            bloque(
-                "DETALLES DE LA COTIZACIÓN",
-                [
-                    fila("Tipo de servicio", detalle_servicio),
-                    fila(
-                        nombre_servicio_label(resumen["tipo_servicio"]),
-                        resumen["servicio_nombre"],
-                    ),
-                    fila("Fecha de cotización", fecha(cotizacion.fecha_cotizacion)),
-                    fila("Fecha de viaje", fecha(cotizacion.fecha_viaje)),
-                    fila("Adultos", cotizacion.cantidad_adultos),
-                    fila("Niños", cotizacion.cantidad_ninos),
-                    fila("Observaciones", cotizacion.observaciones),
-                    fila("Estado", cotizacion.state),
-                ],
-            ),
-            _tabla_lineas_cotizacion(cotizacion) if resumen["tipo_servicio"] == "paquete" else "",
-        ],
-    )
-
-
-def _subtotal_linea_cotizacion(cotizacion, linea):
-    return ((cotizacion.cantidad_adultos or 0) * (linea.precio_adulto_neto or 0)) + (
-        (cotizacion.cantidad_ninos or 0) * (linea.precio_nino_neto or 0)
+def _subtotal_linea_paquete(reserva, linea):
+    return ((reserva.cantidad_adultos or 0) * (linea.precio_adulto_neto or 0)) + (
+        (reserva.cantidad_ninos or 0) * (linea.precio_nino_neto or 0)
     )
 
 
@@ -423,8 +373,8 @@ def _vehiculo_linea_paquete(linea):
     return vehiculo.name if vehiculo else ""
 
 
-def _tabla_lineas_cotizacion(cotizacion):
-    lineas = cotizacion.paquete_linea_ids.sorted(
+def _tabla_lineas_paquete(reserva):
+    lineas = reserva.paquete_linea_ids.sorted(
         lambda linea: (linea.sequence, linea.id)
     )
     if not lineas:
@@ -439,8 +389,8 @@ def _tabla_lineas_cotizacion(cotizacion):
               <td>{escape(_tipo_linea_paquete(linea))}</td>
               <td>{escape(fecha(linea.fecha))}</td>
               <td>{escape(texto(_vehiculo_linea_paquete(linea)))}</td>
-              <td>{escape(monto(cotizacion.moneda, linea.precio_adulto))}</td>
-              <td>{escape(monto(cotizacion.moneda, linea.precio_nino))}</td>
+              <td>{escape(monto(reserva.moneda, linea.precio_adulto))}</td>
+              <td>{escape(monto(reserva.moneda, linea.precio_nino))}</td>
               <td>{escape(f'{numero(linea.descuento):.2f}%' if numero(linea.descuento) else '-')}</td>
             </tr>
             """
@@ -469,8 +419,8 @@ def _tabla_lineas_cotizacion(cotizacion):
     """
 
 
-def _tabla_resumen_paquete(cotizacion):
-    lineas = cotizacion.paquete_linea_ids.sorted(
+def _tabla_resumen_paquete(reserva):
+    lineas = reserva.paquete_linea_ids.sorted(
         lambda linea: (linea.sequence, linea.id)
     )
     if not lineas:
@@ -478,7 +428,7 @@ def _tabla_resumen_paquete(cotizacion):
     filas = []
     total = 0
     for indice, linea in enumerate(lineas, start=1):
-        subtotal = _subtotal_linea_cotizacion(cotizacion, linea)
+        subtotal = _subtotal_linea_paquete(reserva, linea)
         total += subtotal
         filas.append(
             f"""
@@ -488,9 +438,9 @@ def _tabla_resumen_paquete(cotizacion):
               <td>{escape(_tipo_linea_paquete(linea))}</td>
               <td>{escape(fecha(linea.fecha))}</td>
               <td>{escape(texto(_vehiculo_linea_paquete(linea)))}</td>
-              <td>{escape(monto(cotizacion.moneda, linea.precio_adulto_neto))}</td>
-              <td>{escape(monto(cotizacion.moneda, linea.precio_nino_neto))}</td>
-              <td>{escape(monto(cotizacion.moneda, subtotal))}</td>
+              <td>{escape(monto(reserva.moneda, linea.precio_adulto_neto))}</td>
+              <td>{escape(monto(reserva.moneda, linea.precio_nino_neto))}</td>
+              <td>{escape(monto(reserva.moneda, subtotal))}</td>
             </tr>
             """
         )
@@ -514,14 +464,14 @@ def _tabla_resumen_paquete(cotizacion):
       <tfoot>
         <tr>
           <td colspan="7">Monto total del paquete</td>
-          <td>{escape(monto(cotizacion.moneda, total))}</td>
+          <td>{escape(monto(reserva.moneda, total))}</td>
         </tr>
       </tfoot>
     </table>
     """
 
 
-def _tabla_datos_resumen_paquete(cotizacion):
+def _tabla_datos_resumen_paquete(reserva):
     return f"""
     <table class="package-summary-table package-summary-meta-table">
       <thead>
@@ -532,40 +482,28 @@ def _tabla_datos_resumen_paquete(cotizacion):
       <tbody>
         <tr>
           <td class="label">Código</td>
-          <td>{escape(texto(cotizacion.name))}</td>
+          <td>{escape(texto(reserva.name))}</td>
           <td class="label">Cliente</td>
-          <td>{escape(texto(cotizacion.partner_id.display_name))}</td>
+          <td>{escape(texto(reserva.partner_id.display_name))}</td>
         </tr>
         <tr>
           <td class="label">Fecha de viaje</td>
-          <td>{escape(fecha(cotizacion.fecha_viaje))}</td>
+          <td>{escape(fecha(reserva.fecha_viaje))}</td>
           <td class="label">Items del paquete</td>
-          <td>{len(cotizacion.paquete_linea_ids)}</td>
+          <td>{len(reserva.paquete_linea_ids)}</td>
         </tr>
         <tr>
           <td class="label">Moneda</td>
-          <td>{escape(texto(cotizacion.moneda))}</td>
+          <td>{escape(texto(reserva.moneda))}</td>
           <td class="label">Monto total</td>
-          <td>{escape(monto(cotizacion.moneda, cotizacion.monto_total))}</td>
+          <td>{escape(monto(reserva.moneda, reserva.monto_total))}</td>
         </tr>
         <tr>
           <td class="label">Observaciones</td>
-          <td colspan="3">{escape(texto(cotizacion.observaciones))}</td>
+          <td colspan="3">{escape(texto(reserva.observaciones))}</td>
         </tr>
       </tbody>
     </table>
-    """
-
-
-def _bloque_resumen_paquete_cotizacion(cotizacion):
-    tabla = _tabla_resumen_paquete(cotizacion)
-    if not tabla:
-        return ""
-    return f"""
-    <div class="section">
-      <div class="section-title">RESUMEN DEL PAQUETE</div>
-      {tabla}
-    </div>
     """
 
 
@@ -1057,23 +995,23 @@ def _bloque_servicio_paquete(indice, linea):
     return _bloque_transporte_editorial(indice, linea, detalle)
 
 
-def render_cotizacion_paquete_html(cotizacion):
-    lineas = cotizacion.paquete_linea_ids.sorted(
+def render_reserva_paquete_html(reserva):
+    lineas = reserva.paquete_linea_ids.sorted(
         lambda linea: (linea.sequence, linea.id)
     )
     portada = f"""
     <section class="package-hero">
       <div class="package-hero-copy">
         <div class="package-eyebrow">Detalle informativo del paquete</div>
-        <h1>{escape(texto(cotizacion.name))}</h1>
-        <p>Cliente: {escape(texto(cotizacion.partner_id.display_name))}</p>
-        <p>Fecha de viaje: {escape(fecha(cotizacion.fecha_viaje))}</p>
+        <h1>{escape(texto(reserva.name))}</h1>
+        <p>Cliente: {escape(texto(reserva.partner_id.display_name))}</p>
+        <p>Fecha de viaje: {escape(fecha(reserva.fecha_viaje))}</p>
         <p>Items del paquete: {len(lineas)}</p>
-        {f"<p>{escape(texto(cotizacion.observaciones))}</p>" if cotizacion.observaciones else ""}
+        {f"<p>{escape(texto(reserva.observaciones))}</p>" if reserva.observaciones else ""}
       </div>
       <div class="package-hero-total">
         <div class="ticket-label">Monto total</div>
-        <div class="ticket-value">{escape(monto(cotizacion.moneda, cotizacion.monto_total))}</div>
+        <div class="ticket-value">{escape(monto(reserva.moneda, reserva.monto_total))}</div>
       </div>
     </section>
     """
@@ -1084,7 +1022,7 @@ def render_cotizacion_paquete_html(cotizacion):
     cierre = f"""
     <section class="package-total">
       <div class="package-total-label">Monto total del paquete</div>
-      <div class="package-total-value">{escape(monto(cotizacion.moneda, cotizacion.monto_total))}</div>
+      <div class="package-total-value">{escape(monto(reserva.moneda, reserva.monto_total))}</div>
     </section>
     """
     return f"""
@@ -1343,8 +1281,8 @@ def render_cotizacion_paquete_html(cotizacion):
       <body>
         {portada}
         <section class="package-summary">
-          {_tabla_datos_resumen_paquete(cotizacion)}
-          {_tabla_resumen_paquete(cotizacion)}
+          {_tabla_datos_resumen_paquete(reserva)}
+          {_tabla_resumen_paquete(reserva)}
         </section>
         {historias}
         {cierre}

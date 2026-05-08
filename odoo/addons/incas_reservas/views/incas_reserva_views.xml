@@ -23,6 +23,7 @@
                 <field name="cantidad_extra"/>
                 <field name="monto_extra"/>
                 <field name="precio_grupal"/>
+                <field name="estado_comercial"/>
                 <field name="estado_reserva"/>
                 <field name="estado_pago"/>
                 <field
@@ -48,16 +49,20 @@
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="servicio_nombre"/>
+                <field name="estado_comercial"/>
                 <field name="estado_reserva"/>
                 <field name="estado_pago"/>
                 <field name="estado_documental"/>
                 <field name="fecha_viaje"/>
                 <separator/>
                 <filter name="filter_pagado" string="Pagado" domain="[('estado_pago', '=', 'pagado')]"/>
+                <filter name="filter_cotizada" string="Cotizada" domain="[('estado_comercial', '=', 'cotizada')]"/>
+                <filter name="filter_confirmada" string="Confirmada" domain="[('estado_comercial', '=', 'confirmada')]"/>
                 <filter name="filter_pendiente" string="Pendiente" domain="[('estado_pago', '=', 'pendiente')]"/>
                 <filter name="filter_documental_completo" string="Documentación completa" domain="[('estado_documental', '=', 'completo')]"/>
                 <filter name="filter_documental_pendiente" string="Documentación pendiente" domain="[('estado_documental', 'in', ['pendiente', 'parcial'])]"/>
                 <separator/>
+                <filter name="group_estado_comercial" string="Estado comercial" domain="[]" context="{'group_by': 'estado_comercial'}"/>
                 <filter name="group_estado_reserva" string="Estado de reserva" domain="[]" context="{'group_by': 'estado_reserva'}"/>
                 <filter name="group_estado_pago" string="Estado de pago" domain="[]" context="{'group_by': 'estado_pago'}"/>
                 <filter name="group_estado_documental" string="Estado documental" domain="[]" context="{'group_by': 'estado_documental'}"/>
@@ -72,10 +77,18 @@
         <field name="arch" type="xml">
             <form string="Reserva">
                 <header>
-                    <button name="action_nuevo_pago" type="object" string="Crear pago"/>
+                    <button name="action_marcar_cotizada" type="object" string="Marcar cotizada" invisible="estado_comercial != 'borrador'"/>
+                    <button name="action_marcar_pre_reserva" type="object" string="Pasar a pre-reserva" invisible="estado_comercial not in ['borrador', 'cotizada']"/>
+                    <button name="action_confirmar_comercial" type="object" string="Confirmar reserva" invisible="estado_comercial in ['confirmada', 'cancelada']"/>
+                    <button name="action_cancelar_comercial" type="object" string="Cancelar comercial" invisible="estado_comercial == 'cancelada'"/>
                     <button name="action_solicitar_cambio" type="object" string="Solicitar cambio"/>
-                    <button name="action_ver_documentos" type="object" string="Documentos"/>
                     <button name="action_print_pdf" type="object" string="Exportar PDF"/>
+                    <button name="action_print_package_pdf" type="object" string="Exportar detallado"/>
+                    <field
+                        name="estado_comercial"
+                        widget="statusbar"
+                        statusbar_visible="borrador,cotizada,pre_reserva,confirmada,cancelada"
+                    />
                     <field
                         name="estado_pago"
                         widget="badge"
@@ -101,9 +114,6 @@
                         <button name="action_ver_cambios" type="object" class="oe_stat_button" icon="fa-random">
                             <field name="cambio_count" widget="statinfo" string="Cambios"/>
                         </button>
-                        <button name="action_ver_documentos" type="object" class="oe_stat_button" icon="fa-folder-open">
-                            <span class="o_stat_text">Documentos</span>
-                        </button>
                     </div>
                     <div class="oe_title">
                         <h1>
@@ -119,7 +129,6 @@
                             <field name="tipo_documento"/>
                             <field name="numero_documento"/>
                             <field name="nacionalidad"/>
-                            <field name="cotizacion_id"/>
                             <field name="documento_directory_id" invisible="1"/>
                             <field name="ticket" readonly="1"/>
                             <field name="fecha_reserva"/>
@@ -128,7 +137,7 @@
                             <field name="fecha_viaje"/>
                             <field name="hotel_id" invisible="1"/>
                             <field name="hotel_tarifa_id" invisible="1"/>
-                            <field name="hotel_tipo_tarifario"/>
+                            <field name="hotel_tipo_tarifario" invisible="1"/>
                             <field name="fecha_check_in" invisible="1"/>
                             <field name="fecha_check_out" invisible="1"/>
                             <field name="cantidad_habitaciones" invisible="1"/>
@@ -185,8 +194,9 @@
                     </group>
                     <notebook>
                         <page string="Paquete">
-                            <field name="paquete_linea_ids" readonly="1">
-                                <list>
+                            <field name="paquete_linea_ids">
+                                <list editable="bottom">
+                                    <field name="nombre"/>
                                     <field name="fecha"/>
                                     <field name="horario_id"/>
                                     <button name="action_open_popup" type="object" icon="fa-pencil-square-o" string="Editar"/>
@@ -202,7 +212,6 @@
                                     <field name="tipo_servicio" readonly="1"/>
                                     <field name="tipo_tour" readonly="1" optional="hide"/>
                                     <field name="estilo_transporte_id" readonly="1" optional="hide"/>
-                                    <field name="nombre"/>
                                     <field name="precio_adulto"/>
                                     <field name="precio_nino"/>
                                     <field name="descuento"/>
@@ -216,8 +225,8 @@
                             </field>
                         </page>
                         <page string="Hoteles">
-                            <field name="hotel_linea_ids" readonly="1">
-                                <list>
+                            <field name="hotel_linea_ids">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="hotel_id"/>
                                     <field name="hotel_tarifa_id"/>
@@ -228,25 +237,25 @@
                                     <field name="cantidad_habitaciones"/>
                                     <field name="moneda" readonly="1"/>
                                     <field name="hotel_nombre"/>
-                                    <field name="hotel_precio_noche"/>
-                                    <field name="hotel_descuento"/>
-                                    <field name="monto_hotel"/>
+                                    <field name="hotel_precio_noche" readonly="1"/>
+                                    <field name="hotel_descuento" readonly="1"/>
+                                    <field name="monto_hotel" readonly="1"/>
                                 </list>
                             </field>
                         </page>
                         <page string="Extras">
-                            <field name="extra_linea_ids" readonly="1">
-                                <list>
+                            <field name="extra_linea_ids">
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="extra_id"/>
                                     <field name="extra_tarifa_id"/>
                                     <field name="extra_nombre"/>
-                                    <field name="extra_unidad"/>
+                                    <field name="extra_unidad" readonly="1"/>
                                     <field name="cantidad_extra"/>
                                     <field name="moneda" readonly="1"/>
-                                    <field name="extra_precio_unitario"/>
-                                    <field name="extra_descuento"/>
-                                    <field name="monto_extra"/>
+                                    <field name="extra_precio_unitario" readonly="1"/>
+                                    <field name="extra_descuento" readonly="1"/>
+                                    <field name="monto_extra" readonly="1"/>
                                 </list>
                             </field>
                         </page>
@@ -325,4 +334,5 @@
         sequence="20"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
     />
+
 </odoo>

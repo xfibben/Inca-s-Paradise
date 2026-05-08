@@ -3,8 +3,7 @@ from odoo.http import request
 
 from ..utils import (
     generar_pdf_desde_html,
-    render_cotizacion_html,
-    render_cotizacion_paquete_html,
+    render_reserva_paquete_html,
     render_reserva_html,
     texto,
 )
@@ -40,30 +39,16 @@ class IncasReservasPdfController(http.Controller):
             ],
         )
 
-    @http.route("/incas/cotizacion/<int:cotizacion_id>/pdf", type="http", auth="user")
-    def cotizacion_pdf(self, cotizacion_id, **kwargs):
-        cotizacion = request.env["incas.cotizacion"].browse(cotizacion_id)
-        cotizacion.check_access("read")
-        pdf = generar_pdf_desde_html(render_cotizacion_html(cotizacion))
+    @http.route("/incas/reserva/<int:reserva_id>/detalle-paquete-pdf", type="http", auth="user")
+    def reserva_paquete_pdf(self, reserva_id, **kwargs):
+        reserva = request.env["incas.reserva"].browse(reserva_id)
+        reserva.check_access("read")
+        pdf = generar_pdf_desde_html(render_reserva_paquete_html(reserva))
         return request.make_response(
             pdf,
             headers=[
                 ("Content-Type", "application/pdf"),
                 ("Content-Length", str(len(pdf))),
-                ("Content-Disposition", f'attachment; filename="cotizacion-{texto(cotizacion.name)}.pdf"'),
-            ],
-        )
-
-    @http.route("/incas/cotizacion/<int:cotizacion_id>/detalle-paquete-pdf", type="http", auth="user")
-    def cotizacion_paquete_pdf(self, cotizacion_id, **kwargs):
-        cotizacion = request.env["incas.cotizacion"].browse(cotizacion_id)
-        cotizacion.check_access("read")
-        pdf = generar_pdf_desde_html(render_cotizacion_paquete_html(cotizacion))
-        return request.make_response(
-            pdf,
-            headers=[
-                ("Content-Type", "application/pdf"),
-                ("Content-Length", str(len(pdf))),
-                ("Content-Disposition", f'attachment; filename="detalle-paquete-{texto(cotizacion.name)}.pdf"'),
+                ("Content-Disposition", f'attachment; filename="detalle-paquete-{texto(reserva.name)}.pdf"'),
             ],
         )
