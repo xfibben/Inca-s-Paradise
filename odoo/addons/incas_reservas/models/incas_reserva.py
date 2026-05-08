@@ -169,6 +169,7 @@ class IncasReserva(models.Model):
         default="PEN",
         tracking=True,
     )
+    precio_grupal = fields.Float(string="Precio grupal", compute="_compute_precio_grupal", store=True, tracking=True)
     monto_total = fields.Float(string="Monto total", compute="_compute_monto_total", store=True, tracking=True)
     monto_pagado = fields.Float(string="Monto pagado", compute="_compute_monto_pagado", store=True, tracking=True)
     saldo_pendiente = fields.Float(string="Saldo pendiente", compute="_compute_saldo_pendiente", store=True)
@@ -378,6 +379,16 @@ class IncasReserva(models.Model):
             else:
                 record.monto_extra_usd = (record.cantidad_extra or 0) * (record.extra_precio_unitario_usd or 0)
                 record.monto_extra = record._convertir_desde_usd(record.monto_extra_usd, record.moneda, rates)
+
+    @api.depends("cotizacion_id.precio_grupal", "cantidad_adultos", "cantidad_ninos", "precio_adulto", "precio_nino", "descuento")
+    def _compute_precio_grupal(self):
+        for record in self:
+            if record.cotizacion_id:
+                record.precio_grupal = record.cotizacion_id.precio_grupal or 0
+                continue
+            subtotal = ((record.cantidad_adultos or 0) * (record.precio_adulto or 0)) + ((record.cantidad_ninos or 0) * (record.precio_nino or 0))
+            descuento_monto = subtotal * ((record.descuento or 0) / 100)
+            record.precio_grupal = subtotal - descuento_monto
 
     @api.depends("cantidad_adultos", "cantidad_ninos", "precio_adulto", "precio_nino", "descuento", "monto_hotel", "monto_extra")
     def _compute_monto_total(self):

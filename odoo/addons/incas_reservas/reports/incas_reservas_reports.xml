@@ -128,6 +128,7 @@
                             <div class="incas-section-title">RESUMEN DE PAGO</div>
                             <table class="incas-table">
                                 <tr><td class="incas-label">Moneda</td><td><span t-field="o.moneda"/></td></tr>
+                                <tr><td class="incas-label">Precio grupal</td><td><span t-field="o.precio_grupal"/></td></tr>
                                 <tr><td class="incas-label">Descuento</td><td><t t-esc="'%.2f%%' % (o.descuento or 0.0)"/></td></tr>
                                 <tr><td class="incas-label">Precio total del servicio</td><td><span t-field="o.precio_tour"/></td></tr>
                                 <tr><td class="incas-label">Monto pagado en web</td><td><span t-field="o.monto_web"/></td></tr>
@@ -184,6 +185,7 @@
                             <div class="incas-section-title">RESUMEN DE PAGO</div>
                             <table class="incas-table">
                                 <tr><td class="incas-label">Moneda</td><td><span t-field="o.moneda"/></td></tr>
+                                <tr><td class="incas-label">Precio grupal</td><td><span t-field="o.precio_grupal"/></td></tr>
                                 <tr><td class="incas-label">Descuento</td><td><t t-esc="'%.2f%%' % (o.descuento or 0.0)"/></td></tr>
                                 <tr><td class="incas-label">Precio adulto</td><td><span t-field="o.precio_adulto"/></td></tr>
                                 <tr><td class="incas-label">Precio niño</td><td><span t-field="o.precio_nino"/></td></tr>

@@ -23,6 +23,7 @@
                 <field name="cantidad_extra" />
                 <field name="monto_extra" />
                 <field name="monto_total" />
+                <field name="precio_grupal" />
                 <field name="paquete_item_count" />
                 <field name="moneda" />
                 <field name="state" />
@@ -192,6 +193,7 @@
                             <field name="monto_total" readonly="1" />
                             <field name="paquete_item_count" readonly="1" />
                             <field name="moneda" />
+                            <field name="precio_grupal" />
                         </group>
                         <group>
                             <field name="reserva_count" readonly="1" />
