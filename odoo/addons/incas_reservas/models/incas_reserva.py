@@ -849,8 +849,6 @@ class IncasReserva(models.Model):
         email_destino = (email_destino or "").strip()
         if not email_destino:
             return
-        if suscribir and partner:
-            self.message_subscribe(partner_ids=[partner.id])
         remitente = self._obtener_remitente_reserva()
         reply_to = self._obtener_reply_to_reserva()
         _logger.info(
@@ -872,6 +870,8 @@ class IncasReserva(models.Model):
             message_type="email",
             subtype_xmlid="mail.mt_comment",
         )
+        if suscribir and partner:
+            self.message_subscribe(partner_ids=[partner.id])
 
     def _obtener_reply_to_reserva(self):
         self.ensure_one()
