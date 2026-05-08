@@ -2,13 +2,13 @@ from odoo import api, fields, models
 import json
 
 
-class IncasCotizacionPaqueteLinea(models.Model):
-    _name = "incas.cotizacion.paquete.linea"
-    _description = "Línea de paquete de cotización"
+class IncasReservaPaqueteLinea(models.Model):
+    _name = "incas.reserva.paquete.linea"
+    _description = "Línea de paquete de reserva"
     _order = "sequence, id"
 
-    cotizacion_id = fields.Many2one("incas.cotizacion", string="Cotización", required=True, ondelete="cascade")
-    moneda = fields.Selection(related="cotizacion_id.moneda", string="Moneda", readonly=True)
+    reserva_id = fields.Many2one("incas.reserva", string="Reserva", required=True, ondelete="cascade")
+    moneda = fields.Selection(related="reserva_id.moneda", string="Moneda", readonly=True)
     sequence = fields.Integer(string="Secuencia", default=10)
     fecha = fields.Date(string="Fecha")
     horario = fields.Text(string="Horario")
@@ -17,20 +17,13 @@ class IncasCotizacionPaqueteLinea(models.Model):
     vehiculo_id = fields.Many2one("incas.catalogo.vehiculo", string="Vehículo")
     vehiculo_disponible_ids = fields.Many2many("incas.catalogo.vehiculo", compute="_compute_vehiculo_disponible_ids")
     tipo_servicio = fields.Selection(
-        [
-            ("tour", "Tour"),
-            ("transporte", "Transporte"),
-        ],
+        [("tour", "Tour"), ("transporte", "Transporte")],
         string="Tipo",
         compute="_compute_snapshot_servicio",
         store=True,
     )
     tipo_tour = fields.Selection(
-        [
-            ("tour", "Tour"),
-            ("small_trip", "Small Trip"),
-            ("package", "Package"),
-        ],
+        [("tour", "Tour"), ("small_trip", "Small Trip"), ("package", "Package")],
         string="Tipo de tour",
         compute="_compute_snapshot_servicio",
         store=True,
@@ -87,40 +80,13 @@ class IncasCotizacionPaqueteLinea(models.Model):
     tipos_transporte_data = fields.Text(string="Tipos de transporte")
     precios_data = fields.Text(string="Precios por vehículo")
 
-    def _horario_desde_schedule_items(self, schedule_items_data):
-        if not schedule_items_data:
-            return False
-        try:
-            items = json.loads(schedule_items_data) if isinstance(schedule_items_data, str) else schedule_items_data
-        except (TypeError, ValueError, json.JSONDecodeError):
-            return False
-        if not isinstance(items, list):
-            return False
-        horarios = []
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-            titulo = str(item.get("title") or "").strip()
-            hora_entrada = str(item.get("horaEntrada") or item.get("hora_entrada") or "").strip()
-            hora_salida = str(item.get("horaSalida") or item.get("hora_salida") or "").strip()
-            rango = " - ".join(valor for valor in [hora_entrada, hora_salida] if valor)
-            if titulo and rango:
-                horarios.append(f"- {titulo}: {rango}")
-            elif titulo:
-                horarios.append(f"- {titulo}")
-            elif rango:
-                horarios.append(f"- {rango}")
-        return "\n".join(horarios) or False
-
     def _horario_por_defecto(self, servicio):
         if not servicio:
             return self.env["incas.horario.opcion"]
-        return self.env["incas.horario.opcion"].search(
-            [("servicio_id", "=", servicio.id)], order="sequence, id", limit=1
-        )
+        return self.env["incas.horario.opcion"].search([("servicio_id", "=", servicio.id)], order="sequence, id", limit=1)
 
     def _convertir_desde_usd(self, monto_usd, moneda=None):
-        moneda = moneda or self.cotizacion_id.moneda or "USD"
+        moneda = moneda or self.reserva_id.moneda or "USD"
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
         if moneda == "PEN":
             return (monto_usd or 0) * rates["PEN"]
@@ -129,7 +95,7 @@ class IncasCotizacionPaqueteLinea(models.Model):
         return monto_usd or 0
 
     def _convertir_a_usd(self, monto, moneda=None):
-        moneda = moneda or self.cotizacion_id.moneda or "USD"
+        moneda = moneda or self.reserva_id.moneda or "USD"
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
         if moneda == "PEN" and rates["PEN"]:
             return (monto or 0) / rates["PEN"]
@@ -139,7 +105,7 @@ class IncasCotizacionPaqueteLinea(models.Model):
 
     def _actualizar_precios_desde_usd(self, moneda=None):
         for record in self:
-            moneda_actual = moneda or record.cotizacion_id.moneda or "USD"
+            moneda_actual = moneda or record.reserva_id.moneda or "USD"
             record.precio_adulto = record._convertir_desde_usd(record.precio_adulto_usd, moneda_actual)
             record.precio_nino = record._convertir_desde_usd(record.precio_nino_usd, moneda_actual)
             record.precio_adulto_neto = record._convertir_desde_usd(record.precio_adulto_neto_usd, moneda_actual)
@@ -147,7 +113,7 @@ class IncasCotizacionPaqueteLinea(models.Model):
 
     def _actualizar_usd_desde_precios(self, moneda=None):
         for record in self:
-            moneda_actual = moneda or record.cotizacion_id.moneda or "USD"
+            moneda_actual = moneda or record.reserva_id.moneda or "USD"
             record.precio_adulto_usd = record._convertir_a_usd(record.precio_adulto, moneda_actual)
             record.precio_nino_usd = record._convertir_a_usd(record.precio_nino, moneda_actual)
             factor = 1 - ((record.descuento or 0) / 100)
@@ -158,8 +124,8 @@ class IncasCotizacionPaqueteLinea(models.Model):
 
     def _preparar_vals_monetarios(self, vals):
         values = dict(vals)
-        cotizacion = self.env["incas.cotizacion"].browse(values.get("cotizacion_id")) if values.get("cotizacion_id") else self.cotizacion_id
-        moneda = cotizacion.moneda or "USD"
+        reserva = self.env["incas.reserva"].browse(values.get("reserva_id")) if values.get("reserva_id") else self.reserva_id
+        moneda = reserva.moneda or "USD"
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
 
         def convertir_a_usd(monto):
@@ -257,7 +223,7 @@ class IncasCotizacionPaqueteLinea(models.Model):
         return {
             "type": "ir.actions.act_window",
             "name": self.nombre or "Detalle del servicio",
-            "res_model": "incas.cotizacion.paquete.linea",
+            "res_model": "incas.reserva.paquete.linea",
             "view_mode": "form",
             "res_id": self.id,
             "target": "new",
@@ -339,10 +305,10 @@ class IncasCotizacionPaqueteLinea(models.Model):
         processed_vals_list = []
         for vals in vals_list:
             values = dict(vals)
-            servicio_id = vals.get("servicio_id")
-            cotizacion = self.env["incas.cotizacion"].browse(values.get("cotizacion_id")) if values.get("cotizacion_id") else self.env["incas.cotizacion"]
-            if not values.get("fecha") and cotizacion:
-                values["fecha"] = cotizacion.fecha_viaje
+            servicio_id = values.get("servicio_id")
+            reserva = self.env["incas.reserva"].browse(values.get("reserva_id")) if values.get("reserva_id") else self.env["incas.reserva"]
+            if not values.get("fecha") and reserva:
+                values["fecha"] = reserva.fecha_viaje
             if not servicio_id:
                 processed_vals_list.append(self._preparar_vals_monetarios(values))
                 continue
@@ -355,12 +321,8 @@ class IncasCotizacionPaqueteLinea(models.Model):
                 if values.get("horario_id"):
                     horario = self.env["incas.horario.opcion"].browse(values["horario_id"])
                     values["horario"] = horario.name or False
-                vehiculo = False
                 if servicio.tipo_servicio == "transporte":
-                    vehiculo = servicio.obtener_vehiculo_transporte(
-                        vehiculo_id=values.get("vehiculo_id"),
-                        usar_default=not values.get("vehiculo_id"),
-                    )
+                    vehiculo = servicio.obtener_vehiculo_transporte(vehiculo_id=values.get("vehiculo_id"), usar_default=not values.get("vehiculo_id"))
                     if vehiculo and not values.get("vehiculo_id"):
                         values["vehiculo_id"] = vehiculo.id
                     tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo)
@@ -371,18 +333,19 @@ class IncasCotizacionPaqueteLinea(models.Model):
                     values.setdefault("precio_adulto_usd", servicio.precio_adulto)
                     values.setdefault("precio_nino_usd", servicio.precio_nino)
                     values.setdefault("descuento", servicio.descuento)
-                snapshot = self._obtener_snapshot_servicio(servicio)
-                for campo, valor in snapshot.items():
+                for campo, valor in self._obtener_snapshot_servicio(servicio).items():
                     values.setdefault(campo, valor)
             processed_vals_list.append(self._preparar_vals_monetarios(values))
-        return super().create(processed_vals_list)
+        lineas = super().create(processed_vals_list)
+        lineas.mapped("reserva_id")._aplicar_resumen_paquete()
+        return lineas
 
     def write(self, vals):
         for record in self:
             values = dict(vals)
             servicio_id = values.get("servicio_id")
-            if not values.get("fecha") and record.cotizacion_id and not record.fecha:
-                values["fecha"] = record.cotizacion_id.fecha_viaje
+            if not values.get("fecha") and record.reserva_id and not record.fecha:
+                values["fecha"] = record.reserva_id.fecha_viaje
             if values.get("vehiculo_id") and not servicio_id and record.servicio_id.tipo_servicio == "transporte":
                 vehiculo = record.servicio_id.obtener_vehiculo_transporte(vehiculo_id=values.get("vehiculo_id"))
                 tarifa = record.servicio_id.obtener_tarifa_vehiculo_transporte(vehiculo)
@@ -399,7 +362,6 @@ class IncasCotizacionPaqueteLinea(models.Model):
                     if values.get("horario_id"):
                         horario = self.env["incas.horario.opcion"].browse(values["horario_id"])
                         values["horario"] = horario.name or False
-                    vehiculo = False
                     if servicio.tipo_servicio == "transporte":
                         vehiculo = servicio.obtener_vehiculo_transporte(
                             vehiculo_id=values.get("vehiculo_id"),
@@ -416,11 +378,17 @@ class IncasCotizacionPaqueteLinea(models.Model):
                         values.setdefault("precio_adulto_usd", servicio.precio_adulto)
                         values.setdefault("precio_nino_usd", servicio.precio_nino)
                         values.setdefault("descuento", servicio.descuento)
-                    snapshot = record._obtener_snapshot_servicio(servicio)
-                    for campo, valor in snapshot.items():
+                    for campo, valor in record._obtener_snapshot_servicio(servicio).items():
                         values.setdefault(campo, valor)
             elif values.get("horario_id"):
                 horario = self.env["incas.horario.opcion"].browse(values["horario_id"])
                 values["horario"] = horario.name or False
-            super(IncasCotizacionPaqueteLinea, record).write(record._preparar_vals_monetarios(values))
+            super(IncasReservaPaqueteLinea, record).write(record._preparar_vals_monetarios(values))
+        self.mapped("reserva_id")._aplicar_resumen_paquete()
         return True
+
+    def unlink(self):
+        reservas = self.mapped("reserva_id")
+        result = super().unlink()
+        reservas._aplicar_resumen_paquete()
+        return result

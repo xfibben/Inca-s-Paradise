@@ -1,13 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <record id="seq_incas_cotizacion" model="ir.sequence">
-        <field name="name">Cotización</field>
-        <field name="code">incas.cotizacion</field>
-        <field name="prefix">COT-%(year)s-</field>
-        <field name="padding">5</field>
-        <field name="company_id" eval="False"/>
-    </record>
-
     <record id="seq_incas_reserva" model="ir.sequence">
         <field name="name">Reserva</field>
         <field name="code">incas.reserva</field>

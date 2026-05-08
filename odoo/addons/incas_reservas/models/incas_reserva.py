@@ -29,10 +29,9 @@ class IncasReserva(models.Model):
     name = fields.Char(string="Código", required=True, copy=False, readonly=True, default="Nuevo", tracking=True)
     ticket = fields.Char(string="Ticket", copy=False, readonly=True, index=True, tracking=True)
     access_token = fields.Char(string="Token de acceso", copy=False, readonly=True, index=True)
-    cotizacion_id = fields.Many2one("incas.cotizacion", string="Cotización", tracking=True)
-    paquete_linea_ids = fields.One2many(related="cotizacion_id.paquete_linea_ids", string="Líneas del paquete", readonly=True)
-    hotel_linea_ids = fields.One2many(related="cotizacion_id.hotel_linea_ids", string="Hoteles", readonly=True)
-    extra_linea_ids = fields.One2many(related="cotizacion_id.extra_linea_ids", string="Extras", readonly=True)
+    paquete_linea_ids = fields.One2many("incas.reserva.paquete.linea", "reserva_id", string="Líneas del paquete")
+    hotel_linea_ids = fields.One2many("incas.reserva.hotel.linea", "reserva_id", string="Hoteles")
+    extra_linea_ids = fields.One2many("incas.reserva.extra.linea", "reserva_id", string="Extras")
     partner_id = fields.Many2one("res.partner", string="Cliente principal", required=True, tracking=True)
     nombre = fields.Char(string="Nombre completo", tracking=True)
     email = fields.Char(string="Correo electrónico", tracking=True)
@@ -93,6 +92,7 @@ class IncasReserva(models.Model):
         ],
         string="Tour o transporte",
         required=True,
+        default="paquete",
         tracking=True,
     )
     tipo_tour = fields.Selection(
@@ -111,7 +111,7 @@ class IncasReserva(models.Model):
         domain="[('tipo_servicio', '=', tipo_servicio), '|', ('tipo_tour', '=', False), ('tipo_tour', '=', tipo_tour), '|', ('estilo_transporte_id', '=', False), ('estilo_transporte_id', '=', estilo_transporte_id)]",
         tracking=True,
     )
-    servicio_nombre = fields.Char(string="Nombre del servicio", required=True, tracking=True)
+    servicio_nombre = fields.Char(string="Nombre del servicio", required=True, default="Paquete personalizado", tracking=True)
     precio_adulto_usd = fields.Float(string="Precio adulto base USD")
     precio_nino_usd = fields.Float(string="Precio niño base USD")
     precio_adulto = fields.Float(string="Precio adulto", tracking=True)
@@ -180,6 +180,19 @@ class IncasReserva(models.Model):
     monto_total = fields.Float(string="Monto total", compute="_compute_monto_total", store=True, tracking=True)
     monto_pagado = fields.Float(string="Monto pagado", compute="_compute_monto_pagado", store=True, tracking=True)
     saldo_pendiente = fields.Float(string="Saldo pendiente", compute="_compute_saldo_pendiente", store=True)
+    estado_comercial = fields.Selection(
+        [
+            ("borrador", "Borrador"),
+            ("cotizada", "Cotizada"),
+            ("pre_reserva", "Pre-reserva"),
+            ("confirmada", "Confirmada"),
+            ("cancelada", "Cancelada"),
+        ],
+        string="Estado comercial",
+        required=True,
+        default="borrador",
+        tracking=True,
+    )
     estado_reserva = fields.Selection(
         [
             ("reservado", "Reservado"),
@@ -241,7 +254,7 @@ class IncasReserva(models.Model):
             if record.pasajero_ids:
                 record.cantidad_pasajeros = len(record.pasajero_ids)
             else:
-                record.cantidad_pasajeros = (record.cantidad_adultos or 0) + (record.cantidad_ninos or 0) or record.cotizacion_id.cantidad_pasajeros or 1
+                record.cantidad_pasajeros = (record.cantidad_adultos or 0) + (record.cantidad_ninos or 0) or 1
 
     @api.model
     def _nombre_directorio_seguro(self, valor, fallback):
@@ -387,11 +400,23 @@ class IncasReserva(models.Model):
                 record.monto_extra_usd = (record.cantidad_extra or 0) * (record.extra_precio_unitario_usd or 0)
                 record.monto_extra = record._convertir_desde_usd(record.monto_extra_usd, record.moneda, rates)
 
-    @api.depends("cotizacion_id.precio_grupal", "cantidad_adultos", "cantidad_ninos", "precio_adulto", "precio_nino", "descuento")
+    @api.depends(
+        "cantidad_adultos",
+        "cantidad_ninos",
+        "precio_adulto",
+        "precio_nino",
+        "descuento",
+        "paquete_linea_ids.precio_adulto_neto",
+        "paquete_linea_ids.precio_nino_neto",
+    )
     def _compute_precio_grupal(self):
         for record in self:
-            if record.cotizacion_id:
-                record.precio_grupal = record.cotizacion_id.precio_grupal or 0
+            if record.paquete_linea_ids:
+                record.precio_grupal = sum(
+                    ((record.cantidad_adultos or 0) * (linea.precio_adulto_neto or 0))
+                    + ((record.cantidad_ninos or 0) * (linea.precio_nino_neto or 0))
+                    for linea in record.paquete_linea_ids
+                )
                 continue
             subtotal = ((record.cantidad_adultos or 0) * (record.precio_adulto or 0)) + ((record.cantidad_ninos or 0) * (record.precio_nino or 0))
             descuento_monto = subtotal * ((record.descuento or 0) / 100)
@@ -470,6 +495,110 @@ class IncasReserva(models.Model):
             return monto_usd * rates["EUR"]
         return monto_usd
 
+    def _get_resumen_servicio(self):
+        self.ensure_one()
+        if not self.paquete_linea_ids:
+            return {
+                "tipo_servicio": self.tipo_servicio or "paquete",
+                "tipo_tour": self.tipo_tour,
+                "estilo_transporte_id": self.estilo_transporte_id,
+                "servicio_id": self.servicio_id,
+                "servicio_nombre": self.servicio_nombre,
+                "precio_adulto_usd": self.precio_adulto_usd or 0,
+                "precio_nino_usd": self.precio_nino_usd or 0,
+                "precio_adulto": self.precio_adulto or 0,
+                "precio_nino": self.precio_nino or 0,
+                "descuento": self.descuento or 0,
+            }
+        precio_adulto_usd = sum(self.paquete_linea_ids.mapped("precio_adulto_neto_usd"))
+        precio_nino_usd = sum(self.paquete_linea_ids.mapped("precio_nino_neto_usd"))
+        precio_adulto = sum(self.paquete_linea_ids.mapped("precio_adulto_neto"))
+        precio_nino = sum(self.paquete_linea_ids.mapped("precio_nino_neto"))
+        if len(self.paquete_linea_ids) == 1:
+            linea = self.paquete_linea_ids[0]
+            return {
+                "tipo_servicio": linea.tipo_servicio,
+                "tipo_tour": linea.tipo_tour,
+                "estilo_transporte_id": linea.estilo_transporte_id,
+                "servicio_id": linea.servicio_id,
+                "servicio_nombre": linea.nombre,
+                "precio_adulto_usd": precio_adulto_usd,
+                "precio_nino_usd": precio_nino_usd,
+                "precio_adulto": precio_adulto,
+                "precio_nino": precio_nino,
+                "descuento": linea.descuento,
+            }
+        return {
+            "tipo_servicio": "paquete",
+            "tipo_tour": False,
+            "estilo_transporte_id": self.env["incas.estilo.transporte"],
+            "servicio_id": self.env["incas.servicio.catalogo"],
+            "servicio_nombre": "Paquete personalizado",
+            "precio_adulto_usd": precio_adulto_usd,
+            "precio_nino_usd": precio_nino_usd,
+            "precio_adulto": precio_adulto,
+            "precio_nino": precio_nino,
+            "descuento": 0,
+        }
+
+    def _aplicar_resumen_paquete(self):
+        rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
+        for record in self:
+            vals = {}
+            if not record.paquete_linea_ids:
+                if record.tipo_servicio == "paquete":
+                    vals = {
+                        "tipo_servicio": "paquete",
+                        "tipo_tour": False,
+                        "estilo_transporte_id": False,
+                        "servicio_id": False,
+                        "servicio_nombre": False,
+                        "precio_adulto_usd": 0,
+                        "precio_nino_usd": 0,
+                        "precio_adulto": 0,
+                        "precio_nino": 0,
+                        "descuento": 0,
+                    }
+                    if record._origin.id:
+                        super(IncasReserva, record.with_context(skip_resumen_paquete_sync=True)).write(vals)
+                    else:
+                        for field_name, value in vals.items():
+                            record[field_name] = value
+                continue
+            resumen = record._get_resumen_servicio()
+            vals = {
+                "tipo_servicio": resumen["tipo_servicio"],
+                "tipo_tour": resumen["tipo_tour"],
+                "estilo_transporte_id": resumen["estilo_transporte_id"].id if resumen["estilo_transporte_id"] else False,
+                "servicio_id": resumen["servicio_id"].id if resumen["servicio_id"] else False,
+                "servicio_nombre": resumen["servicio_nombre"],
+                "precio_adulto_usd": resumen["precio_adulto_usd"],
+                "precio_nino_usd": resumen["precio_nino_usd"],
+                "precio_adulto": record._convertir_desde_usd(resumen["precio_adulto_usd"], record.moneda, rates),
+                "precio_nino": record._convertir_desde_usd(resumen["precio_nino_usd"], record.moneda, rates),
+                "descuento": resumen["descuento"],
+            }
+            if record._origin.id:
+                super(IncasReserva, record.with_context(skip_resumen_paquete_sync=True)).write(vals)
+            else:
+                for field_name, value in vals.items():
+                    record[field_name] = value
+
+    def _actualizar_estado_comercial_desde_pagos(self):
+        for record in self:
+            if record.estado_reserva == "cancelado":
+                if record._origin.id:
+                    super(IncasReserva, record.with_context(skip_estado_comercial_sync=True)).write({"estado_comercial": "cancelada"})
+                else:
+                    record.estado_comercial = "cancelada"
+                continue
+            if record.monto_pagado > 0 or record.pago_ids.filtered(lambda pago: pago.estado == "pagado"):
+                if record.estado_comercial != "cancelada":
+                    if record._origin.id:
+                        super(IncasReserva, record.with_context(skip_estado_comercial_sync=True)).write({"estado_comercial": "confirmada"})
+                    else:
+                        record.estado_comercial = "confirmada"
+
     def _aplicar_moneda_desde_base(self):
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
         for record in self:
@@ -530,65 +659,6 @@ class IncasReserva(models.Model):
             record.extra_precio_unitario_usd = record.extra_tarifa_id.obtener_precio_unitario_neto_usd()
             record.extra_precio_unitario = record._convertir_desde_usd(record.extra_precio_unitario_usd, record.moneda, rates)
             record.extra_descuento = record.extra_tarifa_id.descuento or 0
-
-    def _aplicar_cotizacion(self, cotizacion):
-        self.ensure_one()
-        values = self._valores_desde_cotizacion(cotizacion)
-        for field_name, value in values.items():
-            self[field_name] = value
-        self._compute_monto_total()
-        self._compute_precio_tour()
-        self._compute_saldo_pendiente()
-        self._compute_pago_restante()
-        self._compute_monto_final()
-
-    @api.model
-    def _valores_desde_cotizacion(self, cotizacion):
-        resumen = cotizacion._get_resumen_servicio()
-        vehiculo = cotizacion.paquete_linea_ids[:1].vehiculo_id if len(cotizacion.paquete_linea_ids) == 1 else self.env["incas.catalogo.vehiculo"]
-        horario = cotizacion.paquete_linea_ids[:1].horario if len(cotizacion.paquete_linea_ids) == 1 else False
-        return {
-            "partner_id": cotizacion.partner_id,
-            "fecha_viaje": cotizacion.fecha_viaje,
-            "turno": horario,
-            "idioma": cotizacion.idioma,
-            "canal_venta": cotizacion.canal_venta,
-            "tipo_servicio": resumen["tipo_servicio"],
-            "tipo_tour": resumen["tipo_tour"],
-            "estilo_transporte_id": resumen["estilo_transporte_id"],
-            "servicio_id": resumen["servicio_id"],
-            "servicio_nombre": cotizacion.servicio_nombre or resumen["servicio_nombre"],
-            "precio_adulto_usd": resumen["precio_adulto_usd"],
-            "precio_nino_usd": resumen["precio_nino_usd"],
-            "precio_adulto": resumen["precio_adulto"],
-            "precio_nino": resumen["precio_nino"],
-            "descuento": resumen["descuento"],
-            "cantidad_adultos": cotizacion.cantidad_adultos,
-            "cantidad_ninos": cotizacion.cantidad_ninos,
-            "hotel_id": cotizacion.hotel_id,
-            "hotel_tarifa_id": cotizacion.hotel_tarifa_id,
-            "hotel_tipo_tarifario": cotizacion.hotel_tipo_tarifario,
-            "fecha_check_in": cotizacion.fecha_check_in,
-            "fecha_check_out": cotizacion.fecha_check_out,
-            "cantidad_habitaciones": cotizacion.cantidad_habitaciones,
-            "hotel_nombre": cotizacion.hotel_nombre,
-            "hotel_precio_noche_usd": cotizacion.hotel_precio_noche_usd,
-            "hotel_precio_noche": cotizacion.hotel_precio_noche,
-            "hotel_descuento": cotizacion.hotel_descuento,
-            "extra_id": cotizacion.extra_id,
-            "extra_tarifa_id": cotizacion.extra_tarifa_id,
-            "extra_nombre": cotizacion.extra_nombre,
-            "extra_unidad": cotizacion.extra_unidad,
-            "cantidad_extra": cotizacion.cantidad_extra,
-            "extra_precio_unitario_usd": cotizacion.extra_precio_unitario_usd,
-            "extra_precio_unitario": cotizacion.extra_precio_unitario,
-            "extra_descuento": cotizacion.extra_descuento,
-            "moneda": cotizacion.moneda,
-            "responsable_id": cotizacion.responsable_id,
-            "vehiculo_id": vehiculo,
-            "vehiculo_seleccionado": vehiculo.name if vehiculo else False,
-            "observaciones": cotizacion.observaciones,
-        }
 
     @api.model
     def _normalizar_fecha_web(self, valor):
@@ -678,10 +748,17 @@ class IncasReserva(models.Model):
         moneda = reserva_data.get("moneda") or reserva_data.get("moneda_usuario") or "USD"
         fecha_inicio = self._normalizar_fecha_web(reserva_data.get("fecha_inicio"))
         fecha_fin = self._normalizar_fecha_web(reserva_data.get("fecha_fin"))
-        cotizacion = self._crear_cotizacion_web(reserva_data, partner, servicio, moneda, fecha_inicio)
-        resumen = cotizacion._get_resumen_servicio()
+        rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
+        horario = self._buscar_horario_web(servicio, reserva_data)
+        tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo) if servicio.tipo_servicio == "transporte" else {
+            "precio_adulto": servicio.precio_adulto or 0,
+            "precio_nino": servicio.precio_nino or 0,
+            "descuento": servicio.descuento or 0,
+        }
+        descuento = float(reserva_data.get("descuento") or reserva_data.get("descuento_usd") or tarifa["descuento"] or 0)
+        precio_adulto = self._convertir_desde_usd(tarifa["precio_adulto"] or 0, moneda, rates)
+        precio_nino = self._convertir_desde_usd(tarifa["precio_nino"] or 0, moneda, rates)
         valores = {
-            "cotizacion_id": cotizacion.id,
             "partner_id": partner.id,
             "nombre": reserva_data.get("nombre"),
             "email": reserva_data.get("email"),
@@ -696,71 +773,42 @@ class IncasReserva(models.Model):
             "vehiculo_seleccionado": vehiculo.name if vehiculo else reserva_data.get("vehiculo_seleccionado"),
             "idioma": reserva_data.get("idioma") or "es",
             "canal_venta": "web",
-            "servicio_id": resumen["servicio_id"].id,
-            "tipo_servicio": resumen["tipo_servicio"],
-            "tipo_tour": resumen["tipo_tour"],
-            "estilo_transporte_id": resumen["estilo_transporte_id"].id,
-            "servicio_nombre": resumen["servicio_nombre"],
+            "servicio_id": servicio.id,
+            "tipo_servicio": servicio.tipo_servicio,
+            "tipo_tour": servicio.tipo_tour,
+            "estilo_transporte_id": servicio.estilo_transporte_id.id,
+            "servicio_nombre": servicio.name,
             "cantidad_adultos": int(reserva_data.get("cantidad_adultos") or 1),
             "cantidad_ninos": int(reserva_data.get("cantidad_ninos") or 0),
             "moneda": moneda,
-            "precio_adulto_usd": resumen["precio_adulto_usd"],
-            "precio_nino_usd": resumen["precio_nino_usd"],
-            "precio_adulto": resumen["precio_adulto"],
-            "precio_nino": resumen["precio_nino"],
-            "descuento": resumen["descuento"],
+            "precio_adulto_usd": tarifa["precio_adulto"] or 0,
+            "precio_nino_usd": tarifa["precio_nino"] or 0,
+            "precio_adulto": precio_adulto,
+            "precio_nino": precio_nino,
+            "descuento": descuento,
             "precio_adulto_web": float(reserva_data.get("precio_adulto_web") or 0),
             "precio_nino_web": float(reserva_data.get("precio_nino_web") or 0),
             "origen_web": True,
             "observaciones": reserva_data.get("notas"),
+            "estado_comercial": "cotizada",
+            "paquete_linea_ids": [
+                (
+                    0,
+                    0,
+                    {
+                        "servicio_id": servicio.id,
+                        "vehiculo_id": vehiculo.id,
+                        "horario": horario.name or reserva_data.get("turno"),
+                        "horario_id": horario.id,
+                        "precio_adulto": precio_adulto,
+                        "precio_nino": precio_nino,
+                        "descuento": descuento,
+                        "fecha": fecha_inicio or self._normalizar_fecha_web(reserva_data.get("fecha_viaje")),
+                    },
+                )
+            ],
         }
         return valores
-
-    @api.model
-    def _crear_cotizacion_web(self, reserva_data, partner, servicio, moneda, fecha_viaje):
-        cotizacion_model = self.env["incas.cotizacion"].sudo()
-        rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
-        vehiculo = self._buscar_vehiculo_web(servicio, reserva_data)
-        horario = self._buscar_horario_web(servicio, reserva_data)
-        tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo) if servicio.tipo_servicio == "transporte" else {
-            "precio_adulto": servicio.precio_adulto or 0,
-            "precio_nino": servicio.precio_nino or 0,
-            "descuento": servicio.descuento or 0,
-        }
-        descuento = float(reserva_data.get("descuento") or reserva_data.get("descuento_usd") or tarifa["descuento"] or 0)
-        precio_adulto = self._convertir_desde_usd(tarifa["precio_adulto"] or 0, moneda, rates)
-        precio_nino = self._convertir_desde_usd(tarifa["precio_nino"] or 0, moneda, rates)
-        return cotizacion_model.create(
-            {
-                "partner_id": partner.id,
-                "fecha_viaje": fecha_viaje or self._normalizar_fecha_web(reserva_data.get("fecha_viaje")),
-                "idioma": reserva_data.get("idioma") or "es",
-                "canal_venta": "web",
-                "tipo_servicio": servicio.tipo_servicio,
-                "tipo_tour": servicio.tipo_tour,
-                "estilo_transporte_id": servicio.estilo_transporte_id.id,
-                "servicio_id": servicio.id,
-                "cantidad_adultos": int(reserva_data.get("cantidad_adultos") or 1),
-                "cantidad_ninos": int(reserva_data.get("cantidad_ninos") or 0),
-                "moneda": moneda,
-                "observaciones": reserva_data.get("notas"),
-                "paquete_linea_ids": [
-                    (
-                        0,
-                        0,
-                        {
-                            "servicio_id": servicio.id,
-                            "vehiculo_id": vehiculo.id,
-                            "horario": horario.name or reserva_data.get("turno"),
-                            "horario_id": horario.id,
-                            "precio_adulto": precio_adulto,
-                            "precio_nino": precio_nino,
-                            "descuento": descuento,
-                        },
-                    )
-                ],
-            }
-        )
 
     def _actualizar_pendientes(self):
         for record in self:
@@ -772,6 +820,7 @@ class IncasReserva(models.Model):
                     "estado_reserva": estado_reserva,
                 }
             )
+        self._actualizar_estado_comercial_desde_pagos()
 
     def _sincronizar_con_sheets(self):
         url = os.getenv("GOOGLE_APPS_SCRIPT_URL", "")
@@ -966,55 +1015,6 @@ class IncasReserva(models.Model):
 
     @api.model
     def _completar_datos_servicio(self, vals):
-        cotizacion_id = vals.get("cotizacion_id")
-        if cotizacion_id:
-            cotizacion = self.env["incas.cotizacion"].browse(cotizacion_id)
-            if cotizacion.exists():
-                values = self._valores_desde_cotizacion(cotizacion)
-                vals.update(
-                    {
-                        "partner_id": values["partner_id"].id,
-                        "fecha_viaje": values["fecha_viaje"],
-                        "turno": values["turno"],
-                        "idioma": values["idioma"],
-                        "canal_venta": values["canal_venta"],
-                        "tipo_servicio": values["tipo_servicio"],
-                        "tipo_tour": values["tipo_tour"],
-                        "estilo_transporte_id": values["estilo_transporte_id"].id,
-                        "servicio_id": values["servicio_id"].id,
-                        "servicio_nombre": values["servicio_nombre"],
-                        "precio_adulto_usd": values["precio_adulto_usd"],
-                        "precio_nino_usd": values["precio_nino_usd"],
-                        "precio_adulto": values["precio_adulto"],
-                        "precio_nino": values["precio_nino"],
-                        "descuento": values["descuento"],
-                        "cantidad_adultos": values["cantidad_adultos"],
-                        "cantidad_ninos": values["cantidad_ninos"],
-                        "hotel_id": values["hotel_id"].id,
-                        "hotel_tarifa_id": values["hotel_tarifa_id"].id,
-                        "fecha_check_in": values["fecha_check_in"],
-                        "fecha_check_out": values["fecha_check_out"],
-                        "cantidad_habitaciones": values["cantidad_habitaciones"],
-                        "hotel_nombre": values["hotel_nombre"],
-                        "hotel_precio_noche_usd": values["hotel_precio_noche_usd"],
-                        "hotel_precio_noche": values["hotel_precio_noche"],
-                        "hotel_descuento": values["hotel_descuento"],
-                        "extra_id": values["extra_id"].id,
-                        "extra_tarifa_id": values["extra_tarifa_id"].id,
-                        "extra_nombre": values["extra_nombre"],
-                        "extra_unidad": values["extra_unidad"],
-                        "cantidad_extra": values["cantidad_extra"],
-                        "extra_precio_unitario_usd": values["extra_precio_unitario_usd"],
-                        "extra_precio_unitario": values["extra_precio_unitario"],
-                        "extra_descuento": values["extra_descuento"],
-                        "moneda": values["moneda"],
-                        "responsable_id": values["responsable_id"].id,
-                        "vehiculo_id": values["vehiculo_id"].id,
-                        "vehiculo_seleccionado": values["vehiculo_seleccionado"],
-                        "observaciones": values["observaciones"],
-                    }
-                )
-                return vals
         servicio_id = vals.get("servicio_id")
         if not servicio_id and vals.get("vehiculo_id") and len(self) == 1 and self.servicio_id and self.servicio_id.tipo_servicio == "transporte":
             servicio = self.servicio_id
@@ -1075,7 +1075,7 @@ class IncasReserva(models.Model):
     @api.onchange("tipo_servicio")
     def _onchange_tipo_servicio(self):
         for record in self:
-            if record.cotizacion_id or record.tipo_servicio == "paquete":
+            if record.tipo_servicio == "paquete":
                 continue
             if record.tipo_servicio == "tour":
                 record.estilo_transporte_id = False
@@ -1092,7 +1092,7 @@ class IncasReserva(models.Model):
     @api.onchange("tipo_tour", "estilo_transporte_id")
     def _onchange_tipo_detalle_servicio(self):
         for record in self:
-            if record.cotizacion_id or record.tipo_servicio == "paquete":
+            if record.tipo_servicio == "paquete":
                 continue
             if not record.servicio_id:
                 record._limpiar_servicio()
@@ -1105,8 +1105,6 @@ class IncasReserva(models.Model):
     @api.onchange("servicio_id")
     def _onchange_servicio_id(self):
         for record in self:
-            if record.cotizacion_id:
-                continue
             if not record.servicio_id:
                 continue
             record.tipo_servicio = record.servicio_id.tipo_servicio
@@ -1143,73 +1141,21 @@ class IncasReserva(models.Model):
             record.descuento = tarifa["descuento"]
             record._aplicar_moneda_desde_base()
 
-    @api.onchange("cotizacion_id")
-    def _onchange_cotizacion_id(self):
-        for record in self:
-            cotizacion = record.cotizacion_id
-            if not cotizacion:
-                continue
-            record._aplicar_cotizacion(cotizacion)
-
     @api.model
     def default_get(self, fields_list):
-        values = super().default_get(fields_list)
-        cotizacion_id = self.env.context.get("default_cotizacion_id")
-        if cotizacion_id:
-            cotizacion = self.env["incas.cotizacion"].browse(cotizacion_id)
-            if cotizacion.exists():
-                resumen = self._valores_desde_cotizacion(cotizacion)
-                values.update(
-                    {
-                        "partner_id": resumen["partner_id"].id,
-                        "fecha_viaje": resumen["fecha_viaje"],
-                        "turno": resumen["turno"],
-                        "idioma": resumen["idioma"],
-                        "canal_venta": resumen["canal_venta"],
-                        "tipo_servicio": resumen["tipo_servicio"],
-                        "tipo_tour": resumen["tipo_tour"],
-                        "estilo_transporte_id": resumen["estilo_transporte_id"].id,
-                        "servicio_id": resumen["servicio_id"].id,
-                        "servicio_nombre": resumen["servicio_nombre"],
-                        "precio_adulto_usd": resumen["precio_adulto_usd"],
-                        "precio_nino_usd": resumen["precio_nino_usd"],
-                        "precio_adulto": resumen["precio_adulto"],
-                        "precio_nino": resumen["precio_nino"],
-                        "descuento": resumen["descuento"],
-                        "cantidad_adultos": resumen["cantidad_adultos"],
-                        "cantidad_ninos": resumen["cantidad_ninos"],
-                        "hotel_id": resumen["hotel_id"].id,
-                        "hotel_tarifa_id": resumen["hotel_tarifa_id"].id,
-                        "hotel_tipo_tarifario": resumen["hotel_tipo_tarifario"],
-                        "fecha_check_in": resumen["fecha_check_in"],
-                        "fecha_check_out": resumen["fecha_check_out"],
-                        "cantidad_habitaciones": resumen["cantidad_habitaciones"],
-                        "hotel_nombre": resumen["hotel_nombre"],
-                        "hotel_precio_noche_usd": resumen["hotel_precio_noche_usd"],
-                        "hotel_precio_noche": resumen["hotel_precio_noche"],
-                        "hotel_descuento": resumen["hotel_descuento"],
-                        "extra_id": resumen["extra_id"].id,
-                        "extra_tarifa_id": resumen["extra_tarifa_id"].id,
-                        "extra_nombre": resumen["extra_nombre"],
-                        "extra_unidad": resumen["extra_unidad"],
-                        "cantidad_extra": resumen["cantidad_extra"],
-                        "extra_precio_unitario_usd": resumen["extra_precio_unitario_usd"],
-                        "extra_precio_unitario": resumen["extra_precio_unitario"],
-                        "extra_descuento": resumen["extra_descuento"],
-                        "moneda": resumen["moneda"],
-                        "responsable_id": resumen["responsable_id"].id,
-                        "vehiculo_id": resumen["vehiculo_id"].id,
-                        "vehiculo_seleccionado": resumen["vehiculo_seleccionado"],
-                        "observaciones": resumen["observaciones"],
-                    }
-                )
-        return values
+        return super().default_get(fields_list)
 
     @api.onchange("moneda")
     def _onchange_moneda(self):
-        if self.cotizacion_id:
-            return
         self._aplicar_moneda_desde_base()
+        self.paquete_linea_ids._actualizar_precios_desde_usd(self.moneda)
+        self.hotel_linea_ids._actualizar_precio_desde_usd(self.moneda)
+        self.extra_linea_ids._actualizar_precio_desde_usd(self.moneda)
+        self._aplicar_resumen_paquete()
+
+    @api.onchange("paquete_linea_ids", "paquete_linea_ids.nombre", "paquete_linea_ids.servicio_id")
+    def _onchange_paquete_linea_ids(self):
+        self._aplicar_resumen_paquete()
 
     @api.onchange("hotel_id")
     def _onchange_hotel_id(self):
@@ -1261,29 +1207,34 @@ class IncasReserva(models.Model):
                 vals["ticket"] = self._generar_ticket()
             if not vals.get("access_token"):
                 vals["access_token"] = self._generar_access_token()
+            vals.setdefault("tipo_servicio", "paquete")
+            vals.setdefault("servicio_nombre", "Paquete personalizado")
             self._completar_datos_servicio(vals)
             self._completar_datos_hotel(vals)
             self._completar_datos_extra(vals)
         reservas = super().create(vals_list)
+        reservas._aplicar_resumen_paquete()
+        reservas._actualizar_estado_comercial_desde_pagos()
         reservas._asegurar_carpeta_documental()
         reservas._asegurar_pasajero_principal()
         return reservas
 
     def write(self, vals):
+        if self.env.context.get("skip_resumen_paquete_sync") or self.env.context.get("skip_estado_comercial_sync"):
+            return super().write(vals)
         self._completar_datos_servicio(vals)
         self._completar_datos_hotel(vals)
         self._completar_datos_extra(vals)
         result = super().write(vals)
+        self._aplicar_resumen_paquete()
+        if "moneda" in vals:
+            self.paquete_linea_ids._actualizar_precios_desde_usd(vals["moneda"])
+            self.hotel_linea_ids._actualizar_precio_desde_usd(vals["moneda"])
+            self.extra_linea_ids._actualizar_precio_desde_usd(vals["moneda"])
+        self._actualizar_estado_comercial_desde_pagos()
         if any(campo in vals for campo in ["name"]):
             self._asegurar_carpeta_documental()
         return result
-
-    def action_ver_documentos(self):
-        self.ensure_one()
-        self._asegurar_carpeta_documental()
-        if not self.documento_directory_id:
-            raise UserError("No existe un directorio raíz en Documentos. Crea uno en el módulo Documentos primero.")
-        return self.documento_directory_id.action_dms_files_all_directory()
 
     def _completar_datos_hotel(self, vals):
         hotel_id = vals.get("hotel_id") or (self.hotel_id.id if len(self) == 1 else False)
@@ -1336,6 +1287,28 @@ class IncasReserva(models.Model):
             "target": "self",
         }
 
+    def action_print_package_pdf(self):
+        self.ensure_one()
+        if not self.paquete_linea_ids:
+            raise UserError("Selecciona al menos un tour o un transporte en la pestaña Paquete.")
+        return {
+            "type": "ir.actions.act_url",
+            "url": f"/incas/reserva/{self.id}/detalle-paquete-pdf",
+            "target": "self",
+        }
+
+    def action_marcar_cotizada(self):
+        self.write({"estado_comercial": "cotizada"})
+
+    def action_marcar_pre_reserva(self):
+        self.write({"estado_comercial": "pre_reserva"})
+
+    def action_confirmar_comercial(self):
+        self.write({"estado_comercial": "confirmada"})
+
+    def action_cancelar_comercial(self):
+        self.write({"estado_comercial": "cancelada"})
+
     def action_ver_pagos(self):
         self.ensure_one()
         return {
@@ -1375,21 +1348,5 @@ class IncasReserva(models.Model):
                 "default_reserva_id": self.id,
                 "default_motivo": "",
                 "default_tipo_cambio": "reprogramacion",
-            },
-        }
-
-    def action_nuevo_pago(self):
-        self.ensure_one()
-        return {
-            "type": "ir.actions.act_window",
-            "name": "Nuevo pago",
-            "res_model": "incas.pago",
-            "view_mode": "form",
-            "target": "current",
-            "context": {
-                "default_reserva_id": self.id,
-                "default_moneda": self.moneda,
-                "default_monto": self.saldo_pendiente or self.precio_tour or self.monto_total,
-                "default_estado": "pendiente",
             },
         }

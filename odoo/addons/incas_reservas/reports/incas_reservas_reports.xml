@@ -11,17 +11,6 @@
         <field name="binding_type">report</field>
     </record>
 
-    <record id="action_report_incas_cotizacion" model="ir.actions.report">
-        <field name="name">Cotización PDF</field>
-        <field name="model">incas.cotizacion</field>
-        <field name="report_type">qweb-pdf</field>
-        <field name="report_name">incas_reservas.report_incas_cotizacion_document</field>
-        <field name="report_file">incas_reservas.report_incas_cotizacion_document</field>
-        <field name="print_report_name">'Cotizacion - %s' % object.name</field>
-        <field name="binding_model_id" ref="model_incas_cotizacion"/>
-        <field name="binding_type">report</field>
-    </record>
-
     <template id="report_incas_common_styles">
         <style>
             .incas-page {
@@ -144,57 +133,4 @@
         </t>
     </template>
 
-    <template id="report_incas_cotizacion_document">
-        <t t-call="web.html_container">
-            <t t-foreach="docs" t-as="o">
-                <t t-call="web.external_layout">
-                    <div class="page incas-page">
-                        <t t-call="incas_reservas.report_incas_common_styles"/>
-                        <div class="incas-title">Inca's Paradise</div>
-                        <div class="incas-subtitle">Comprobante de cotización de <t t-esc="'Tour' if o.tipo_servicio == 'tour' else 'Transporte'"/></div>
-                        <div class="incas-ticket-box">
-                            <div class="incas-ticket-label">CÓDIGO</div>
-                            <div class="incas-ticket-value"><span t-field="o.name"/></div>
-                        </div>
-
-                        <div class="incas-section">
-                            <div class="incas-section-title">DATOS DEL CLIENTE</div>
-                            <table class="incas-table">
-                                <tr><td class="incas-label">Cliente principal</td><td><span t-field="o.partner_id"/></td></tr>
-                                <tr><td class="incas-label">Idioma</td><td><span t-field="o.idioma"/></td></tr>
-                                <tr><td class="incas-label">Canal</td><td><span t-field="o.canal_venta"/></td></tr>
-                                <tr><td class="incas-label">Responsable</td><td><span t-field="o.responsable_id"/></td></tr>
-                            </table>
-                        </div>
-
-                        <div class="incas-section">
-                            <div class="incas-section-title">DETALLES DE LA COTIZACIÓN</div>
-                            <table class="incas-table">
-                                <tr><td class="incas-label">Tipo de servicio</td><td><span t-field="o.tipo_tour" t-if="o.tipo_servicio == 'tour'"/><span t-field="o.estilo_transporte_id" t-if="o.tipo_servicio == 'transporte'"/></td></tr>
-                                <tr><td class="incas-label"><t t-esc="'Nombre del tour' if o.tipo_servicio == 'tour' else 'Nombre del transporte'"/></td><td><span t-field="o.servicio_nombre"/></td></tr>
-                                <tr><td class="incas-label">Fecha de cotización</td><td><span t-field="o.fecha_cotizacion"/></td></tr>
-                                <tr><td class="incas-label">Fecha de viaje</td><td><span t-field="o.fecha_viaje"/></td></tr>
-                                <tr><td class="incas-label">Adultos</td><td><span t-field="o.cantidad_adultos"/></td></tr>
-                                <tr><td class="incas-label">Niños</td><td><span t-field="o.cantidad_ninos"/></td></tr>
-                                <tr><td class="incas-label">Observaciones</td><td><span t-field="o.observaciones"/></td></tr>
-                                <tr><td class="incas-label">Estado</td><td><span t-field="o.state"/></td></tr>
-                            </table>
-                        </div>
-
-                        <div class="incas-section">
-                            <div class="incas-section-title">RESUMEN DE PAGO</div>
-                            <table class="incas-table">
-                                <tr><td class="incas-label">Moneda</td><td><span t-field="o.moneda"/></td></tr>
-                                <tr><td class="incas-label">Precio grupal</td><td><span t-field="o.precio_grupal"/></td></tr>
-                                <tr><td class="incas-label">Descuento</td><td><t t-esc="'%.2f%%' % (o.descuento or 0.0)"/></td></tr>
-                                <tr><td class="incas-label">Precio adulto</td><td><span t-field="o.precio_adulto"/></td></tr>
-                                <tr><td class="incas-label">Precio niño</td><td><span t-field="o.precio_nino"/></td></tr>
-                                <tr><td class="incas-label">Monto total</td><td><span t-field="o.monto_total"/></td></tr>
-                            </table>
-                        </div>
-                    </div>
-                </t>
-            </t>
-        </t>
-    </template>
 </odoo>
