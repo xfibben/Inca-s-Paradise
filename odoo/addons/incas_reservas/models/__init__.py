@@ -1,5 +1,6 @@
 from . import incas_estilo_transporte
 from . import incas_hotel
+from . import incas_hotel_categoria
 from . import incas_hotel_tarifa
 from . import incas_extra
 from . import incas_extra_tarifa
