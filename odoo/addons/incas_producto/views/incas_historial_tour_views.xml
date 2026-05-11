@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_historial_tour_list" model="ir.ui.view">
+        <field name="name">incas.historial.tour.list</field>
+        <field name="model">incas.historial.tour</field>
+        <field name="arch" type="xml">
+            <list string="Historial de tours">
+                <field name="nombre_tour"/>
+                <field name="enlace"/>
+                <field name="notas"/>
+                <field name="estado"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_historial_tour_form" model="ir.ui.view">
+        <field name="name">incas.historial.tour.form</field>
+        <field name="model">incas.historial.tour</field>
+        <field name="arch" type="xml">
+            <form string="Historial de tour">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="nombre_tour"/>
+                            <field name="enlace"/>
+                            <field name="estado"/>
+                        </group>
+                        <group>
+                            <field name="notas"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_incas_historial_tour_search" model="ir.ui.view">
+        <field name="name">incas.historial.tour.search</field>
+        <field name="model">incas.historial.tour</field>
+        <field name="arch" type="xml">
+            <search string="Buscar historial de tours">
+                <field name="nombre_tour"/>
+                <field name="enlace"/>
+                <field name="estado"/>
+                <filter name="filter_modificado" string="Modificado" domain="[('estado', '=', 'modificado')]"/>
+                <filter name="filter_falta_modificar" string="Falta modificar" domain="[('estado', '=', 'falta_modificar')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_incas_historial_tour" model="ir.actions.act_window">
+        <field name="name">Historial de tours</field>
+        <field name="res_model">incas.historial.tour</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_historial_tour_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_historial_tour"
+        name="Historial de tours"
+        parent="incas_core.menu_incas_operaciones_root"
+        action="action_incas_historial_tour"
+        sequence="30"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

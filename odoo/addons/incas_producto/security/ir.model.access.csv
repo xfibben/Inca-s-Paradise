@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_incas_historial_tour_system,access.incas.historial.tour.system,model_incas_historial_tour,base.group_system,1,1,1,1
+access_incas_historial_tour_admin,access.incas.historial.tour.admin,model_incas_historial_tour,incas_core.group_incas_core_admin,1,1,1,1
+access_incas_historial_tour_reservas,access.incas.historial.tour.reservas,model_incas_historial_tour,incas_core.group_incas_core_reservas,1,1,0,0
+access_incas_historial_tour_operaciones,access.incas.historial.tour.operaciones,model_incas_historial_tour,incas_core.group_incas_core_operaciones,1,1,0,0
+access_incas_historial_tour_gerencia,access.incas.historial.tour.gerencia,model_incas_historial_tour,incas_core.group_incas_core_gerencia,1,1,1,0

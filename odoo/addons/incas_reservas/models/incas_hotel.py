@@ -43,6 +43,9 @@ class IncasHotel(models.Model):
             record.tarifa_count = len(record.tarifa_ids)
 
     def init(self):
+        self.env.cr.execute("SELECT to_regclass('incas_hotel')")
+        if not self.env.cr.fetchone()[0]:
+            return
         for codigo, nombre in self._CATEGORIAS_LEGACY.items():
             self.env.cr.execute(
                 """
