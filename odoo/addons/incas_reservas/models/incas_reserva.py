@@ -10,7 +10,6 @@ from markupsafe import Markup
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools.mail import email_split
 
 from ..utils import (
     generar_pdf_desde_html,
@@ -954,13 +953,7 @@ class IncasReserva(models.Model):
 
     def _obtener_reply_to_reserva(self):
         self.ensure_one()
-        remitente = self._obtener_remitente_reserva()
-        emails = email_split(remitente or "")
-        email = emails[0] if emails else remitente
-        if not email or "@" not in email:
-            return remitente
-        local, domain = email.rsplit("@", 1)
-        return f"{local}+reserva-{self.id}@{domain}"
+        return self._obtener_remitente_reserva()
 
     def _enviar_correos_reserva(self):
         notify_email = os.getenv("RESEND_NOTIFY_EMAIL", "")
@@ -970,6 +963,11 @@ class IncasReserva(models.Model):
             partner_cliente, email_cliente = record._resolver_destinatario_cliente()
             destinatarios = []
             partners = self.env["res.partner"]
+            remitente = record._obtener_remitente_reserva()
+            if remitente:
+                partner_remitente = record._obtener_partner_destinatario(remitente, "Reservas Inca's Paradise")
+                destinatarios.append(remitente)
+                partners |= partner_remitente
             if notify_email:
                 partner_admin = record._obtener_partner_destinatario(notify_email, "Notificaciones reservas")
                 destinatarios.append(notify_email)
