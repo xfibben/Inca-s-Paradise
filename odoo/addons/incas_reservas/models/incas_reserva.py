@@ -923,7 +923,11 @@ class IncasReserva(models.Model):
             email = (email or "").strip()
             if email and email.lower() not in [item.lower() for item in emails]:
                 emails.append(email)
-        if not emails:
+        if not partners:
+            partners = self.env["res.partner"]
+            for email in emails:
+                partners |= self._obtener_partner_destinatario(email, email)
+        if not partners:
             return
         remitente = self._obtener_remitente_reserva()
         reply_to = self._obtener_reply_to_reserva()
@@ -938,8 +942,7 @@ class IncasReserva(models.Model):
         self.with_context(mail_notify_force_send=True, mail_post_autofollow=False).message_post(
             body=Markup(body_html),
             subject=subject,
-            partner_ids=[],
-            outgoing_email_to=", ".join(emails),
+            partner_ids=partners.ids,
             attachments=[(f"comprobante-{self.ticket}.pdf", pdf_bytes)],
             email_from=remitente,
             reply_to=reply_to,
