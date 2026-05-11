@@ -11,6 +11,9 @@ class IncasHotelCategoria(models.Model):
     active = fields.Boolean(default=True)
 
     def init(self):
+        self.env.cr.execute("SELECT to_regclass('incas_hotel_categoria')")
+        if not self.env.cr.fetchone()[0]:
+            return
         self.env.cr.execute(
             """
             INSERT INTO incas_hotel_categoria (name, sequence, active, create_uid, create_date, write_uid, write_date)
