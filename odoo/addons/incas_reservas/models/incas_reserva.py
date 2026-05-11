@@ -10,6 +10,7 @@ from markupsafe import Markup
 
 from odoo import api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.mail import email_split
 
 from ..utils import (
     generar_pdf_desde_html,
@@ -891,7 +892,8 @@ class IncasReserva(models.Model):
     def _obtener_remitente_reserva(self):
         self.ensure_one()
         remitente = (
-            self.env["ir.config_parameter"].sudo().get_param("mail.default.from")
+            os.getenv("RESEND_FROM_EMAIL")
+            or self.env["ir.config_parameter"].sudo().get_param("mail.default.from")
             or self.env.user.email
             or self.env.company.email
             or self.env.user.partner_id.email
@@ -912,17 +914,23 @@ class IncasReserva(models.Model):
             )
         return partner_cliente, email_cliente
 
-    def _enviar_correo_odoo(self, email_destino, subject, body_html, pdf_bytes, partner=False, suscribir=False):
+    def _enviar_correo_odoo(self, destinatarios, subject, body_html, pdf_bytes, partners=False, suscribir=False):
         self.ensure_one()
-        email_destino = (email_destino or "").strip()
-        if not email_destino:
+        if isinstance(destinatarios, str):
+            destinatarios = [destinatarios]
+        emails = []
+        for email in destinatarios or []:
+            email = (email or "").strip()
+            if email and email.lower() not in [item.lower() for item in emails]:
+                emails.append(email)
+        if not emails:
             return
         remitente = self._obtener_remitente_reserva()
         reply_to = self._obtener_reply_to_reserva()
         _logger.info(
             "Reserva %s: enviando correo a=%s asunto=%s remitente=%s reply_to=%s",
             self.id,
-            email_destino,
+            emails,
             subject,
             remitente,
             reply_to,
@@ -931,45 +939,49 @@ class IncasReserva(models.Model):
             body=Markup(body_html),
             subject=subject,
             partner_ids=[],
-            outgoing_email_to=email_destino,
+            outgoing_email_to=", ".join(emails),
             attachments=[(f"comprobante-{self.ticket}.pdf", pdf_bytes)],
             email_from=remitente,
             reply_to=reply_to,
             message_type="email",
             subtype_xmlid="mail.mt_comment",
         )
-        if suscribir and partner:
-            self.message_subscribe(partner_ids=[partner.id])
+        if suscribir and partners:
+            self.message_subscribe(partner_ids=partners.ids)
 
     def _obtener_reply_to_reserva(self):
         self.ensure_one()
-        return self._obtener_remitente_reserva()
+        remitente = self._obtener_remitente_reserva()
+        emails = email_split(remitente or "")
+        email = emails[0] if emails else remitente
+        if not email or "@" not in email:
+            return remitente
+        local, domain = email.rsplit("@", 1)
+        return f"{local}+reserva-{self.id}@{domain}"
 
     def _enviar_correos_reserva(self):
         notify_email = os.getenv("RESEND_NOTIFY_EMAIL", "")
         for record in self:
             pdf = generar_pdf_desde_html(render_reserva_html(record))
-            html_admin = html_correo_reserva(record, "Nueva reserva recibida", "Se registró una nueva reserva y el comprobante PDF va adjunto.")
-            html_cliente = html_correo_reserva(record, "Confirmación de reserva", f"Hola {record.nombre or record.partner_id.display_name}, tu reserva fue registrada correctamente. Adjuntamos el comprobante PDF.")
+            html = html_correo_reserva(record, "Confirmación de reserva", f"Hola {record.nombre or record.partner_id.display_name}, tu reserva fue registrada correctamente. Responde a este correo para continuar la conversación sobre esta reserva.")
             partner_cliente, email_cliente = record._resolver_destinatario_cliente()
+            destinatarios = []
+            partners = self.env["res.partner"]
             if notify_email:
                 partner_admin = record._obtener_partner_destinatario(notify_email, "Notificaciones reservas")
-                record._enviar_correo_odoo(
-                    notify_email,
-                    f"INCA'S PARADISE - Nueva reserva {record.ticket}",
-                    html_admin,
-                    pdf,
-                    partner=partner_admin,
-                )
+                destinatarios.append(notify_email)
+                partners |= partner_admin
             if email_cliente:
-                record._enviar_correo_odoo(
-                    email_cliente,
-                    f"INCA'S PARADISE - Confirmación de reserva {record.ticket}",
-                    html_cliente,
-                    pdf,
-                    partner=partner_cliente,
-                    suscribir=True,
-                )
+                destinatarios.append(email_cliente)
+                partners |= partner_cliente
+            record._enviar_correo_odoo(
+                destinatarios,
+                f"INCA'S PARADISE - Reserva {record.ticket}",
+                html,
+                pdf,
+                partners=partners,
+                suscribir=True,
+            )
 
     def _post_reserva_web(self):
         for record in self:
