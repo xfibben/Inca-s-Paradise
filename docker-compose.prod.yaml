@@ -15,7 +15,8 @@ services:
     ports:
       - "5431:5432"
     networks:
-      - incas_network
+      incas_network:
+        ipv4_address: 172.19.0.2
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 10s
@@ -70,7 +71,8 @@ services:
       - 8.8.8.8
       - 8.8.4.4
     networks:
-      - incas_network
+      incas_network:
+        ipv4_address: 172.19.0.10
     ports:
       - "0.0.0.0:1336:1336"
     depends_on:
@@ -108,7 +110,8 @@ services:
       HOST=0.0.0.0 PORT=4320 node ./dist/server/entry.mjs
       "
     networks:
-      - incas_network
+      incas_network:
+        ipv4_address: 172.19.0.20
     ports:
       - "0.0.0.0:4320:4320"
     depends_on:
@@ -130,7 +133,8 @@ services:
     ports:
       - "5434:5432"
     networks:
-      - incas_network
+      incas_network:
+        ipv4_address: 172.19.0.3
     healthcheck:
       test:
         [
@@ -170,7 +174,8 @@ services:
       - ./odoo/addons:/mnt/extra-addons
       - ./odoo/config/odoo.conf:/etc/odoo/odoo.conf
     networks:
-      - incas_network
+      incas_network:
+        ipv4_address: 172.19.0.11
     ports:
       - "0.0.0.0:8070:8069"
       - "0.0.0.0:8072:8072"
@@ -186,3 +191,6 @@ volumes:
 networks:
   incas_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
