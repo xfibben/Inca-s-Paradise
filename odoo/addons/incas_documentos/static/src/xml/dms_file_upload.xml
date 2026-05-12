@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="incas_documentos.KanbanButtonsUploadProgress" t-inherit="dms.KanbanButtons" t-inherit-mode="extension">
+        <xpath expr="." position="inside">
+            <div t-if="uploadState.active" class="d-inline-flex align-items-center gap-2 mx-2">
+                <span t-esc="uploadState.fileName" class="text-muted"/>
+                <div class="progress" style="width: 180px; height: 10px;">
+                    <div
+                        class="progress-bar"
+                        role="progressbar"
+                        t-att-style="'width: ' + uploadState.percent + '%;'"
+                        t-att-aria-valuenow="uploadState.percent"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                    />
+                </div>
+                <span t-esc="uploadState.percent + '%'" class="text-muted"/>
+            </div>
+        </xpath>
+    </t>
+
+    <t t-name="incas_documentos.ListButtonsUploadProgress" t-inherit="dms.ListButtons" t-inherit-mode="extension">
+        <xpath expr="." position="inside">
+            <div t-if="uploadState.active" class="d-inline-flex align-items-center gap-2 mx-2">
+                <span t-esc="uploadState.fileName" class="text-muted"/>
+                <div class="progress" style="width: 180px; height: 10px;">
+                    <div
+                        class="progress-bar"
+                        role="progressbar"
+                        t-att-style="'width: ' + uploadState.percent + '%;'"
+                        t-att-aria-valuenow="uploadState.percent"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                    />
+                </div>
+                <span t-esc="uploadState.percent + '%'" class="text-muted"/>
+            </div>
+        </xpath>
+    </t>
+</templates>

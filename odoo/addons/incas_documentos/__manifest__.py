@@ -16,6 +16,7 @@
         "web.assets_backend": [
             "incas_documentos/static/src/js/attachment.esm.js",
             "incas_documentos/static/src/js/dms_file_upload.esm.js",
+            "incas_documentos/static/src/xml/dms_file_upload.xml",
         ],
     },
     "application": False,

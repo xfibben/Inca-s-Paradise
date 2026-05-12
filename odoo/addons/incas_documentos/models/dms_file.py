@@ -51,3 +51,9 @@ class DmsFile(models.Model):
         records = self.create(values)
         attachments.with_context(dms_file=True).unlink()
         return records.ids
+
+    def unlink(self):
+        attachments = self.mapped("attachment_id")
+        if not self.env.context.get("dms_file") and attachments:
+            attachments.with_context(dms_file=True).unlink()
+        return super().unlink()
