@@ -15,8 +15,7 @@
     "assets": {
         "web.assets_backend": [
             "incas_documentos/static/src/js/attachment.esm.js",
-            "incas_documentos/static/src/js/dms_file_download.esm.js",
-            "incas_documentos/static/src/js/file_kanban_record.esm.js",
+            "incas_documentos/static/src/js/dms_file_actions.esm.js",
             "incas_documentos/static/src/js/dms_file_upload.esm.js",
             "incas_documentos/static/src/xml/dms_file_upload.xml",
         ],
