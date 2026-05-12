@@ -11,7 +11,7 @@
         <field name="arch" type="xml">
             <xpath expr="//a[contains(@class, 'o_kanban_dms_file_preview')]" position="attributes">
                 <attribute name="class">h-100 d-block incas_dms_file_preview</attribute>
-                <attribute name="t-attf-href">/incas/dms/file/#{record.id.raw_value}/content?download=false</attribute>
+                <attribute name="t-attf-href">/incas/dms/file/#{record.id.raw_value}/preview</attribute>
                 <attribute name="target">_blank</attribute>
             </xpath>
 
@@ -21,7 +21,7 @@
 
             <xpath expr="//div[@role='menuitem'][a[@type='open']]" position="before">
                 <div role="menuitem">
-                    <a t-attf-href="/incas/dms/file/#{record.id.raw_value}/content?download=false" target="_blank">
+                    <a t-attf-href="/incas/dms/file/#{record.id.raw_value}/preview" target="_blank">
                         <i class="fa fa-eye" />
                         Vista previa
                     </a>
