@@ -11,8 +11,8 @@ async function eliminarArchivo(recordId) {
             method: "call",
             params: {
                 model: "dms.file",
-                method: "unlink",
-                args: [[recordId]],
+                method: "unlink_incas_safe",
+                args: [recordId],
                 kwargs: {},
             },
         }),

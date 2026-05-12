@@ -62,3 +62,11 @@ class DmsFile(models.Model):
     def action_unlink_incas(self):
         self.unlink()
         return {"type": "ir.actions.client", "tag": "reload"}
+
+    @api.model
+    def unlink_incas_safe(self, record_id):
+        record = self.browse(record_id).exists()
+        if not record:
+            return True
+        record.unlink()
+        return True
