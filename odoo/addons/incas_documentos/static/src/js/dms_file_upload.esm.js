@@ -34,7 +34,6 @@ function crearUploadPorArchivo() {
 
         async onUpload(attachments) {
             const attachmentIds = attachments.map((attachment) => attachment.id);
-            const ctx = this.props.context;
             const controllerID = this.actionService.currentController.jsId;
 
             if (!attachmentIds.length) {
@@ -63,21 +62,11 @@ function crearUploadPorArchivo() {
             }
 
             try {
-                for (const attachmentId of attachmentIds) {
-                    const attachmentData = await this.orm.call(
-                        "dms.file",
-                        "get_dms_files_from_attachments",
-                        [],
-                        {attachment_ids: [attachmentId]}
-                    );
-                    const values = attachmentData.map((attachment) => ({
-                        name: attachment.name,
-                        content: attachment.datas,
-                        mimetype: attachment.mimetype,
-                        directory_id,
-                    }));
-                    await this.orm.call("dms.file", "create", [values], {context: ctx});
-                }
+                await this.orm.call(
+                    "dms.file",
+                    "crear_desde_adjuntos_subidos",
+                    [attachmentIds, directory_id]
+                );
             } catch (error) {
                 this.notification.add(error.data?.message || error.message, {
                     type: "danger",
