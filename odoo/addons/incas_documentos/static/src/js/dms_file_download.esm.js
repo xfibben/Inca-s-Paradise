@@ -43,74 +43,18 @@ function hideDownloadProgress() {
     }, 1200);
 }
 
-function parseFilename(contentDisposition) {
-    if (!contentDisposition) {
-        return "archivo";
-    }
-    const match = contentDisposition.match(/filename\*=UTF-8''([^;]+)|filename=\"?([^\";]+)\"?/i);
-    if (!match) {
-        return "archivo";
-    }
-    return decodeURIComponent(match[1] || match[2]);
-}
-
-function downloadWithProgress(url) {
-    return new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("GET", url, true);
-        xhr.responseType = "blob";
-
-        xhr.addEventListener("progress", (event) => {
-            const name = parseFilename(xhr.getResponseHeader("Content-Disposition"));
-            if (event.lengthComputable) {
-                setDownloadProgress(name, Math.round((event.loaded / event.total) * 100));
-            } else {
-                setDownloadProgress(name, 0);
-            }
-        });
-
-        xhr.addEventListener("load", () => {
-            if (xhr.status < 200 || xhr.status >= 300) {
-                reject(new Error(`Download failed with status ${xhr.status}`));
-                return;
-            }
-            const name = parseFilename(xhr.getResponseHeader("Content-Disposition"));
-            const blobUrl = URL.createObjectURL(xhr.response);
-            const link = document.createElement("a");
-            link.href = blobUrl;
-            link.download = name;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(blobUrl);
-            setDownloadProgress(name, 100);
-            hideDownloadProgress();
-            resolve();
-        });
-
-        xhr.addEventListener("error", () => {
-            reject(new Error("No se pudo completar la descarga del archivo."));
-        });
-
-        xhr.send();
-    });
-}
-
 if (!window.__incasDmsDownloadBound) {
     window.__incasDmsDownloadBound = true;
     document.addEventListener(
         "click",
-        async (event) => {
+        (event) => {
             const link = event.target.closest("a[href*='/incas/dms/file/'][href*='download=true']");
             if (!link) {
                 return;
             }
-            event.preventDefault();
-            try {
-                await downloadWithProgress(link.href);
-            } catch (error) {
-                window.alert(error.message || "No se pudo completar la descarga del archivo.");
-            }
+            const fileName = link.closest(".o_kanban_record, tr")?.innerText?.split("\n")[0]?.trim() || "archivo";
+            setDownloadProgress(fileName, 100);
+            hideDownloadProgress();
         },
         true
     );
