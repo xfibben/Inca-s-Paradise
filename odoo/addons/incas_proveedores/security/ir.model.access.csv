@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_incas_proveedor_system,access.incas.proveedor.system,model_incas_proveedor,base.group_system,1,1,1,1
+access_incas_proveedor_admin,access.incas.proveedor.admin,model_incas_proveedor,incas_core.group_incas_core_admin,1,1,1,1
+access_incas_proveedor_gerencia,access.incas.proveedor.gerencia,model_incas_proveedor,incas_core.group_incas_core_gerencia,1,1,1,0
+access_incas_proveedor_reservas,access.incas.proveedor.reservas,model_incas_proveedor,incas_core.group_incas_core_reservas,1,1,0,0
+access_incas_proveedor_operaciones,access.incas.proveedor.operaciones,model_incas_proveedor,incas_core.group_incas_core_operaciones,1,0,0,0
