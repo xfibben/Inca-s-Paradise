@@ -18,6 +18,7 @@
                 <attribute name="name"></attribute>
                 <attribute name="href">#</attribute>
                 <attribute name="class" add=" incas_dms_delete" separator=" "/>
+                <attribute name="t-att-data-record-id">record.id.raw_value</attribute>
             </xpath>
         </field>
     </record>
