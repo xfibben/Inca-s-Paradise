@@ -6,7 +6,7 @@ class DmsFile(models.Model):
 
     def _actualizar_pasajeros_documentales(self, directory_ids=None):
         directory_ids = set(directory_ids or [])
-        directory_ids.update(self.mapped("directory_id").ids)
+        directory_ids.update(self.exists().mapped("directory_id").ids)
         if not directory_ids:
             return
         directory_model = self.env["dms.directory"].sudo()
