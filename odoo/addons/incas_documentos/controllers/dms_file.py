@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import mimetypes
+import re
 import unicodedata
 
 from odoo import _, http
@@ -10,10 +11,56 @@ from odoo.http import request
 from odoo.tools.mimetypes import guess_mimetype
 
 _logger = logging.getLogger(__name__)
+RANGE_RE = re.compile(r"bytes=(\d+)-(\d*)")
 
 
 def _clean_filename(name):
     return name.replace("<", "")
+
+
+def _build_range_response(binary, mimetype, filename):
+    httprequest = request.httprequest
+    range_header = httprequest.headers.get("Range")
+    size = len(binary)
+
+    headers = [
+        ("Content-Type", mimetype),
+        ("Content-Disposition", f'inline; filename="{filename}"'),
+        ("Accept-Ranges", "bytes"),
+        ("X-Content-Type-Options", "nosniff"),
+    ]
+
+    if not range_header:
+        headers.append(("Content-Length", str(size)))
+        return request.make_response(binary, headers)
+
+    match = RANGE_RE.fullmatch(range_header.strip())
+    if not match:
+        return request.make_response(
+            b"",
+            headers + [("Content-Range", f"bytes */{size}")],
+            status=416,
+        )
+
+    start = int(match.group(1))
+    end = int(match.group(2)) if match.group(2) else size - 1
+    end = min(end, size - 1)
+
+    if start >= size or start > end:
+        return request.make_response(
+            b"",
+            headers + [("Content-Range", f"bytes */{size}")],
+            status=416,
+        )
+
+    chunk = binary[start : end + 1]
+    headers.extend(
+        [
+            ("Content-Length", str(len(chunk))),
+            ("Content-Range", f"bytes {start}-{end}/{size}"),
+        ]
+    )
+    return request.make_response(chunk, headers, status=206)
 
 
 class IncasDocumentosDmsFileController(http.Controller):
@@ -115,10 +162,4 @@ class IncasDocumentosDmsFileController(http.Controller):
             or guess_mimetype(binary)
             or "application/octet-stream"
         )
-
-        headers = [
-            ("Content-Type", mimetype),
-            ("Content-Disposition", f'inline; filename="{archivo.name}"'),
-            ("X-Content-Type-Options", "nosniff"),
-        ]
-        return request.make_response(binary, headers)
+        return _build_range_response(binary, mimetype, archivo.name)
