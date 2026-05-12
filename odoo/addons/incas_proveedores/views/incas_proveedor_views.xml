@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_proveedor_list" model="ir.ui.view">
+        <field name="name">incas.proveedor.list</field>
+        <field name="model">incas.proveedor</field>
+        <field name="arch" type="xml">
+            <list string="Proveedores">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="tipo_proveedor"/>
+                <field name="contact_name"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="mobile"/>
+                <field name="city"/>
+                <field name="country_id"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_proveedor_search" model="ir.ui.view">
+        <field name="name">incas.proveedor.search</field>
+        <field name="model">incas.proveedor</field>
+        <field name="arch" type="xml">
+            <search string="Buscar proveedores">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="tipo_proveedor"/>
+                <field name="contact_name"/>
+                <field name="email"/>
+                <field name="phone"/>
+                <field name="city"/>
+                <field name="country_id"/>
+                <separator/>
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+                <filter name="filter_archived" string="Archivados" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter name="group_tipo" string="Tipo" domain="[]" context="{'group_by': 'tipo_proveedor'}"/>
+                <filter name="group_city" string="Ciudad" domain="[]" context="{'group_by': 'city'}"/>
+                <filter name="group_country" string="Pais" domain="[]" context="{'group_by': 'country_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_proveedor_form" model="ir.ui.view">
+        <field name="name">incas.proveedor.form</field>
+        <field name="model">incas.proveedor</field>
+        <field name="arch" type="xml">
+            <form string="Proveedor">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="name"/>
+                            <field name="tipo_proveedor"/>
+                            <field name="contact_name"/>
+                            <field name="email"/>
+                            <field name="website"/>
+                        </group>
+                        <group>
+                            <field name="phone"/>
+                            <field name="mobile"/>
+                            <field name="street"/>
+                            <field name="street2"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="city"/>
+                            <field name="state_id"/>
+                            <field name="zip"/>
+                            <field name="country_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="notes" placeholder="Informacion adicional del proveedor"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_proveedores" model="ir.actions.act_window">
+        <field name="name">Proveedores</field>
+        <field name="res_model">incas.proveedor</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_proveedor_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_proveedores_root"
+        name="Proveedores"
+        parent="incas_core.menu_incas_root"
+        sequence="25"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones"
+    />
+
+    <menuitem
+        id="menu_incas_proveedores"
+        name="Directorio"
+        parent="menu_incas_proveedores_root"
+        action="action_incas_proveedores"
+        sequence="10"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia,incas_core.group_incas_core_reservas,incas_core.group_incas_core_operaciones"
+    />
+</odoo>
