@@ -14,6 +14,7 @@ from . import incas_reserva_paquete_linea
 from . import incas_reserva_hotel_linea
 from . import incas_reserva_extra_linea
 from . import incas_reserva
+from . import incas_reserva_pdf_wizard
 from . import incas_pago
 from . import incas_pasajero
 from . import incas_reserva_cambio

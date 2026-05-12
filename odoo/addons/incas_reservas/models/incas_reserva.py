@@ -1294,10 +1294,17 @@ class IncasReserva(models.Model):
 
     def action_print_pdf(self):
         self.ensure_one()
+        idioma = self.idioma if self.idioma in ["es", "en", "pt"] else "es"
         return {
-            "type": "ir.actions.act_url",
-            "url": f"/incas/reserva/{self.id}/pdf",
-            "target": "self",
+            "type": "ir.actions.act_window",
+            "name": "Exportar voucher PDF",
+            "res_model": "incas.reserva.pdf.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_reserva_id": self.id,
+                "default_idioma": idioma,
+            },
         }
 
     def action_print_package_pdf(self):

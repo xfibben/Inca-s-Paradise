@@ -19,6 +19,7 @@
         "views/incas_catalogo_tour_views.xml",
         "views/incas_catalogo_transporte_views.xml",
         "views/incas_currency_rate_views.xml",
+        "views/incas_reserva_pdf_wizard_views.xml",
         "views/incas_reserva_views.xml",
         "views/incas_reserva_cambio_views.xml",
         "views/incas_pago_views.xml",

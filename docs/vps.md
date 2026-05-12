@@ -131,6 +131,59 @@ Y en `docker-compose.prod.yaml` el servicio `odoo` debe publicar:
 - `8070:8069`
 - `8072:8072`
 
+## DMS pesado en produccion
+
+Para el modulo documental de Odoo (`dms` + `incas_documentos`) quedaron validadas estas reglas:
+
+- subir archivos grandes funciona con:
+  - `client_max_body_size 600M;`
+  - `proxy_request_buffering off;`
+  - `proxy_buffering off;`
+  - `limit_time_cpu = 1200`
+  - `limit_time_real = 1200`
+- el limite funcional actual del DMS custom es `500 MB` por archivo
+- la barra de progreso de subida vive en JS custom de `incas_documentos`
+- despues de actualizar assets JS de Odoo conviene limpiar bundles cacheados en la BD:
+
+```bash
+docker exec incas_odoo_prod sh -lc 'PGPASSWORD="$PASSWORD" psql -h "$HOST" -U "$USER" -d incas_odoo -c "delete from ir_attachment where url like '\''/web/assets/%'\'';"'
+```
+
+- luego reiniciar Odoo y abrir:
+
+```text
+https://odoo.incasparadise.com/odoo?debug=assets
+```
+
+- y hacer `Ctrl+Shift+R`
+
+### Preview inline de archivos
+
+- no usar `download=false` como unico mecanismo para preview
+- usar la ruta custom:
+
+```text
+/incas/dms/file/<id>/preview
+```
+
+- esa ruta devuelve `Content-Disposition: inline`
+- soporta `Range requests`
+- eso permite preview real para:
+  - videos
+  - PDF
+  - imagenes
+
+### Borrado DMS
+
+- el error `Record does not exist or has been deleted` no estaba en `incas_documentos`
+- la causa real estaba en `odoo/addons/incas_reservas/models/dms_file.py`
+- al borrar, el modulo hacia `self.mapped("directory_id")` sobre registros ya eliminados
+- el fix correcto fue usar:
+
+```python
+self.exists().mapped("directory_id")
+```
+
 Si Odoo devuelve error de websocket tipo:
 
 `Couldn't bind the websocket. Is the connection opened on the evented port (8072)?`
