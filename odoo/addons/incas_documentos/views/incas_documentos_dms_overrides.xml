@@ -12,6 +12,13 @@
             <xpath expr="//a[contains(@t-attf-href, '/web/content?id=#{record.id.raw_value}&amp;field=content&amp;model=dms.file&amp;filename_field=name&amp;download=true')]" position="attributes">
                 <attribute name="t-attf-href">/incas/dms/file/#{record.id.raw_value}/content?download=true</attribute>
             </xpath>
+
+            <xpath expr="//a[@type='delete']" position="attributes">
+                <attribute name="type"></attribute>
+                <attribute name="name"></attribute>
+                <attribute name="href">#</attribute>
+                <attribute name="class" add=" incas_dms_delete" separator=" "/>
+            </xpath>
         </field>
     </record>
 </odoo>

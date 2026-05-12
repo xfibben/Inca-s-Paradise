@@ -58,3 +58,7 @@ class DmsFile(models.Model):
         if not self.env.context.get("dms_file") and attachments:
             attachments.exists().with_context(dms_file=True).unlink()
         return result
+
+    def action_unlink_incas(self):
+        self.unlink()
+        return {"type": "ir.actions.client", "tag": "reload"}
