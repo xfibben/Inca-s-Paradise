@@ -12,6 +12,11 @@
         "views/incas_documentos_dms_overrides.xml",
         "views/incas_documentos_menu.xml",
     ],
+    "assets": {
+        "web.assets_backend": [
+            "incas_documentos/static/src/js/dms_file_upload.esm.js",
+        ],
+    },
     "application": False,
     "installable": True,
 }

@@ -121,6 +121,7 @@ Para que Odoo funcione detras de proxy:
 - `proxy_mode = True`
 - `workers = 2`
 - `gevent_port = 8072`
+- `client_max_body_size 600M;` en el vhost/proxy si se suben videos por DMS
 
 Y en `docker-compose.prod.yaml` el servicio `odoo` debe publicar:
 
