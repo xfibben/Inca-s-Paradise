@@ -2,8 +2,6 @@ import {patch} from "@web/core/utils/patch";
 import {ListController} from "@web/views/list/list_controller";
 import {KanbanController} from "@web/views/kanban/kanban_controller";
 import {_t} from "@web/core/l10n/translation";
-import {FileKanbanRenderer} from "../../../dms/static/src/js/views/file_kanban_renderer.esm";
-import {FileListRenderer} from "../../../dms/static/src/js/views/file_list_renderer.esm";
 
 function ensureUploadOverlay() {
     let overlay = document.getElementById("incas-dms-upload-overlay");
@@ -45,72 +43,6 @@ function setUploadProgress(fileName, percent) {
 function hideUploadProgress() {
     const overlay = ensureUploadOverlay();
     overlay.style.display = "none";
-}
-
-function leerEntradaArchivo(entry) {
-    return new Promise((resolve, reject) => {
-        entry.file(resolve, reject);
-    });
-}
-
-function leerDirectorio(reader) {
-    return new Promise((resolve, reject) => {
-        reader.readEntries(resolve, reject);
-    });
-}
-
-async function extraerArchivosDesdeEntrada(entry) {
-    if (entry.isFile) {
-        return [await leerEntradaArchivo(entry)];
-    }
-    if (!entry.isDirectory) {
-        return [];
-    }
-
-    const reader = entry.createReader();
-    const files = [];
-
-    while (true) {
-        const entries = await leerDirectorio(reader);
-        if (!entries.length) {
-            break;
-        }
-        for (const child of entries) {
-            files.push(...(await extraerArchivosDesdeEntrada(child)));
-        }
-    }
-
-    return files;
-}
-
-async function extraerArchivosDrop(dataTransfer) {
-    const items = [...(dataTransfer?.items || [])];
-    const files = [];
-
-    for (const item of items) {
-        const entry = item.webkitGetAsEntry?.();
-        if (entry) {
-            files.push(...(await extraerArchivosDesdeEntrada(entry)));
-            continue;
-        }
-        const file = item.getAsFile?.();
-        if (file) {
-            files.push(file);
-        }
-    }
-
-    if (files.length) {
-        return files;
-    }
-    return [...(dataTransfer?.files || [])];
-}
-
-function construirFileList(files) {
-    const dataTransfer = new DataTransfer();
-    for (const file of files) {
-        dataTransfer.items.add(file);
-    }
-    return dataTransfer.files;
 }
 
 function parsearRespuestaSubida(fileData) {
@@ -250,19 +182,3 @@ function crearUploadPorArchivo() {
 
 patch(ListController.prototype, crearUploadPorArchivo());
 patch(KanbanController.prototype, crearUploadPorArchivo());
-
-function crearDropZoneCarpetas() {
-    return {
-        async onDrop(ev) {
-            ev.preventDefault();
-            this.dragState.showDragZone = false;
-            const files = await extraerArchivosDrop(ev.dataTransfer);
-            await this.env.bus.trigger("change_file_input", {
-                files: construirFileList(files),
-            });
-        },
-    };
-}
-
-patch(FileKanbanRenderer.prototype, crearDropZoneCarpetas());
-patch(FileListRenderer.prototype, crearDropZoneCarpetas());
