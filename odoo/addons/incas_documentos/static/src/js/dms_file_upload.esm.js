@@ -2,9 +2,50 @@ import {patch} from "@web/core/utils/patch";
 import {ListController} from "@web/views/list/list_controller";
 import {KanbanController} from "@web/views/kanban/kanban_controller";
 import {_t} from "@web/core/l10n/translation";
-import {useState} from "@odoo/owl";
 import {FileKanbanRenderer} from "../../../dms/static/src/js/views/file_kanban_renderer.esm";
 import {FileListRenderer} from "../../../dms/static/src/js/views/file_list_renderer.esm";
+
+function ensureUploadOverlay() {
+    let overlay = document.getElementById("incas-dms-upload-overlay");
+    if (overlay) {
+        return overlay;
+    }
+    overlay = document.createElement("div");
+    overlay.id = "incas-dms-upload-overlay";
+    overlay.style.position = "fixed";
+    overlay.style.right = "16px";
+    overlay.style.bottom = "16px";
+    overlay.style.zIndex = "9999";
+    overlay.style.background = "#ffffff";
+    overlay.style.border = "1px solid #d1d5db";
+    overlay.style.borderRadius = "8px";
+    overlay.style.padding = "12px";
+    overlay.style.boxShadow = "0 8px 24px rgba(0,0,0,0.12)";
+    overlay.style.minWidth = "320px";
+    overlay.style.display = "none";
+    overlay.innerHTML = `
+        <div id="incas-dms-upload-name" style="font-size:12px;color:#4b5563;margin-bottom:8px;"></div>
+        <div style="width:100%;height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;">
+            <div id="incas-dms-upload-bar" style="width:0%;height:100%;background:#1aa093;"></div>
+        </div>
+        <div id="incas-dms-upload-percent" style="font-size:12px;color:#4b5563;margin-top:8px;">0%</div>
+    `;
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+function setUploadProgress(fileName, percent) {
+    const overlay = ensureUploadOverlay();
+    overlay.style.display = "block";
+    overlay.querySelector("#incas-dms-upload-name").textContent = fileName;
+    overlay.querySelector("#incas-dms-upload-bar").style.width = `${percent}%`;
+    overlay.querySelector("#incas-dms-upload-percent").textContent = `${percent}%`;
+}
+
+function hideUploadProgress() {
+    const overlay = ensureUploadOverlay();
+    overlay.style.display = "none";
+}
 
 function leerEntradaArchivo(entry) {
     return new Promise((resolve, reject) => {
@@ -124,11 +165,6 @@ function crearUploadPorArchivo() {
     return {
         setup() {
             super.setup(...arguments);
-            this.uploadState = useState({
-                active: false,
-                fileName: "",
-                percent: 0,
-            });
             this.pendingFiles = null;
         },
 
@@ -138,12 +174,10 @@ function crearUploadPorArchivo() {
 
             try {
                 for (const file of files) {
-                    this.uploadState.active = true;
-                    this.uploadState.fileName = file.name;
-                    this.uploadState.percent = 0;
+                    setUploadProgress(file.name, 0);
 
                     const fileData = await subirArchivoConProgreso(file, (percent) => {
-                        this.uploadState.percent = percent;
+                        setUploadProgress(file.name, percent);
                     });
                     const uploaded = parsearRespuestaSubida(fileData);
                     if (uploaded.error) {
@@ -162,9 +196,7 @@ function crearUploadPorArchivo() {
                     }
                 );
             } finally {
-                this.uploadState.active = false;
-                this.uploadState.fileName = "";
-                this.uploadState.percent = 0;
+                hideUploadProgress();
                 this.pendingFiles = null;
                 this.fileInput.el.value = "";
             }
