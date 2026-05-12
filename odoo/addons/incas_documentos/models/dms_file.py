@@ -56,4 +56,8 @@ class DmsFile(models.Model):
         attachments = self.mapped("attachment_id")
         if not self.env.context.get("dms_file") and attachments:
             attachments.with_context(dms_file=True).unlink()
+            remaining = self.exists()
+            if not remaining:
+                return True
+            return super(DmsFile, remaining).unlink()
         return super().unlink()
