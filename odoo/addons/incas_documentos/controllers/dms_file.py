@@ -1,10 +1,13 @@
+import base64
 import json
 import logging
+import mimetypes
 import unicodedata
 
 from odoo import _, http
 from odoo.exceptions import AccessError
 from odoo.http import request
+from odoo.tools.mimetypes import guess_mimetype
 
 _logger = logging.getLogger(__name__)
 
@@ -84,3 +87,38 @@ class IncasDocumentosDmsFileController(http.Controller):
             f"?id={archivo.id}&field=content&model=dms.file"
             f"&filename_field=name&{query}"
         )
+
+    @http.route("/incas/dms/file/<int:file_id>/preview", type="http", auth="user")
+    def vista_previa_archivo_dms(self, file_id, **kwargs):
+        archivo = request.env["dms.file"].browse(file_id)
+        archivo.check_access("read")
+
+        binary = b""
+        mimetype = archivo.mimetype
+
+        if archivo.attachment_id:
+            binary = archivo.attachment_id.raw or b""
+            mimetype = mimetype or archivo.attachment_id.mimetype
+        elif archivo.content_file:
+            binary = base64.b64decode(
+                archivo.with_context(bin_size=False).content_file or b""
+            )
+        elif archivo.content:
+            binary = base64.b64decode(
+                archivo.with_context(bin_size=False).content or b""
+            )
+
+        guessed_from_name = mimetypes.guess_type(archivo.name or "")[0]
+        mimetype = (
+            mimetype
+            or guessed_from_name
+            or guess_mimetype(binary)
+            or "application/octet-stream"
+        )
+
+        headers = [
+            ("Content-Type", mimetype),
+            ("Content-Disposition", f'inline; filename="{archivo.name}"'),
+            ("X-Content-Type-Options", "nosniff"),
+        ]
+        return request.make_response(binary, headers)
