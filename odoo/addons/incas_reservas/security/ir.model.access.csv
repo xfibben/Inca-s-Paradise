@@ -59,6 +59,11 @@ access_incas_reserva_admin,access.incas.reserva.admin,model_incas_reserva,incas_
 access_incas_reserva_reservas,access.incas.reserva.reservas,model_incas_reserva,incas_core.group_incas_core_reservas,1,1,1,0
 access_incas_reserva_operaciones,access.incas.reserva.operaciones,model_incas_reserva,incas_core.group_incas_core_operaciones,1,1,0,0
 access_incas_reserva_gerencia,access.incas.reserva.gerencia,model_incas_reserva,incas_core.group_incas_core_gerencia,1,1,1,0
+access_incas_reserva_pdf_wizard_system,access.incas.reserva.pdf.wizard.system,model_incas_reserva_pdf_wizard,base.group_system,1,1,1,1
+access_incas_reserva_pdf_wizard_admin,access.incas.reserva.pdf.wizard.admin,model_incas_reserva_pdf_wizard,incas_core.group_incas_core_admin,1,1,1,1
+access_incas_reserva_pdf_wizard_reservas,access.incas.reserva.pdf.wizard.reservas,model_incas_reserva_pdf_wizard,incas_core.group_incas_core_reservas,1,1,1,1
+access_incas_reserva_pdf_wizard_operaciones,access.incas.reserva.pdf.wizard.operaciones,model_incas_reserva_pdf_wizard,incas_core.group_incas_core_operaciones,1,1,1,1
+access_incas_reserva_pdf_wizard_gerencia,access.incas.reserva.pdf.wizard.gerencia,model_incas_reserva_pdf_wizard,incas_core.group_incas_core_gerencia,1,1,1,1
 access_incas_pago_system,access.incas.pago.system,model_incas_pago,base.group_system,1,1,1,1
 access_incas_pago_admin,access.incas.pago.admin,model_incas_pago,incas_core.group_incas_core_admin,1,1,1,1
 access_incas_pago_reservas,access.incas.pago.reservas,model_incas_pago,incas_core.group_incas_core_reservas,1,1,1,0

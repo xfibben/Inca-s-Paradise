@@ -14,7 +14,7 @@ class IncasReservasPdfController(http.Controller):
     def reserva_pdf(self, reserva_id, **kwargs):
         reserva = request.env["incas.reserva"].browse(reserva_id)
         reserva.check_access("read")
-        pdf = generar_pdf_desde_html(render_reserva_html(reserva))
+        pdf = generar_pdf_desde_html(render_reserva_html(reserva, kwargs.get("idioma")))
         return request.make_response(
             pdf,
             headers=[
@@ -29,7 +29,7 @@ class IncasReservasPdfController(http.Controller):
         reserva = request.env["incas.reserva"].sudo().browse(reserva_id)
         if not reserva.exists() or reserva.access_token != access_token:
             return request.not_found()
-        pdf = generar_pdf_desde_html(render_reserva_html(reserva))
+        pdf = generar_pdf_desde_html(render_reserva_html(reserva, kwargs.get("idioma") or reserva.idioma))
         return request.make_response(
             pdf,
             headers=[

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_reserva_pdf_wizard_form" model="ir.ui.view">
+        <field name="name">incas.reserva.pdf.wizard.form</field>
+        <field name="model">incas.reserva.pdf.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Exportar voucher PDF">
+                <group>
+                    <field name="reserva_id" readonly="1"/>
+                    <field name="idioma" widget="radio"/>
+                </group>
+                <footer>
+                    <button name="action_exportar_pdf" type="object" string="Exportar" class="btn-primary"/>
+                    <button special="cancel" string="Cancelar" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

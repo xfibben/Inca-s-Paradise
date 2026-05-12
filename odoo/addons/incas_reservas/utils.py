@@ -163,6 +163,212 @@ def bloque_pagos_reserva(reserva):
     return bloque("RESUMEN DE PAGO", filas)
 
 
+def fecha_corta(valor):
+    if not valor:
+        return "-"
+    if isinstance(valor, str):
+        partes = valor.split("-")
+        if len(partes) == 3:
+            return f"{partes[2]}/{partes[1]}/{partes[0]}"
+        return valor
+    return valor.strftime("%d/%m/%Y")
+
+
+def _voucher_logo_data_uri():
+    module_dir = os.path.dirname(__file__)
+    logo_dir = os.path.join(
+        os.path.dirname(module_dir),
+        "static",
+        "src",
+        "img",
+    )
+    logo_path = ""
+    for filename in ["certificado_imagen.png", "voucher_logo.svg", "voucher_logo.png", "voucher_logo.jpg", "voucher_logo.jpeg"]:
+        candidate = os.path.join(logo_dir, filename)
+        if os.path.exists(candidate):
+            logo_path = candidate
+            break
+    if not os.path.exists(logo_path):
+        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        logo_path = os.path.join(
+            root_dir,
+            "frontend",
+            "public",
+            "landing page images",
+            "nuevo_logo.svg",
+        )
+    if not os.path.exists(logo_path):
+        return ""
+    with open(logo_path, "rb") as logo_file:
+        data = base64.b64encode(logo_file.read()).decode("ascii")
+    extension = os.path.splitext(logo_path)[1].lower()
+    mime = {
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".svg": "image/svg+xml",
+    }.get(extension, "image/svg+xml")
+    return f"data:{mime};base64,{data}"
+
+
+def _voucher_valor_linea(reserva, precio_adulto, precio_nino):
+    return ((reserva.cantidad_adultos or 0) * (precio_adulto or 0)) + (
+        (reserva.cantidad_ninos or 0) * (precio_nino or 0)
+    )
+
+
+def _metodo_pago_reserva(reserva):
+    pago = reserva.pago_ids.sorted(
+        lambda item: (
+            item.fecha_pago or item.create_date or fields.Datetime.now(),
+            item.id,
+        ),
+        reverse=True,
+    )[:1]
+    if not pago:
+        return "-"
+    metodo = pago.metodo or pago.proveedor
+    if not metodo:
+        return "-"
+    return texto(metodo).replace("_", " ").title()
+
+
+def _voucher_filas_servicio(reserva):
+    lineas = reserva.paquete_linea_ids.sorted(lambda linea: (linea.sequence, linea.id))
+    if not lineas:
+        servicio = reserva.servicio_nombre
+        if reserva.tipo_servicio == "transporte" and reserva.vehiculo_seleccionado:
+            servicio = f"{servicio} ({reserva.vehiculo_seleccionado})"
+        factor = 1 - ((reserva.descuento or 0) / 100)
+        return [
+            {
+                "fecha": fecha_corta(reserva.fecha_inicio or reserva.fecha_viaje),
+                "hora": reserva.turno,
+                "servicio": servicio,
+                "valor": _voucher_valor_linea(
+                    reserva,
+                    (reserva.precio_adulto or 0) * factor,
+                    (reserva.precio_nino or 0) * factor,
+                ),
+            }
+        ]
+    filas = []
+    for linea in lineas:
+        servicio = linea.nombre
+        vehiculo = _vehiculo_linea_paquete(linea)
+        if linea.tipo_servicio == "transporte" and vehiculo:
+            servicio = f"{servicio} ({vehiculo})"
+        filas.append(
+            {
+                "fecha": fecha_corta(linea.fecha or reserva.fecha_inicio or reserva.fecha_viaje),
+                "hora": linea.horario_id.name or linea.horario or reserva.turno,
+                "servicio": servicio,
+                "valor": _voucher_valor_linea(
+                    reserva,
+                    linea.precio_adulto_neto,
+                    linea.precio_nino_neto,
+                ),
+            }
+        )
+    return filas
+
+
+def _voucher_tabla_servicios(reserva):
+    filas = _voucher_filas_servicio(reserva)
+    pasajeros = (reserva.cantidad_adultos or 0) + (reserva.cantidad_ninos or 0)
+    html_filas = []
+    for indice, fila_servicio in enumerate(filas):
+        pax = ""
+        if indice == 0:
+            pax = f'<td class="pax" rowspan="{len(filas)}">X{int(pasajeros or 1)}</td>'
+        html_filas.append(
+            f"""
+            <tr>
+              <td class="date-cell">{escape(texto(fila_servicio["fecha"]))}</td>
+              {pax}
+              <td class="hour-cell">{escape(texto(fila_servicio["hora"]))}</td>
+              <td class="service-cell">{escape(texto(fila_servicio["servicio"]))}</td>
+              <td class="value-cell">{escape(monto(reserva.moneda, fila_servicio["valor"]))}</td>
+            </tr>
+            """
+        )
+    return "".join(html_filas)
+
+
+def _voucher_total_servicios(reserva):
+    return sum(fila["valor"] for fila in _voucher_filas_servicio(reserva))
+
+
+def _voucher_hoteles(reserva):
+    lineas = reserva.hotel_linea_ids.sorted(lambda linea: (linea.sequence, linea.id))
+    if lineas:
+        hoteles = []
+        for linea in lineas:
+            hotel = texto(linea.hotel_nombre or linea.hotel_id.name)
+            if linea.fecha_check_in and linea.fecha_check_out:
+                hotel = f"{hotel} ({fecha_corta(linea.fecha_check_in)} - {fecha_corta(linea.fecha_check_out)})"
+            hoteles.append(hotel)
+        return " / ".join(hoteles)
+    return texto(reserva.hotel_nombre or reserva.hotel_id.name)
+
+
+def _voucher_textos(idioma):
+    textos = {
+        "es": {
+            "phone": "Número de celular",
+            "client": "Clientes(s):",
+            "hotel": "Hotel:",
+            "mobile": "Celular:",
+            "issue_date": "Fecha de emisión:",
+            "date": "FECHA",
+            "pax": "Nro PAX",
+            "hour": "HORA",
+            "service": "SERVICIO",
+            "total_val": "TOTAL VAL.",
+            "payment_method": "MEDIO DE PAGO",
+            "advance_payment": "PAGO ADELANTADO",
+            "balance": "SALDO A PAGAR",
+            "total": "TOTAL",
+            "note": "NOTA: * El pago del saldo se debe realizar en efectivo en Dólares, los dólares deben estar en buenas condiciones casi nuevo. (sin roturas, dobleces muy marcados, ni gastados). También se puede realizar el pago en soles. De acuerdo al tipo de cambio",
+        },
+        "en": {
+            "phone": "Mobile number",
+            "client": "Client(s):",
+            "hotel": "Hotel:",
+            "mobile": "Phone:",
+            "issue_date": "Issue date:",
+            "date": "DATE",
+            "pax": "PAX",
+            "hour": "TIME",
+            "service": "SERVICE",
+            "total_val": "TOTAL VAL.",
+            "payment_method": "PAYMENT METHOD",
+            "advance_payment": "ADVANCE PAYMENT",
+            "balance": "BALANCE DUE",
+            "total": "TOTAL",
+            "note": "NOTE: * The balance must be paid in cash in US dollars. Bills must be in very good condition, without tears, strong folds, or excessive wear. Payment can also be made in soles according to the exchange rate.",
+        },
+        "pt": {
+            "phone": "Número de celular",
+            "client": "Cliente(s):",
+            "hotel": "Hotel:",
+            "mobile": "Celular:",
+            "issue_date": "Data de emissão:",
+            "date": "DATA",
+            "pax": "Nro PAX",
+            "hour": "HORA",
+            "service": "SERVIÇO",
+            "total_val": "TOTAL VAL.",
+            "payment_method": "MEIO DE PAGAMENTO",
+            "advance_payment": "PAGAMENTO ANTECIPADO",
+            "balance": "SALDO A PAGAR",
+            "total": "TOTAL",
+            "note": "NOTA: * O pagamento do saldo deve ser feito em dinheiro em Dólares. As notas devem estar em muito boas condições, sem rasgos, dobras muito marcadas ou desgaste. Também é possível pagar em soles, de acordo com a taxa de câmbio.",
+        },
+    }
+    return textos.get(idioma, textos["es"])
+
+
 def html_base(titulo, codigo_label, codigo_valor, secciones):
     return f"""
     <html>
@@ -275,71 +481,227 @@ def html_base(titulo, codigo_label, codigo_valor, secciones):
     """
 
 
-def render_reserva_html(reserva):
-    tipo_servicio = tipo_servicio_titulo(reserva.tipo_servicio)
-    return html_base(
-        f"Comprobante de reserva de {tipo_servicio}",
-        "TICKET",
-        reserva.ticket,
-        [
-            bloque(
-                "DATOS DEL PASAJERO",
-                [
-                    fila(
-                        "Cliente principal",
-                        reserva.nombre or reserva.partner_id.display_name,
-                    ),
-                    fila_si(
-                        "Correo electrónico", reserva.email or reserva.partner_id.email
-                    ),
-                    fila_si(
-                        "Teléfono",
-                        reserva.telefono
-                        or getattr(reserva.partner_id, "phone", False)
-                        or getattr(reserva.partner_id, "mobile", False),
-                    ),
-                    fila_si("Tipo de documento", tipo_documento_valor(reserva)),
-                    fila_si("Número de documento", reserva.numero_documento),
-                    fila_si("Nacionalidad", reserva.nacionalidad),
-                    fila_si("Idioma", reserva.idioma),
-                    fila_si("Canal", reserva.canal_venta),
-                ],
-            ),
-            bloque(
-                f"DETALLES DEL {tipo_servicio.upper()}",
-                [
-                    fila("Tipo de servicio", detalle_tipo_servicio(reserva)),
-                    fila(
-                        nombre_servicio_label(reserva.tipo_servicio),
-                        reserva.servicio_nombre,
-                    ),
-                    fila_si(
-                        "Vehículo seleccionado",
-                        reserva.vehiculo_seleccionado
-                        if reserva.tipo_servicio == "transporte"
-                        else "",
-                    ),
-                    fila_si(
-                        "Fecha de inicio",
-                        reserva.fecha_inicio or reserva.fecha_viaje,
-                        render=fecha(reserva.fecha_inicio or reserva.fecha_viaje),
-                    ),
-                    fila_si(
-                        "Fecha de fin",
-                        reserva.fecha_fin or reserva.fecha_viaje,
-                        render=fecha(reserva.fecha_fin or reserva.fecha_viaje),
-                    ),
-                    fila_si("Horario", reserva.turno),
-                    fila("Adultos", reserva.cantidad_adultos),
-                    fila_si("Niños", reserva.cantidad_ninos, ocultar_cero=True),
-                    fila_si("Observaciones", reserva.observaciones),
-                    fila("Estado de reserva", reserva.estado_reserva),
-                    fila("Estado de pago", reserva.estado_pago),
-                ],
-            ),
-            bloque_pagos_reserva(reserva),
-        ],
-    )
+def render_reserva_html(reserva, idioma=None):
+    idioma = idioma if idioma in ["es", "en", "pt"] else "es"
+    t = _voucher_textos(idioma)
+    logo = _voucher_logo_data_uri()
+    cliente = reserva.nombre or reserva.partner_id.display_name
+    email = reserva.email or reserva.partner_id.email
+    telefono = reserva.telefono or telefono_partner(reserva.partner_id)
+    total = _voucher_total_servicios(reserva)
+    pagado = reserva.monto_pagado
+    saldo = total - pagado
+    return f"""
+    <html>
+      <head>
+        <meta charset="utf-8"/>
+        <style>
+          @page {{ size: A4 landscape; margin: 7mm; }}
+          body {{
+            margin: 0;
+            color: #050505;
+            font-family: "Times New Roman", serif;
+            font-size: 17px;
+          }}
+          .voucher {{
+            border: 3px solid #1aa093;
+            border-radius: 7px;
+            overflow: hidden;
+          }}
+          table {{
+            width: 100%;
+            border-collapse: collapse;
+          }}
+          td, th {{
+            border: 1px solid #58bdb4;
+            padding: 4px 7px;
+            vertical-align: middle;
+          }}
+          .top td {{
+            height: 118px;
+            border-top: 0;
+          }}
+          .logo-cell {{
+            width: 24%;
+            text-align: center;
+          }}
+          .logo-cell img {{
+            width: 84px;
+            height: auto;
+          }}
+          .agency {{
+            width: 38%;
+            text-align: center;
+            font-weight: 700;
+            font-size: 23px;
+            line-height: 1.14;
+          }}
+          .agency .address {{
+            display: block;
+            font-size: 18px;
+          }}
+          .agency .phone {{
+            display: block;
+            font-size: 17px;
+            font-style: italic;
+            font-weight: 400;
+          }}
+          .voucher-title {{
+            width: 38%;
+            text-align: center;
+            font-weight: 700;
+            font-size: 21px;
+          }}
+          .bar {{
+            background: #1aa093;
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 700;
+            padding: 4px 0;
+          }}
+          .number {{
+            display: block;
+            margin-top: 8px;
+            font-size: 19px;
+          }}
+          .meta td {{
+            background: #fff4cb;
+            height: 22px;
+          }}
+          .meta .label {{
+            width: 24%;
+            font-weight: 700;
+          }}
+          .meta .value {{
+            width: 76%;
+            font-weight: 700;
+          }}
+          .meta .email {{
+            color: #1d73d4;
+            text-decoration: underline;
+          }}
+          .service-head th {{
+            background: #1aa093;
+            color: #ffffff;
+            font-size: 19px;
+            font-weight: 700;
+            text-align: center;
+          }}
+          .service-body td {{
+            height: 36px;
+            font-size: 18px;
+          }}
+          .date-cell {{
+            width: 9%;
+            text-align: center;
+          }}
+          .pax {{
+            width: 6%;
+            text-align: center;
+            font-size: 21px;
+            font-weight: 700;
+          }}
+          .hour-cell {{
+            width: 8%;
+            text-align: center;
+          }}
+          .service-cell {{
+            width: 63%;
+          }}
+          .value-cell {{
+            width: 14%;
+          }}
+          .payment td {{
+            height: 32px;
+            font-size: 18px;
+            font-weight: 700;
+          }}
+          .payment .label {{
+            background: #1aa093;
+            color: #ffffff;
+            text-align: center;
+            font-size: 20px;
+          }}
+          .payment .amount {{
+            text-align: center;
+            font-size: 23px;
+          }}
+          .payment .balance {{
+            color: #ff0000;
+          }}
+          .payment .total {{
+            color: #001d55;
+          }}
+          .note {{
+            border-top: 1px solid #58bdb4;
+            padding: 7px 10px 10px;
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            font-style: italic;
+            line-height: 1.45;
+            text-align: center;
+          }}
+        </style>
+      </head>
+      <body>
+        <div class="voucher">
+          <table class="top">
+            <tr>
+              <td class="logo-cell">{f'<img src="{logo}" alt="Inca Paradise"/>' if logo else ""}</td>
+              <td class="agency">
+                INCA'S PARADISE<br/>TRAVEL AGENCY
+                <span class="address">Jirón Grau Nro. 460 Puno- Perú</span>
+                <span class="phone">{escape(t["phone"])} +51-953556680</span>
+              </td>
+              <td class="voucher-title">
+                RUC No: 20601022207
+                <div class="bar">VOUCHER</div>
+                <span class="number">No:{escape(texto(reserva.ticket or reserva.name))}</span>
+              </td>
+            </tr>
+          </table>
+          <table class="meta">
+            <tr><td class="label">{escape(t["client"])}</td><td class="value">{escape(texto(cliente))}</td></tr>
+            <tr><td class="label">{escape(t["hotel"])}</td><td>{escape(_voucher_hoteles(reserva))}</td></tr>
+            <tr><td class="label">E-mail:</td><td class="email">{escape(texto(email))}</td></tr>
+            <tr><td class="label">{escape(t["mobile"])}</td><td>{escape(texto(telefono))}</td></tr>
+            <tr><td class="label">{escape(t["issue_date"])}</td><td>{escape(fecha_corta(reserva.fecha_reserva or fields.Date.context_today(reserva)))}</td></tr>
+          </table>
+          <table>
+            <thead class="service-head">
+              <tr>
+                <th>{escape(t["date"])}</th>
+                <th>{escape(t["pax"])}</th>
+                <th>{escape(t["hour"])}</th>
+                <th>{escape(t["service"])}</th>
+                <th>{escape(t["total_val"])}</th>
+              </tr>
+            </thead>
+            <tbody class="service-body">
+              {_voucher_tabla_servicios(reserva)}
+            </tbody>
+          </table>
+          <table class="payment">
+            <tr>
+              <td class="label" style="width:24%;">{escape(t["payment_method"])}</td>
+              <td colspan="5">{escape(_metodo_pago_reserva(reserva))}</td>
+            </tr>
+            <tr>
+              <td class="label">{escape(t["advance_payment"])}</td>
+              <td class="amount" style="width:18%;">{escape(monto(reserva.moneda, pagado))}</td>
+              <td class="label" style="width:18%;">{escape(t["balance"])}</td>
+              <td class="amount balance" style="width:18%;">{escape(monto(reserva.moneda, saldo))}</td>
+              <td class="label" style="width:10%;">{escape(t["total"])}</td>
+              <td class="amount total" style="width:12%;">{escape(monto(reserva.moneda, total))}</td>
+            </tr>
+          </table>
+          <div class="note">
+            {escape(t["note"])}
+          </div>
+        </div>
+      </body>
+    </html>
+    """
 
 
 def _subtotal_linea_paquete(reserva, linea):
