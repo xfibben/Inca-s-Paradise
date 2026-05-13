@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class IncasHotel(models.Model):
@@ -67,6 +67,7 @@ class IncasHotel(models.Model):
         for record in self:
             record.categoria = record.categoria_id.name or False
 
+    @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
             categoria_id = vals.get("categoria_id")
