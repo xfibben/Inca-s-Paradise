@@ -1,4 +1,5 @@
 import base64
+import html
 import json
 import logging
 import mimetypes
@@ -16,6 +17,34 @@ RANGE_RE = re.compile(r"bytes=(\d+)-(\d*)")
 
 def _clean_filename(name):
     return name.replace("<", "")
+
+
+def _is_video_mimetype(mimetype):
+    return (mimetype or "").startswith("video/")
+
+
+def _get_dms_file_binary(archivo):
+    binary = b""
+    mimetype = archivo.mimetype
+
+    if archivo.attachment_id:
+        binary = archivo.attachment_id.raw or b""
+        mimetype = mimetype or archivo.attachment_id.mimetype
+    elif archivo.content_file:
+        binary = base64.b64decode(
+            archivo.with_context(bin_size=False).content_file or b""
+        )
+    elif archivo.content:
+        binary = base64.b64decode(archivo.with_context(bin_size=False).content or b"")
+
+    guessed_from_name = mimetypes.guess_type(archivo.name or "")[0]
+    mimetype = (
+        mimetype
+        or guessed_from_name
+        or guess_mimetype(binary)
+        or "application/octet-stream"
+    )
+    return binary, mimetype
 
 
 def _build_range_response(binary, mimetype, filename):
@@ -140,27 +169,56 @@ class IncasDocumentosDmsFileController(http.Controller):
     def vista_previa_archivo_dms(self, file_id, **kwargs):
         archivo = request.env["dms.file"].browse(file_id)
         archivo.check_access("read")
+        binary, mimetype = _get_dms_file_binary(archivo)
 
-        binary = b""
-        mimetype = archivo.mimetype
-
-        if archivo.attachment_id:
-            binary = archivo.attachment_id.raw or b""
-            mimetype = mimetype or archivo.attachment_id.mimetype
-        elif archivo.content_file:
-            binary = base64.b64decode(
-                archivo.with_context(bin_size=False).content_file or b""
+        if _is_video_mimetype(mimetype):
+            safe_title = html.escape(archivo.name or "Video")
+            stream_url = f"/incas/dms/file/{archivo.id}/stream"
+            body = f"""<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{safe_title}</title>
+  <style>
+    html, body {{
+      margin: 0;
+      background: #111;
+      height: 100%;
+    }}
+    body {{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }}
+    video {{
+      width: 100%;
+      height: 100%;
+      max-width: 100vw;
+      max-height: 100vh;
+      background: #000;
+    }}
+  </style>
+</head>
+<body>
+  <video controls preload="metadata" playsinline>
+    <source src="{html.escape(stream_url, quote=True)}" type="{html.escape(mimetype, quote=True)}">
+  </video>
+</body>
+</html>"""
+            return request.make_response(
+                body,
+                [
+                    ("Content-Type", "text/html; charset=utf-8"),
+                    ("X-Content-Type-Options", "nosniff"),
+                ],
             )
-        elif archivo.content:
-            binary = base64.b64decode(
-                archivo.with_context(bin_size=False).content or b""
-            )
 
-        guessed_from_name = mimetypes.guess_type(archivo.name or "")[0]
-        mimetype = (
-            mimetype
-            or guessed_from_name
-            or guess_mimetype(binary)
-            or "application/octet-stream"
-        )
+        return _build_range_response(binary, mimetype, archivo.name)
+
+    @http.route("/incas/dms/file/<int:file_id>/stream", type="http", auth="user")
+    def stream_archivo_dms(self, file_id, **kwargs):
+        archivo = request.env["dms.file"].browse(file_id)
+        archivo.check_access("read")
+        binary, mimetype = _get_dms_file_binary(archivo)
         return _build_range_response(binary, mimetype, archivo.name)
