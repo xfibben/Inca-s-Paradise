@@ -1,15 +1,8 @@
 import base64
-import logging
-import os
-import shutil
 import struct
-import subprocess
-import tempfile
 
 from odoo import _, api, models
 from odoo.exceptions import UserError
-
-_logger = logging.getLogger(__name__)
 
 
 class DmsFile(models.Model):
@@ -22,7 +15,7 @@ class DmsFile(models.Model):
         offset = start
         while offset + 8 <= end:
             size = struct.unpack(">I", binary[offset : offset + 4])[0]
-            box_type = binary[offset + 4 : offset + 8]
+            box_type = bytes(binary[offset + 4 : offset + 8])
             header_size = 8
 
             if size == 0:
@@ -52,7 +45,6 @@ class DmsFile(models.Model):
             offset = box_end
 
     def _patch_moov_chunk_offsets(self, binary, delta):
-        # Ajusta offsets internos cuando movemos "moov" antes de "mdat".
         data = bytearray(binary)
         stack = [(0, len(data))]
 
@@ -130,7 +122,6 @@ class DmsFile(models.Model):
         if not moov_box or not mdat_box or moov_box["start"] < mdat_box["start"]:
             return binary
 
-        # Reordena el contenedor para que el navegador pueda iniciar antes.
         moov_binary = binary[moov_box["start"] : moov_box["end"]]
         patched_moov = self._patch_moov_chunk_offsets(moov_binary, len(moov_binary))
 
@@ -149,66 +140,6 @@ class DmsFile(models.Model):
             return binary
 
         return bytes(reordered)
-
-    def _is_linearized_pdf(self, binary):
-        return binary.startswith(b"%PDF-") and b"/Linearized" in binary[:2048]
-
-    def _optimize_pdf_for_preview(self, binary, filename, mimetype):
-        lower_name = (filename or "").lower()
-        lower_mimetype = (mimetype or "").lower()
-        if not (
-            lower_name.endswith(".pdf") or lower_mimetype == "application/pdf"
-        ):
-            return binary
-
-        if self._is_linearized_pdf(binary):
-            return binary
-
-        gs_binary = shutil.which("gs")
-        if not gs_binary:
-            return binary
-
-        try:
-            with tempfile.TemporaryDirectory(prefix="incas_pdf_preview_") as tmp_dir:
-                input_path = os.path.join(tmp_dir, "input.pdf")
-                output_path = os.path.join(tmp_dir, "output.pdf")
-                with open(input_path, "wb") as input_file:
-                    input_file.write(binary)
-
-                # Genera un PDF linearizado para carga progresiva en navegador.
-                command = [
-                    gs_binary,
-                    "-q",
-                    "-dNOPAUSE",
-                    "-dBATCH",
-                    "-sDEVICE=pdfwrite",
-                    "-dCompatibilityLevel=1.7",
-                    "-dFastWebView=true",
-                    f"-sOutputFile={output_path}",
-                    input_path,
-                ]
-                subprocess.run(
-                    command,
-                    check=True,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                )
-
-                with open(output_path, "rb") as output_file:
-                    optimized_binary = output_file.read()
-
-                if optimized_binary.startswith(b"%PDF-") and optimized_binary:
-                    return optimized_binary
-        except Exception:
-            _logger.exception("No se pudo linearizar el PDF %s", filename)
-
-        return binary
-
-    def _optimize_binary_for_preview(self, binary, filename, mimetype):
-        optimized_binary = self._optimize_video_for_preview(binary, filename, mimetype)
-        return self._optimize_pdf_for_preview(
-            optimized_binary, filename, mimetype
-        )
 
     def _get_binary_max_size(self):
         return 500
@@ -247,8 +178,7 @@ class DmsFile(models.Model):
         values = []
         for attachment in attachments:
             binary = base64.b64decode(attachment.datas or b"")
-            # Guardamos archivos pesados listos para carga progresiva.
-            optimized_binary = self._optimize_binary_for_preview(
+            optimized_binary = self._optimize_video_for_preview(
                 binary, attachment.name, attachment.mimetype
             )
             values.append(
@@ -259,7 +189,6 @@ class DmsFile(models.Model):
                     "directory_id": directory_id,
                 }
             )
-
         records = self.create(values)
         attachments.with_context(dms_file=True).unlink()
         return records.ids

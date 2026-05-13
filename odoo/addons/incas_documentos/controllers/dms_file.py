@@ -163,4 +163,5 @@ class IncasDocumentosDmsFileController(http.Controller):
             or guess_mimetype(binary)
             or "application/octet-stream"
         )
+        binary = archivo._optimize_video_for_preview(binary, archivo.name, mimetype)
         return _build_range_response(binary, mimetype, archivo.name)
