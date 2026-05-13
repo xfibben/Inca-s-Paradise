@@ -18,30 +18,6 @@ def _clean_filename(name):
     return name.replace("<", "")
 
 
-def _is_truthy(value):
-    return str(value).lower() in {"1", "true", "yes", "on"}
-
-
-def _get_native_content_url(archivo, download=False):
-    query = "download=true" if download else "download=false"
-
-    if archivo.attachment_id:
-        return f"/web/content/ir.attachment/{archivo.attachment_id.id}/datas?{query}"
-
-    if archivo.content_file:
-        return (
-            "/web/content"
-            f"?id={archivo.id}&field=content_file&model=dms.file"
-            f"&filename_field=name&{query}"
-        )
-
-    return (
-        "/web/content"
-        f"?id={archivo.id}&field=content&model=dms.file"
-        f"&filename_field=name&{query}"
-    )
-
-
 def _build_range_response(binary, mimetype, filename):
     httprequest = request.httprequest
     range_header = httprequest.headers.get("Range")
@@ -66,8 +42,10 @@ def _build_range_response(binary, mimetype, filename):
             status=416,
         )
 
-    start = int(match.group(1))
-    end = int(match.group(2)) if match.group(2) else size - 1
+    start_text = match.group(1)
+    end_text = match.group(2)
+    start = int(start_text)
+    end = int(end_text) if end_text else size - 1
     end = min(end, size - 1)
 
     if start >= size or start > end:
@@ -138,8 +116,24 @@ class IncasDocumentosDmsFileController(http.Controller):
     def descargar_archivo_dms(self, file_id, download=None, **kwargs):
         archivo = request.env["dms.file"].browse(file_id)
         archivo.check_access("read")
+        query = "download=true" if str(download).lower() in {"1", "true", "yes", "on"} else "download=false"
+
+        if archivo.attachment_id:
+            return request.redirect(
+                f"/web/content/ir.attachment/{archivo.attachment_id.id}/datas?{query}"
+            )
+
+        if archivo.content_file:
+            return request.redirect(
+                "/web/content"
+                f"?id={archivo.id}&field=content_file&model=dms.file"
+                f"&filename_field=name&{query}"
+            )
+
         return request.redirect(
-            _get_native_content_url(archivo, download=_is_truthy(download))
+            "/web/content"
+            f"?id={archivo.id}&field=content&model=dms.file"
+            f"&filename_field=name&{query}"
         )
 
     @http.route("/incas/dms/file/<int:file_id>/preview", type="http", auth="user")
@@ -169,8 +163,4 @@ class IncasDocumentosDmsFileController(http.Controller):
             or guess_mimetype(binary)
             or "application/octet-stream"
         )
-
-        if mimetype.startswith(("video/", "audio/")):
-            return request.redirect(_get_native_content_url(archivo, download=False))
-
         return _build_range_response(binary, mimetype, archivo.name)
