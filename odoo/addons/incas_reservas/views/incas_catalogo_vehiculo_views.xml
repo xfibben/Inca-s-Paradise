@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_catalogo_vehiculo_list" model="ir.ui.view">
+        <field name="name">incas.catalogo.vehiculo.list</field>
+        <field name="model">incas.catalogo.vehiculo</field>
+        <field name="arch" type="xml">
+            <list string="Vehículos">
+                <field name="name"/>
+                <field name="nro_asientos"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_catalogo_vehiculo_form" model="ir.ui.view">
+        <field name="name">incas.catalogo.vehiculo.form</field>
+        <field name="model">incas.catalogo.vehiculo</field>
+        <field name="arch" type="xml">
+            <form string="Vehículo">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="nro_asientos"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Contenido">
+                            <group>
+                                <field name="descripcion"/>
+                                <field name="features_data" widget="text"/>
+                            </group>
+                        </page>
+                        <page string="Media">
+                            <group>
+                                <field name="imagen_data" widget="text"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_catalogo_vehiculo" model="ir.actions.act_window">
+        <field name="name">Vehículos</field>
+        <field name="res_model">incas.catalogo.vehiculo</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem
+        id="menu_incas_catalogo_vehiculo"
+        name="Vehículos"
+        parent="incas_core.menu_incas_configuracion_root"
+        action="action_incas_catalogo_vehiculo"
+        sequence="13"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

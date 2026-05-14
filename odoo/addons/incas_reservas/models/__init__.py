@@ -9,6 +9,7 @@ from . import incas_horario_opcion
 from . import incas_catalogo_vehiculo
 from . import incas_catalogo_tour
 from . import incas_catalogo_transporte
+from . import incas_catalogo_transporte_tarifa
 from . import mail_thread
 from . import incas_reserva_paquete_linea
 from . import incas_reserva_hotel_linea
