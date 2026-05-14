@@ -499,7 +499,7 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
     };
 
     if (window.location.origin) {
-      fetch(`/api/odoo/tipo-cambio`)
+      fetch(`/frontend-api/odoo/tipo-cambio`)
       .then((r) => r.json())
       .then((data: any) => {
         if (data?.PEN) rates.PEN = data.PEN;
