@@ -5,8 +5,8 @@
         <field name="model">incas.catalogo.vehiculo</field>
         <field name="arch" type="xml">
             <list string="Vehículos">
-                <field name="name"/>
-                <field name="nro_asientos"/>
+                <field name="nombre"/>
+                <field name="numero_asientos"/>
                 <field name="active"/>
             </list>
         </field>
@@ -20,8 +20,8 @@
                 <sheet>
                     <group>
                         <group>
-                            <field name="name"/>
-                            <field name="nro_asientos"/>
+                            <field name="nombre"/>
+                            <field name="numero_asientos"/>
                             <field name="active"/>
                         </group>
                     </group>
@@ -29,12 +29,20 @@
                         <page string="Contenido">
                             <group>
                                 <field name="descripcion"/>
-                                <field name="features_data" widget="text"/>
                             </group>
+                        </page>
+                        <page string="Características">
+                            <field name="caracteristica_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="titulo"/>
+                                    <field name="descripcion"/>
+                                </list>
+                            </field>
                         </page>
                         <page string="Media">
                             <group>
-                                <field name="imagen_data" widget="text"/>
+                                <field name="imagen" widget="text"/>
                             </group>
                         </page>
                     </notebook>

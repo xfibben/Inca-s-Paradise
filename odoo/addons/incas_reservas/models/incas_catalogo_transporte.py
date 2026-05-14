@@ -71,9 +71,11 @@ class IncasCatalogoTransporte(models.Model):
         "estilo_transporte_ids.slug",
         "estilo_transporte_ids.descripcion",
         "tarifa_ids.sequence",
-        "tarifa_ids.vehiculo_id.name",
+        "tarifa_ids.vehiculo_id.nombre",
         "tarifa_ids.vehiculo_id.descripcion",
-        "tarifa_ids.vehiculo_id.imagen_data",
+        "tarifa_ids.vehiculo_id.imagen",
+        "tarifa_ids.vehiculo_id.caracteristica_ids.titulo",
+        "tarifa_ids.vehiculo_id.caracteristica_ids.descripcion",
         "tarifa_ids.precio_adulto_usd",
         "tarifa_ids.precio_nino_usd",
         "tarifa_ids.descuento",
@@ -98,9 +100,18 @@ class IncasCatalogoTransporte(models.Model):
                         "descuento": tarifa.descuento or 0,
                         "vehiculo": [
                             {
-                                "nombre": tarifa.vehiculo_id.name,
+                                "nombre": tarifa.vehiculo_id.nombre,
                                 "descripcion": tarifa.vehiculo_id.descripcion,
-                                "imagen": self._json_lista(tarifa.vehiculo_id.imagen_data),
+                                "imagen": self._json_lista(tarifa.vehiculo_id.imagen),
+                                "features": [
+                                    {
+                                        "title": caracteristica.titulo,
+                                        "description": caracteristica.descripcion,
+                                    }
+                                    for caracteristica in tarifa.vehiculo_id.caracteristica_ids.sorted(
+                                        lambda item: (item.sequence, item.id)
+                                    )
+                                ],
                             }
                         ],
                     }

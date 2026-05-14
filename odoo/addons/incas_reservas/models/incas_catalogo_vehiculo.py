@@ -6,19 +6,24 @@ from odoo import fields, models
 class IncasCatalogoVehiculo(models.Model):
     _name = "incas.catalogo.vehiculo"
     _description = "Catálogo local de vehículos"
-    _order = "name"
+    _order = "nombre"
+    _rec_name = "nombre"
 
-    name = fields.Char(string="Nombre", required=True)
+    nombre = fields.Char(string="Nombre", required=True)
     descripcion = fields.Text(string="Descripción")
-    imagen_data = fields.Text(string="Imagen")
-    nro_asientos = fields.Integer(string="Nro. asientos")
-    features_data = fields.Text(string="Features")
-    transporte_tarifa_ids = fields.One2many(
+    imagen = fields.Text(string="Imagen")
+    numero_asientos = fields.Integer(string="Número de asientos")
+    caracteristica_ids = fields.One2many(
+        "incas.catalogo.vehiculo.caracteristica",
+        "vehiculo_id",
+        string="Características",
+    )
+    tarifa_transporte_ids = fields.One2many(
         "incas.catalogo.transporte.tarifa",
         "vehiculo_id",
         string="Tarifas de transporte",
     )
-    active = fields.Boolean(default=True)
+    active = fields.Boolean(string="Activo", default=True)
 
     def _json_legible(self, valor):
         if not valor:

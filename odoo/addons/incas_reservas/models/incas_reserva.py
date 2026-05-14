@@ -775,7 +775,7 @@ class IncasReserva(models.Model):
             "fecha_fin": fecha_fin,
             "fecha_viaje": fecha_inicio or self._normalizar_fecha_web(reserva_data.get("fecha_viaje")),
             "vehiculo_id": vehiculo.id,
-            "vehiculo_seleccionado": vehiculo.name if vehiculo else reserva_data.get("vehiculo_seleccionado"),
+            "vehiculo_seleccionado": vehiculo.nombre if vehiculo else reserva_data.get("vehiculo_seleccionado"),
             "idioma": reserva_data.get("idioma") or "es",
             "canal_venta": "web",
             "servicio_id": servicio.id,
@@ -1041,7 +1041,7 @@ class IncasReserva(models.Model):
                 vehiculo_id=vals.get("vehiculo_id"),
             )
             if vehiculo and not vals.get("vehiculo_seleccionado"):
-                vals["vehiculo_seleccionado"] = vehiculo.name
+                vals["vehiculo_seleccionado"] = vehiculo.nombre
             tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo)
             vals.setdefault("precio_adulto_usd", tarifa["precio_adulto"])
             vals.setdefault("precio_nino_usd", tarifa["precio_nino"])
@@ -1073,7 +1073,7 @@ class IncasReserva(models.Model):
             if vehiculo and not vals.get("vehiculo_id"):
                 vals["vehiculo_id"] = vehiculo.id
             if vehiculo and not vals.get("vehiculo_seleccionado"):
-                vals["vehiculo_seleccionado"] = vehiculo.name
+                vals["vehiculo_seleccionado"] = vehiculo.nombre
             tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo)
             vals.setdefault("precio_adulto_usd", tarifa["precio_adulto"])
             vals.setdefault("precio_nino_usd", tarifa["precio_nino"])
@@ -1134,7 +1134,7 @@ class IncasReserva(models.Model):
                     nombre=record.vehiculo_seleccionado,
                     vehiculo_id=record.vehiculo_id.id,
                 )
-                record.vehiculo_seleccionado = record.vehiculo_id.name if record.vehiculo_id else False
+                record.vehiculo_seleccionado = record.vehiculo_id.nombre if record.vehiculo_id else False
                 tarifa = record.servicio_id.obtener_tarifa_vehiculo_transporte(record.vehiculo_id)
                 record.precio_adulto_usd = tarifa["precio_adulto"]
                 record.precio_nino_usd = tarifa["precio_nino"]
@@ -1152,7 +1152,7 @@ class IncasReserva(models.Model):
         for record in self:
             if record.tipo_servicio != "transporte" or not record.servicio_id:
                 continue
-            record.vehiculo_seleccionado = record.vehiculo_id.name if record.vehiculo_id else False
+            record.vehiculo_seleccionado = record.vehiculo_id.nombre if record.vehiculo_id else False
             tarifa = record.servicio_id.obtener_tarifa_vehiculo_transporte(record.vehiculo_id)
             record.precio_adulto_usd = tarifa["precio_adulto"]
             record.precio_nino_usd = tarifa["precio_nino"]

@@ -242,7 +242,7 @@ Conectar operación, ventas y fidelización.
 - Existe estructura local de Odoo en el repo:
   - `odoo/config/odoo.conf`
   - `odoo/addons/`
-- La base Odoo actual de trabajo es `odoo_incas`.
+- La base Odoo actual de trabajo en produccion es `incas_odoo`.
 - El menú principal del BO es `Inca's Paradise`.
 - Módulos reales existentes en código:
   - `incas_core`

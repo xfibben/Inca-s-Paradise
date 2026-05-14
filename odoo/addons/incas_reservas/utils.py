@@ -732,7 +732,7 @@ def _vehiculo_record_linea_paquete(linea):
 
 def _vehiculo_linea_paquete(linea):
     vehiculo = _vehiculo_record_linea_paquete(linea)
-    return vehiculo.name if vehiculo else ""
+    return vehiculo.nombre if vehiculo else ""
 
 
 def _tabla_lineas_paquete(reserva):
@@ -1275,7 +1275,7 @@ def _bloque_transporte_editorial(indice, linea, detalle):
     vehiculo = _vehiculo_record_linea_paquete(linea)
     galeria = _render_galeria(
         linea,
-        vehiculo.imagen_data if vehiculo else False,
+        vehiculo.imagen if vehiculo else False,
         linea.wallpaper_data or detalle.wallpaper_data,
         linea.image_data or detalle.image_data,
         max_imagenes=1,
@@ -1289,7 +1289,7 @@ def _bloque_transporte_editorial(indice, linea, detalle):
     ]
     ruta = _render_lista_simple(
         [
-            vehiculo.name if vehiculo else "",
+            vehiculo.nombre if vehiculo else "",
             _texto_json_lista(
                 linea.destino_origen_data or detalle.destino_origen_data,
                 ["title", "nombre", "name"],

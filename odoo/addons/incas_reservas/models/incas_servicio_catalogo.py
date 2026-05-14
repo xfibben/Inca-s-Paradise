@@ -186,7 +186,7 @@ class IncasServicioCatalogo(models.Model):
             if vehiculo:
                 return vehiculo[:1]
         if nombre:
-            vehiculo = vehiculos.filtered(lambda item: item.name == nombre)
+            vehiculo = vehiculos.filtered(lambda item: item.nombre == nombre)
             if vehiculo:
                 return vehiculo[:1]
         if vehiculo_actual and vehiculo_actual.id in vehiculos.ids:

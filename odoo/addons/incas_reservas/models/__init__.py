@@ -7,6 +7,7 @@ from . import incas_extra_tarifa
 from . import incas_servicio_catalogo
 from . import incas_horario_opcion
 from . import incas_catalogo_vehiculo
+from . import incas_catalogo_vehiculo_caracteristica
 from . import incas_catalogo_tour
 from . import incas_catalogo_transporte
 from . import incas_catalogo_transporte_tarifa

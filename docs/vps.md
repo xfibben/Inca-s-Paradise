@@ -113,6 +113,7 @@ Regla operativa:
 
 - rutas normales -> `http://172.19.0.11:8069`
 - websocket -> `http://172.19.0.11:8072`
+- base productiva Odoo -> `incas_odoo`
 
 ### Nota importante de Odoo
 
@@ -130,6 +131,56 @@ Y en `docker-compose.prod.yaml` el servicio `odoo` debe publicar:
 
 - `8070:8069`
 - `8072:8072`
+
+### Seleccion de base en Odoo
+
+En produccion se detecto un problema con el endpoint:
+
+- `GET /incas/api/pagos/tipo-cambio`
+
+Sintoma observado:
+
+- el frontend mostraba error CORS con `404`
+- Odoo devolvia:
+
+```html
+No database is selected and the requested URL was not found in the server-wide controllers.
+```
+
+Causa real:
+
+- Odoo recibia la request por `odoo.incasparadise.com`
+- Nginx reenviaba bien al contenedor Odoo
+- pero Odoo no resolvia automaticamente la base para esa request
+- sin base seleccionada, las rutas del modulo no existen para esa request y responde `404`
+
+Fix aplicado en el vhost de `odoo.incasparadise.com`:
+
+- forzar la base correcta por header
+- la base productiva actual es `incas_odoo`
+
+Header agregado en `location /` y `location /websocket`:
+
+```nginx
+proxy_set_header X-Odoo-Database incas_odoo;
+```
+
+Validacion recomendada:
+
+```bash
+curl -i https://odoo.incasparadise.com/incas/api/pagos/tipo-cambio
+curl -i -H "Origin: https://incasparadise.com" https://odoo.incasparadise.com/incas/api/pagos/tipo-cambio
+```
+
+Resultado esperado:
+
+- ambos requests deben responder `200`
+- ambos deben devolver JSON con `PEN` y `EUR`
+
+Regla operativa:
+
+- si Odoo en produccion maneja mas de una base, fijar la base por `X-Odoo-Database`
+- aunque quede una sola base, conviene mantener este header para evitar regresiones futuras
 
 ## DMS pesado en produccion
 
