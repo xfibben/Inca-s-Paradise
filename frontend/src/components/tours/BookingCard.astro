@@ -498,10 +498,8 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
       updateBtnTotal(currency);
     };
 
-    // El tipo de cambio sale desde Odoo usando las monedas configuradas en el sistema.
-    const odooUrl = (window as any).__odooUrl ?? import.meta.env.PUBLIC_ODOO_URL ?? "";
-    if (odooUrl) {
-      fetch(`${odooUrl}/incas/api/pagos/tipo-cambio`)
+    if (window.location.origin) {
+      fetch(`/api/odoo/tipo-cambio`)
       .then((r) => r.json())
       .then((data: any) => {
         if (data?.PEN) rates.PEN = data.PEN;

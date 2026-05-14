@@ -12,7 +12,6 @@
                 <field name="descuento"/>
                 <field name="vehiculo_ids" widget="many2many_tags"/>
                 <field name="slug"/>
-                <field name="strapi_id"/>
                 <field name="active"/>
             </list>
         </field>
@@ -36,14 +35,12 @@
         <field name="model">incas.catalogo.transporte</field>
         <field name="arch" type="xml">
             <form string="Transporte">
-                <header>
-                    <button name="action_sync_from_strapi" type="object" string="Sincronizar desde Strapi"/>
-                </header>
                 <sheet>
                     <group>
                         <group>
                             <field name="name"/>
                             <field name="estilo_transporte_id"/>
+                            <field name="estilo_transporte_ids" widget="many2many_tags"/>
                             <field name="precio_adulto"/>
                             <field name="precio_nino"/>
                             <field name="descuento"/>
@@ -53,8 +50,6 @@
                             <field name="active"/>
                         </group>
                         <group>
-                            <field name="strapi_id"/>
-                            <field name="strapi_document_id"/>
                             <field name="slug"/>
                             <field name="servicio_id" readonly="1"/>
                             <field name="seo_title"/>
@@ -81,14 +76,24 @@
                             <group>
                                 <field name="destino_origen_data" widget="text"/>
                                 <field name="destino_llegada_data" widget="text"/>
-                                <field name="tipos_transporte_data" widget="text"/>
                             </group>
+                        </page>
+                        <page string="Tarifas">
+                            <field name="tarifa_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="vehiculo_id"/>
+                                    <field name="precio_adulto_usd"/>
+                                    <field name="precio_nino_usd"/>
+                                    <field name="descuento"/>
+                                    <field name="active"/>
+                                </list>
+                            </field>
                         </page>
                         <page string="Media y precios">
                             <group>
                                 <field name="image_data" widget="text"/>
                                 <field name="wallpaper_data" widget="text"/>
-                                <field name="precios_data" widget="text"/>
                             </group>
                         </page>
                     </notebook>

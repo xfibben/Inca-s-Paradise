@@ -674,6 +674,7 @@ class IncasReserva(models.Model):
         transporte_document_id = reserva_data.get("transporteDocumentId")
         tour_numeric_id = reserva_data.get("tourNumericId")
         transporte_numeric_id = reserva_data.get("transporteNumericId")
+        nombre_servicio = (reserva_data.get("tourNombre") or "").strip()
         tour_rel = ((reserva_data.get("tour") or {}).get("connect") or [None])[0]
         transporte_rel = ((reserva_data.get("transportes") or {}).get("connect") or [None])[0]
         if isinstance(tour_rel, str) and not tour_document_id:
@@ -694,9 +695,13 @@ class IncasReserva(models.Model):
                 servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("strapi_document_id", "=", transporte_document_id)], limit=1)
             elif transporte_numeric_id:
                 servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("strapi_id", "=", int(transporte_numeric_id))], limit=1)
+            elif nombre_servicio:
+                servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("name", "=", nombre_servicio)], limit=1)
             if servicio or intento == 1:
                 return servicio
-            servicio_model.sync_from_strapi()
+            # Solo tours siguen sincronizando desde Strapi.
+            if tour_document_id or tour_numeric_id:
+                servicio_model.sync_from_strapi()
         return False
 
     @api.model

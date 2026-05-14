@@ -44,7 +44,7 @@
         <field name="arch" type="xml">
             <form string="Servicio">
                 <header>
-                    <button name="sync_from_strapi" type="object" string="Sincronizar desde Strapi"/>
+                    <button name="sync_from_strapi" type="object" string="Sincronizar desde Strapi" invisible="tipo_servicio != 'tour'"/>
                 </header>
                 <sheet>
                     <group>
@@ -59,8 +59,8 @@
                             <field name="active"/>
                         </group>
                         <group>
-                            <field name="strapi_id"/>
-                            <field name="strapi_document_id"/>
+                            <field name="strapi_id" invisible="tipo_servicio != 'tour'"/>
+                            <field name="strapi_document_id" invisible="tipo_servicio != 'tour'"/>
                             <field name="slug"/>
                         </group>
                     </group>
