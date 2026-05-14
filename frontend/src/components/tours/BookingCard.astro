@@ -498,8 +498,9 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
       updateBtnTotal(currency);
     };
 
-    if (window.location.origin) {
-      fetch(`/frontend-api/odoo/tipo-cambio`)
+    const odooUrl = (window as any).__odooUrl ?? import.meta.env.PUBLIC_ODOO_URL ?? "";
+    if (odooUrl) {
+      fetch(`${odooUrl}/incas/api/pagos/tipo-cambio`)
       .then((r) => r.json())
       .then((data: any) => {
         if (data?.PEN) rates.PEN = data.PEN;
