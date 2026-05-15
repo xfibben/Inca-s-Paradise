@@ -5,6 +5,7 @@ class IncasEstiloTransporte(models.Model):
     _name = "incas.estilo.transporte"
     _description = "Estilo de transporte"
     _order = "nro_orden, name"
+    _inherit = "incas.image.webp.mixin"
 
     name = fields.Char(string="Nombre", required=True)
     name_en = fields.Char(string="Nombre en inglés")
@@ -119,12 +120,14 @@ class IncasEstiloTransporte(models.Model):
         self._migrar_columnas_legadas_jsonb()
         for vals in vals_list:
             self._autocompletar_traducciones_en_vals(vals)
+            self._convertir_a_webp_en_vals(vals, ("image_data", "wallpaper_data"))
         records = super().create(vals_list)
         records._completar_traducciones_vacias()
         return records
 
     def write(self, vals):
         self._migrar_columnas_legadas_jsonb()
+        self._convertir_a_webp_en_vals(vals, ("image_data", "wallpaper_data"))
         result = super().write(vals)
         if not self.env.context.get("skip_autocompletar_traducciones"):
             self._completar_traducciones_vacias()

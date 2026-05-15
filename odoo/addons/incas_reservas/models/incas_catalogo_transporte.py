@@ -8,6 +8,7 @@ class IncasCatalogoTransporte(models.Model):
     _description = "Catálogo local de transportes"
     _inherits = {"incas.servicio.catalogo": "servicio_id"}
     _order = "name"
+    _inherit = "incas.image.webp.mixin"
 
     servicio_id = fields.Many2one("incas.servicio.catalogo", string="Servicio base", required=True, ondelete="cascade")
     name_en = fields.Char(string="Nombre en inglés")
@@ -273,6 +274,7 @@ class IncasCatalogoTransporte(models.Model):
         servicio_model = self.env["incas.servicio.catalogo"]
         for vals in vals_list:
             self._autocompletar_traducciones_en_vals(vals)
+            self._convertir_a_webp_en_vals(vals, ("image_data", "wallpaper_data"))
             if vals.get("servicio_id"):
                 continue
             servicio_vals = {
@@ -289,6 +291,7 @@ class IncasCatalogoTransporte(models.Model):
 
     def write(self, vals):
         self._migrar_columnas_legadas_jsonb()
+        self._convertir_a_webp_en_vals(vals, ("image_data", "wallpaper_data"))
         result = super().write(vals)
         if not self.env.context.get("skip_autocompletar_traducciones"):
             self._completar_traducciones_vacias()

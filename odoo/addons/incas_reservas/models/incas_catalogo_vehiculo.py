@@ -8,6 +8,7 @@ class IncasCatalogoVehiculo(models.Model):
     _description = "Catálogo local de vehículos"
     _order = "nombre"
     _rec_name = "nombre"
+    _inherit = "incas.image.webp.mixin"
 
     nombre = fields.Char(string="Nombre", required=True, default="Nuevo vehículo")
     descripcion = fields.Html(string="Descripción")
@@ -103,12 +104,14 @@ class IncasCatalogoVehiculo(models.Model):
         self._migrar_columnas_legadas_jsonb()
         for vals in vals_list:
             self._autocompletar_traducciones_en_vals(vals)
+            self._convertir_a_webp_en_vals(vals, ("imagen",))
         records = super().create(vals_list)
         records._completar_traducciones_vacias()
         return records
 
     def write(self, vals):
         self._migrar_columnas_legadas_jsonb()
+        self._convertir_a_webp_en_vals(vals, ("imagen",))
         result = super().write(vals)
         if not self.env.context.get("skip_autocompletar_traducciones"):
             self._completar_traducciones_vacias()

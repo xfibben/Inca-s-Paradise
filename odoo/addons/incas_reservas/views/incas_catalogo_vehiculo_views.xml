@@ -87,9 +87,9 @@
     <menuitem
         id="menu_incas_catalogo_vehiculo"
         name="Vehículos"
-        parent="incas_core.menu_incas_configuracion_root"
+        parent="menu_incas_transporte_root"
         action="action_incas_catalogo_vehiculo"
-        sequence="13"
+        sequence="20"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
     />
 </odoo>
