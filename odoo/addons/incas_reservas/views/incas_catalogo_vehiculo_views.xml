@@ -5,8 +5,8 @@
         <field name="model">incas.catalogo.vehiculo</field>
         <field name="arch" type="xml">
             <list string="Vehículos">
-                <field name="name"/>
-                <field name="nro_asientos"/>
+                <field name="nombre"/>
+                <field name="numero_asientos"/>
                 <field name="active"/>
             </list>
         </field>
@@ -20,21 +20,56 @@
                 <sheet>
                     <group>
                         <group>
-                            <field name="name"/>
-                            <field name="nro_asientos"/>
+                            <field name="numero_asientos"/>
                             <field name="active"/>
                         </group>
                     </group>
                     <notebook>
-                        <page string="Contenido">
+                        <page string="Español">
                             <group>
-                                <field name="descripcion"/>
-                                <field name="features_data" widget="text"/>
+                                <field name="nombre"/>
+                                <field name="descripcion" widget="html"/>
                             </group>
+                        </page>
+                        <page string="English">
+                            <group>
+                                <field name="nombre_en"/>
+                                <field name="descripcion_en" widget="html"/>
+                            </group>
+                        </page>
+                        <page string="Português">
+                            <group>
+                                <field name="nombre_pt"/>
+                                <field name="descripcion_pt" widget="html"/>
+                            </group>
+                        </page>
+                        <page string="Características">
+                            <field name="caracteristica_ids" nolabel="1">
+                                <list>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="titulo"/>
+                                </list>
+                                <form string="Característica">
+                                    <sheet>
+                                        <group string="Español">
+                                            <field name="titulo"/>
+                                            <field name="descripcion" widget="html"/>
+                                        </group>
+                                        <group string="English">
+                                            <field name="titulo_en"/>
+                                            <field name="descripcion_en" widget="html"/>
+                                        </group>
+                                        <group string="Português">
+                                            <field name="titulo_pt"/>
+                                            <field name="descripcion_pt" widget="html"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
                         </page>
                         <page string="Media">
                             <group>
-                                <field name="imagen_data" widget="text"/>
+                                <field name="imagen" widget="image" options="{'size': [256, 256]}"/>
                             </group>
                         </page>
                     </notebook>

@@ -67,16 +67,16 @@ class IncasReservaPaqueteLinea(models.Model):
     excluded_items_data = fields.Text(string="Excluded items")
     faq_title = fields.Char(string="FAQ title")
     faq_items_data = fields.Text(string="FAQ items")
-    image_data = fields.Text(string="Imagen")
-    wallpaper_data = fields.Text(string="Wallpaper")
+    image_data = fields.Image(string="Imagen")
+    wallpaper_data = fields.Image(string="Imagen de fondo")
     destino_origen_data = fields.Text(string="Destino origen")
     destino_llegada_data = fields.Text(string="Destino llegada")
     modelo_vehiculo = fields.Char(string="Modelo de vehículo")
     duracion_viaje = fields.Char(string="Duración del viaje")
     distancia = fields.Char(string="Distancia")
-    descripcion_origen = fields.Text(string="Descripción origen")
-    descripcion_llegada = fields.Text(string="Descripción llegada")
-    descripcion = fields.Text(string="Descripción")
+    descripcion_origen = fields.Html(string="Descripción origen")
+    descripcion_llegada = fields.Html(string="Descripción llegada")
+    descripcion = fields.Html(string="Descripción")
     tipos_transporte_data = fields.Text(string="Tipos de transporte")
     precios_data = fields.Text(string="Precios por vehículo")
 
@@ -208,9 +208,9 @@ class IncasReservaPaqueteLinea(models.Model):
                 "descripcion_origen": detalle.descripcion_origen,
                 "descripcion_llegada": detalle.descripcion_llegada,
                 "descripcion": detalle.descripcion,
-                "included_title": detalle.included_title,
+                "included_title": False,
                 "included_items_data": detalle.included_items_data,
-                "excluded_title": detalle.excluded_title,
+                "excluded_title": False,
                 "excluded_items_data": detalle.excluded_items_data,
                 "tipos_transporte_data": detalle.tipos_transporte_data,
                 "precios_data": detalle.precios_data,

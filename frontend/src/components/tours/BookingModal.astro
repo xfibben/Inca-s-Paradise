@@ -735,7 +735,7 @@ const t = translations[lang] ?? translations.es;
     numero_documento: string; nacionalidad: string; turno: string | null;
     vehiculo_seleccionado?: string | null;
     tourDocumentId: string | null; tourNumericId: number | null;
-    transporteDocumentId: string | null; transporteNumericId: number | null;
+    transporteDocumentId: string | null; transporteNumericId: number | null; transporteSlug?: string | null;
     descuento_usd: number; monto_total: number; moneda: string;
     simbolo_moneda: string; decimales_moneda: number;
     porcentaje_pago: number; // Porcentaje a pagar: 30, 50 o 100
@@ -748,7 +748,7 @@ const t = translations[lang] ?? translations.es;
   declare global {
     interface Window {
       __tourData?: { numericId: number | null; documentId: string | null };
-      __transporteData?: { numericId: number | null; documentId: string | null };
+      __transporteData?: { numericId: number | null; documentId: string | null; slug?: string | null };
       __strapiUrl?: string;
       __odooUrl?: string;
       __pendingBooking?: PendingBooking;
@@ -852,6 +852,7 @@ const t = translations[lang] ?? translations.es;
         tourNumericId: tourData?.numericId ?? null,
         transporteDocumentId: transporteData?.documentId ?? null,
         transporteNumericId: transporteData?.numericId ?? null,
+        transporteSlug: transporteData?.slug ?? null,
         descuento_usd: parseFloat(str(raw.descuento_usd)) || 0,
         monto_total: (pricing.totalConvertido ?? 0) * 0.3,
         moneda: monedaMap[pricing.simboloMoneda ?? "$"] ?? "USD",
@@ -983,6 +984,7 @@ const t = translations[lang] ?? translations.es;
             tourNumericId: b.tourNumericId,
             transporteDocumentId: b.transporteDocumentId,
             transporteNumericId: b.transporteNumericId,
+            transporteSlug: b.transporteSlug ?? null,
             precio_tour: b.monto_original,
             precio_adulto_web: b.precio_adulto_web,
             precio_nino_web: b.precio_nino_web,
@@ -1154,6 +1156,7 @@ const t = translations[lang] ?? translations.es;
                   tourNumericId: b.tourNumericId,
                   transporteDocumentId: b.transporteDocumentId,
                   transporteNumericId: b.transporteNumericId,
+                  transporteSlug: b.transporteSlug ?? null,
                   monto_total: b.monto_total,
                   monto_original: b.monto_original,
                   precio_tour:       b.monto_original,

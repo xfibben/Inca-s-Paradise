@@ -670,11 +670,13 @@ class IncasReserva(models.Model):
     @api.model
     def _buscar_servicio_web(self, reserva_data):
         servicio_model = self.env["incas.servicio.catalogo"].sudo()
+        transporte_model = self.env["incas.catalogo.transporte"].sudo()
         tour_document_id = reserva_data.get("tourDocumentId")
         transporte_document_id = reserva_data.get("transporteDocumentId")
         tour_numeric_id = reserva_data.get("tourNumericId")
         transporte_numeric_id = reserva_data.get("transporteNumericId")
         nombre_servicio = (reserva_data.get("tourNombre") or "").strip()
+        transporte_slug = (reserva_data.get("transporteSlug") or "").strip()
         tour_rel = ((reserva_data.get("tour") or {}).get("connect") or [None])[0]
         transporte_rel = ((reserva_data.get("transportes") or {}).get("connect") or [None])[0]
         if isinstance(tour_rel, str) and not tour_document_id:
@@ -694,7 +696,16 @@ class IncasReserva(models.Model):
             elif transporte_document_id:
                 servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("strapi_document_id", "=", transporte_document_id)], limit=1)
             elif transporte_numeric_id:
-                servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("strapi_id", "=", int(transporte_numeric_id))], limit=1)
+                transporte = transporte_model.browse(int(transporte_numeric_id))
+                if transporte.exists():
+                    servicio = transporte.servicio_id
+                if not servicio:
+                    servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("id", "=", int(transporte_numeric_id))], limit=1)
+                if not servicio:
+                    servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("strapi_id", "=", int(transporte_numeric_id))], limit=1)
+            elif transporte_slug:
+                transporte = transporte_model.search([("slug", "=", transporte_slug)], limit=1)
+                servicio = transporte.servicio_id if transporte else False
             elif nombre_servicio:
                 servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("name", "=", nombre_servicio)], limit=1)
             if servicio or intento == 1:
@@ -775,7 +786,7 @@ class IncasReserva(models.Model):
             "fecha_fin": fecha_fin,
             "fecha_viaje": fecha_inicio or self._normalizar_fecha_web(reserva_data.get("fecha_viaje")),
             "vehiculo_id": vehiculo.id,
-            "vehiculo_seleccionado": vehiculo.name if vehiculo else reserva_data.get("vehiculo_seleccionado"),
+            "vehiculo_seleccionado": vehiculo.nombre if vehiculo else reserva_data.get("vehiculo_seleccionado"),
             "idioma": reserva_data.get("idioma") or "es",
             "canal_venta": "web",
             "servicio_id": servicio.id,
@@ -1041,7 +1052,7 @@ class IncasReserva(models.Model):
                 vehiculo_id=vals.get("vehiculo_id"),
             )
             if vehiculo and not vals.get("vehiculo_seleccionado"):
-                vals["vehiculo_seleccionado"] = vehiculo.name
+                vals["vehiculo_seleccionado"] = vehiculo.nombre
             tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo)
             vals.setdefault("precio_adulto_usd", tarifa["precio_adulto"])
             vals.setdefault("precio_nino_usd", tarifa["precio_nino"])
@@ -1073,7 +1084,7 @@ class IncasReserva(models.Model):
             if vehiculo and not vals.get("vehiculo_id"):
                 vals["vehiculo_id"] = vehiculo.id
             if vehiculo and not vals.get("vehiculo_seleccionado"):
-                vals["vehiculo_seleccionado"] = vehiculo.name
+                vals["vehiculo_seleccionado"] = vehiculo.nombre
             tarifa = servicio.obtener_tarifa_vehiculo_transporte(vehiculo)
             vals.setdefault("precio_adulto_usd", tarifa["precio_adulto"])
             vals.setdefault("precio_nino_usd", tarifa["precio_nino"])
@@ -1134,7 +1145,7 @@ class IncasReserva(models.Model):
                     nombre=record.vehiculo_seleccionado,
                     vehiculo_id=record.vehiculo_id.id,
                 )
-                record.vehiculo_seleccionado = record.vehiculo_id.name if record.vehiculo_id else False
+                record.vehiculo_seleccionado = record.vehiculo_id.nombre if record.vehiculo_id else False
                 tarifa = record.servicio_id.obtener_tarifa_vehiculo_transporte(record.vehiculo_id)
                 record.precio_adulto_usd = tarifa["precio_adulto"]
                 record.precio_nino_usd = tarifa["precio_nino"]
@@ -1152,7 +1163,7 @@ class IncasReserva(models.Model):
         for record in self:
             if record.tipo_servicio != "transporte" or not record.servicio_id:
                 continue
-            record.vehiculo_seleccionado = record.vehiculo_id.name if record.vehiculo_id else False
+            record.vehiculo_seleccionado = record.vehiculo_id.nombre if record.vehiculo_id else False
             tarifa = record.servicio_id.obtener_tarifa_vehiculo_transporte(record.vehiculo_id)
             record.precio_adulto_usd = tarifa["precio_adulto"]
             record.precio_nino_usd = tarifa["precio_nino"]

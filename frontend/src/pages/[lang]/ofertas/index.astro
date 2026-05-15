@@ -6,6 +6,7 @@ import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import SEOHead from '../../../components/SEO/SEOHead.astro';
 import { formatPrice } from '../../../utils/currency';
+import { fetchOdooTransportJson, getOdooTransportLang } from '../../../utils/odooTransport';
 
 const { lang } = Astro.params;
 
@@ -111,39 +112,27 @@ interface TransporteOferta {
 let transportesOferta: TransporteOferta[] = [];
 
 try {
-  const res = await fetch(
-    `${STRAPI_URL}/api/transportes` +
-    `?locale=${strapiLocale}` +
-    `&filters[precios][descuento][$gt]=0` +
-    `&fields[0]=nombre&fields[1]=slug` +
-    `&populate[image]=*` +
-    `&populate[precios][populate][vehiculo][fields][0]=nombre` +
-    `&pagination[pageSize]=100`
+  const json = await fetchOdooTransportJson(
+    `/incas/api/web/transportes?lang=${getOdooTransportLang(currentLang)}`
   );
-  if (res.ok) {
-    const json = await res.json();
-    const rows: any[] = json?.data ?? [];
-    transportesOferta = rows
-      .map((row: any) => {
-        const d = row?.attributes ?? row;
-        const precios: any[] = d?.precios ?? [];
-        // Filtra solo los precios que tienen descuento > 0
-        const preciosConDescuento = precios.filter((p: any) => (p.descuento ?? 0) > 0);
-        if (preciosConDescuento.length === 0) return null;
-        // Toma el precio con mayor descuento para mostrar
-        const mejorPrecio = preciosConDescuento.reduce((prev: any, curr: any) =>
-          (curr.descuento ?? 0) > (prev.descuento ?? 0) ? curr : prev
-        );
-        return {
-          slug: d.slug ?? '',
-          nombre: d.nombre ?? '',
-          imageUrl: getImageUrl(d.image),
-          precioAdulto: mejorPrecio.precioAdulto ?? 0,
-          descuento: mejorPrecio.descuento ?? 0,
-        };
-      })
-      .filter(Boolean) as TransporteOferta[];
-  }
+  const rows: any[] = json?.data ?? [];
+  transportesOferta = rows
+    .map((d: any) => {
+      const precios: any[] = d?.precios ?? [];
+      const preciosConDescuento = precios.filter((p: any) => (p.descuento ?? 0) > 0);
+      if (preciosConDescuento.length === 0) return null;
+      const mejorPrecio = preciosConDescuento.reduce((prev: any, curr: any) =>
+        (curr.descuento ?? 0) > (prev.descuento ?? 0) ? curr : prev
+      );
+      return {
+        slug: d.slug ?? '',
+        nombre: d.nombre ?? '',
+        imageUrl: getImageUrl(d.image),
+        precioAdulto: mejorPrecio.precioAdulto ?? 0,
+        descuento: mejorPrecio.descuento ?? 0,
+      };
+    })
+    .filter(Boolean) as TransporteOferta[];
 } catch (e) {
   console.error('Error al obtener transportes con descuento:', e);
 }

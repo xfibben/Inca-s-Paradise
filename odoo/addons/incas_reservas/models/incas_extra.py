@@ -27,7 +27,7 @@ class IncasExtra(models.Model):
         required=True,
         default="USD",
     )
-    descripcion = fields.Text(string="Descripción")
+    descripcion = fields.Html(string="Descripción")
     observaciones = fields.Text(string="Observaciones")
     tarifa_ids = fields.One2many("incas.extra.tarifa", "extra_id", string="Tarifas")
     tarifa_count = fields.Integer(string="Cantidad de tarifas", compute="_compute_tarifa_count")

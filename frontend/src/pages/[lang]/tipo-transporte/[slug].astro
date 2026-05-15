@@ -1,12 +1,12 @@
 ﻿---
-import MarkdownIt from 'markdown-it';
 import { getTranslation, languages, defaultLanguage, type Language } from '../../../i18n';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import TipoTransporteTable from '../../../components/tipo-transporte/TipoTransporteTable.astro';
-import { strapiRichTextToMarkdown } from '../../../utils/strapiRichText';
+import { buildLocalizedSlugs, fetchOdooTransportJson, getOdooTransportLang } from '../../../utils/odooTransport';
+import { richContentToHtml } from '../../../utils/richContent';
 
 export function getStaticPaths() {
   return [];
@@ -29,14 +29,6 @@ const metaDescriptionFallbacks: Record<string, string> = {
   it: (name: string) => `Scopri di più su ${name} con Inca's Paradise.`,
 } as any;
 
-const STRAPI_URL = import.meta.env.STRAPI_URL;
-const PUBLIC_STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL;
-
-const strapiLocale =
-  currentLang === 'pt' ? 'pt'
-  : currentLang === 'es' ? 'es-PE'
-  : currentLang;
-
 // Estructuras de datos procesados para la tabla comparativa
 interface VehiculoData {
   nombre: string;
@@ -51,28 +43,13 @@ interface RutaData {
   precios: Record<string, { precio: number; original: number | null }>;
 }
 
-// Fetch del tipo de transporte por slug con precios y vehÃ­culos anidados
 let tipoTransporte: any = null;
 
 try {
-  // Se construye la URL manualmente para evitar que URLSearchParams codifique los corchetes
-  const query =
-    `filters[slug][$eq]=${encodeURIComponent(slug as string)}` +
-    `&locale=${strapiLocale}` +
-    `&populate[image]=*` +
-    `&populate[wallpaper]=*` +
-    `&populate[transportes][fields][0]=slug` +
-    `&populate[transportes][fields][1]=nombre` +
-    `&populate[transportes][populate][image]=*` +
-    `&populate[transportes][populate][destino_origen][fields][0]=title` +
-    `&populate[transportes][populate][destino_llegada][fields][0]=title` +
-    `&populate[transportes][populate][precios][populate][vehiculo]=*`;
-
-  const res = await fetch(`${STRAPI_URL}/api/tipo-transportes?${query}`);
-  if (res.ok) {
-    const json = await res.json();
-    tipoTransporte = json?.data?.[0] ?? null;
-  }
+  const json = await fetchOdooTransportJson(
+    `/incas/api/web/tipo-transportes/${encodeURIComponent(slug as string)}?lang=${getOdooTransportLang(currentLang)}`
+  );
+  tipoTransporte = json?.data ?? null;
 } catch (e) {
   console.error("Error al obtener tipo de transporte:", e);
 }
@@ -82,32 +59,14 @@ if (!tipoTransporte) {
 }
 
 // Obtiene los slugs localizados para el cambio de idioma en la navbar
-const LANG_TO_LOCALE: Record<string, string> = { es: 'es-PE', en: 'en', pt: 'pt', fr: 'fr', it: 'it' };
 const ALL_LANGS = ['es', 'en', 'pt', 'fr', 'it'];
-const tipoTransporteSlugs: Record<string, string> = { [currentLang]: slug as string };
-
-if (tipoTransporte.documentId) {
-  await Promise.all(
-    ALL_LANGS.filter((l) => l !== currentLang).map(async (targetLang) => {
-      const locale = LANG_TO_LOCALE[targetLang] ?? targetLang;
-      try {
-        const res = await fetch(
-          `${STRAPI_URL}/api/tipo-transportes/${tipoTransporte.documentId}?locale=${locale}&fields[0]=slug`
-        );
-        if (!res.ok) return;
-        const json = await res.json();
-        const s = json?.data?.slug ?? json?.slug;
-        if (s) tipoTransporteSlugs[targetLang] = String(s).toLowerCase();
-      } catch {}
-    })
-  );
-}
+const tipoTransporteSlugs: Record<string, string> = tipoTransporte?.slugs ?? buildLocalizedSlugs(slug as string);
 
 function getImageUrl(media: any): string | null {
   if (!media) return null;
   const url = media?.formats?.large?.url ?? media?.formats?.medium?.url ?? media?.url;
   if (!url) return null;
-  return url.startsWith('http') ? url : `${PUBLIC_STRAPI_URL}${url}`;
+  return url.startsWith('http') ? url : url;
 }
 
 const wallpaperUrl = getImageUrl(tipoTransporte.wallpaper);
@@ -133,10 +92,7 @@ for (const tp of transportes) {
 }
 
 const vehiculos: VehiculoData[] = Array.from(vehiculosMap.values());
-const md = new MarkdownIt({ html: true });
-const descripcionHtml = tipoTransporte?.descripcion
-  ? md.render(strapiRichTextToMarkdown(tipoTransporte.descripcion))
-  : '';
+const descripcionHtml = richContentToHtml(tipoTransporte?.descripcion);
 
 const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
   const preciosMap: Record<string, { precio: number; original: number | null }> = {};
@@ -159,14 +115,14 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
     <title>{tipoTransporte.nombre} — Inca's Paradise</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="description" content={tipoTransporte.descripcion ?? (metaDescriptionFallbacks[currentLang] ?? metaDescriptionFallbacks.es)(tipoTransporte.nombre)} />
+    <meta name="description" content={tipoTransporte.seoDescription ?? (metaDescriptionFallbacks[currentLang] ?? metaDescriptionFallbacks.es)(tipoTransporte.nombre)} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- Schema JSON-LD Service -->
     <script is:inline type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "Service",
       "name": tipoTransporte.nombre,
-      "description": tipoTransporte.descripcion ?? (metaDescriptionFallbacks as any)[currentLang]?.(tipoTransporte.nombre) ?? `${tipoTransporte.nombre} - Inca's Paradise`,
+      "description": tipoTransporte.seoDescription ?? (metaDescriptionFallbacks as any)[currentLang]?.(tipoTransporte.nombre) ?? `${tipoTransporte.nombre} - Inca's Paradise`,
       "url": `${Astro.site}${currentLang}/tipo-transporte/${slug}`,
       "image": wallpaperUrl ?? undefined,
       "provider": {

@@ -12,6 +12,7 @@ import Footer from "../../../components/shared/Footer.astro";
 import SEOHead from "../../../components/SEO/SEOHead.astro";
 import TipoTransporteHero from "../../../components/tipo-transporte/TipoTransporteHero.astro";
 import TipoTransporteGrid from "../../../components/tipo-transporte/TipoTransporteGrid.astro";
+import { fetchOdooTransportJson, getOdooTransportLang } from "../../../utils/odooTransport";
 
 const { lang } = Astro.params;
 
@@ -56,26 +57,13 @@ const alternateLanguages = [
     { lang: "it", url: `${siteOrigin}/it/tipo-transporte` },
 ];
 
-const STRAPI_URL = import.meta.env.STRAPI_URL;
-const PUBLIC_STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL;
-
-const strapiLocale =
-    currentLang === "pt" ? "pt" : currentLang === "es" ? "es-PE" : currentLang;
-
-// Fetch de tipos de transporte
 let tiposTransporte: any[] = [];
 
 try {
-    const res = await fetch(
-        `${STRAPI_URL}/api/tipo-transportes?locale=${strapiLocale}` +
-            `&fields[0]=nombre&fields[1]=slug&fields[2]=nroOrden` +
-            `&populate[image]=*` +
-            `&sort=nroOrden:asc`,
+    const json = await fetchOdooTransportJson(
+        `/incas/api/web/tipo-transportes?lang=${getOdooTransportLang(currentLang)}`
     );
-    if (res.ok) {
-        const json = await res.json();
-        tiposTransporte = json?.data ?? [];
-    }
+    tiposTransporte = json?.data ?? [];
 } catch (e) {
     console.error("Error al obtener tipos de transporte:", e);
 }
@@ -138,7 +126,6 @@ const tipoTransporteSchema = {
             <TipoTransporteHero t={t} />
             <TipoTransporteGrid
                 tipos={tiposTransporte}
-                publicStrapiUrl={PUBLIC_STRAPI_URL}
                 lang={currentLang}
                 t={t}
             />

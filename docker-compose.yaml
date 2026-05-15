@@ -130,6 +130,7 @@ services:
     image: odoo:19
     container_name: incas_odoo_test
     restart: unless-stopped
+    command: ["odoo", "--config=/etc/odoo/odoo.conf", "--workers=0"]
     depends_on:
       odoo_db:
         condition: service_healthy

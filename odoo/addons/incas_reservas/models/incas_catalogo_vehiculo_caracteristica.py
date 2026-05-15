@@ -1,50 +1,36 @@
-import json
-
 from odoo import api, fields, models
 
 
-class IncasCatalogoVehiculo(models.Model):
-    _name = "incas.catalogo.vehiculo"
-    _description = "Catálogo local de vehículos"
-    _order = "nombre"
-    _rec_name = "nombre"
+class IncasCatalogoVehiculoCaracteristica(models.Model):
+    _name = "incas.catalogo.vehiculo.caracteristica"
+    _description = "Característica de vehículo"
+    _order = "sequence, id"
 
-    nombre = fields.Char(string="Nombre", required=True, default="Nuevo vehículo")
+    sequence = fields.Integer(string="Secuencia", default=10)
+    vehiculo_id = fields.Many2one(
+        "incas.catalogo.vehiculo",
+        string="Vehículo",
+        required=True,
+        ondelete="cascade",
+    )
+    titulo = fields.Char(string="Título", required=True, default="Nueva característica")
     descripcion = fields.Html(string="Descripción")
-    nombre_en = fields.Char(string="Nombre en inglés")
+    titulo_en = fields.Char(string="Título en inglés")
     descripcion_en = fields.Html(string="Descripción en inglés")
-    nombre_pt = fields.Char(string="Nombre en portugués")
+    titulo_pt = fields.Char(string="Título en portugués")
     descripcion_pt = fields.Html(string="Descripción en portugués")
-    imagen = fields.Image(string="Imagen")
-    numero_asientos = fields.Integer(string="Número de asientos")
-    caracteristica_ids = fields.One2many(
-        "incas.catalogo.vehiculo.caracteristica",
-        "vehiculo_id",
-        string="Características",
-    )
-    tarifa_transporte_ids = fields.One2many(
-        "incas.catalogo.transporte.tarifa",
-        "vehiculo_id",
-        string="Tarifas de transporte",
-    )
-    active = fields.Boolean(string="Activo", default=True)
 
     def _auto_init(self):
         self._migrar_columnas_legadas_jsonb()
         return super()._auto_init()
 
-    def _json_legible(self, valor):
-        if not valor:
-            return False
-        return json.dumps(valor, ensure_ascii=False, indent=2)
-
     def _migrar_columnas_legadas_jsonb(self):
         columnas = {
-            "nombre": "varchar",
+            "titulo": "varchar",
             "descripcion": "text",
-            "nombre_en": "varchar",
+            "titulo_en": "varchar",
             "descripcion_en": "text",
-            "nombre_pt": "varchar",
+            "titulo_pt": "varchar",
             "descripcion_pt": "text",
         }
         for columna, tipo_destino in columnas.items():
@@ -52,7 +38,7 @@ class IncasCatalogoVehiculo(models.Model):
                 """
                 SELECT data_type
                 FROM information_schema.columns
-                WHERE table_name = 'incas_catalogo_vehiculo'
+                WHERE table_name = 'incas_catalogo_vehiculo_caracteristica'
                   AND column_name = %s
                 """,
                 [columna],
@@ -62,7 +48,7 @@ class IncasCatalogoVehiculo(models.Model):
                 continue
             self.env.cr.execute(
                 f"""
-                ALTER TABLE incas_catalogo_vehiculo
+                ALTER TABLE incas_catalogo_vehiculo_caracteristica
                 ALTER COLUMN {columna} TYPE {tipo_destino}
                 USING CASE
                     WHEN {columna} IS NULL THEN NULL
@@ -93,7 +79,7 @@ class IncasCatalogoVehiculo(models.Model):
 
     def _normalizar_filas_legacy(self, filas):
         for fila in filas:
-            for campo in ("nombre", "descripcion", "nombre_en", "descripcion_en", "nombre_pt", "descripcion_pt"):
+            for campo in ("titulo", "descripcion", "titulo_en", "descripcion_en", "titulo_pt", "descripcion_pt"):
                 if campo in fila:
                     fila[campo] = self._normalizar_valor_legacy(fila[campo])
         return filas
@@ -125,12 +111,12 @@ class IncasCatalogoVehiculo(models.Model):
         return self._normalizar_filas_legacy(filas)
 
     def _autocompletar_traducciones_en_vals(self, vals):
-        nombre_base = vals.get("nombre")
+        titulo_base = vals.get("titulo")
         descripcion_base = vals.get("descripcion")
-        if nombre_base:
-            for campo in ("nombre_en", "nombre_pt"):
+        if titulo_base:
+            for campo in ("titulo_en", "titulo_pt"):
                 if not vals.get(campo):
-                    vals[campo] = nombre_base
+                    vals[campo] = titulo_base
         if descripcion_base:
             for campo in ("descripcion_en", "descripcion_pt"):
                 if not vals.get(campo):
@@ -139,10 +125,10 @@ class IncasCatalogoVehiculo(models.Model):
     def _completar_traducciones_vacias(self):
         for record in self:
             valores = {}
-            if record.nombre:
-                for campo in ("nombre_en", "nombre_pt"):
+            if record.titulo:
+                for campo in ("titulo_en", "titulo_pt"):
                     if not record[campo]:
-                        valores[campo] = record.nombre
+                        valores[campo] = record.titulo
             if record.descripcion:
                 for campo in ("descripcion_en", "descripcion_pt"):
                     if not record[campo]:
@@ -150,13 +136,13 @@ class IncasCatalogoVehiculo(models.Model):
             if valores:
                 record.with_context(skip_autocompletar_traducciones=True).write(valores)
 
-    @api.onchange("nombre", "descripcion")
+    @api.onchange("titulo", "descripcion")
     def _onchange_autocompletar_traducciones(self):
         for record in self:
-            if record.nombre:
-                for campo in ("nombre_en", "nombre_pt"):
+            if record.titulo:
+                for campo in ("titulo_en", "titulo_pt"):
                     if not record[campo]:
-                        record[campo] = record.nombre
+                        record[campo] = record.titulo
             if record.descripcion:
                 for campo in ("descripcion_en", "descripcion_pt"):
                     if not record[campo]:

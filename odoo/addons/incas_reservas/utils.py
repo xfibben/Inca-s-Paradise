@@ -7,6 +7,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from odoo import fields
+from markupsafe import Markup
 
 
 def texto(valor):
@@ -732,7 +733,7 @@ def _vehiculo_record_linea_paquete(linea):
 
 def _vehiculo_linea_paquete(linea):
     vehiculo = _vehiculo_record_linea_paquete(linea)
-    return vehiculo.name if vehiculo else ""
+    return vehiculo.nombre if vehiculo else ""
 
 
 def _tabla_lineas_paquete(reserva):
@@ -937,6 +938,12 @@ def _normalizar_url_imagen(record, url):
     texto_url = str(url).strip()
     if not texto_url:
         return ""
+    if (
+        len(texto_url) > 100
+        and " " not in texto_url
+        and texto_url.replace("\n", "").replace("\r", "").replace("=", "").replace("+", "").replace("/", "").isalnum()
+    ):
+        return f"data:image/png;base64,{texto_url}"
     if texto_url.startswith("data:image/"):
         return texto_url
     if texto_url.startswith("http://") or texto_url.startswith("https://"):
@@ -1147,7 +1154,7 @@ def _seccion_editorial(titulo, contenido):
 def _parrafo_editorial(texto_largo):
     if not texto_largo:
         return ""
-    return f"<p class='editorial-copy'>{escape(texto_largo)}</p>"
+    return Markup(f"<div class='editorial-copy'>{texto_largo}</div>")
 
 
 def _bloque_highlights_intro(pregunta, lead):
@@ -1275,7 +1282,7 @@ def _bloque_transporte_editorial(indice, linea, detalle):
     vehiculo = _vehiculo_record_linea_paquete(linea)
     galeria = _render_galeria(
         linea,
-        vehiculo.imagen_data if vehiculo else False,
+        vehiculo.imagen if vehiculo else False,
         linea.wallpaper_data or detalle.wallpaper_data,
         linea.image_data or detalle.image_data,
         max_imagenes=1,
@@ -1289,7 +1296,7 @@ def _bloque_transporte_editorial(indice, linea, detalle):
     ]
     ruta = _render_lista_simple(
         [
-            vehiculo.name if vehiculo else "",
+            vehiculo.nombre if vehiculo else "",
             _texto_json_lista(
                 linea.destino_origen_data or detalle.destino_origen_data,
                 ["title", "nombre", "name"],
