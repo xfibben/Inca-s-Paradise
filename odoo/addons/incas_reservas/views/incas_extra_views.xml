@@ -63,7 +63,7 @@
                             </field>
                         </page>
                         <page string="Descripción">
-                            <field name="descripcion"/>
+                            <field name="descripcion" widget="html"/>
                         </page>
                         <page string="Observaciones">
                             <field name="observaciones"/>

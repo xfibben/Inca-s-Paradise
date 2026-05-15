@@ -3,7 +3,8 @@
 
 const baseUrl = "https://incasparadise.com";
 const STRAPI_URL = import.meta.env.STRAPI_URL || "http://localhost:1337";
-const langs = ["es", "en", "pt"];
+const ODOO_URL = (import.meta.env.PUBLIC_ODOO_URL || "").replace(/\/$/, "");
+const langs = ["es", "en", "pt", "fr", "it"];
 
 // Mapeo de lang a locale de Strapi
 const langToLocale: Record<string, string> = {
@@ -79,14 +80,27 @@ async function fetchSlugsByLocale(endpoint: string, locale: string): Promise<str
   return slugs;
 }
 
+async function fetchOdooSlugs(path: string, lang: string): Promise<string[]> {
+  if (!ODOO_URL) return [];
+  try {
+    const res = await fetch(`${ODOO_URL}${path}?lang=${encodeURIComponent(lang)}`);
+    if (!res.ok) return [];
+    const json = await res.json();
+    const rows: any[] = json?.data ?? [];
+    return rows
+      .map((item: any) => item?.slug)
+      .filter((slug: any): slug is string => typeof slug === "string" && Boolean(slug));
+  } catch {
+    return [];
+  }
+}
+
 export async function GET() {
   // Obtener slugs por idioma en paralelo
   const endpoints = [
     { key: "tours",          path: "tour-detalles",    urlPath: "tours"          },
     { key: "destinos",       path: "destinos",          urlPath: "destinos"       },
     { key: "styleTrips",     path: "style-trips",       urlPath: "style-trips"    },
-    { key: "tipoTransporte", path: "tipo-transportes",  urlPath: "tipo-transporte" },
-    { key: "transporte",     path: "transportes",       urlPath: "transporte"     },
   ];
 
   // Obtener slugs por lang y endpoint
@@ -101,6 +115,18 @@ export async function GET() {
         slugsByLangAndEndpoint[lang][key] = slugs;
       })
     )
+  );
+
+  await Promise.all(
+    langs.map(async (lang) => {
+      if (!slugsByLangAndEndpoint[lang]) slugsByLangAndEndpoint[lang] = {};
+      const [tipoTransporte, transporte] = await Promise.all([
+        fetchOdooSlugs("/incas/api/web/tipo-transportes", lang),
+        fetchOdooSlugs("/incas/api/web/transportes", lang),
+      ]);
+      slugsByLangAndEndpoint[lang].tipoTransporte = tipoTransporte;
+      slugsByLangAndEndpoint[lang].transporte = transporte;
+    })
   );
 
   const entries: string[] = [];

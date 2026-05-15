@@ -670,11 +670,13 @@ class IncasReserva(models.Model):
     @api.model
     def _buscar_servicio_web(self, reserva_data):
         servicio_model = self.env["incas.servicio.catalogo"].sudo()
+        transporte_model = self.env["incas.catalogo.transporte"].sudo()
         tour_document_id = reserva_data.get("tourDocumentId")
         transporte_document_id = reserva_data.get("transporteDocumentId")
         tour_numeric_id = reserva_data.get("tourNumericId")
         transporte_numeric_id = reserva_data.get("transporteNumericId")
         nombre_servicio = (reserva_data.get("tourNombre") or "").strip()
+        transporte_slug = (reserva_data.get("transporteSlug") or "").strip()
         tour_rel = ((reserva_data.get("tour") or {}).get("connect") or [None])[0]
         transporte_rel = ((reserva_data.get("transportes") or {}).get("connect") or [None])[0]
         if isinstance(tour_rel, str) and not tour_document_id:
@@ -694,7 +696,16 @@ class IncasReserva(models.Model):
             elif transporte_document_id:
                 servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("strapi_document_id", "=", transporte_document_id)], limit=1)
             elif transporte_numeric_id:
-                servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("strapi_id", "=", int(transporte_numeric_id))], limit=1)
+                transporte = transporte_model.browse(int(transporte_numeric_id))
+                if transporte.exists():
+                    servicio = transporte.servicio_id
+                if not servicio:
+                    servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("id", "=", int(transporte_numeric_id))], limit=1)
+                if not servicio:
+                    servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("strapi_id", "=", int(transporte_numeric_id))], limit=1)
+            elif transporte_slug:
+                transporte = transporte_model.search([("slug", "=", transporte_slug)], limit=1)
+                servicio = transporte.servicio_id if transporte else False
             elif nombre_servicio:
                 servicio = servicio_model.search([("tipo_servicio", "=", "transporte"), ("name", "=", nombre_servicio)], limit=1)
             if servicio or intento == 1:

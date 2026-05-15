@@ -6,11 +6,7 @@
         <field name="arch" type="xml">
             <list string="Catálogo de transportes">
                 <field name="name"/>
-                <field name="estilo_transporte_id"/>
-                <field name="precio_adulto"/>
-                <field name="precio_nino"/>
-                <field name="descuento"/>
-                <field name="vehiculo_ids" widget="many2many_tags"/>
+                <field name="estilo_transporte_ids" widget="many2many_tags"/>
                 <field name="slug"/>
                 <field name="active"/>
             </list>
@@ -23,9 +19,8 @@
         <field name="arch" type="xml">
             <search string="Buscar transportes">
                 <field name="name"/>
-                <field name="estilo_transporte_id"/>
+                <field name="estilo_transporte_ids"/>
                 <field name="slug"/>
-                <filter name="group_estilo" string="Estilo de transporte" domain="[]" context="{'group_by': 'estilo_transporte_id'}"/>
             </search>
         </field>
     </record>
@@ -39,44 +34,92 @@
                     <group>
                         <group>
                             <field name="name"/>
-                            <field name="estilo_transporte_id"/>
                             <field name="estilo_transporte_ids" widget="many2many_tags"/>
-                            <field name="precio_adulto"/>
-                            <field name="precio_nino"/>
-                            <field name="descuento"/>
-                            <field name="vehiculo_ids" readonly="1"/>
                             <field name="duracion_viaje"/>
                             <field name="distancia"/>
                             <field name="active"/>
                         </group>
                         <group>
                             <field name="slug"/>
-                            <field name="servicio_id" readonly="1"/>
-                            <field name="seo_title"/>
-                            <field name="seo_description"/>
+                            <field name="modelo_vehiculo"/>
                         </group>
                     </group>
                     <notebook>
-                        <page string="Descripción">
+                        <page string="Español">
                             <group>
-                                <group>
-                                    <field name="descripcion_origen"/>
-                                    <field name="descripcion_llegada"/>
-                                    <field name="descripcion"/>
-                                </group>
-                                <group>
-                                    <field name="included_title"/>
-                                    <field name="included_items_data" widget="text"/>
-                                    <field name="excluded_title"/>
-                                    <field name="excluded_items_data" widget="text"/>
-                                </group>
-                            </group>
-                        </page>
-                        <page string="Relaciones">
-                            <group>
+                                <field name="name"/>
+                                <field name="descripcion" widget="html"/>
                                 <field name="destino_origen_data" widget="text"/>
                                 <field name="destino_llegada_data" widget="text"/>
+                                <field name="seo_title"/>
+                                <field name="seo_description"/>
                             </group>
+                        </page>
+                        <page string="English">
+                            <group>
+                                <field name="name_en"/>
+                                <field name="descripcion_en" widget="html"/>
+                                <field name="destino_origen_data_en" widget="text"/>
+                                <field name="destino_llegada_data_en" widget="text"/>
+                                <field name="seo_title_en"/>
+                                <field name="seo_description_en"/>
+                            </group>
+                        </page>
+                        <page string="Português">
+                            <group>
+                                <field name="name_pt"/>
+                                <field name="descripcion_pt" widget="html"/>
+                                <field name="destino_origen_data_pt" widget="text"/>
+                                <field name="destino_llegada_data_pt" widget="text"/>
+                                <field name="seo_title_pt"/>
+                                <field name="seo_description_pt"/>
+                            </group>
+                        </page>
+                        <page string="Incluye">
+                            <field name="incluye_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="texto"/>
+                                    <field name="texto_en"/>
+                                    <field name="texto_pt"/>
+                                </list>
+                                <form string="Incluye">
+                                    <sheet>
+                                        <group string="Español">
+                                            <field name="texto"/>
+                                        </group>
+                                        <group string="English">
+                                            <field name="texto_en"/>
+                                        </group>
+                                        <group string="Português">
+                                            <field name="texto_pt"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="No incluye">
+                            <field name="no_incluye_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="texto"/>
+                                    <field name="texto_en"/>
+                                    <field name="texto_pt"/>
+                                </list>
+                                <form string="No incluye">
+                                    <sheet>
+                                        <group string="Español">
+                                            <field name="texto"/>
+                                        </group>
+                                        <group string="English">
+                                            <field name="texto_en"/>
+                                        </group>
+                                        <group string="Português">
+                                            <field name="texto_pt"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
                         </page>
                         <page string="Tarifas">
                             <field name="tarifa_ids">
@@ -90,10 +133,10 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Media y precios">
+                        <page string="Imágenes">
                             <group>
-                                <field name="image_data" widget="text"/>
-                                <field name="wallpaper_data" widget="text"/>
+                                <field name="image_data" widget="image" options="{'size': [256, 256]}"/>
+                                <field name="wallpaper_data" widget="image" options="{'size': [512, 256]}"/>
                             </group>
                         </page>
                     </notebook>

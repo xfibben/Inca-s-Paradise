@@ -1,5 +1,4 @@
 ﻿---
-import MarkdownIt from 'markdown-it';
 import { getTranslation, languages, defaultLanguage, type Language } from '../../../i18n';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
@@ -7,7 +6,8 @@ import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import BookingCard from '../../../components/tours/BookingCard.astro';
 import BookingModal from '../../../components/tours/BookingModal.astro';
-import { cleanTextValue, strapiRichTextToMarkdown } from '../../../utils/strapiRichText';
+import { buildLocalizedSlugs, fetchOdooTransportJson, getOdooTransportLang } from '../../../utils/odooTransport';
+import { richContentToHtml } from '../../../utils/richContent';
 
 export function getStaticPaths() {
   // SSR: rutas generadas dinámicamente; retornamos array vacío
@@ -30,34 +30,14 @@ const metaDescriptionFallbacks: Record<string, (name: string) => string> = {
   it: (name) => `Scopri di più su ${name} con Inca's Paradise.`,
 };
 
-const STRAPI_URL = import.meta.env.STRAPI_URL;
-const PUBLIC_STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL;
-
-const strapiLocale =
-  currentLang === 'pt' ? 'pt'
-  : currentLang === 'es' ? 'es-PE'
-  : currentLang;
-
 // Fetch del transporte por slug
 let transporte: any = null;
 
 try {
-  const res = await fetch(
-    `${STRAPI_URL}/api/transportes?filters[slug][$eq]=${slug}` +
-    `&locale=${strapiLocale}&status=draft` +
-    `&populate[image]=*` +
-    `&populate[wallpaper]=*` +
-    `&populate[destino_origen][fields][0]=title` +
-    `&populate[destino_llegada][fields][0]=title` +
-    `&populate[tipos_transporte][fields][0]=nombre&populate[tipos_transporte][fields][1]=slug` +
-    `&populate[includedItems][fields][0]=text&populate[includedItems][fields][1]=icon` +
-    `&populate[excludedItems][fields][0]=text&populate[excludedItems][fields][1]=icon` +
-    `&populate[precios][populate][vehiculo]=*`
+  const json = await fetchOdooTransportJson(
+    `/incas/api/web/transportes/${encodeURIComponent(slug as string)}?lang=${getOdooTransportLang(currentLang)}`
   );
-  if (res.ok) {
-    const json = await res.json();
-    transporte = json?.data?.[0] ?? null;
-  }
+  transporte = json?.data ?? null;
 } catch (e) {
   console.error("Error al obtener transporte:", e);
 }
@@ -68,32 +48,13 @@ if (!transporte) {
 }
 
 // Slugs localizados para el cambio de idioma en la navbar
-const LANG_TO_LOCALE: Record<string, string> = { es: 'es-PE', en: 'en', pt: 'pt', fr: 'fr', it: 'it' };
-const ALL_LANGS = ['es', 'en', 'pt', 'fr', 'it'];
-const transporteSlugs: Record<string, string> = { [currentLang]: slug as string };
-
-if (transporte.documentId) {
-  await Promise.all(
-    ALL_LANGS.filter((l) => l !== currentLang).map(async (targetLang) => {
-      const locale = LANG_TO_LOCALE[targetLang] ?? targetLang;
-      try {
-        const res = await fetch(
-          `${STRAPI_URL}/api/transportes/${transporte.documentId}?locale=${locale}&fields[0]=slug`
-        );
-        if (!res.ok) return;
-        const json = await res.json();
-        const s = json?.data?.slug ?? json?.slug;
-        if (s) transporteSlugs[targetLang] = String(s).toLowerCase();
-      } catch {}
-    })
-  );
-}
+const transporteSlugs: Record<string, string> = transporte?.slugs ?? buildLocalizedSlugs(slug as string);
 
 function getImageUrl(media: any): string | null {
   if (!media) return null;
   const url = media?.formats?.large?.url ?? media?.formats?.medium?.url ?? media?.url;
   if (!url) return null;
-  return url.startsWith('http') ? url : `${PUBLIC_STRAPI_URL}${url}`;
+  return url.startsWith('http') ? url : url;
 }
 
 // Variables para el BookingCard
@@ -146,40 +107,36 @@ const displayImageUrl = selectedPrecio?.imagenUrl ?? getImageUrl(transporte.imag
 const adultPrice = selectedPrecio?.precioAdulto ?? 0;
 const childPrice = selectedPrecio?.precioNino ?? 0;
 const discountPrice = selectedPrecio?.descuento ?? 0;
-const descripcion = strapiRichTextToMarkdown(transporte.descripcion ?? '');
-const md = new MarkdownIt({ html: true });
-const descripcionHtml = descripcion ? md.render(descripcion) : '';
+const descripcionHtml = richContentToHtml(transporte.descripcion ?? '');
 
 // Incluye / No incluye
-const includedTitle = cleanTextValue(transporte.includedTitle);
 const includedItems = Array.isArray(transporte.includedItems)
   ? transporte.includedItems
       .map((i: any) => ({
-        text: cleanTextValue(i.text),
-        icon: cleanTextValue(i.icon)
+        text: typeof i.text === 'string' ? i.text.trim() : '',
+        icon: typeof i.icon === 'string' ? i.icon.trim() : ''
       }))
       .filter((i: any) => i.text)
   : [];
-const excludedTitle = cleanTextValue(transporte.excludedTitle);
 const excludedItems = Array.isArray(transporte.excludedItems)
   ? transporte.excludedItems
       .map((i: any) => ({
-        text: cleanTextValue(i.text),
-        icon: cleanTextValue(i.icon)
+        text: typeof i.text === 'string' ? i.text.trim() : '',
+        icon: typeof i.icon === 'string' ? i.icon.trim() : ''
       }))
       .filter((i: any) => i.text)
   : [];
-const hasIncludedBlock = Boolean(includedTitle || includedItems.length);
-const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
+const hasIncludedBlock = Boolean(includedItems.length);
+const hasExcludedBlock = Boolean(excludedItems.length);
 ---
 
 <html lang={currentLang}>
   <head>
     <meta charset="utf-8" />
     <title>{transporte.seoTitle || transporte.nombre} — Inca's Paradise</title>
-    <link rel=”icon” type=”image/svg+xml” href=”/favicon.svg” />
-    <link rel=”icon” href=”/favicon.ico” />
-    <meta name=”description” content={transporte.seoDescription || (metaDescriptionFallbacks[currentLang] ?? metaDescriptionFallbacks.es)(transporte.nombre)} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="description" content={transporte.seoDescription || (metaDescriptionFallbacks[currentLang] ?? metaDescriptionFallbacks.es)(transporte.nombre)} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- Schema JSON-LD Service -->
     <script is:inline type="application/ld+json" set:html={JSON.stringify((() => {
@@ -350,7 +307,7 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
             </div>
 
             <!-- Descripción -->
-            {descripcion && (
+            {descripcionHtml && (
               <div
                 class="prose prose-stone max-w-none text-[#374151] text-justify"
                 set:html={descripcionHtml}
@@ -363,11 +320,9 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
                 <div class="grid grid-cols-2 gap-3 lg:gap-6">
                   {hasIncludedBlock && (
                     <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
-                      {includedTitle && (
-                        <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
-                          <span class="mr-2 text-green-700">✓</span>{includedTitle}
-                        </h3>
-                      )}
+                      <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
+                        <span class="mr-2 text-green-700">✓</span>{t.transporte?.incluye ?? 'Incluye'}
+                      </h3>
                       <div class="divide-y divide-[#e5e7eb]">
                         {includedItems.map((item: any) => (
                           <div class="flex items-start gap-2 py-2 md:py-4">
@@ -382,11 +337,9 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
                   )}
                   {hasExcludedBlock && (
                     <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
-                      {excludedTitle && (
-                        <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
-                          <span class="mr-2 text-[#6b7280]">✕</span>{excludedTitle}
-                        </h3>
-                      )}
+                      <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
+                        <span class="mr-2 text-[#6b7280]">✕</span>{t.transporte?.noIncluye ?? 'No incluye'}
+                      </h3>
                       <div class="divide-y divide-[#e5e7eb]">
                         {excludedItems.map((item: any) => (
                           <div class="flex items-start gap-2 py-2 md:py-4">
@@ -442,8 +395,8 @@ const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
     <Footer currentLang={currentLang} t={t} />
 
     <!-- Inyecta datos del transporte para el BookingModal -->
-    <script is:inline define:vars={{ transporteDocumentId: transporte.documentId, transporteNumericId: transporte.id, selectedVehiculoNombre }}>
-      window.__transporteData = { documentId: transporteDocumentId, numericId: transporteNumericId };
+    <script is:inline define:vars={{ transporteDocumentId: transporte.documentId, transporteNumericId: transporte.id, transporteSlug: transporte.slug, selectedVehiculoNombre }}>
+      window.__transporteData = { documentId: transporteDocumentId, numericId: transporteNumericId, slug: transporteSlug };
       window.__selectedVehicleName = selectedVehiculoNombre;
     </script>
 

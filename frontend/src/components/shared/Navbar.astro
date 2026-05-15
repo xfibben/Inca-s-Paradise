@@ -1,6 +1,7 @@
 ---
 import LanguageSwitcher from './LanguageSwitcher.astro';
 import { languages } from '../../i18n';
+import { fetchOdooTransportJson, getOdooTransportLang } from '../../utils/odooTransport';
 
 interface Props {
   t: any;
@@ -116,14 +117,18 @@ function sortToursAlphabetically(rows: any[]) {
   });
 }
 
+function resolveMediaUrl(media: any) {
+  if (!media) return null;
+  const url = media?.formats?.medium?.url || media?.formats?.small?.url || media?.url || '';
+  if (!url) return null;
+  return url.startsWith('http') ? url : `${STRAPI_PUBLIC_URL}${url}`;
+}
+
 let navStyleTrips: any[] = [];
 let navDestinations: any[] = [];
 let navTipoTransportes: any[] = [];
 try {
-  const tipoTransporteUrl = `${STRAPI_URL}/api/tipo-transportes?locale=${strapiLocale}&status=published` +
-    `&fields[0]=nombre&fields[1]=slug&fields[2]=nroOrden&populate[image][fields][0]=url&populate[image][fields][1]=formats` +
-    `&sort=nroOrden:asc`;
-  const json = await fetchJsonCached(tipoTransporteUrl);
+  const json = await fetchOdooTransportJson(`/incas/api/web/tipo-transportes?lang=${getOdooTransportLang(currentLang)}`);
   navTipoTransportes = json.data ?? [];
 } catch (e) {
   console.error('[Navbar] Error tipo-transportes:', e);
@@ -521,11 +526,7 @@ try {
               <div class="grid grid-cols-4 gap-0 h-full w-full">
                 {navTipoTransportes.map((item: any) => {
                   const navImg = Array.isArray(item.image) ? item.image[0] : item.image;
-                  const imgUrl = navImg?.formats?.medium?.url
-                    ? `${STRAPI_PUBLIC_URL}${navImg.formats.medium.url}`
-                    : navImg?.url
-                    ? `${STRAPI_PUBLIC_URL}${navImg.url}`
-                    : null;
+                  const imgUrl = resolveMediaUrl(navImg);
                   return (
                     <a
                       href={item.slug ? `/${currentLang}/tipo-transporte/${item.slug}` : `/${currentLang}/tipo-transporte/`}
@@ -708,11 +709,7 @@ try {
           <div class="grid grid-cols-2 gap-1 p-1">
             {navTipoTransportes.map((item: any) => {
               const navImg = Array.isArray(item.image) ? item.image[0] : item.image;
-              const imgUrl = navImg?.formats?.medium?.url
-                ? `${STRAPI_PUBLIC_URL}${navImg.formats.medium.url}`
-                : navImg?.url
-                ? `${STRAPI_PUBLIC_URL}${navImg.url}`
-                : null;
+              const imgUrl = resolveMediaUrl(navImg);
               return (
                 <a
                   href={item.slug ? `/${currentLang}/tipo-transporte/${item.slug}` : `/${currentLang}/tipo-transporte/`}

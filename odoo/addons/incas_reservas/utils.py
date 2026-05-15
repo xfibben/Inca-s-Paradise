@@ -7,6 +7,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from odoo import fields
+from markupsafe import Markup
 
 
 def texto(valor):
@@ -937,6 +938,12 @@ def _normalizar_url_imagen(record, url):
     texto_url = str(url).strip()
     if not texto_url:
         return ""
+    if (
+        len(texto_url) > 100
+        and " " not in texto_url
+        and texto_url.replace("\n", "").replace("\r", "").replace("=", "").replace("+", "").replace("/", "").isalnum()
+    ):
+        return f"data:image/png;base64,{texto_url}"
     if texto_url.startswith("data:image/"):
         return texto_url
     if texto_url.startswith("http://") or texto_url.startswith("https://"):
@@ -1147,7 +1154,7 @@ def _seccion_editorial(titulo, contenido):
 def _parrafo_editorial(texto_largo):
     if not texto_largo:
         return ""
-    return f"<p class='editorial-copy'>{escape(texto_largo)}</p>"
+    return Markup(f"<div class='editorial-copy'>{texto_largo}</div>")
 
 
 def _bloque_highlights_intro(pregunta, lead):

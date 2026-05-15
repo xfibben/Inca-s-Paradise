@@ -1,16 +1,15 @@
 ---
 interface Props {
   tipos: any[];
-  publicStrapiUrl: string;
   lang: string;
   t: any;
 }
 
-const { tipos, publicStrapiUrl, lang, t } = Astro.props;
+const { tipos, lang, t } = Astro.props;
 
 function absUrl(raw: string): string {
   if (!raw) return '';
-  return raw.startsWith('http') ? raw : `${publicStrapiUrl}${raw}`;
+  return raw.startsWith('http') ? raw : raw;
 }
 
 function getCardImage(media: any): { src: string; srcset: string } {

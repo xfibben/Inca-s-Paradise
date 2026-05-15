@@ -28,15 +28,37 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Contenido">
+                        <page string="Español">
                             <group>
-                                <field name="descripcion"/>
+                                <field name="name"/>
+                                <field name="descripcion" widget="html"/>
+                                <field name="seo_title"/>
+                                <field name="seo_description"/>
                             </group>
+                        </page>
+                        <page string="English">
+                            <group>
+                                <field name="name_en"/>
+                                <field name="descripcion_en" widget="html"/>
+                                <field name="seo_title_en"/>
+                                <field name="seo_description_en"/>
+                            </group>
+                        </page>
+                        <page string="Português">
+                            <group>
+                                <field name="name_pt"/>
+                                <field name="descripcion_pt" widget="html"/>
+                                <field name="seo_title_pt"/>
+                                <field name="seo_description_pt"/>
+                            </group>
+                        </page>
+                        <page string="Transportes">
+                            <field name="transporte_ids" widget="many2many_tags"/>
                         </page>
                         <page string="Media">
                             <group>
-                                <field name="image_data" widget="text"/>
-                                <field name="wallpaper_data" widget="text"/>
+                                <field name="image_data" widget="image" options="{'size': [256, 256]}"/>
+                                <field name="wallpaper_data" widget="image" options="{'size': [512, 256]}"/>
                             </group>
                         </page>
                     </notebook>
