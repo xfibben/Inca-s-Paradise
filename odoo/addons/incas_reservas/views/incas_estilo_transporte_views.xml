@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <menuitem
+        id="menu_incas_transporte_root"
+        name="Transporte"
+        parent="incas_core.menu_incas_configuracion_root"
+        sequence="11"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+
     <record id="view_incas_estilo_transporte_list" model="ir.ui.view">
         <field name="name">incas.estilo.transporte.list</field>
         <field name="model">incas.estilo.transporte</field>
@@ -76,9 +84,9 @@
     <menuitem
         id="menu_incas_estilo_transporte"
         name="Tipos de transporte"
-        parent="incas_core.menu_incas_configuracion_root"
+        parent="menu_incas_transporte_root"
         action="action_incas_estilo_transporte"
-        sequence="11"
+        sequence="10"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
     />
 </odoo>

@@ -1,3 +1,4 @@
+from . import image_webp_mixin
 from . import incas_estilo_transporte
 from . import incas_hotel
 from . import incas_hotel_categoria
