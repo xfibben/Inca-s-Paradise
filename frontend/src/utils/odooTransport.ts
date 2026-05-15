@@ -7,7 +7,7 @@ export function getOdooTransportBaseUrl(): string {
 }
 
 export function getOdooDatabaseName(): string {
-  return import.meta.env.ODOO_DB_NAME || import.meta.env.PUBLIC_ODOO_DB || "incaas";
+  return (import.meta.env.PUBLIC_ODOO_DB || import.meta.env.ODOO_DB_NAME || "").trim();
 }
 
 export function getOdooTransportLang(lang: string): OdooTransportLang {
@@ -30,11 +30,12 @@ export async function fetchOdooTransportJson(path: string) {
   if (!baseUrl) {
     throw new Error("ODOO_URL no esta configurada");
   }
-  const response = await fetch(`${baseUrl}${path}`, {
-    headers: {
-      "X-Odoo-Database": getOdooDatabaseName(),
-    },
-  });
+  const databaseName = getOdooDatabaseName();
+  const headers: Record<string, string> = {};
+  if (databaseName) {
+    headers["X-Odoo-Database"] = databaseName;
+  }
+  const response = await fetch(`${baseUrl}${path}`, { headers });
   if (!response.ok) {
     throw new Error(`Error Odoo ${response.status}`);
   }
