@@ -40,6 +40,7 @@ interface VehiculoData {
 interface RutaData {
   id: string;
   nombre: string;
+  descripcionGrupo: string;
   precios: Record<string, { precio: number; original: number | null }>;
 }
 
@@ -67,6 +68,15 @@ function getImageUrl(media: any): string | null {
   const url = media?.formats?.large?.url ?? media?.formats?.medium?.url ?? media?.url;
   if (!url) return null;
   return url.startsWith('http') ? url : url;
+}
+
+function limpiarTextoGrupo(value: unknown): string {
+  const html = richContentToHtml(value);
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 const wallpaperUrl = getImageUrl(tipoTransporte.wallpaper);
@@ -104,6 +114,7 @@ const rutas: RutaData[] = transportes.map((tp: any): RutaData => {
   return {
     id: tp.slug ?? String(tp.id),
     nombre: tp.nombre,
+    descripcionGrupo: limpiarTextoGrupo(tp.descripcion),
     precios: preciosMap,
   };
 });

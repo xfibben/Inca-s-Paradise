@@ -11,6 +11,7 @@ interface VehiculoData {
 interface RutaData {
   id: string;
   nombre: string;
+  descripcionGrupo: string;
   // Mapa vehiculo.nombre → precio
   precios: Record<string, { precio: number; original: number | null }>;
 }
@@ -31,6 +32,26 @@ const COLUMNAS = vehiculos.map((v) => v.nombre);
 
 // Mapa para acceso rápido a detalle por nombre
 const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
+
+const conteoPorDescripcion = rutas.reduce((acc, ruta) => {
+  const clave = ruta.descripcionGrupo?.trim();
+  if (!clave) return acc;
+  acc[clave] = (acc[clave] ?? 0) + 1;
+  return acc;
+}, {} as Record<string, number>);
+
+const descripcionVista = new Set<string>();
+const rutasAgrupadas = rutas.map((ruta) => {
+  const clave = ruta.descripcionGrupo?.trim();
+  const mostrarSubtitulo = Boolean(clave && (conteoPorDescripcion[clave] ?? 0) > 1 && !descripcionVista.has(clave));
+  if (mostrarSubtitulo && clave) {
+    descripcionVista.add(clave);
+  }
+  return {
+    ...ruta,
+    mostrarSubtitulo,
+  };
+});
 ---
 
 <section class="py-20 bg-stone-50">
@@ -49,7 +70,15 @@ const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
 
     <!-- Vista móvil: tarjetas por ruta -->
     <div class="md:hidden flex flex-col gap-4" id="mobile-rutas">
-      {rutas.map((ruta) => (
+      {rutasAgrupadas.map((ruta) => (
+        <>
+          {ruta.mostrarSubtitulo && (
+            <div class="px-1 pt-3 pb-1">
+              <h3 class="text-xs font-semibold uppercase tracking-[0.24em] text-[#1AA093]">
+                {ruta.descripcionGrupo}
+              </h3>
+            </div>
+          )}
         <div class="bg-white rounded-2xl shadow border border-stone-200 overflow-hidden">
 
           <!-- Cabecera de la tarjeta (expandible) -->
@@ -144,6 +173,7 @@ const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
             })}
           </div>
         </div>
+        </>
       ))}
     </div>
 
@@ -163,8 +193,17 @@ const detalleMap = Object.fromEntries(vehiculos.map((v) => [v.nombre, v]));
 
         <!-- Cuerpo -->
         <tbody id="transporte-tbody">
-          {rutas.map((ruta, i) => (
+          {rutasAgrupadas.map((ruta, i) => (
             <>
+              {ruta.mostrarSubtitulo && (
+                <tr class="bg-[#e0f7f5] border-b border-stone-200">
+                  <td colspan={COLUMNAS.length + 1} class="px-6 py-3">
+                    <h3 class="text-xs font-semibold uppercase tracking-[0.24em] text-[#1AA093]">
+                      {ruta.descripcionGrupo}
+                    </h3>
+                  </td>
+                </tr>
+              )}
               <!-- Fila principal -->
               <tr
                 class={`ruta-row cursor-pointer transition-colors duration-150 border-b border-stone-100 hover:bg-[#e0f7f5] ${i % 2 === 0 ? 'bg-white' : 'bg-stone-50'}`}
