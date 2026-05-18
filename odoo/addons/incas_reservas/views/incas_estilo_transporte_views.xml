@@ -27,6 +27,14 @@
         <field name="arch" type="xml">
             <form string="Tipo de transporte">
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_ver_documentos" type="object" class="oe_stat_button" icon="fa-folder-open">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Documentos</span>
+                            </div>
+                        </button>
+                    </div>
+                    <field name="documento_directory_id" invisible="1"/>
                     <group>
                         <group>
                             <field name="name"/>

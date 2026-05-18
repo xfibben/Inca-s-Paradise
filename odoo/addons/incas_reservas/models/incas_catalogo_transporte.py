@@ -8,12 +8,25 @@ class IncasCatalogoTransporte(models.Model):
     _description = "Catálogo local de transportes"
     _inherits = {"incas.servicio.catalogo": "servicio_id"}
     _order = "name"
+    _inherit = ["incas.dms.asset.mixin"]
 
     servicio_id = fields.Many2one("incas.servicio.catalogo", string="Servicio base", required=True, ondelete="cascade")
     name_en = fields.Char(string="Nombre en inglés")
     name_pt = fields.Char(string="Nombre en portugués")
-    image_data = fields.Image(string="Imagen")
-    wallpaper_data = fields.Image(string="Imagen de fondo")
+    image_data = fields.Image(
+        string="Imagen",
+        compute="_compute_image_data",
+        inverse="_inverse_image_data",
+        store=False,
+    )
+    wallpaper_data = fields.Image(
+        string="Imagen de fondo",
+        compute="_compute_wallpaper_data",
+        inverse="_inverse_wallpaper_data",
+        store=False,
+    )
+    image_file_id = fields.Many2one("dms.file", string="Archivo imagen", readonly=True, copy=False)
+    wallpaper_file_id = fields.Many2one("dms.file", string="Archivo imagen de fondo", readonly=True, copy=False)
     destino_origen_data = fields.Text(string="Destino origen")
     destino_origen_data_en = fields.Text(string="Destino origen en inglés")
     destino_origen_data_pt = fields.Text(string="Destino origen en portugués")
@@ -176,7 +189,8 @@ class IncasCatalogoTransporte(models.Model):
         "tarifa_ids.vehiculo_id.descripcion",
         "tarifa_ids.vehiculo_id.imagen",
         "tarifa_ids.vehiculo_id.caracteristica_ids.titulo",
-        "tarifa_ids.vehiculo_id.caracteristica_ids.descripcion",
+        "tarifa_ids.vehiculo_id.caracteristica_ids.titulo_en",
+        "tarifa_ids.vehiculo_id.caracteristica_ids.titulo_pt",
         "tarifa_ids.precio_adulto_usd",
         "tarifa_ids.precio_nino_usd",
         "tarifa_ids.descuento",
@@ -207,7 +221,6 @@ class IncasCatalogoTransporte(models.Model):
                                 "features": [
                                     {
                                         "title": caracteristica.titulo,
-                                        "description": caracteristica.descripcion,
                                     }
                                     for caracteristica in tarifa.vehiculo_id.caracteristica_ids.sorted(
                                         lambda item: (item.sequence, item.id)
@@ -284,15 +297,62 @@ class IncasCatalogoTransporte(models.Model):
             servicio = servicio_model.create(servicio_vals)
             vals["servicio_id"] = servicio.id
         records = super().create(vals_list)
+        records._asegurar_carpeta_documental()
         records._completar_traducciones_vacias()
         return records
 
     def write(self, vals):
         self._migrar_columnas_legadas_jsonb()
         result = super().write(vals)
+        if any(campo in vals for campo in ["name", "documento_directory_id"]):
+            self._asegurar_carpeta_documental()
         if not self.env.context.get("skip_autocompletar_traducciones"):
             self._completar_traducciones_vacias()
         return result
+
+    def _dms_storage_name(self):
+        return "Transportes"
+
+    def _dms_root_directory_name(self):
+        return "Transportes"
+
+    @api.depends("image_file_id")
+    def _compute_image_data(self):
+        for record in self:
+            record.image_data = record.image_file_id.content if record.image_file_id else False
+
+    def _inverse_image_data(self):
+        for record in self:
+            if not record.image_data:
+                if record.image_file_id:
+                    record.image_file_id.unlink()
+                    record.image_file_id = False
+                continue
+            archivo = record._guardar_archivo_dms(
+                record.image_data,
+                "transporte-imagen",
+                archivo_actual=record.image_file_id,
+            )
+            record.image_file_id = archivo.id
+
+    @api.depends("wallpaper_file_id")
+    def _compute_wallpaper_data(self):
+        for record in self:
+            record.wallpaper_data = record.wallpaper_file_id.content if record.wallpaper_file_id else False
+
+    def _inverse_wallpaper_data(self):
+        for record in self:
+            if not record.wallpaper_data:
+                if record.wallpaper_file_id:
+                    record.wallpaper_file_id.unlink()
+                    record.wallpaper_file_id = False
+                continue
+            archivo = record._guardar_archivo_dms(
+                record.wallpaper_data,
+                "transporte-fondo",
+                archivo_actual=record.wallpaper_file_id,
+            )
+            record.wallpaper_file_id = archivo.id
 
     def read(self, fields=None, load="_classic_read"):
         self._migrar_columnas_legadas_jsonb()

@@ -8,6 +8,7 @@ class IncasCatalogoVehiculo(models.Model):
     _description = "Catálogo local de vehículos"
     _order = "nombre"
     _rec_name = "nombre"
+    _inherit = ["incas.dms.asset.mixin"]
 
     nombre = fields.Char(string="Nombre", required=True, default="Nuevo vehículo")
     descripcion = fields.Html(string="Descripción")
@@ -15,7 +16,13 @@ class IncasCatalogoVehiculo(models.Model):
     descripcion_en = fields.Html(string="Descripción en inglés")
     nombre_pt = fields.Char(string="Nombre en portugués")
     descripcion_pt = fields.Html(string="Descripción en portugués")
-    imagen = fields.Image(string="Imagen")
+    imagen = fields.Image(
+        string="Imagen",
+        compute="_compute_imagen",
+        inverse="_inverse_imagen",
+        store=False,
+    )
+    imagen_file_id = fields.Many2one("dms.file", string="Archivo imagen", readonly=True, copy=False)
     numero_asientos = fields.Integer(string="Número de asientos")
     caracteristica_ids = fields.One2many(
         "incas.catalogo.vehiculo.caracteristica",
@@ -104,15 +111,43 @@ class IncasCatalogoVehiculo(models.Model):
         for vals in vals_list:
             self._autocompletar_traducciones_en_vals(vals)
         records = super().create(vals_list)
+        records._asegurar_carpeta_documental()
         records._completar_traducciones_vacias()
         return records
 
     def write(self, vals):
         self._migrar_columnas_legadas_jsonb()
         result = super().write(vals)
+        if any(campo in vals for campo in ["nombre", "documento_directory_id"]):
+            self._asegurar_carpeta_documental()
         if not self.env.context.get("skip_autocompletar_traducciones"):
             self._completar_traducciones_vacias()
         return result
+
+    def _dms_storage_name(self):
+        return "Transportes"
+
+    def _dms_root_directory_name(self):
+        return "Vehículos"
+
+    @api.depends("imagen_file_id")
+    def _compute_imagen(self):
+        for record in self:
+            record.imagen = record.imagen_file_id.content if record.imagen_file_id else False
+
+    def _inverse_imagen(self):
+        for record in self:
+            if not record.imagen:
+                if record.imagen_file_id:
+                    record.imagen_file_id.unlink()
+                    record.imagen_file_id = False
+                continue
+            archivo = record._guardar_archivo_dms(
+                record.imagen,
+                "vehiculo-imagen",
+                archivo_actual=record.imagen_file_id,
+            )
+            record.imagen_file_id = archivo.id
 
     def read(self, fields=None, load="_classic_read"):
         self._migrar_columnas_legadas_jsonb()

@@ -5,6 +5,7 @@ class IncasEstiloTransporte(models.Model):
     _name = "incas.estilo.transporte"
     _description = "Estilo de transporte"
     _order = "nro_orden, name"
+    _inherit = ["incas.dms.asset.mixin"]
 
     name = fields.Char(string="Nombre", required=True)
     name_en = fields.Char(string="Nombre en inglés")
@@ -13,8 +14,20 @@ class IncasEstiloTransporte(models.Model):
     descripcion = fields.Html(string="Descripción")
     descripcion_en = fields.Html(string="Descripción en inglés")
     descripcion_pt = fields.Html(string="Descripción en portugués")
-    image_data = fields.Image(string="Imagen")
-    wallpaper_data = fields.Image(string="Imagen de fondo")
+    image_data = fields.Image(
+        string="Imagen",
+        compute="_compute_image_data",
+        inverse="_inverse_image_data",
+        store=False,
+    )
+    wallpaper_data = fields.Image(
+        string="Imagen de fondo",
+        compute="_compute_wallpaper_data",
+        inverse="_inverse_wallpaper_data",
+        store=False,
+    )
+    image_file_id = fields.Many2one("dms.file", string="Archivo imagen", readonly=True, copy=False)
+    wallpaper_file_id = fields.Many2one("dms.file", string="Archivo imagen de fondo", readonly=True, copy=False)
     seo_title = fields.Char(string="Título SEO")
     seo_title_en = fields.Char(string="Título SEO en inglés")
     seo_title_pt = fields.Char(string="Título SEO en portugués")
@@ -120,15 +133,62 @@ class IncasEstiloTransporte(models.Model):
         for vals in vals_list:
             self._autocompletar_traducciones_en_vals(vals)
         records = super().create(vals_list)
+        records._asegurar_carpeta_documental()
         records._completar_traducciones_vacias()
         return records
 
     def write(self, vals):
         self._migrar_columnas_legadas_jsonb()
         result = super().write(vals)
+        if any(campo in vals for campo in ["name", "documento_directory_id"]):
+            self._asegurar_carpeta_documental()
         if not self.env.context.get("skip_autocompletar_traducciones"):
             self._completar_traducciones_vacias()
         return result
+
+    def _dms_storage_name(self):
+        return "Transportes"
+
+    def _dms_root_directory_name(self):
+        return "Tipos de transporte"
+
+    @api.depends("image_file_id")
+    def _compute_image_data(self):
+        for record in self:
+            record.image_data = record.image_file_id.content if record.image_file_id else False
+
+    def _inverse_image_data(self):
+        for record in self:
+            if not record.image_data:
+                if record.image_file_id:
+                    record.image_file_id.unlink()
+                    record.image_file_id = False
+                continue
+            archivo = record._guardar_archivo_dms(
+                record.image_data,
+                "tipo-transporte-imagen",
+                archivo_actual=record.image_file_id,
+            )
+            record.image_file_id = archivo.id
+
+    @api.depends("wallpaper_file_id")
+    def _compute_wallpaper_data(self):
+        for record in self:
+            record.wallpaper_data = record.wallpaper_file_id.content if record.wallpaper_file_id else False
+
+    def _inverse_wallpaper_data(self):
+        for record in self:
+            if not record.wallpaper_data:
+                if record.wallpaper_file_id:
+                    record.wallpaper_file_id.unlink()
+                    record.wallpaper_file_id = False
+                continue
+            archivo = record._guardar_archivo_dms(
+                record.wallpaper_data,
+                "tipo-transporte-fondo",
+                archivo_actual=record.wallpaper_file_id,
+            )
+            record.wallpaper_file_id = archivo.id
 
     def read(self, fields=None, load="_classic_read"):
         self._migrar_columnas_legadas_jsonb()

@@ -41,13 +41,11 @@ def _serialize_vehiculo(vehiculo, lang):
     features = []
     for caracteristica in vehiculo.caracteristica_ids.sorted(lambda item: (item.sequence, item.id)):
         texto = _campo_localizado(caracteristica, "titulo", lang)
-        descripcion = _campo_localizado(caracteristica, "descripcion", lang)
-        if texto or descripcion:
+        if texto:
             features.append(
                 {
-                    "text": texto or descripcion or "",
+                    "text": texto or "",
                     "title": texto or "",
-                    "description": descripcion or "",
                 }
             )
     return {
