@@ -1,5 +1,7 @@
 import json
 import logging
+import re
+import unicodedata
 
 from urllib.error import HTTPError
 
@@ -21,6 +23,13 @@ def _lang_base(lang):
 
 def _normalizar_slug(valor):
     return (valor or "").strip().strip("/").lower()
+
+
+def _slugify(valor):
+    texto = unicodedata.normalize("NFKD", (valor or "").strip().lower())
+    texto = texto.encode("ascii", "ignore").decode("ascii")
+    texto = re.sub(r"[^a-z0-9]+", "-", texto).strip("-")
+    return texto
 
 
 def _domain_ip(ip_value):
@@ -427,6 +436,7 @@ def _serialize_web_tour(tour, lang, incluir_relaciones=True, incluir_relacionado
 
 def _buscar_por_slug_localizado(model_name, slug):
     slug_normalizado = _normalizar_slug(slug)
+    slug_slugificado = _slugify(slug_normalizado)
     if not slug_normalizado:
         return request.env[model_name]
     candidatos = request.env[model_name].sudo().search(
@@ -442,7 +452,15 @@ def _buscar_por_slug_localizado(model_name, slug):
     # Evita falsos positivos de ilike y tolera slugs guardados con espacios o mayusculas.
     for record in candidatos:
         for campo in ("slug", "slug_en", "slug_pt"):
-            if _normalizar_slug(getattr(record, campo, False)) == slug_normalizado:
+            valor_campo = getattr(record, campo, False)
+            if _normalizar_slug(valor_campo) == slug_normalizado:
+                return record
+            if _slugify(valor_campo) == slug_slugificado:
+                return record
+        for campo in ("nombre", "nombre_en", "nombre_pt", "name", "name_en", "name_pt"):
+            if campo not in record._fields:
+                continue
+            if _slugify(getattr(record, campo, False)) == slug_slugificado:
                 return record
     return request.env[model_name]
 
