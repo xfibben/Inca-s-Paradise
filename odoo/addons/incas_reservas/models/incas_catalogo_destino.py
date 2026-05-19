@@ -35,7 +35,7 @@ class IncasCatalogoDestino(models.Model):
     imagen_fondo = fields.Image(string="Imagen de fondo")
     tour_ids = fields.Many2many(
         "incas.tour",
-        "incas_catalogo_destino_web_tour_rel",
+        "incas_tour_destino_rel",
         "destino_id",
         "tour_id",
         string="Tours",
@@ -59,8 +59,36 @@ class IncasCatalogoDestino(models.Model):
     ]
 
     def _auto_init(self):
+        self._migrar_relacion_tours_legada()
         self._migrar_columnas_seo_a_texto()
         return super()._auto_init()
+
+    def _migrar_relacion_tours_legada(self):
+        self.env.cr.execute(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_name = 'incas_catalogo_destino_web_tour_rel'
+            )
+            """
+        )
+        fila = self.env.cr.fetchone()
+        if not fila or not fila[0]:
+            return
+        self.env.cr.execute(
+            """
+            INSERT INTO incas_tour_destino_rel (tour_id, destino_id)
+            SELECT rel.tour_id, rel.destino_id
+            FROM incas_catalogo_destino_web_tour_rel rel
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM incas_tour_destino_rel actual
+                WHERE actual.tour_id = rel.tour_id
+                  AND actual.destino_id = rel.destino_id
+            )
+            """
+        )
 
     def _migrar_columnas_seo_a_texto(self):
         columnas = {

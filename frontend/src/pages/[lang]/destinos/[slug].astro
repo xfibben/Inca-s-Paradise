@@ -7,7 +7,7 @@ import Footer from "../../../components/shared/Footer.astro";
 import Ribbon from "../../../components/shared/Ribbon.astro";
 import { formatPrice } from "../../../utils/currency";
 import { fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from "../../../utils/odooWeb";
-import { richContentToHtml } from "../../../utils/richContent";
+import { normalizeOdooHtml, richContentToHtml } from "../../../utils/richContent";
 
 type SupportedLang = "es" | "en" | "pt" | "it" | "fr";
 
@@ -39,6 +39,7 @@ if (!destination) {
 const pageTitle = destination.title ?? slugKey;
 const pageDescription = richContentToHtml(destination.description);
 const plainDescription = pageDescription.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(/\/$/, "");
 const canonical = `${siteOrigin}/${lang}/destinos/${destination.slug}`;
 const seoTitle = String(destination?.seoTitle ?? "").trim() || pageTitle;
@@ -49,6 +50,7 @@ const iconItems = Array.isArray(destination.iconItems) ? destination.iconItems :
 const tours = Array.isArray(destination.tours) ? destination.tours : [];
 const introTitleHtml = richContentToHtml(destination.introTitle);
 const introContentHtml = richContentToHtml(destination.introContent);
+const primaryRibbonText = stripHtml(normalizeOdooHtml(destination.primaryRibbon || ""));
 const smallTripItems = tours.filter((tour: any) => tour.tourType === "small_trip");
 const packageItems = tours.filter((tour: any) => tour.tourType !== "small_trip");
 const priceFromLabel =
@@ -108,7 +110,7 @@ const getDiscountedPrice = (price: number, discountPercent: number) =>
         </div>
       </section>
 
-      {destination.primaryRibbon ? <Ribbon text={destination.primaryRibbon} maxWidthClass="max-w-6xl" /> : null}
+      {primaryRibbonText ? <Ribbon text={primaryRibbonText} maxWidthClass="max-w-6xl" /> : null}
 
       <section class="max-w-6xl mx-auto px-6 py-16">
         {(destination.introTitle || destination.introContent || iconItems.length > 0) && (

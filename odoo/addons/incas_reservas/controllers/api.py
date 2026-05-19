@@ -241,7 +241,10 @@ def _serialize_subcategoria_destino(subcategoria, lang):
 
 
 def _serialize_destino(destino, lang, incluir_tours=False):
-    tours = destino.tour_ids.sorted(lambda rec: (_campo_localizado(rec, "nombre", lang) or "", rec.id))
+    tours = request.env["incas.tour"].sudo().search(
+        [("destino_ids", "in", destino.id), ("active", "=", True)],
+        order="nombre, id",
+    )
     icon_items = []
     for item in destino.icono_item_ids.sorted(lambda rec: (rec.sequence, rec.id)):
         label = _campo_localizado(item, "titulo", lang)
@@ -284,7 +287,7 @@ def _serialize_destino(destino, lang, incluir_tours=False):
         "subcategorias_tour": [_serialize_subcategoria_destino(item, lang) for item in destino.subcategoria_tour_ids.sorted(lambda rec: (rec.sequence, rec.id))],
     }
     if incluir_tours:
-        data["tours"] = [_serialize_tour_card(tour, lang) for tour in tours if tour.active]
+        data["tours"] = [_serialize_tour_card(tour, lang) for tour in tours]
     return data
 
 
