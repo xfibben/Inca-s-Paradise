@@ -7,6 +7,7 @@
             <list string="Tours">
                 <field name="nombre"/>
                 <field name="tipo_tour"/>
+                <field name="ip"/>
                 <field name="slug"/>
                 <field name="destino_ids" widget="many2many_tags"/>
                 <field name="active"/>
@@ -21,6 +22,7 @@
             <search string="Buscar tours">
                 <field name="nombre"/>
                 <field name="tipo_tour"/>
+                <field name="ip"/>
                 <field name="slug"/>
                 <field name="destino_ids"/>
             </search>
@@ -33,7 +35,7 @@
         <field name="arch" type="xml">
             <form string="Tour">
                 <header>
-                    <button name="action_copiar_imagenes_destacadas" type="object" string="Copiar featured images desde itinerary"/>
+                    <button name="action_copiar_imagenes_destacadas" type="object" string="Copiar imagenes destacadas desde itinerario"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -47,7 +49,12 @@
                     <group>
                         <group>
                             <field name="nombre"/>
+                            <field name="servicio_id" readonly="1"/>
                             <field name="tipo_tour"/>
+                            <field name="ip"/>
+                            <field name="precio_adulto"/>
+                            <field name="precio_nino"/>
+                            <field name="descuento"/>
                             <field name="estilo_ids" widget="many2many_tags"/>
                             <field name="destino_ids" widget="many2many_tags"/>
                             <field name="active"/>
@@ -59,6 +66,7 @@
                     <notebook>
                         <page string="Español">
                             <group>
+                                <field name="nombre"/>
                                 <field name="slug"/>
                                 <field name="meta_titulo" widget="html"/>
                                 <field name="meta_descripcion" widget="html"/>
@@ -68,6 +76,7 @@
                         </page>
                         <page string="English">
                             <group>
+                                <field name="nombre_en"/>
                                 <field name="slug_en"/>
                                 <field name="meta_titulo_en" widget="html"/>
                                 <field name="meta_descripcion_en" widget="html"/>
@@ -77,6 +86,7 @@
                         </page>
                         <page string="Português">
                             <group>
+                                <field name="nombre_pt"/>
                                 <field name="slug_pt"/>
                                 <field name="meta_titulo_pt" widget="html"/>
                                 <field name="meta_descripcion_pt" widget="html"/>
@@ -84,7 +94,7 @@
                                 <field name="destacados_lead_pt" widget="html"/>
                             </group>
                         </page>
-                        <page string="Highlights items">
+                        <page string="Items destacados">
                             <field name="destacado_item_ids" nolabel="1">
                                 <list editable="bottom" open_form_view="True">
                                     <field name="sequence" widget="handle"/>
@@ -95,7 +105,7 @@
                                     <field name="titulo_pt"/>
                                     <field name="contenido_pt"/>
                                 </list>
-                                <form string="Highlight item">
+                                <form string="Item destacado">
                                     <sheet>
                                         <group string="Español">
                                             <field name="titulo" widget="html"/>
@@ -113,7 +123,7 @@
                                 </form>
                             </field>
                         </page>
-                        <page string="Itinerary items">
+                        <page string="Items itinerario">
                             <field name="itinerario_item_ids" nolabel="1">
                                 <list editable="bottom" open_form_view="True">
                                     <field name="sequence" widget="handle"/>
@@ -124,7 +134,7 @@
                                     <field name="titulo_pt"/>
                                     <field name="descripcion_pt"/>
                                 </list>
-                                <form string="Itinerary item">
+                                <form string="Item itinerario">
                                     <sheet>
                                         <group string="Español">
                                             <field name="titulo" widget="html"/>
@@ -138,7 +148,7 @@
                                             <field name="titulo_pt" widget="html"/>
                                             <field name="descripcion_pt" widget="html"/>
                                         </group>
-                                        <group string="Imágenes">
+                                        <group string="Imagenes">
                                             <field name="imagen_ids" nolabel="1">
                                                 <list editable="bottom">
                                                     <field name="sequence" widget="handle"/>
@@ -150,7 +160,7 @@
                                 </form>
                             </field>
                         </page>
-                        <page string="Included">
+                        <page string="Incluidos">
                             <field name="incluye_item_ids" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
@@ -160,7 +170,7 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Not included">
+                        <page string="No incluidos">
                             <field name="no_incluye_item_ids" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
@@ -179,7 +189,7 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Featured images">
+                        <page string="Imagenes destacadas">
                             <field name="imagen_destacada_ids" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
@@ -194,7 +204,7 @@
     </record>
 
     <record id="action_incas_tour" model="ir.actions.act_window">
-        <field name="name">Tours web</field>
+        <field name="name">Tours</field>
         <field name="res_model">incas.tour</field>
         <field name="view_mode">list,form</field>
         <field name="search_view_id" ref="view_incas_tour_search"/>
@@ -202,8 +212,8 @@
 
     <menuitem
         id="menu_incas_tour"
-        name="Tours web"
-        parent="incas_core.menu_incas_configuracion_root"
+        name="Tours"
+        parent="menu_incas_catalogo_root"
         action="action_incas_tour"
         sequence="13"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"

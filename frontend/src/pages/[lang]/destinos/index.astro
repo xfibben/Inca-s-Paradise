@@ -1,219 +1,86 @@
-﻿---
+---
 import { getTranslation } from "../../../i18n";
 import "../../../styles/global.css";
-import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
+import GoogleAnalytics from "../../../components/shared/GoogleAnalytics.astro";
 import DestinationsGallery from "../../../components/LandingPage/DestinationsGallery.astro";
-import Ribbon from "../../../components/shared/Ribbon.astro";
 import Navbar from "../../../components/shared/Navbar.astro";
 import Footer from "../../../components/shared/Footer.astro";
 import SEOHead from "../../../components/SEO/SEOHead.astro";
 
-type SupportedLang = "es" | "en";
+type SupportedLang = "es" | "en" | "pt" | "it" | "fr";
 
 export function getStaticPaths() {
-  return [{ params: { lang: "es" } }, { params: { lang: "en" } }];
+  return ["es", "en", "pt", "it", "fr"].map((lang) => ({ params: { lang } }));
 }
 
 const rawLang = (Astro.params.lang ?? "es").toLowerCase();
-const lang: SupportedLang = rawLang === "en" ? "en" : "es";
-const isEnglish = lang === "en";
+const lang: SupportedLang = ["es", "en", "pt", "it", "fr"].includes(rawLang) ? (rawLang as SupportedLang) : "es";
+const t = getTranslation(lang);
 
 if (rawLang !== lang) {
   return Astro.redirect(`/${lang}/destinos`);
 }
 
-const t = getTranslation(lang);
-
-const STRAPI_URLS = Array.from(
-  new Set([
-    import.meta.env.STRAPI_URL,
-    import.meta.env.PUBLIC_STRAPI_URL,
-  ].filter(Boolean))
-);
-
-const STRAPI_LOCALES = isEnglish
-  ? (["en", "en-US", null] as const)
-  : (["es-PE", "es", null] as const);
-
-let title =
-  isEnglish ? "Destinations" : "Destinos";
-let description = "";
-let ribbonText = "";
-let contactBandText = "";
-let contactBandPhone = "";
-let contactBandButtonLabel = "";
-let contactBandButtonUrl = "";
-
-for (const baseUrl of STRAPI_URLS) {
-  let loadedFromStrapi = false;
-
-  for (const locale of STRAPI_LOCALES) {
-    const localePart = locale ? `locale=${encodeURIComponent(locale)}&` : "";
-
-    try {
-      const res = await fetch(
-        `${baseUrl}/api/destino?${localePart}fields[0]=title&fields[1]=description&fields[2]=ribbonText&fields[3]=contactBandText&fields[4]=contactBandPhone&fields[5]=contactBandButtonLabel&fields[6]=contactBandButtonUrl`
-      );
-
-      if (!res.ok) continue;
-
-      const json = await res.json();
-      const raw = json?.data ?? null;
-      const attrs = raw?.attributes ?? raw ?? {};
-      if (!attrs || typeof attrs !== "object") continue;
-
-      title = attrs.title ?? title;
-      description = attrs.description ?? description;
-      ribbonText = attrs.ribbonText ?? ribbonText;
-      contactBandText = attrs.contactBandText ?? contactBandText;
-      contactBandPhone = attrs.contactBandPhone ?? contactBandPhone;
-      contactBandButtonLabel =
-        attrs.contactBandButtonLabel ?? contactBandButtonLabel;
-      contactBandButtonUrl = attrs.contactBandButtonUrl ?? contactBandButtonUrl;
-      loadedFromStrapi = true;
-      break;
-    } catch {
-      // Try next locale / URL.
-    }
-  }
-
-  if (loadedFromStrapi) {
-    break;
-  }
-}
-
-const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(
-  /\/$/,
-  ""
-);
+const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(/\/$/, "");
 const canonical = `${siteOrigin}/${lang}/destinos`;
-const cleanText = (value: any) =>
-  typeof value === "string" ? value.trim() : "";
-
-const seoTitle = (() => {
-  const base = cleanText(title);
-  if (!base) return "Destinos | Inca's Paradise";
-  return /inca'?s paradise/i.test(base) ? base : `${base} | Inca's Paradise`;
-})();
-
+const seoTitle =
+  lang === "en" ? "Destinations | Inca's Paradise" :
+  lang === "pt" ? "Destinos | Inca's Paradise" :
+  lang === "fr" ? "Destinations | Inca's Paradise" :
+  lang === "it" ? "Destinazioni | Inca's Paradise" :
+  "Destinos | Inca's Paradise";
 const seoDescription =
-  cleanText(description) ||
-  (isEnglish
-    ? "Explore destinations in Peru with tailor-made experiences by Inca's Paradise."
-    : "Explora destinos en Peru con experiencias personalizadas de Inca's Paradise.");
-
-const alternateLanguages = [
-  { lang: "es-PE", url: `${siteOrigin}/es/destinos` },
-  { lang: "en", url: `${siteOrigin}/en/destinos` },
-];
-
-const destinationCollectionSchema = {
-  "@context": "https://schema.org",
-  "@type": "CollectionPage",
-  name: seoTitle,
-  description: seoDescription,
-  inLanguage: isEnglish ? "en" : "es",
-  url: canonical,
-  isPartOf: {
-    "@type": "WebSite",
-    name: "Inca's Paradise",
-    url: siteOrigin,
-  },
-  breadcrumb: {
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: isEnglish ? "Home" : "Inicio",
-        item: `${siteOrigin}/${lang}/`,
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: isEnglish ? "Destinations" : "Destinos",
-        item: canonical,
-      },
-    ],
-  },
-};
-const hasHeroContent = Boolean(title || description);
-const hasContactBandContent = Boolean(
-  contactBandText || contactBandPhone || contactBandButtonLabel
-);
+  lang === "en"
+    ? "Explore our destinations in Peru and discover tours crafted from Odoo content."
+    : lang === "pt"
+    ? "Explore nossos destinos no Peru e descubra tours gerenciados no Odoo."
+    : lang === "fr"
+    ? "Explorez nos destinations au Perou et decouvrez des tours geres depuis Odoo."
+    : lang === "it"
+    ? "Esplora le nostre destinazioni in Peru e scopri tour gestiti da Odoo."
+    : "Explora nuestros destinos en Peru y descubre tours gestionados desde Odoo.";
 ---
 
 <html lang={lang}>
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{seoTitle}</title>
-		<SEOHead
-			title={seoTitle}
-			description={seoDescription}
-			canonical={canonical}
-			ogImage={`${siteOrigin}/og-image.jpg`}
-			ogType="website"
-			currentLang={lang}
-			alternateLanguages={alternateLanguages}
-			xDefaultUrl={`${siteOrigin}/es/destinos`}
-			structuredData={destinationCollectionSchema}
-		/>
-	  <GoogleAnalytics />
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{seoTitle}</title>
+    <SEOHead
+      title={seoTitle}
+      description={seoDescription}
+      canonical={canonical}
+      ogImage={`${siteOrigin}/og-image.jpg`}
+      ogType="website"
+      currentLang={lang}
+      alternateLanguages={[
+        { lang: "es-PE", url: `${siteOrigin}/es/destinos` },
+        { lang: "en", url: `${siteOrigin}/en/destinos` },
+        { lang: "pt", url: `${siteOrigin}/pt/destinos` },
+        { lang: "fr", url: `${siteOrigin}/fr/destinos` },
+        { lang: "it", url: `${siteOrigin}/it/destinos` },
+      ]}
+      xDefaultUrl={`${siteOrigin}/es/destinos`}
+    />
+    <GoogleAnalytics />
   </head>
-	<body class="min-h-screen bg-white text-gray-900">
-		<Navbar {t} currentLang={lang} />
-		<main>
-			{
-				hasHeroContent && (		
-					<section class="bg-[#f5f0e9]">
-						<div class="mx-auto w-full max-w-5xl px-6 py-16 md:py-24 lg:py-28">
-							{title ? (
-								<h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic" style="font-family: 'Playfair Display', serif;">
-									{title}
-								</h1>
-							) : null}
-							{description ? (
-								<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed mb-3 md:mb-4 lg:mb-6">
-									{description}
-								</p>
-							) : null}
-						</div>
-					</section>
-				)
-			}
-			{ribbonText ? <Ribbon text={ribbonText} maxWidthClass="max-w-5xl" /> : null}
-			<DestinationsGallery t={t} currentLang={lang} />
-			{
-				hasContactBandContent && (
-					<section class="bg-[#db3f24] mt-8 mb-8 md:mt-12 md:mb-12">
-						<div class="mx-auto w-full max-w-7xl px-6 py-10 md:py-12">
-							<div class="grid gap-6 text-white md:grid-cols-[1.5fr_auto_auto] md:items-center md:gap-8">
-								{contactBandText ? (
-									<p class="flex items-center gap-3 text-lg md:text-xl leading-snug">
-										<span class="inline-block h-2 w-2 rounded-sm bg-white"></span>
-										<span>{contactBandText}</span>
-									</p>
-								) : null}
-								{contactBandPhone ? <p class="text-lg md:text-xl">{contactBandPhone}</p> : null}
-								{contactBandButtonLabel ? (
-									<a
-										href={contactBandButtonUrl || "#"}
-										class="inline-flex w-fit items-center justify-center border border-white px-5 py-2 text-sm font-semibold text-white transition hover:bg-white hover:text-[#db3f24]"
-									>
-										{contactBandButtonLabel}
-									</a>
-								) : null}
-							</div>
-						</div>
-					</section>
-				)
-			}
-		</main>
-		<Footer currentLang={lang} {t} />
-	</body>
+  <body class="min-h-screen bg-white text-gray-900">
+    <Navbar {t} currentLang={lang} />
+    <main>
+      <section class="bg-[#f5f0e9]">
+        <div class="mx-auto w-full max-w-5xl px-6 py-16 md:py-24 lg:py-28">
+          <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic" style="font-family: 'Playfair Display', serif;">
+            {lang === "en" ? "Destinations" : lang === "it" ? "Destinazioni" : "Destinos"}
+          </h1>
+          <p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed">
+            {seoDescription}
+          </p>
+        </div>
+      </section>
+      <DestinationsGallery t={t} currentLang={lang} />
+    </main>
+    <Footer currentLang={lang} {t} />
+  </body>
 </html>
-

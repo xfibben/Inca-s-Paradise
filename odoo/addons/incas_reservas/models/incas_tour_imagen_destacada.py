@@ -27,7 +27,7 @@ class IncasTourImagenDestacada(models.Model):
             tour = record.tour_id
             if not tour:
                 continue
-            directorio = tour._asegurar_subcarpeta_documental("Featured images")
+            directorio = tour._asegurar_subcarpeta_documental("Imagenes destacadas")
             if not record.imagen:
                 if record.imagen_file_id:
                     record.imagen_file_id.unlink()
@@ -35,15 +35,18 @@ class IncasTourImagenDestacada(models.Model):
                 continue
             archivo = tour._guardar_archivo_dms(
                 record.imagen,
-                "featured-image",
+                "imagen-destacada",
                 archivo_actual=record.imagen_file_id,
                 directory=directorio,
             )
             record.imagen_file_id = archivo.id
 
     def unlink(self):
+        tours = self.mapped("tour_id")
         archivos = self.mapped("imagen_file_id")
         result = super().unlink()
         if archivos:
             archivos.unlink()
+        if tours:
+            tours._sincronizar_servicio_operativo()
         return result

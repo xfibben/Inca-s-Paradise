@@ -292,6 +292,7 @@ class IncasCatalogoTransporte(models.Model):
                 "tipo_servicio": "transporte",
                 "name": vals.get("name"),
                 "slug": vals.get("slug"),
+                "ip": vals.get("ip") or "ip3",
                 "active": vals.get("active", True),
             }
             servicio = servicio_model.create(servicio_vals)

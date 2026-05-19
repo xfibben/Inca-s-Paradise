@@ -47,11 +47,11 @@ access_incas_catalogo_vehiculo_caracteristica_admin,access.incas.catalogo.vehicu
 access_incas_catalogo_vehiculo_caracteristica_reservas,access.incas.catalogo.vehiculo.caracteristica.reservas,model_incas_catalogo_vehiculo_caracteristica,incas_core.group_incas_core_reservas,1,1,0,0
 access_incas_catalogo_vehiculo_caracteristica_operaciones,access.incas.catalogo.vehiculo.caracteristica.operaciones,model_incas_catalogo_vehiculo_caracteristica,incas_core.group_incas_core_operaciones,1,1,0,0
 access_incas_catalogo_vehiculo_caracteristica_gerencia,access.incas.catalogo.vehiculo.caracteristica.gerencia,model_incas_catalogo_vehiculo_caracteristica,incas_core.group_incas_core_gerencia,1,1,0,0
-access_incas_estilo_tour_system,access.incas.estilo.tour.system,model_incas_estilo_tour,base.group_system,1,1,1,1
-access_incas_estilo_tour_admin,access.incas.estilo.tour.admin,model_incas_estilo_tour,incas_core.group_incas_core_admin,1,1,1,1
-access_incas_estilo_tour_reservas,access.incas.estilo.tour.reservas,model_incas_estilo_tour,incas_core.group_incas_core_reservas,1,1,0,0
-access_incas_estilo_tour_operaciones,access.incas.estilo.tour.operaciones,model_incas_estilo_tour,incas_core.group_incas_core_operaciones,1,1,0,0
-access_incas_estilo_tour_gerencia,access.incas.estilo.tour.gerencia,model_incas_estilo_tour,incas_core.group_incas_core_gerencia,1,1,1,0
+access_incas_estilo_viaje_system,access.incas.estilo.viaje.system,model_incas_estilo_viaje,base.group_system,1,1,1,1
+access_incas_estilo_viaje_admin,access.incas.estilo.viaje.admin,model_incas_estilo_viaje,incas_core.group_incas_core_admin,1,1,1,1
+access_incas_estilo_viaje_reservas,access.incas.estilo.viaje.reservas,model_incas_estilo_viaje,incas_core.group_incas_core_reservas,1,1,0,0
+access_incas_estilo_viaje_operaciones,access.incas.estilo.viaje.operaciones,model_incas_estilo_viaje,incas_core.group_incas_core_operaciones,1,1,0,0
+access_incas_estilo_viaje_gerencia,access.incas.estilo.viaje.gerencia,model_incas_estilo_viaje,incas_core.group_incas_core_gerencia,1,1,1,0
 access_incas_tour_system,access.incas.tour.system,model_incas_tour,base.group_system,1,1,1,1
 access_incas_tour_admin,access.incas.tour.admin,model_incas_tour,incas_core.group_incas_core_admin,1,1,1,1
 access_incas_tour_reservas,access.incas.tour.reservas,model_incas_tour,incas_core.group_incas_core_reservas,1,1,0,0

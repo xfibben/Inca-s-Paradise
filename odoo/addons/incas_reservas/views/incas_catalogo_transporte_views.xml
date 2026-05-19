@@ -7,6 +7,7 @@
             <list string="Catálogo de transportes">
                 <field name="name"/>
                 <field name="estilo_transporte_ids" widget="many2many_tags"/>
+                <field name="ip"/>
                 <field name="slug"/>
                 <field name="active"/>
             </list>
@@ -20,6 +21,7 @@
             <search string="Buscar transportes">
                 <field name="name"/>
                 <field name="estilo_transporte_ids"/>
+                <field name="ip"/>
                 <field name="slug"/>
             </search>
         </field>
@@ -43,6 +45,7 @@
                         <group>
                             <field name="name"/>
                             <field name="estilo_transporte_ids" widget="many2many_tags"/>
+                            <field name="ip"/>
                             <field name="duracion_viaje"/>
                             <field name="distancia"/>
                             <field name="active"/>

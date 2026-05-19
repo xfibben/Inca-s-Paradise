@@ -9,7 +9,7 @@ class IncasTourItinerarioImagen(models.Model):
     sequence = fields.Integer(string="Secuencia", default=10)
     itinerario_id = fields.Many2one(
         "incas.tour.itinerario",
-        string="Itinerary item",
+        string="Item itinerario",
         required=True,
         ondelete="cascade",
     )
@@ -32,7 +32,7 @@ class IncasTourItinerarioImagen(models.Model):
             tour = record.itinerario_id.tour_id
             if not tour:
                 continue
-            directorio = tour._asegurar_subcarpeta_documental("Itinerary")
+            directorio = tour._asegurar_subcarpeta_documental("Itinerario")
             if not record.imagen:
                 if record.imagen_file_id:
                     record.imagen_file_id.unlink()
@@ -40,15 +40,36 @@ class IncasTourItinerarioImagen(models.Model):
                 continue
             archivo = tour._guardar_archivo_dms(
                 record.imagen,
-                "itinerary-image",
+                "imagen-itinerario",
                 archivo_actual=record.imagen_file_id,
                 directory=directorio,
             )
             record.imagen_file_id = archivo.id
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        tours = records.mapped("itinerario_id.tour_id")
+        if tours:
+            tours._copiar_imagenes_destacadas_desde_itinerario(si_vacio=False)
+            tours._sincronizar_servicio_operativo()
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        tours = self.mapped("itinerario_id.tour_id")
+        if tours:
+            tours._copiar_imagenes_destacadas_desde_itinerario(si_vacio=False)
+            tours._sincronizar_servicio_operativo()
+        return result
+
     def unlink(self):
+        tours = self.mapped("itinerario_id.tour_id")
         archivos = self.mapped("imagen_file_id")
         result = super().unlink()
         if archivos:
             archivos.unlink()
+        if tours:
+            tours._copiar_imagenes_destacadas_desde_itinerario(si_vacio=False)
+            tours._sincronizar_servicio_operativo()
         return result

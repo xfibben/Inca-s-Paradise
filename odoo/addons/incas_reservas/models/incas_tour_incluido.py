@@ -8,9 +8,9 @@ class IncasTourIncluido(models.Model):
 
     sequence = fields.Integer(string="Secuencia", default=10)
     tour_id = fields.Many2one("incas.tour", string="Tour", required=True, ondelete="cascade")
-    titulo = fields.Html(string="Título")
-    titulo_en = fields.Html(string="Título en inglés")
-    titulo_pt = fields.Html(string="Título en portugués")
+    titulo = fields.Html(string="Titulo")
+    titulo_en = fields.Html(string="Titulo en ingles")
+    titulo_pt = fields.Html(string="Titulo en portugues")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -19,7 +19,9 @@ class IncasTourIncluido(models.Model):
                 vals["titulo_en"] = vals["titulo"]
             if vals.get("titulo") and not vals.get("titulo_pt"):
                 vals["titulo_pt"] = vals["titulo"]
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records.mapped("tour_id")._sincronizar_servicio_operativo()
+        return records
 
     def write(self, vals):
         valores = dict(vals)
@@ -28,4 +30,12 @@ class IncasTourIncluido(models.Model):
                 valores["titulo_en"] = valores["titulo"]
             if "titulo_pt" not in valores and any(not record.titulo_pt for record in self):
                 valores["titulo_pt"] = valores["titulo"]
-        return super().write(valores)
+        result = super().write(valores)
+        self.mapped("tour_id")._sincronizar_servicio_operativo()
+        return result
+
+    def unlink(self):
+        tours = self.mapped("tour_id")
+        result = super().unlink()
+        tours._sincronizar_servicio_operativo()
+        return result

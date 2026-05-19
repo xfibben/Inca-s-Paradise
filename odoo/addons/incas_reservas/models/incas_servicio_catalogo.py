@@ -1,12 +1,7 @@
 import json
-import os
-from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
-
-
 class IncasServicioCatalogo(models.Model):
     _name = "incas.servicio.catalogo"
     _description = "Catálogo de servicios"
@@ -36,48 +31,29 @@ class IncasServicioCatalogo(models.Model):
     precio_adulto = fields.Float(string="Precio adulto")
     precio_nino = fields.Float(string="Precio niño")
     descuento = fields.Float(string="Descuento")
-    strapi_id = fields.Integer(string="ID Strapi", index=True)
-    strapi_document_id = fields.Char(string="Document ID Strapi")
+    ip = fields.Selection(
+        [
+            ("ip3", "IP 3"),
+            ("ip2", "IP 2"),
+        ],
+        string="IP",
+        required=True,
+        default="ip3",
+        index=True,
+    )
     slug = fields.Char(string="Slug")
     active = fields.Boolean(default=True)
 
-    @api.model
-    def _get_strapi_base_url(self):
-        return (
-            self.env["ir.config_parameter"]
-            .sudo()
-            .get_param("incas_reservas.strapi_url")
-            or os.getenv("ODOO_STRAPI_CONECTION_URL")
-            or "https://api.incasparadise.com"
+    def _auto_init(self):
+        res = super()._auto_init()
+        self.env.cr.execute(
+            """
+            UPDATE incas_servicio_catalogo
+               SET ip = 'ip3'
+             WHERE ip IS NULL
+            """
         )
-
-    @api.model
-    def _fetch_strapi_records(self, endpoint, params):
-        base_url = self._get_strapi_base_url().rstrip("/")
-        page = 1
-        page_size = 100
-        records = []
-        while True:
-            request_params = dict(params)
-            request_params["pagination[page]"] = page
-            request_params["pagination[pageSize]"] = page_size
-            request_params["publicationState"] = "live"
-            query = urlencode(request_params)
-            with urlopen(f"{base_url}/api/{endpoint}?{query}", timeout=15) as response:
-                payload = json.loads(response.read().decode("utf-8"))
-            data = payload.get("data", [])
-            records.extend(data)
-            pagination = payload.get("meta", {}).get("pagination", {})
-            if page >= pagination.get("pageCount", page):
-                break
-            page += 1
-        return records
-
-    @api.model
-    def _strapi_texto_json(self, valor):
-        if not valor:
-            return False
-        return json.dumps(valor, ensure_ascii=False, indent=2)
+        return res
 
     @api.model
     def _upsert_servicio_base(self, dominio, values):
@@ -97,22 +73,6 @@ class IncasServicioCatalogo(models.Model):
             return data if isinstance(data, list) else []
         except (TypeError, ValueError, json.JSONDecodeError):
             return []
-
-    @api.constrains("tipo_servicio", "strapi_id")
-    def _check_strapi_id_unico(self):
-        for record in self:
-            if not record.strapi_id:
-                continue
-            duplicado = self.search(
-                [
-                    ("id", "!=", record.id),
-                    ("tipo_servicio", "=", record.tipo_servicio),
-                    ("strapi_id", "=", record.strapi_id),
-                ],
-                limit=1,
-            )
-            if duplicado:
-                raise ValidationError("El ID Strapi ya existe para este tipo de servicio.")
 
     def _horarios_desde_schedule_items(self, schedule_items_data):
         if not schedule_items_data:
@@ -353,104 +313,37 @@ class IncasServicioCatalogo(models.Model):
 
     @api.model
     def _sync_tours(self):
-        tour_model = self.env["incas.catalogo.tour"]
-        records = self._fetch_strapi_records(
-            "tour-detalles",
-            {
-                "populate[0]": "destinos",
-                "populate[1]": "estilos",
-                "populate[2]": "ogImage",
-                "populate[3]": "twitterImage",
-                "populate[4]": "heroSlideImages",
-                "populate[5]": "highlightsItems",
-                "populate[6]": "featuredImages.image",
-                "populate[7]": "itineraryItems.image",
-                "populate[8]": "itineraryItems.includes",
-                "populate[9]": "scheduleItems",
-                "populate[10]": "includedItems",
-                "populate[11]": "excludedItems",
-                "populate[12]": "faqItems",
-            },
-        )
-        seen_ids = []
-        for item in records:
-            strapi_id = item.get("id")
-            if not strapi_id:
-                continue
-            seen_ids.append(strapi_id)
-            values = {
-                "name": item.get("title"),
-                "tipo_servicio": "tour",
-                "tipo_tour": item.get("tourType") or "tour",
-                "estilo_transporte_id": False,
-                "precio_adulto": float(item.get("adultUnitPrice") or 0),
-                "precio_nino": float(item.get("childUnitPrice") or 0),
-                "descuento": float(item.get("discount") or 0),
-                "strapi_id": strapi_id,
-                "strapi_document_id": item.get("documentId"),
-                "slug": item.get("slug"),
-                "active": True,
-            }
-            service = self._upsert_servicio_base(
-                [("tipo_servicio", "=", "tour"), ("strapi_id", "=", strapi_id)],
-                values,
-            )
-            detail_values = {
-                "destination_slug": item.get("destinationSlug"),
-                "destinos_data": self._strapi_texto_json(item.get("destinos")),
-                "estilos_data": self._strapi_texto_json(item.get("estilos")),
-                "meta_title": item.get("metaTitle"),
-                "meta_description": item.get("metaDescription"),
-                "seo_title": item.get("seoTitle"),
-                "seo_description": item.get("seoDescription"),
-                "seo_keywords": item.get("seoKeywords"),
-                "seo_canonical_url": item.get("seoCanonicalUrl"),
-                "seo_no_index": bool(item.get("seoNoIndex")),
-                "og_title": item.get("ogTitle"),
-                "og_description": item.get("ogDescription"),
-                "og_image_data": self._strapi_texto_json(item.get("ogImage")),
-                "twitter_title": item.get("twitterTitle"),
-                "twitter_description": item.get("twitterDescription"),
-                "twitter_image_data": self._strapi_texto_json(item.get("twitterImage")),
-                "hero_title": item.get("heroTitle"),
-                "hero_description": item.get("heroDescription"),
-                "hero_slide_images_data": self._strapi_texto_json(item.get("heroSlideImages")),
-                "highlights_title": item.get("highlightsTitle"),
-                "highlights_lead": item.get("highlightsLead"),
-                "highlights_question": item.get("highlightsQuestion"),
-                "highlights_cta_label": item.get("highlightsCtaLabel"),
-                "highlights_cta_url": item.get("highlightsCtaUrl"),
-                "highlights_items_data": self._strapi_texto_json(item.get("highlightsItems")),
-                "featured_title": item.get("featuredTitle"),
-                "featured_images_data": self._strapi_texto_json(item.get("featuredImages")),
-                "itinerary_title": item.get("itineraryTitle"),
-                "itinerary_item_label": item.get("itineraryItemLabel"),
-                "itinerary_expand_label": item.get("itineraryExpandLabel"),
-                "itinerary_collapse_label": item.get("itineraryCollapseLabel"),
-                "itinerary_items_data": self._strapi_texto_json(item.get("itineraryItems")),
-                "schedule_title": item.get("scheduleTitle"),
-                "schedule_items_data": self._strapi_texto_json(item.get("scheduleItems")),
-                "included_title": item.get("includedTitle"),
-                "included_items_data": self._strapi_texto_json(item.get("includedItems")),
-                "excluded_title": item.get("excludedTitle"),
-                "excluded_items_data": self._strapi_texto_json(item.get("excludedItems")),
-                "faq_title": item.get("faqTitle"),
-                "faq_items_data": self._strapi_texto_json(item.get("faqItems")),
-                "show_in_styles": bool(item.get("showInStyles")),
-                "duration_days": int(item.get("durationDays") or 0),
-            }
-            detail = tour_model.search([("servicio_id", "=", service.id)], limit=1)
-            if detail:
-                detail.write(detail_values)
-            else:
-                tour_model.create({"servicio_id": service.id, **detail_values})
-            self._sync_horarios_servicio(service, item.get("scheduleItems"))
-        stale_records = self.search(
-            [("tipo_servicio", "=", "tour"), ("strapi_id", "not in", seen_ids)]
-        )
-        if stale_records:
-            stale_records.write({"active": False})
+        return True
 
-    def sync_from_strapi(self, *args, **kwargs):
-        self._sync_tours()
+    @api.model
+    def _cleanup_legacy_catalogo_tour(self):
+        xmlids = [
+            "incas_reservas.view_incas_catalogo_tour_list",
+            "incas_reservas.view_incas_catalogo_tour_search",
+            "incas_reservas.view_incas_catalogo_tour_form",
+            "incas_reservas.action_incas_catalogo_tour",
+            "incas_reservas.menu_incas_catalogo_tour",
+            "incas_reservas.access_incas_catalogo_tour_system_xml",
+            "incas_reservas.access_incas_catalogo_tour_admin_xml",
+            "incas_reservas.access_incas_catalogo_tour_gerencia_xml",
+        ]
+        for xmlid in xmlids:
+            record = self.env.ref(xmlid, raise_if_not_found=False)
+            if record:
+                record.sudo().unlink()
+        self.env["ir.model.data"].sudo().search(
+            [
+                ("module", "=", "incas_reservas"),
+                ("name", "in", [xmlid.split(".")[1] for xmlid in xmlids]),
+            ]
+        ).unlink()
+        self.env["ir.ui.view"].sudo().search([("model", "=", "incas.catalogo.tour")]).unlink()
+        self.env["ir.actions.act_window"].sudo().search([("res_model", "=", "incas.catalogo.tour")]).unlink()
+        self.env["ir.ui.menu"].sudo().search([("name", "in", ["Catalogo de tours", "Catálogo de tours"])]).unlink()
+        model = self.env["ir.model"].sudo().search([("model", "=", "incas.catalogo.tour")], limit=1)
+        if model:
+            self.env["ir.model.access"].sudo().search([("model_id", "=", model.id)]).unlink()
+        self.env.cr.execute("DROP TABLE IF EXISTS incas_catalogo_destino_tour_rel CASCADE")
+        self.env.cr.execute("DROP TABLE IF EXISTS incas_subcategoria_tour_catalogo_tour_rel CASCADE")
+        self.env.cr.execute("DROP TABLE IF EXISTS incas_catalogo_tour CASCADE")
         return True

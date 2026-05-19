@@ -6,6 +6,7 @@ import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import SEOHead from '../../../components/SEO/SEOHead.astro';
 import { formatPrice } from '../../../utils/currency';
+import { fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from '../../../utils/odooWeb';
 import { fetchOdooTransportJson, getOdooTransportLang } from '../../../utils/odooTransport';
 
 const { lang } = Astro.params;
@@ -20,35 +21,13 @@ if (!Object.keys(languages).includes(lang as string)) {
 
 const t = getTranslation(currentLang);
 
-const STRAPI_URL = import.meta.env.STRAPI_URL;
-const PUBLIC_STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL;
-
-const strapiLocale =
-  currentLang === 'pt' ? 'pt'
-  : currentLang === 'es' ? 'es-PE'
-  : currentLang;
-
-// Obtiene la URL absoluta de una imagen de Strapi
-function absUrl(raw: string): string {
-  if (!raw) return '';
-  return raw.startsWith('http') ? raw : `${PUBLIC_STRAPI_URL}${raw}`;
-}
-
 function getImageUrl(media: any): string | null {
-  if (!media) return null;
-  const url = media?.formats?.small?.url ?? media?.formats?.medium?.url ?? media?.url;
-  if (!url) return null;
-  return absUrl(url);
+  return getOdooMediaUrl(media);
 }
 
 function getCardSrcset(media: any): string {
-  if (!media) return '';
-  const small  = absUrl(media?.formats?.small?.url  ?? '');
-  const medium = absUrl(media?.formats?.medium?.url ?? '');
-  return [
-    small  ? `${small} 500w`  : '',
-    medium ? `${medium} 750w` : '',
-  ].filter(Boolean).join(', ');
+  const url = getOdooMediaUrl(media);
+  return url ? `${url} 750w` : '';
 }
 
 // --- Fetch de tours con descuento activo ---
@@ -66,23 +45,13 @@ interface TourOferta {
 let toursOferta: TourOferta[] = [];
 
 try {
-  const res = await fetch(
-    `${STRAPI_URL}/api/tour-detalles` +
-    `?locale=${strapiLocale}&status=published` +
-    `&filters[discount][$gt]=0` +
-    `&fields[0]=title&fields[1]=slug&fields[2]=discount` +
-    `&fields[3]=adultUnitPrice&fields[4]=childUnitPrice&fields[5]=durationDays` +
-    `&populate[heroSlideImages][fields][0]=url&populate[heroSlideImages][fields][1]=formats` +
-    `&pagination[pageSize]=100`
+  const json = await fetchOdooWebJson(
+    `/incas/api/web/tours?lang=${getOdooWebLang(currentLang)}`
   );
-  if (res.ok) {
-    const json = await res.json();
-    const rows: any[] = json?.data ?? [];
-    toursOferta = rows.map((row: any) => {
-      const d = row?.attributes ?? row;
-      // Primera imagen del hero slide
-      const imgs: any[] = d?.heroSlideImages?.data ?? d?.heroSlideImages ?? [];
-      const firstImg = imgs[0]?.attributes ?? imgs[0] ?? null;
+  const rows: any[] = json?.data ?? [];
+  toursOferta = rows
+    .map((d: any) => {
+      const firstImg = Array.isArray(d?.heroSlideImages) ? d.heroSlideImages[0] ?? null : null;
       return {
         slug: d.slug ?? '',
         title: d.title ?? '',
@@ -93,8 +62,8 @@ try {
         imageUrl: getImageUrl(firstImg),
         imageSrcset: getCardSrcset(firstImg),
       };
-    }).filter((t: TourOferta) => t.slug);
-  }
+    })
+    .filter((tour: TourOferta) => tour.slug && tour.discount > 0);
 } catch (e) {
   console.error('Error al obtener tours con descuento:', e);
 }

@@ -163,35 +163,10 @@ class IncasReservaPaqueteLinea(models.Model):
     def _obtener_snapshot_servicio(self, servicio):
         valores = {"slug": servicio.slug}
         if servicio.tipo_servicio == "tour":
-            detalle = self.env["incas.catalogo.tour"].search([("servicio_id", "=", servicio.id)], limit=1)
+            detalle = self.env["incas.tour"].search([("servicio_id", "=", servicio.id)], limit=1)
             if not detalle:
                 return valores
-            valores.update(
-                {
-                    "destino_slug": detalle.destination_slug,
-                    "destinos_data": detalle.destinos_data,
-                    "estilos_data": detalle.estilos_data,
-                    "duration_days": detalle.duration_days,
-                    "hero_title": detalle.hero_title,
-                    "hero_description": detalle.hero_description,
-                    "hero_slide_images_data": detalle.hero_slide_images_data,
-                    "highlights_title": detalle.highlights_title,
-                    "highlights_question": detalle.highlights_question,
-                    "highlights_lead": detalle.highlights_lead,
-                    "highlights_items_data": detalle.highlights_items_data,
-                    "featured_images_data": detalle.featured_images_data,
-                    "itinerary_title": detalle.itinerary_title,
-                    "itinerary_items_data": detalle.itinerary_items_data,
-                    "schedule_title": detalle.schedule_title,
-                    "schedule_items_data": detalle.schedule_items_data,
-                    "included_title": detalle.included_title,
-                    "included_items_data": detalle.included_items_data,
-                    "excluded_title": detalle.excluded_title,
-                    "excluded_items_data": detalle.excluded_items_data,
-                    "faq_title": detalle.faq_title,
-                    "faq_items_data": detalle.faq_items_data,
-                }
-            )
+            valores.update(detalle._valores_snapshot_operativo())
             return valores
         detalle = self.env["incas.catalogo.transporte"].search([("servicio_id", "=", servicio.id)], limit=1)
         if not detalle:

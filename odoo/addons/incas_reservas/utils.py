@@ -916,7 +916,7 @@ def _texto_json_detallado(item, claves_principales, claves_secundarias=None):
 
 def _detalle_catalogo_linea(linea):
     if linea.tipo_servicio == "tour":
-        return linea.env["incas.catalogo.tour"].search(
+        return linea.env["incas.tour"].search(
             [("servicio_id", "=", linea.servicio_id.id)], limit=1
         )
     return linea.env["incas.catalogo.transporte"].search(
@@ -924,11 +924,16 @@ def _detalle_catalogo_linea(linea):
     )
 
 
-def _strapi_base_url(record):
+def _snapshot_detalle_tour(detalle):
+    if not detalle or detalle._name != "incas.tour":
+        return {}
+    return detalle._valores_snapshot_operativo()
+
+
+def _base_public_url(record):
     return (
-        record.env["ir.config_parameter"].sudo().get_param("incas_reservas.strapi_url")
-        or os.getenv("ODOO_STRAPI_CONECTION_URL")
-        or "https://api.incasparadise.com"
+        record.env["ir.config_parameter"].sudo().get_param("web.base.url")
+        or "http://localhost:8069"
     ).rstrip("/")
 
 
@@ -949,8 +954,8 @@ def _normalizar_url_imagen(record, url):
     if texto_url.startswith("http://") or texto_url.startswith("https://"):
         return texto_url
     if texto_url.startswith("/"):
-        return f"{_strapi_base_url(record)}{texto_url}"
-    return f"{_strapi_base_url(record)}/{texto_url.lstrip('/')}"
+        return f"{_base_public_url(record)}{texto_url}"
+    return f"{_base_public_url(record)}/{texto_url.lstrip('/')}"
 
 
 def _filtrar_urls_small(urls):
@@ -1173,24 +1178,25 @@ def _bloque_highlights_intro(pregunta, lead):
 
 
 def _bloque_tour_editorial(indice, linea, detalle):
+    snapshot = _snapshot_detalle_tour(detalle)
     highlights = [
         _texto_json_detallado(
             item, ["title", "label", "name"], ["description", "text", "body"]
         )
         for item in _json_lista(
-            linea.highlights_items_data or detalle.highlights_items_data
+            linea.highlights_items_data or snapshot.get("highlights_items_data")
         )
     ]
     incluye = [
         _texto_json_detallado(item, ["text", "label", "title"], ["description", "body"])
         for item in _json_lista(
-            linea.included_items_data or detalle.included_items_data
+            linea.included_items_data or snapshot.get("included_items_data")
         )
     ]
     no_incluye = [
         _texto_json_detallado(item, ["text", "label", "title"], ["description", "body"])
         for item in _json_lista(
-            linea.excluded_items_data or detalle.excluded_items_data
+            linea.excluded_items_data or snapshot.get("excluded_items_data")
         )
     ]
     horarios = [
@@ -1198,49 +1204,49 @@ def _bloque_tour_editorial(indice, linea, detalle):
             item, ["title", "label", "time"], ["description", "text", "body"]
         )
         for item in _json_lista(
-            linea.schedule_items_data or detalle.schedule_items_data
+            linea.schedule_items_data or snapshot.get("schedule_items_data")
         )
     ]
     galeria = _render_galeria(
         linea,
-        linea.featured_images_data or detalle.featured_images_data,
+        linea.featured_images_data or snapshot.get("featured_images_data"),
         max_imagenes=4,
         mostrar_urls=True,
     )
     itinerario = _render_itinerario(
-        linea, linea.itinerary_items_data or detalle.itinerary_items_data
+        linea, linea.itinerary_items_data or snapshot.get("itinerary_items_data")
     )
     resumen = [
         f"<span class='story-kicker'>Tour {indice}</span>",
         f"<h2>{escape(texto(linea.nombre))}</h2>",
-        f"<div class='story-meta'>{escape(texto(linea.tipo_tour or detalle.tipo_tour or 'Tour'))} · {escape(fecha(linea.fecha))}{f' · {escape(texto(linea.horario))}' if tiene_contenido(getattr(linea, 'horario', False)) else ''}</div>",
-        _parrafo_editorial(linea.hero_description or detalle.hero_description),
+        f"<div class='story-meta'>{escape(texto(linea.tipo_tour or getattr(detalle, 'tipo_tour', False) or 'Tour'))} · {escape(fecha(linea.fecha))}{f' · {escape(texto(linea.horario))}' if tiene_contenido(getattr(linea, 'horario', False)) else ''}</div>",
+        _parrafo_editorial(linea.hero_description or snapshot.get("hero_description")),
     ]
     cuerpo = [
         _bloque_highlights_intro(
-            linea.highlights_question or detalle.highlights_question,
-            linea.highlights_lead or detalle.highlights_lead,
+            linea.highlights_question or snapshot.get("highlights_question"),
+            linea.highlights_lead or snapshot.get("highlights_lead"),
         ),
         _seccion_editorial(
             linea.highlights_title
-            or detalle.highlights_title
+            or snapshot.get("highlights_title")
             or "Lo mejor de la experiencia",
             _render_lista_simple(highlights)
-            or _parrafo_editorial(linea.highlights_lead or detalle.highlights_lead),
+            or _parrafo_editorial(linea.highlights_lead or snapshot.get("highlights_lead")),
         ),
         _seccion_editorial(
-            linea.itinerary_title or detalle.itinerary_title or "Itinerario", itinerario
+            linea.itinerary_title or snapshot.get("itinerary_title") or "Itinerario", itinerario
         ),
         _seccion_editorial(
-            linea.schedule_title or detalle.schedule_title or "Horarios",
+            linea.schedule_title or snapshot.get("schedule_title") or "Horarios",
             _render_lista_simple(horarios),
         ),
         _seccion_editorial(
-            linea.included_title or detalle.included_title or "Incluye",
+            linea.included_title or snapshot.get("included_title") or "Incluye",
             _render_lista_simple(incluye),
         ),
         _seccion_editorial(
-            linea.excluded_title or detalle.excluded_title or "No incluye",
+            linea.excluded_title or snapshot.get("excluded_title") or "No incluye",
             _render_lista_simple(no_incluye),
         ),
     ]

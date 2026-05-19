@@ -1,221 +1,20 @@
-﻿---
-import MarkdownIt from 'markdown-it';
+---
 import { defaultLanguage, getTranslation, languages } from "../../../i18n";
 import "../../../styles/global.css";
-import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
+import GoogleAnalytics from "../../../components/shared/GoogleAnalytics.astro";
 import Navbar from "../../../components/shared/Navbar.astro";
 import Footer from "../../../components/shared/Footer.astro";
 import BookingModal from "../../../components/tours/BookingModal.astro";
 import BookingCard from "../../../components/tours/BookingCard.astro";
-import Ribbon from "../../../components/shared/Ribbon.astro";
 import { formatPrice } from "../../../utils/currency";
-import { cleanTextValue, strapiRichTextToMarkdown } from "../../../utils/strapiRichText";
+import { buildLocalizedSlugs, fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from "../../../utils/odooWeb";
 
-type SupportedLang = string;
-
-const SUPPORTED_LANGS = Object.keys(languages);
-
-const STRAPI_BASE_URLS = Array.from(
-  new Set([
-    import.meta.env.STRAPI_URL,
-    import.meta.env.PUBLIC_STRAPI_URL,
-  ].filter(Boolean))
-);
-const STRAPI_TOUR_ENDPOINT = "/api/tour-detalles";
-
-const getLocales = (lang: SupportedLang) =>
-  lang === "es"
-    ? (["es-PE", "es", null] as const)
-    : ([lang, null] as const);
-
-async function resolveLocaleCandidates(
-  lang: SupportedLang,
-  baseUrls: string[]
-): Promise<Array<string | null>> {
-  const candidateSet = new Set<string | null>(getLocales(lang));
-
-  for (const baseUrl of baseUrls) {
-    try {
-      const res = await fetch(`${baseUrl}/api/locales`);
-      if (!res.ok) continue;
-      const json = await res.json();
-      const rows = Array.isArray(json?.data) ? json.data : [];
-
-      rows.forEach((row: any) => {
-        const code = String(row?.code ?? "").trim();
-        if (!code) return;
-        if (code.toLowerCase().split("-")[0] === lang.toLowerCase()) {
-          candidateSet.add(code);
-        }
-      });
-    } catch {
-      // Try next URL
-    }
-  }
-
-  return Array.from(candidateSet);
-}
-
-function normalizeLang(raw: string | undefined): SupportedLang {
-  const candidate = String(raw ?? defaultLanguage).toLowerCase();
-  return SUPPORTED_LANGS.includes(candidate) ? candidate : defaultLanguage;
-}
-
-function localePrefix(locale: string | null) {
-  return locale ? `locale=${encodeURIComponent(locale)}&` : "";
-}
-
-function normalizeRow(row: any) {
-  return row?.attributes ?? row ?? null;
-}
-
-function hasNonEmptyComponentRows(value: any) {
-  if (!Array.isArray(value)) return false;
-  return value.some((entry) => Boolean(normalizeRow(entry)));
-}
-
-function toMediaRows(value: any): any[] {
-  if (!value) return [];
-  if (Array.isArray(value?.data)) return value.data;
-  if (Array.isArray(value)) return value;
-  if (value?.data) return [value.data];
-  return [value];
-}
-
-function hasMediaValue(value: any) {
-  return toMediaRows(value).some((row) => Boolean(toAbsoluteMediaUrl(row)));
-}
-
-function pickLocalizedText(current: any, fallback: any) {
-  return typeof current === "string" && current.trim() ? current : fallback;
-}
-
-function toAbsoluteMediaUrl(value: any) {
-  const url =
-    typeof value === "string"
-      ? value
-      : value?.formats?.large?.url ??
-        value?.formats?.medium?.url ??
-        value?.formats?.small?.url ??
-        value?.url ??
-        "";
-  if (!url) return "";
-  if (/^https?:\/\//i.test(url)) return url;
-
-  const publicBase =
-    import.meta.env.PUBLIC_STRAPI_URL ??
-    "http://localhost:1337";
-  const normalizedBase = String(publicBase).replace(/\/$/, "");
-  const normalizedPath = String(url).startsWith("/") ? String(url) : `/${url}`;
-  return `${normalizedBase}${normalizedPath}`;
-}
-
-function toAbsoluteUrl(value: any, siteOrigin: string) {
-  const raw = typeof value === "string" ? value.trim() : "";
-  if (!raw) return "";
-  if (/^https?:\/\//i.test(raw)) return raw;
-  return `${siteOrigin}${raw.startsWith("/") ? raw : `/${raw}`}`;
-}
-
-function toMediaMeta(value: any) {
-  const media = value?.data ?? value;
-  const row = media?.attributes ?? media ?? null;
-  if (!row) return null;
-
-  const preferredFormat =
-    row?.formats?.large ??
-    row?.formats?.medium ??
-    row?.formats?.small ??
-    null;
-  const src = toAbsoluteMediaUrl(row);
-  if (!src) return null;
-
-  const width = Number(preferredFormat?.width ?? row?.width ?? 0);
-  const height = Number(preferredFormat?.height ?? row?.height ?? 0);
-
-  return {
-    src,
-    alt: typeof row?.alternativeText === "string" ? row.alternativeText.trim() : "",
-    width: Number.isFinite(width) && width > 0 ? String(width) : "",
-    height: Number.isFinite(height) && height > 0 ? String(height) : "",
-  };
-}
-
-function toCardImageFromTour(tour: any) {
-  const mediaRows = toMediaRows(tour?.heroSlideImages);
-  const firstWithUrl = mediaRows.find((entry: any) => Boolean(toAbsoluteMediaUrl(entry)));
-  return toAbsoluteMediaUrl(firstWithUrl);
-}
-
-export async function getStaticPaths() {
-  const strapiBaseUrls = Array.from(
-    new Set([
-      import.meta.env.PUBLIC_STRAPI_URL,
-    ].filter(Boolean))
-  );
-  const strapiEndpoint = "/api/tour-detalles";
-
-  const strapiPaths: Array<{
-    params: { lang: SupportedLang; tour: string };
-  }> = [];
-  const strapiSeen = new Set<string>();
-  const langs: SupportedLang[] = SUPPORTED_LANGS;
-
-  const localeCandidatesByLang: Record<string, Array<string | null>> = {};
-  await Promise.all(
-    langs.map(async (lang) => {
-      localeCandidatesByLang[lang] = await resolveLocaleCandidates(
-        lang,
-        strapiBaseUrls
-      );
-    })
-  );
-
-  for (const lang of langs) {
-    let foundForLang = false;
-
-    for (const baseUrl of strapiBaseUrls) {
-      for (const locale of localeCandidatesByLang[lang] ?? getLocales(lang)) {
-        const localePart = locale ? `locale=${encodeURIComponent(locale)}&` : "";
-        const url =
-          `${baseUrl}${strapiEndpoint}?${localePart}` +
-          "status=published&fields[0]=slug&pagination[pageSize]=200";
-
-        try {
-          const res = await fetch(url);
-          if (!res.ok) continue;
-
-          const json = await res.json();
-          const rows = Array.isArray(json?.data) ? json.data : [];
-          for (const row of rows) {
-            const attrs = row?.attributes ?? row;
-            const tour = String(attrs?.slug ?? "").toLowerCase();
-            if (!tour) continue;
-
-            const key = `${lang}::${tour}`;
-            if (strapiSeen.has(key)) continue;
-            strapiSeen.add(key);
-            strapiPaths.push({ params: { lang, tour } });
-          }
-
-          if (rows.length > 0) {
-            foundForLang = true;
-            break;
-          }
-        } catch {
-          // Try next locale / URL.
-        }
-      }
-
-      if (foundForLang) break;
-    }
-  }
-
-  return strapiPaths;
+export function getStaticPaths() {
+  return [];
 }
 
 const rawLang = (Astro.params.lang ?? defaultLanguage).toLowerCase();
-const lang: SupportedLang = normalizeLang(rawLang);
+const lang = Object.keys(languages).includes(rawLang) ? rawLang : defaultLanguage;
 const tourSlug = String(Astro.params.tour ?? "").toLowerCase();
 const t = getTranslation(lang);
 
@@ -223,719 +22,53 @@ if (rawLang !== lang) {
   return Astro.redirect(`/${lang}/tours/${tourSlug}`);
 }
 
-let strapiTourRaw: Record<string, any> | null = null;
-// Usa locales hardcodeados igual que destinos â€” evita fetches extra a /api/locales
-const localeCandidates = getLocales(lang);
-for (const baseUrl of STRAPI_BASE_URLS) {
-  for (const locale of localeCandidates) {
-    const localePart = localePrefix(locale);
-    const url =
-      `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
-      "status=published&" +
-      `filters[slug][$eq]=${encodeURIComponent(tourSlug)}&` +
-      "pagination[pageSize]=1&" +
-      "populate[heroSlideImages][fields][0]=url&" +
-      "populate[heroSlideImages][fields][1]=alternativeText&" +
-      "populate[heroSlideImages][fields][2]=formats&" +
-      "populate[ogImage][fields][0]=url&" +
-      "populate[ogImage][fields][1]=alternativeText&" +
-      "populate[ogImage][fields][2]=formats&" +
-      "populate[twitterImage][fields][0]=url&" +
-      "populate[twitterImage][fields][1]=alternativeText&" +
-      "populate[twitterImage][fields][2]=formats&" +
-      "populate[featuredImages][populate][image][fields][0]=url&" +
-      "populate[featuredImages][populate][image][fields][1]=alternativeText&" +
-      "populate[featuredImages][populate][image][fields][2]=formats&" +
-      "populate[highlightsItems][fields][0]=title&" +
-      "populate[highlightsItems][fields][1]=description&" +
-      "populate[destinos][fields][0]=title&" +
-      "populate[destinos][fields][1]=slug&" +
-      "populate[itineraryItems][fields][0]=title&" +
-      "populate[itineraryItems][fields][1]=highlight&" +
-      "populate[itineraryItems][fields][2]=description&" +
-      "populate[itineraryItems][fields][3]=optional&" +
-      "populate[itineraryItems][fields][4]=imageAlt&" +
-      "populate[itineraryItems][populate][image][fields][0]=url&" +
-      "populate[itineraryItems][populate][image][fields][1]=alternativeText&" +
-      "populate[itineraryItems][populate][image][fields][2]=formats&" +
-      "populate[itineraryItems][populate][includes][fields][0]=text&" +
-      "populate[scheduleItems]=*&" +
-      "populate[includedItems][fields][0]=text&" +
-      "populate[includedItems][fields][1]=icon&" +
-      "populate[excludedItems][fields][0]=text&" +
-      "populate[excludedItems][fields][1]=icon&" +
-      "populate[faqItems][fields][0]=question&" +
-      "populate[faqItems][fields][1]=answer";
-
-    try {
-      const res = await fetch(url);
-      if (!res.ok) continue;
-
-      const json = await res.json();
-      const rows = Array.isArray(json?.data) ? json.data : [];
-      const first =
-        rows.find((row: any) => Boolean(normalizeRow(row)?.publishedAt)) ??
-        rows[0];
-      const attrs = normalizeRow(first);
-      if (attrs) {
-        strapiTourRaw = { ...attrs, __fetchedBaseUrl: baseUrl };
-        break;
-      }
-    } catch {
-      // Try next locale / URL.
-    }
-  }
-
-  if (strapiTourRaw) break;
+let sourceTour: any = null;
+try {
+  const json = await fetchOdooWebJson(
+    `/incas/api/web/tours/${encodeURIComponent(tourSlug)}?lang=${getOdooWebLang(lang)}`
+  );
+  sourceTour = json?.data ?? null;
+} catch (error) {
+  console.error("[tour] Error:", error);
 }
 
-if (!strapiTourRaw) {
+if (!sourceTour) {
   return Astro.redirect(`/${lang}/destinos`);
 }
 
-if (lang !== "es") {
-  let spanishTourRaw: Record<string, any> | null = null;
-  const spanishLocaleCandidates = await resolveLocaleCandidates(
-    "es",
-    STRAPI_BASE_URLS
-  );
-  const sourceDocumentId =
-    typeof strapiTourRaw?.documentId === "string" &&
-    strapiTourRaw.documentId.trim()
-      ? strapiTourRaw.documentId.trim()
-      : "";
-
-  for (const baseUrl of STRAPI_BASE_URLS) {
-    for (const locale of spanishLocaleCandidates) {
-      const localePart = localePrefix(locale);
-      const identityFilter = sourceDocumentId
-        ? `filters[documentId][$eq]=${encodeURIComponent(sourceDocumentId)}&`
-        : `filters[slug][$eq]=${encodeURIComponent(tourSlug)}&`;
-      const url =
-        `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
-        "status=published&" +
-        identityFilter +
-        "pagination[pageSize]=1&" +
-        "populate[featuredImages][populate][image][fields][0]=url&" +
-        "populate[featuredImages][populate][image][fields][1]=alternativeText&" +
-        "populate[featuredImages][populate][image][fields][2]=formats&" +
-        "populate[destinos][fields][0]=title&" +
-        "populate[destinos][fields][1]=slug&" +
-        "populate[itineraryItems][fields][0]=title&" +
-        "populate[itineraryItems][fields][1]=highlight&" +
-        "populate[itineraryItems][fields][2]=description&" +
-        "populate[itineraryItems][fields][3]=optional&" +
-        "populate[itineraryItems][fields][4]=imageAlt&" +
-        "populate[itineraryItems][populate][image][fields][0]=url&" +
-        "populate[itineraryItems][populate][image][fields][1]=alternativeText&" +
-        "populate[itineraryItems][populate][image][fields][2]=formats&" +
-        "populate[itineraryItems][populate][includes][fields][0]=text&" +
-        "populate[scheduleItems]=*";
-
-      try {
-        const res = await fetch(url);
-        if (!res.ok) continue;
-
-        const json = await res.json();
-        const rows = Array.isArray(json?.data) ? json.data : [];
-        const first =
-          rows.find((row: any) => Boolean(normalizeRow(row)?.publishedAt)) ??
-          rows[0];
-        const attrs = normalizeRow(first);
-        if (attrs) {
-          spanishTourRaw = attrs;
-          break;
-        }
-      } catch {
-        // Try next locale / URL.
-      }
-    }
-
-    if (spanishTourRaw) break;
-  }
-
-  if (spanishTourRaw) {
-    const currentFeaturedRows = Array.isArray(strapiTourRaw.featuredImages)
-      ? strapiTourRaw.featuredImages.map((entry: any) => normalizeRow(entry))
-      : [];
-    const spanishFeaturedRows = Array.isArray(spanishTourRaw.featuredImages)
-      ? spanishTourRaw.featuredImages.map((entry: any) => normalizeRow(entry))
-      : [];
-
-    // Reglas de negocio:
-    // - cantidad/orden e imagenes compartidas desde ES
-    // - texto (alt) puede traducirse por locale
-    if (spanishFeaturedRows.length > 0) {
-      strapiTourRaw.featuredImages = spanishFeaturedRows
-        .map((spanishItem: any, index: number) => {
-          const currentItem = currentFeaturedRows[index];
-          if (!spanishItem && !currentItem) return null;
-
-          const currentImage = currentItem?.image?.data ?? currentItem?.image;
-          const spanishImage = spanishItem?.image?.data ?? spanishItem?.image;
-
-          return {
-            ...(spanishItem ?? {}),
-            ...(currentItem ?? {}),
-            image: hasMediaValue(currentImage) ? currentImage : spanishImage,
-            alt: pickLocalizedText(currentItem?.alt, spanishItem?.alt),
-          };
-        })
-        .filter(Boolean);
-    }
-
-    const currentItineraryRows = Array.isArray(strapiTourRaw.itineraryItems)
-      ? strapiTourRaw.itineraryItems.map((entry: any) => normalizeRow(entry))
-      : [];
-    const spanishItineraryRows = Array.isArray(spanishTourRaw.itineraryItems)
-      ? spanishTourRaw.itineraryItems.map((entry: any) => normalizeRow(entry))
-      : [];
-
-    // Reglas de negocio:
-    // - cantidad/orden e imagenes compartidas desde ES
-    // - textos localizables por idioma (si faltan, cae a ES)
-    if (spanishItineraryRows.length > 0) {
-      strapiTourRaw.itineraryItems = spanishItineraryRows
-        .map((spanishItem: any, index: number) => {
-          const currentItem = currentItineraryRows[index];
-          if (!spanishItem && !currentItem) return null;
-
-          const currentImage = currentItem?.image?.data ?? currentItem?.image;
-          const spanishImage = spanishItem?.image?.data ?? spanishItem?.image;
-
-          const currentIncludes = Array.isArray(currentItem?.includes)
-            ? currentItem.includes
-            : [];
-          const spanishIncludes = Array.isArray(spanishItem?.includes)
-            ? spanishItem.includes
-            : [];
-
-          return {
-            ...(spanishItem ?? {}),
-            ...(currentItem ?? {}),
-            title: pickLocalizedText(currentItem?.title, spanishItem?.title),
-            highlight: pickLocalizedText(
-              currentItem?.highlight,
-              spanishItem?.highlight
-            ),
-            description: pickLocalizedText(
-              currentItem?.description,
-              spanishItem?.description
-            ),
-            optional: pickLocalizedText(
-              currentItem?.optional,
-              spanishItem?.optional
-            ),
-            imageAlt: pickLocalizedText(
-              currentItem?.imageAlt,
-              spanishItem?.imageAlt
-            ),
-            image: hasMediaValue(currentImage) ? currentImage : spanishImage,
-            includes:
-              currentIncludes.length > 0 ? currentIncludes : spanishIncludes,
-          };
-        })
-        .filter(Boolean);
-    }
-
-    const currentFeaturedTitle =
-      typeof strapiTourRaw.featuredTitle === "string"
-        ? strapiTourRaw.featuredTitle.trim()
-        : "";
-    const spanishFeaturedTitle =
-      typeof spanishTourRaw.featuredTitle === "string"
-        ? spanishTourRaw.featuredTitle.trim()
-        : "";
-    if (!currentFeaturedTitle && spanishFeaturedTitle) {
-      strapiTourRaw.featuredTitle = spanishTourRaw.featuredTitle;
-    }
-
-    const currentDestRows = Array.isArray(strapiTourRaw.destinos?.data)
-      ? strapiTourRaw.destinos.data
-      : Array.isArray(strapiTourRaw.destinos)
-      ? strapiTourRaw.destinos
-      : [];
-    const spanishDestRows = Array.isArray(spanishTourRaw.destinos?.data)
-      ? spanishTourRaw.destinos.data
-      : Array.isArray(spanishTourRaw.destinos)
-      ? spanishTourRaw.destinos
-      : [];
-    if (currentDestRows.length === 0 && spanishDestRows.length > 0) {
-      strapiTourRaw.destinos = spanishTourRaw.destinos;
-    }
-
-    const itineraryTextFields = [
-      "itineraryTitle",
-      "itineraryItemLabel",
-      "itineraryExpandLabel",
-      "itineraryCollapseLabel",
-    ];
-    itineraryTextFields.forEach((fieldName) => {
-      const current =
-        typeof strapiTourRaw?.[fieldName] === "string"
-          ? strapiTourRaw[fieldName].trim()
-          : "";
-      const fallback =
-        typeof spanishTourRaw?.[fieldName] === "string"
-          ? spanishTourRaw[fieldName].trim()
-          : "";
-      if (!current && fallback) {
-        strapiTourRaw[fieldName] = spanishTourRaw[fieldName];
-      }
-    });
-  }
-}
-
-const sourceTour = strapiTourRaw;
-
-// Obtiene los slugs de todos los idiomas usando el documentId
-const allSupportedLangs = SUPPORTED_LANGS;
-const tourSlugs: Record<string, string> = { [lang]: tourSlug };
-
-if (sourceTour.documentId) {
-  const baseUrl = sourceTour.__fetchedBaseUrl ?? STRAPI_BASE_URLS[0];
-  const localeByLang: Record<string, string> = {};
-  await Promise.all(
-    allSupportedLangs.map(async (targetLang) => {
-      const candidates = await resolveLocaleCandidates(targetLang, [baseUrl]);
-      const preferred =
-        candidates.find(
-          (candidate): candidate is string =>
-            typeof candidate === "string" && candidate.trim().length > 0
-        ) ?? targetLang;
-      localeByLang[targetLang] = preferred;
-    })
-  );
-
-  await Promise.all(
-    allSupportedLangs
-      .filter((l) => l !== lang)
-      .map(async (targetLang) => {
-        const locale = localeByLang[targetLang] ?? targetLang;
-        const url = `${baseUrl}${STRAPI_TOUR_ENDPOINT}/${sourceTour.documentId}?locale=${locale}&fields[0]=slug`;
-        try {
-          const res = await fetch(url);
-          if (!res.ok) return;
-          const json = await res.json();
-          const attrs = normalizeRow(json?.data ?? json);
-          if (attrs?.slug) tourSlugs[targetLang] = String(attrs.slug).toLowerCase();
-        } catch {}
-      })
-  );
-}
-
-const cleanText = (value: any) =>
-  typeof value === "string" ? value.trim() : "";
-const pickText = (row: any, keys: string[]) => {
-  for (const key of keys) {
-    const value = cleanTextValue(row?.[key]) || cleanText(row?.[key]);
-    if (value) return value;
-  }
-  return "";
-};
-const formatAmPmTime = (value: any) => {
-  const raw = cleanTextValue(value) || cleanText(value);
-  if (!raw) return "";
-
-  const match = raw.match(/^(\d{1,2})(?::(\d{1,2}))?(?::\d{1,2})?\s*(a\.?m\.?|p\.?m\.?)?$/i);
-  if (!match) return raw;
-
-  let hour = Number(match[1]);
-  const minute = Number(match[2] ?? 0);
-  const explicitPeriod = match[3]?.toLowerCase().replace(/\./g, "");
-
-  if (!Number.isFinite(hour) || !Number.isFinite(minute) || minute > 59) {
-    return raw;
-  }
-
-  let period = explicitPeriod?.toUpperCase();
-  if (period) {
-    if (hour > 12) hour = hour % 12 || 12;
-    if (hour === 0) hour = 12;
-  } else {
-    if (hour > 23) return raw;
-    period = hour >= 12 ? "PM" : "AM";
-    hour = hour % 12 || 12;
-  }
-
-  return `${hour}:${String(minute).padStart(2, "0")} ${period}`;
-};
-const humanizeSlug = (value: string) =>
-  value
-    .replace(/[-_]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\p{L}/gu, (letter) => letter.toUpperCase());
-
-const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-
-
+const cleanText = (value: any) => (typeof value === "string" ? value.trim() : "");
 const toNumber = (value: any) => {
   const number = Number(value);
-  return Number.isFinite(number) ? number : null;
+  return Number.isFinite(number) ? number : 0;
 };
-
 const seoTitle =
   cleanText(sourceTour.seoTitle) ||
   cleanText(sourceTour.metaTitle) ||
   cleanText(sourceTour.title) ||
   (lang === "en" ? "Tour details" : "Detalle del tour");
-const pageDescription =
-  cleanText(sourceTour.seoDescription);
-const seoKeywords = cleanText(sourceTour.seoKeywords);
-const seoNoIndex = Boolean(sourceTour.seoNoIndex);
-
-const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(
-  /\/$/,
-  ""
-);
-const canonical =
-  toAbsoluteUrl(sourceTour.seoCanonicalUrl, siteOrigin) ||
-  `${siteOrigin}/${lang}/tours/${tourSlug}`;
-
-
-const md = new MarkdownIt({ html: true });
-
-const highlightsItems = Array.isArray(sourceTour.highlightsItems)
-  ? sourceTour.highlightsItems
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any) => ({
-        title: cleanText(item?.title),
-        descriptionHtml: md.render(strapiRichTextToMarkdown(item?.description ?? ''))
-      }))
-      .filter((item: any) => item.title || item.descriptionHtml)
-  : [];
-const highlightsTitle = cleanText(sourceTour.highlightsTitle);
-const highlightsLead = sourceTour.highlightsLead ?? "";
-const highlightsLeadHtml = highlightsLead
-  ? md.render(strapiRichTextToMarkdown(highlightsLead))
-  : '';
-const highlightsQuestion = cleanText(sourceTour.highlightsQuestion);
-const heroSlides = Array.isArray(sourceTour.heroSlideImages?.data)
-  ? sourceTour.heroSlideImages.data
-  : Array.isArray(sourceTour.heroSlideImages)
-  ? sourceTour.heroSlideImages
-  : [];
-const firstHeroSlide = heroSlides[0];
-const highlightsImageMeta = toMediaMeta(firstHeroSlide);
-const highlightsImage = highlightsImageMeta?.src || "";
-const highlightsImageAlt = cleanText(firstHeroSlide?.alternativeText) || highlightsTitle || seoTitle;
-const ogTitle = cleanText(sourceTour.ogTitle) || seoTitle;
-const ogDescription = cleanText(sourceTour.ogDescription) || pageDescription;
-const ogImageMeta = highlightsImageMeta;
-const ogImage = ogImageMeta?.src || "";
-const twitterTitle = cleanText(sourceTour.twitterTitle) || ogTitle;
-const twitterDescription =
-  cleanText(sourceTour.twitterDescription) || ogDescription;
-const twitterImageMeta = ogImageMeta;
-const twitterImage = twitterImageMeta?.src || "";
-const socialImageAlt =
-  highlightsImageAlt ||
-  seoTitle;
-const ogLocale =
-  lang === "es"
-    ? "es_PE"
-    : lang === "pt"
-    ? "pt_BR"
-    : lang === "fr"
-    ? "fr_FR"
-    : lang === "it"
-    ? "it_IT"
-    : "en_US";
-const alternateLanguages = allSupportedLangs
-  .map((targetLang) => {
-    const slug = cleanText(tourSlugs[targetLang]);
-    if (!slug) return null;
-    return {
-      lang: targetLang,
-      url: `${siteOrigin}/${targetLang}/tours/${slug}`,
-    };
-  })
-  .filter(Boolean);
-const xDefaultUrl =
-  alternateLanguages.find((entry: any) => entry.lang === "es")?.url ||
-  canonical;
-const highlightsCtaLabel = cleanText(sourceTour.highlightsCtaLabel);
-const highlightsCtaUrl = cleanText(sourceTour.highlightsCtaUrl);
-const hasHighlightsCta = Boolean(highlightsCtaLabel && highlightsCtaUrl);
-const hasHighlightsSection = Boolean(
-  highlightsTitle ||
-    highlightsLead ||
-    highlightsQuestion ||
-    highlightsItems.length ||
-    highlightsImage ||
-    hasHighlightsCta
-);
-
-const featuredTitle = cleanText(sourceTour.featuredTitle);
-const featuredImages = Array.isArray(sourceTour.featuredImages)
-  ? sourceTour.featuredImages
-      .map((entry: any, index: number) => {
-        const item = normalizeRow(entry);
-        if (!item) return null;
-        const src = toAbsoluteMediaUrl(item?.image?.data ?? item?.image);
-        if (!src) return null;
-        return {
-          src,
-          alt: cleanText(item?.alt) || `Featured ${index + 1}`
-        };
-      })
-      .filter(Boolean)
-  : [];
-const hasFeaturedSection = Boolean(featuredTitle || featuredImages.length);
-
-const tourDestinationRows = Array.isArray(sourceTour.destinos?.data)
-  ? sourceTour.destinos.data
-  : Array.isArray(sourceTour.destinos)
-  ? sourceTour.destinos
-  : [];
-const tourDestinationNames = tourDestinationRows
-  .map((entry: any) => normalizeRow(entry))
-  .filter(Boolean)
-  .map((entry: any) => cleanText(entry?.title))
-  .filter(Boolean);
-const firstDestinationSlug = (() => {
-  const firstRow = tourDestinationRows
-    .map((entry: any) => normalizeRow(entry))
-    .find(Boolean);
-  return cleanText(firstRow?.slug) || cleanText(sourceTour.destinationSlug);
-})();
-const primaryDestinationName =
-  tourDestinationNames[0] || humanizeSlug(cleanText(sourceTour.destinationSlug));
-const moreToursPrefix = lang === "es" ? "Más tours en" : lang === "pt" ? "Mais tours em" : "More tours in";
-const moreToursRibbonText = primaryDestinationName
-  ? `${moreToursPrefix} ${primaryDestinationName}`
-  : "";
-let strapiMoreToursRaw: any[] = [];
-if (firstDestinationSlug) {
-  for (const baseUrl of STRAPI_BASE_URLS) {
-    let loadedMoreTours = false;
-    for (const locale of localeCandidates) {
-      const localePart = localePrefix(locale);
-      const url =
-        `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
-        "status=published&" +
-        `filters[destinationSlug][$eq]=${encodeURIComponent(firstDestinationSlug)}&` +
-        `filters[slug][$ne]=${encodeURIComponent(tourSlug)}&` +
-        "pagination[pageSize]=8&" +
-        "sort[0]=updatedAt:desc&" +
-        "fields[0]=slug&" +
-        "fields[1]=title&" +
-        "fields[2]=metaTitle&" +
-        "fields[3]=metaDescription&" +
-        "fields[4]=adultUnitPrice&" +
-        "fields[5]=discount&" +
-        "populate[heroSlideImages][fields][0]=url&" +
-        "populate[heroSlideImages][fields][1]=alternativeText&" +
-        "populate[heroSlideImages][fields][2]=formats";
-
-      try {
-        const res = await fetch(url);
-        if (!res.ok) continue;
-        const json = await res.json();
-        const rows = Array.isArray(json?.data)
-          ? json.data.map((entry: any) => normalizeRow(entry)).filter(Boolean)
-          : [];
-        strapiMoreToursRaw = rows;
-        loadedMoreTours = true;
-        break;
-      } catch {
-        // Try next locale / URL.
-      }
-    }
-    if (loadedMoreTours) break;
-  }
-}
-const tourDetailCtaLabel =
-  lang === "en" ? "View tour" : lang === "pt" ? "Ver tour" : "Ver tour";
+const seoDescription = cleanText(sourceTour.seoDescription) || cleanText(sourceTour.metaDescription);
+const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(/\/$/, "");
+const canonical = `${siteOrigin}/${lang}/tours/${sourceTour.slug}`;
+const heroImages = Array.isArray(sourceTour.heroSlideImages) ? sourceTour.heroSlideImages : [];
+const heroImage = getOdooMediaUrl(heroImages[0]);
+const featuredImages = Array.isArray(sourceTour.featuredImages) ? sourceTour.featuredImages : [];
+const itineraryItems = Array.isArray(sourceTour.itineraryItems) ? sourceTour.itineraryItems : [];
+const scheduleItems = Array.isArray(sourceTour.scheduleItems) ? sourceTour.scheduleItems : [];
+const includedItems = Array.isArray(sourceTour.includedItems) ? sourceTour.includedItems : [];
+const excludedItems = Array.isArray(sourceTour.excludedItems) ? sourceTour.excludedItems : [];
+const faqItems = Array.isArray(sourceTour.faqItems) ? sourceTour.faqItems : [];
+const relatedTours = Array.isArray(sourceTour.relatedTours) ? sourceTour.relatedTours : [];
+const tourSlugs = sourceTour.slugs ?? buildLocalizedSlugs(sourceTour.slug || tourSlug);
+const destinationNames = (Array.isArray(sourceTour.destinos) ? sourceTour.destinos : []).map((item: any) => item.title).filter(Boolean);
 const priceFromLabel =
-  lang === "en" ? "From" :
-  lang === "pt" ? "Desde" :
-  lang === "fr" ? "Des" :
-  lang === "it" ? "Da" :
-  "Desde";
+  lang === "en" ? "From"
+  : lang === "pt" ? "Desde"
+  : lang === "fr" ? "Des"
+  : lang === "it" ? "Da"
+  : "Desde";
+const bookingLang = (["es", "en", "pt", "fr", "it"].includes(lang) ? lang : "es") as "es" | "en" | "pt" | "fr" | "it";
 const getDiscountedPrice = (price: number, discountPercent: number) =>
   Math.max(0, price - (price * Math.max(0, discountPercent)) / 100);
-const moreToursCards = strapiMoreToursRaw
-  .map((tour: any) => {
-    const slug = cleanText(tour?.slug).toLowerCase();
-    if (!slug) return null;
-    return {
-      slug,
-      title: cleanText(tour?.metaTitle) || cleanText(tour?.title),
-      description: cleanText(tour?.metaDescription),
-      image: toCardImageFromTour(tour),
-      adultUnitPrice: Number(tour?.adultUnitPrice ?? 0),
-      discount: Number(tour?.discount ?? 0),
-    };
-  })
-  .filter(Boolean)
-  .slice(0, 6);
-const hasMoreToursSection = Boolean(moreToursRibbonText && moreToursCards.length);
-
-const itineraryTitle = cleanText(sourceTour.itineraryTitle);
-const itineraryItemLabel = cleanText(sourceTour.itineraryItemLabel);
-const showItineraryEnumeration = itineraryItemLabel.length > 0;
-const itineraryExpandLabel =
-  cleanText(sourceTour.itineraryExpandLabel) ||
-  (lang === "en" ? "View full itinerary" : "Ver itinerario completo");
-const itineraryCollapseLabel =
-  cleanText(sourceTour.itineraryCollapseLabel) ||
-  (lang === "en" ? "Show less" : "Ver menos");
-const itineraryItems = Array.isArray(sourceTour.itineraryItems)
-  ? sourceTour.itineraryItems
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any, index: number) => ({
-        title: cleanText(item?.title),
-        highlight: cleanText(item?.highlight),
-        descriptionHtml: md.render(strapiRichTextToMarkdown(item?.description ?? '')),
-        optional: cleanText(item?.optional),
-        images: toMediaRows(item?.image)
-          .map((mediaItem: any) => ({
-            src: toAbsoluteMediaUrl(mediaItem),
-            alt:
-              cleanText(mediaItem?.alternativeText) ||
-              cleanText(item?.imageAlt) ||
-              cleanText(item?.title) ||
-              (showItineraryEnumeration
-                ? `${itineraryItemLabel} ${index + 1}`
-                : `${lang === "en" ? "Item" : "Elemento"} ${index + 1}`),
-          }))
-          .filter((media: any) => media.src),
-        includes: Array.isArray(item?.includes)
-          ? item.includes
-              .map((includeEntry: any) => normalizeRow(includeEntry))
-              .filter(Boolean)
-              .map((includeItem: any) => cleanTextValue(includeItem?.text))
-              .filter(Boolean)
-          : []
-      }))
-      .filter(
-        (item: any) =>
-          item.title || item.highlight || item.descriptionHtml || item.images.length
-      )
-  : [];
-const hasItinerarySection = itineraryItems.length > 0;
-
-const scheduleStartTimeKeys = [
-  "horaEntrada",
-  "hora_entrada",
-  "entryTime",
-  "entrada",
-  "startTime",
-  "horaInicio",
-  "hora_inicio",
-  "start",
-];
-const scheduleEndTimeKeys = [
-  "horaSalida",
-  "hora_salida",
-  "exitTime",
-  "salida",
-  "endTime",
-  "horaFin",
-  "hora_fin",
-  "end",
-];
-const scheduleItems = Array.isArray(sourceTour.scheduleItems)
-  ? sourceTour.scheduleItems
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any) => ({
-        title: cleanText(item?.title),
-        startTime: formatAmPmTime(pickText(item, scheduleStartTimeKeys)),
-        endTime: formatAmPmTime(pickText(item, scheduleEndTimeKeys)),
-      }))
-      .filter((item: any) => item.title || item.startTime || item.endTime)
-  : [];
-const hasScheduleSection = scheduleItems.length > 0;
-const scheduleTitle = cleanText(sourceTour.scheduleTitle);
-const scheduleStartLabel = lang === "en" ? "Entry" : "Entrada";
-const scheduleEndLabel = lang === "en" ? "Exit" : "Salida";
-const scheduleOptionTitles = scheduleItems
-  .map((item: any) => item.title)
-  .filter((value: string) => Boolean(value));
-
-const includedTitle = cleanText(sourceTour.includedTitle);
-const includedItems = Array.isArray(sourceTour.includedItems)
-  ? sourceTour.includedItems
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any) => ({
-        text: cleanTextValue(item?.text),
-        icon: cleanTextValue(item?.icon)
-      }))
-      .filter((item: any) => item.text)
-  : [];
-const excludedTitle = cleanText(sourceTour.excludedTitle);
-const excludedItems = Array.isArray(sourceTour.excludedItems)
-  ? sourceTour.excludedItems
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any) => ({
-        text: cleanTextValue(item?.text),
-        icon: cleanTextValue(item?.icon)
-      }))
-      .filter((item: any) => item.text)
-  : [];
-const hasInclusionsSection = Boolean(
-  includedTitle || excludedTitle || includedItems.length || excludedItems.length
-);
-const hasIncludedBlock = Boolean(includedTitle || includedItems.length);
-const hasExcludedBlock = Boolean(excludedTitle || excludedItems.length);
-
-const faqTitle = cleanText(sourceTour.faqTitle);
-const faqItems = Array.isArray(sourceTour.faqItems)
-  ? sourceTour.faqItems
-      .map((entry: any) => normalizeRow(entry))
-      .filter(Boolean)
-      .map((item: any) => ({
-        question: cleanText(item?.question),
-        answer: cleanText(item?.answer)
-      }))
-      .filter((item: any) => item.question && item.answer)
-  : [];
-const hasFaqSection = faqItems.length > 0;
-
-
-const stickyBookingTitle = lang === "en" ? "BOOK NOW" : "RESERVA AHORA";
-const stickyBookingPrice = (() => {
-  const value = toNumber(sourceTour.adultUnitPrice);
-  if (value === null) return "";
-  const formatted = value % 1 === 0 ? value.toFixed(0) : value.toFixed(2);
-  return lang === "en"
-    ? `From USD ${formatted} per person`
-    : `Desde USD ${formatted} por persona`;
-})();
-const stickyBookingDuration = (() => {
-  const days = toNumber(sourceTour.durationDays);
-  if (days === null) return "";
-  return lang === "en" ? `Duration: ${days} days` : `Duracion: ${days} dias`;
-})();
-const stickyBookingUrl = cleanText(sourceTour.highlightsCtaUrl);
-const stickyBookingAvailability =
-  lang === "en" ? "Real-time availability" : "Disponibilidad en tiempo real";
-// Fecha actual en hora peruana (UTC-5) para el calendario
-const nowPeru = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Lima" }));
-const stickyCalendarStart = `${nowPeru.getFullYear()}-${String(nowPeru.getMonth() + 1).padStart(2, "0")}`;
-const stickyCalendarLocale = lang === "en" ? "en-US" : "es-PE";
-const stickyBookingMonth = nowPeru.toLocaleDateString(stickyCalendarLocale, { month: "long", year: "numeric", timeZone: "America/Lima" });
-const stickyCalendarWeekdays =
-  lang === "en"
-    ? ["M", "T", "W", "Th", "F", "S", "S"]
-    : ["L", "M", "X", "Ju", "V", "S", "D"];
-const hasBookingCard = Boolean(
-  stickyBookingPrice || stickyBookingDuration || stickyBookingUrl
-);
-
 ---
 
 <html lang={lang}>
@@ -944,1159 +77,225 @@ const hasBookingCard = Boolean(
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
-    <style is:global>
-      body.tour-detail {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-          "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-          sans-serif;
-      }
-
-      body.tour-detail main h1 {
-        font-family: "Playfair Display", serif;
-        font-style: italic;
-      }
-    </style>
     <title>{seoTitle}</title>
-    <meta name="description" content={pageDescription} />
-    {seoKeywords ? <meta name="keywords" content={seoKeywords} /> : null}
-    <meta
-      name="robots"
-      content={
-        seoNoIndex
-          ? "noindex,nofollow"
-          : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
-      }
-    />
-    <meta
-      name="googlebot"
-      content={seoNoIndex ? "noindex,nofollow" : "index, follow, max-image-preview:large"}
-    />
-    <meta name="bingbot" content={seoNoIndex ? "noindex,nofollow" : "index, follow"} />
+    <meta name="description" content={seoDescription} />
     <link rel="canonical" href={canonical} />
-    {alternateLanguages.map((entry: any) => (
-      <link rel="alternate" hrefLang={entry.lang} href={entry.url} />
-    ))}
-    <link rel="alternate" hrefLang="x-default" href={xDefaultUrl} />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Inca's Paradise" />
-    <meta property="og:locale" content={ogLocale} />
-    <meta property="og:title" content={ogTitle} />
-    <meta property="og:description" content={ogDescription} />
+    <meta property="og:title" content={seoTitle} />
+    <meta property="og:description" content={seoDescription} />
     <meta property="og:url" content={canonical} />
-    {ogImage ? <meta property="og:image" content={ogImage} /> : null}
-    {ogImageMeta?.width ? <meta property="og:image:width" content={ogImageMeta.width} /> : null}
-    {ogImageMeta?.height ? <meta property="og:image:height" content={ogImageMeta.height} /> : null}
-    {ogImage ? <meta property="og:image:alt" content={socialImageAlt} /> : null}
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={twitterTitle} />
-    <meta name="twitter:description" content={twitterDescription} />
-    {twitterImage ? <meta name="twitter:image" content={twitterImage} /> : null}
-    {twitterImage ? <meta name="twitter:image:alt" content={socialImageAlt} /> : null}
-    <!-- Schema JSON-LD TouristTrip -->
-    <script type="application/ld+json" set:html={JSON.stringify((() => {
-      const schema: Record<string, any> = {
-        "@context": "https://schema.org",
-        "@type": "TouristTrip",
-        "name": seoTitle,
-        "description": pageDescription,
-        "url": canonical,
-        "provider": {
-          "@type": "TravelAgency",
-          "name": "Inca's Paradise",
-          "url": "https://incasparadise.com"
+    {heroImage ? <meta property="og:image" content={heroImage} /> : null}
+    <meta name="twitter:card" content={heroImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={seoTitle} />
+    <meta name="twitter:description" content={seoDescription} />
+    {heroImage ? <meta name="twitter:image" content={heroImage} /> : null}
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "TouristTrip",
+      "name": seoTitle,
+      "description": seoDescription,
+      "url": canonical,
+      "provider": {
+        "@type": "TravelAgency",
+        "name": "Inca's Paradise",
+        "url": "https://incasparadise.com"
+      },
+      ...(heroImage ? { image: heroImage } : {}),
+      ...(sourceTour.adultUnitPrice ? {
+        offers: {
+          "@type": "Offer",
+          price: toNumber(sourceTour.adultUnitPrice),
+          priceCurrency: "USD",
+          availability: "https://schema.org/InStock"
         }
-      };
-      if (ogImage) {
-        schema["image"] = [
-          {
-            "@type": "ImageObject",
-            "url": ogImage,
-            "contentUrl": ogImage,
-            "caption": socialImageAlt,
-            ...(ogImageMeta?.width ? { "width": Number(ogImageMeta.width) } : {}),
-            ...(ogImageMeta?.height ? { "height": Number(ogImageMeta.height) } : {}),
-          }
-        ];
-      }
-      if (sourceTour.durationDays) schema["duration"] = `P${sourceTour.durationDays}D`;
-      if (sourceTour.adultUnitPrice) schema["offers"] = {
-        "@type": "Offer",
-        "price": toNumber(sourceTour.adultUnitPrice),
-        "priceCurrency": "USD",
-        "availability": "https://schema.org/InStock"
-      };
-      return schema;
-    })())} />
-    {highlightsImage && <link rel="preload" as="image" href={highlightsImage} fetchpriority="high" />}
+      } : {}),
+    })} />
+    {heroImage && <link rel="preload" as="image" href={heroImage} fetchpriority="high" />}
     <GoogleAnalytics />
   </head>
-  <body class="tour-detail min-h-screen bg-white text-gray-900" data-navbar-solid>
-    <Navbar
-      {t}
-      currentLang={lang}
-      whatsappTourName={cleanText(sourceTour.title) || undefined}
-    />
-    <main>
-
-      <section class="bg-[#f5f0e9]">
-        <div class={`grid w-full gap-10 px-4 pb-16 pt-24 lg:pt-28 lg:items-start lg:gap-6 lg:px-12 ${hasBookingCard ? "lg:grid-cols-[minmax(0,1fr)_300px]" : "lg:grid-cols-1"}`}>
-          <div class="min-w-0">
-            {hasHighlightsSection ? (
-            <section class="pb-12 md:pb-14">
-              <div class="grid gap-6 border border-[#e2e8f0] bg-white p-4 shadow-sm md:grid-cols-[240px_1fr] md:gap-8 md:p-6">
-                {highlightsImage ? (
-                  <div class="overflow-hidden">
-                    <img
-                      src={highlightsImage}
-                      alt={highlightsImageAlt}
-                      class="h-full min-h-[280px] w-full object-cover"
-                      fetchpriority="high"
-                      loading="eager"
-                      decoding="async"
-                    />
-                  </div>
-                ) : null}
-
-                <div>
-                  {highlightsTitle ? (
-                    <h2 class="text-3xl leading-tight text-[#1f2937] md:text-3xl">
-                      {highlightsTitle}
-                    </h2>
-                  ) : null}
-                  {highlightsLeadHtml ? (
-                    <div
-                      class="mt-3 text-sm leading-relaxed text-[#1f2937] text-justify md:text-base"
-                      set:html={highlightsLeadHtml}
-                    />
-                  ) : null}
-
-                  {highlightsQuestion ? (
-                    <h3 class="mt-5 text-xl uppercase  text-[#1f2937] md:text-xl">
-                      {highlightsQuestion}
-                    </h3>
-                  ) : null}
-
-                  <div class="mt-4 space-y-4">
-                    {
-                      highlightsItems.map((item, index) => (
-                        <article class="flex items-start gap-3">
-                          <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-green-600 text-green-600">
-                            {index + 1}
-                          </span>
-                          <div>
-                            <p class="text-lg font-normal text-[#111827] md:text-xl">
-                              {item.title}
-                            </p>
-                            {item.descriptionHtml ? (
-                              <div
-                    class="mt-1 text-sm leading-relaxed text-[#4b5563] text-justify md:text-base [&_p]:mb-2 [&_p]:text-justify [&_p:last-child]:mb-0 [&_strong]:font-semibold [&_b]:font-semibold [&_em]:italic [&_i]:italic"
-                                set:html={item.descriptionHtml}
-                              />
-                            ) : null}
-                          </div>
-                        </article>
-                      ))
-                    }
-                  </div>
-
-                  {hasHighlightsCta ? (
-                    <a
-                      href={highlightsCtaUrl}
-                      class="mt-6 inline-flex items-center justify-center bg-green-700 px-5 py-2.5 text-sm text-white transition hover:bg-green-800"
-                    >
-                      {highlightsCtaLabel}
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            </section>
-            ) : null}
-
-            {hasItinerarySection ? (
-            <section class="pb-16 md:pb-20">
-              <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                {itineraryTitle ? (
-                  <h2 class="text-2xl md:text-3xl font-bold italic text-gray-900" style="font-family: 'Playfair Display', serif;">
-                    {itineraryTitle}
-                  </h2>
-                ) : null}
-                {
-                  itineraryItems.length > 1 && (
-                    <button
-                      type="button"
-                      class="inline-flex items-center justify-center border border-[#166534] px-5 py-2 text-sm font-semibold text-[#166534] transition hover:bg-[#166534] hover:text-white"
-                      data-itinerary-expand
-                      data-label-more={itineraryExpandLabel}
-                      data-label-less={itineraryCollapseLabel}
-                      aria-expanded="false"
-                    >
-                      {itineraryExpandLabel}
-                    </button>
-                  )
-                }
-              </div>
-
-              <div class="mt-8 border-t border-gray-300">
-                {
-                  itineraryItems.map((item, index) => (
-                    <article class="border-b border-gray-200 py-4" data-itinerary-item data-index={index}>
-                      <button
-                        type="button"
-                        class="flex w-full items-start gap-4 text-left"
-                        data-itinerary-trigger
-                        data-index={index}
-                        aria-expanded={index === 0 ? "true" : "false"}
-                      >
-                        <span class="mt-0.5 inline-flex shrink-0 items-center gap-2 text-green-700">
-                          {showItineraryEnumeration ? (
-                            <>
-                              <span class="text-base font-semibold">{itineraryItemLabel}</span>
-                              <span class="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-green-600 px-1 text-xs font-bold leading-none">
-                                {index + 1}
-                              </span>
-                            </>
-                          ) : (
-                            <span class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-green-600 bg-green-50 text-lg leading-none text-green-700">
-                              ▸
-                            </span>
-                          )}
-                        </span>
-                        <span class="pt-0.5 text-base md:text-lg font-semibold text-gray-900">
-                          {item.title}
-                        </span>
-                      </button>
-
-                      <div
-                        class="mt-4 overflow-hidden transition-all duration-300 ease-in-out"
-                        data-itinerary-panel
-                        style={index === 0 ? "max-height:2000px;opacity:1;" : "max-height:0;opacity:0;"}
-                        aria-hidden={index === 0 ? "false" : "true"}
-                      >
-                        <div class="pl-0 md:pl-24">
-                          {item.images.length ? (
-                            <div
-                              class="relative mx-auto w-full max-w-2xl"
-                              data-itinerary-gallery
-                              data-gallery-index={index}
-                            >
-                              <div class="overflow-hidden touch-pan-y" data-itinerary-gallery-viewport>
-                                <div
-                                  class="flex gap-3 transition-transform duration-300 ease-out md:gap-4"
-                                  data-itinerary-gallery-track
-                                >
-                                  {item.images.map((media: any, mediaIndex: number) => (
-                                    <button
-                                      type="button"
-                                      class="h-50 w-full flex-none overflow-hidden md:h-64 md:w-[82%]"
-                                      data-itinerary-gallery-slide
-                                      data-itinerary-lightbox-open
-                                      data-gallery-index={index}
-                                      data-slide-index={mediaIndex}
-                                      data-src={media.src}
-                                      data-alt={media.alt ?? ""}
-                                      aria-label="Ver imagen en grande"
-                                    >
-                                      <img
-                                        src={media.src}
-                                        alt={media.alt}
-                                        class="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
-                                      />
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {item.images.length > 1 ? (
-                                <>
-                                  <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-20 bg-gradient-to-l from-black/30 to-transparent md:block"></div>
-                                  <button
-                                    type="button"
-                                    class="absolute left-3 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white transition hover:bg-black/65 md:left-4"
-                                    data-itinerary-gallery-prev
-                                    aria-label="Imagen anterior"
-                                  >
-                                    <svg
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      aria-hidden="true"
-                                      class="h-6 w-6"
-                                    >
-                                      <path
-                                        d="M14.5 6.5L9 12l5.5 5.5"
-                                        stroke="currentColor"
-                                        stroke-width="2.5"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                      />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    type="button"
-                                    class="absolute right-3 top-1/2 z-10 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white transition hover:bg-black/65 md:right-4"
-                                    data-itinerary-gallery-next
-                                    aria-label="Imagen siguiente"
-                                  >
-                                    <svg
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      aria-hidden="true"
-                                      class="h-6 w-6"
-                                    >
-                                      <path
-                                        d="M9.5 6.5L15 12l-5.5 5.5"
-                                        stroke="currentColor"
-                                        stroke-width="2.5"
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                      />
-                                    </svg>
-                                  </button>
-                                </>
-                              ) : null}
-                            </div>
-                          ) : null}
-                          {item.highlight ? (
-                            <p class="mt-4 text-sm md:text-base font-semibold text-gray-900">
-                              {item.highlight}
-                            </p>
-                          ) : null}
-                          {item.descriptionHtml ? (
-                            <div
-                              class="prose prose-sm md:prose-base mt-3 max-w-none text-black md:ml-6 md:mr-14 lg:ml-10 lg:mr-28 prose-p:mb-3 prose-p:leading-7 prose-p:text-justify prose-p:last:mb-0 prose-headings:text-black prose-headings:font-semibold prose-strong:text-black prose-strong:font-semibold prose-em:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e] [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:space-y-2 [&_li_p]:my-0 [&_[style*='text-align:center']]:text-center [&_[style*='text-align:right']]:text-right [&_[style*='text-align:left']]:text-left [&_img]:my-3 [&_img]:block [&_img]:clear-both [&_img]:float-none [&_img]:mx-auto [&_img]:h-auto [&_img]:w-full [&_img]:max-w-[560px] [&_img]:max-h-[340px] [&_img]:object-cover"
-                              set:html={item.descriptionHtml}
-                            />
-                          ) : null}
-
-                          {
-                            item.includes.length > 0 && (
-                              <ul class="mt-4 space-y-1 text-sm md:text-base text-gray-700">
-                                {item.includes.map((entry: string) => (
-                                  <li class="flex items-start gap-2">
-                                    <span class="mt-0.5 text-green-600">+</span>
-                                    <span>{entry}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            )
-                          }
-
-                          {
-                            item.optional && (
-                              <p class="mt-4 text-sm md:text-base text-gray-700">
-                                {item.optional}
-                              </p>
-                            )
-                          }
-                        </div>
-                      </div>
-                    </article>
-                  ))
-                }
-              </div>
-
-              {
-                itineraryItems.length > 1 && (
-                  <div class="mt-8 flex justify-center">
-                    <button
-                      type="button"
-                      class="inline-flex items-center justify-center border border-[#166534] px-7 py-3 text-sm font-semibold text-[#166534] transition hover:bg-[#166534] hover:text-white"
-                      data-itinerary-expand
-                      data-label-more={itineraryExpandLabel}
-                      data-label-less={itineraryCollapseLabel}
-                      aria-expanded="false"
-                    >
-                      {itineraryExpandLabel}
-                    </button>
-                  </div>
-                )
-              }
-            </section>
-            ) : null}
-
-            {hasScheduleSection ? (
-            <section class="pb-16 md:pb-20">
-              {scheduleTitle ? (
-                <h2 class="mb-6 text-2xl md:text-3xl font-bold italic text-gray-900" style="font-family: 'Playfair Display', serif;">
-                  {scheduleTitle}
-                </h2>
-              ) : null}
-
-              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {scheduleItems.map((item) => (
-                  <article class="border border-[#e2e8f0] bg-white p-5 md:p-6">
-                    {item.title ? (
-                      <h3 class="mb-3 text-base md:text-lg font-bold text-gray-900">{item.title}</h3>
-                    ) : null}
-                    <div class="grid grid-cols-2 gap-3">
-                      <div class="border border-[#e5e7eb] bg-[#f8fafc] p-3">
-                        <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#6b7280]">{scheduleStartLabel}</p>
-                        <p class="text-base font-bold text-gray-900">{item.startTime || "-"}</p>
-                      </div>
-                      <div class="border border-[#e5e7eb] bg-[#f8fafc] p-3">
-                        <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#6b7280]">{scheduleEndLabel}</p>
-                        <p class="text-base font-bold text-gray-900">{item.endTime || "-"}</p>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-            ) : null}
-
-            {hasInclusionsSection ? (
-            <section class="pb-16 md:pb-20">
-              <div class="grid grid-cols-2 gap-3 lg:gap-6">
-                {hasIncludedBlock ? (
-                <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
-                  {includedTitle ? (
-                    <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
-                      <span class="mr-2 text-green-700">✓</span>{includedTitle}
-                    </h3>
-                  ) : null}
-                  <div class="divide-y divide-[#e5e7eb]">
-                    {includedItems.map((item) => (
-                      <div class="flex items-start gap-2 py-1.5 md:py-2.5">
-                        <span class="mt-0.5 inline-flex h-4 w-4 md:h-5 md:w-5 shrink-0 items-center justify-center rounded-full border border-green-700 text-xs text-green-700">
-                          {item.icon || "✓"}
-                        </span>
-                        <p class="text-xs md:text-sm leading-snug text-[#374151]">{item.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-                ) : null}
-
-                {hasExcludedBlock ? (
-                <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
-                  {excludedTitle ? (
-                    <h3 class="mb-4 text-base md:text-2xl lg:text-3xl font-bold italic text-[#111827]" style="font-family: 'Playfair Display', serif;">
-                      <span class="mr-2 text-[#6b7280]">✕</span>{excludedTitle}
-                    </h3>
-                  ) : null}
-                  <div class="divide-y divide-[#e5e7eb]">
-                    {excludedItems.map((item) => (
-                      <div class="flex items-start gap-2 py-1.5 md:py-2.5">
-                        <span class="mt-0.5 inline-flex h-4 w-4 md:h-5 md:w-5 shrink-0 items-center justify-center rounded-full border border-[#9ca3af] text-xs text-[#6b7280]">
-                          {item.icon || "✕"}
-                        </span>
-                        <p class="text-xs md:text-sm leading-snug text-[#374151]">{item.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                </article>
-                ) : null}
-              </div>
-            </section>
-            ) : null}
-
-            {hasFeaturedSection && featuredImages.length > 0 ? (
-            <section class="pb-14 md:pb-20">
-              {featuredTitle ? (
-                <h2
-                  class="mb-6 text-2xl md:text-3xl font-bold italic text-gray-900"
-                  style="font-family: 'Playfair Display', serif;"
-                >
-                  {featuredTitle}
-                </h2>
-              ) : null}
-
-              <div class="grid gap-px grid-cols-2 md:grid-cols-4">
-                {
-                  featuredImages.map((item, index) => item && (
-                    <button
-                      type="button"
-                      class="relative group overflow-hidden aspect-square cursor-zoom-in"
-                      data-lightbox-open
-                      data-lightbox-index={index}
-                    >
-                      <img src={item.src} alt={item.alt ?? ""} class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                      <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
-                    </button>
-                  ))
-                }
-              </div>
-
-              <!-- Lightbox -->
-              <div
-                id="gallery-lightbox"
-                class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90"
-                data-lightbox
-              >
-                <!-- Cerrar -->
-                <button
-                  type="button"
-                  class="absolute top-4 right-4 z-10 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition text-2xl"
-                  data-lightbox-close
-                  aria-label="Cerrar"
-                >✕</button>
-
-                <!-- Anterior -->
-                <button
-                  type="button"
-                  class="absolute left-4 z-10 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition text-3xl"
-                  data-lightbox-prev
-                  aria-label="Anterior"
-                >&#8249;</button>
-
-                <!-- Imagen -->
-                <div class="relative max-h-[90vh] max-w-[90vw]">
-                  <img
-                    src=""
-                    alt=""
-                    class="max-h-[90vh] max-w-[90vw] object-contain select-none"
-                    data-lightbox-img
-                  />
-                  <p class="absolute bottom-2 left-0 right-0 text-center text-sm text-white/70" data-lightbox-counter></p>
-                </div>
-
-                <!-- Siguiente -->
-                <button
-                  type="button"
-                  class="absolute right-4 z-10 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition text-3xl"
-                  data-lightbox-next
-                  aria-label="Siguiente"
-                >&#8250;</button>
-              </div>
-            </section>
-            ) : null}
-
-            {hasMoreToursSection ? (
-              <>
-                <Ribbon
-                  text={moreToursRibbonText}
-                  backgroundClass="bg-white"
-                  maxWidthClass="max-w-7xl"
-                  paddingClass="py-6 md:py-8"
-                  textClass="text-base md:text-xl lg:text-2xl text-gray-900 leading-relaxed"
-                  accentClass="bg-orange-500"
-                  sectionClass="mb-4 md:mb-6"
-                />
-                <section class="pt-1 pb-10 md:pt-2 md:pb-14">
-                  <div class="mx-auto w-full max-w-7xl px-6">
-                    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                      {moreToursCards.map((card: any) => (
-                        <article class="flex h-full flex-col overflow-hidden border border-[#e2e8f0] bg-white">
-                          <a
-                            href={`/${lang}/tours/${card.slug}`}
-                            class="relative block"
-                            aria-label={card.title || tourDetailCtaLabel}
-                          >
-                            {card.image ? (
-                              <img
-                                src={card.image}
-                                alt={card.title || ""}
-                                class="h-52 w-full object-cover"
-                              />
-                            ) : (
-                              <div class="h-52 w-full bg-gray-200" />
-                            )}
-                            {card.discount > 0 ? (
-                              <span class="absolute top-3 left-3 bg-[#1AA093] px-3 py-1 text-xs font-bold text-white rounded-full shadow">
-                                -{card.discount.toFixed(0)}%
-                              </span>
-                            ) : null}
-                          </a>
-                          <div class="flex flex-1 flex-col p-4 md:p-5">
-                            {card.title ? (
-                              <h3 class="text-lg font-semibold text-gray-900">
-                                {card.title}
-                              </h3>
-                            ) : null}
-                            {card.description ? (
-                              <p class="mt-2 line-clamp-3 text-sm leading-relaxed text-gray-600">
-                                {card.description}
-                              </p>
-                            ) : null}
-                            {card.adultUnitPrice > 0 ? (
-                              <div class="mt-4">
-                                {card.discount > 0 ? (
-                                  <p class="text-xs text-gray-400 line-through">
-                                    {formatPrice(card.adultUnitPrice, lang)}
-                                  </p>
-                                ) : null}
-                                <p class="text-base font-bold text-gray-900">
-                                  {priceFromLabel} {formatPrice(getDiscountedPrice(card.adultUnitPrice, card.discount), lang)}
-                                </p>
-                              </div>
-                            ) : null}
-                            <a
-                              href={`/${lang}/tours/${card.slug}`}
-                              class="mt-4 inline-flex w-fit self-start items-center justify-center border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-700 hover:text-white"
-                            >
-                              {tourDetailCtaLabel}
-                            </a>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-              </>
-            ) : null}
-
-            <script>
-              (() => {
-                const lightbox = document.querySelector("[data-lightbox]") as HTMLElement | null;
-                const img = document.querySelector("[data-lightbox-img]") as HTMLImageElement | null;
-                const counter = document.querySelector("[data-lightbox-counter]");
-                if (!lightbox || !img) return;
-
-                // Recopila imÃ¡genes de los botones
-                const btns = Array.from(document.querySelectorAll("[data-lightbox-open]")) as HTMLElement[];
-                const images = btns.map(b => ({
-                  src: (b.querySelector("img") as HTMLImageElement)?.src ?? "",
-                  alt: (b.querySelector("img") as HTMLImageElement)?.alt ?? ""
-                }));
-                let current = 0;
-
-                const show = (index: number) => {
-                  current = (index + images.length) % images.length;
-                  img.src = images[current].src;
-                  img.alt = images[current].alt;
-                  if (counter) counter.textContent = `${current + 1} / ${images.length}`;
-                };
-
-                const open = (index: number) => {
-                  show(index);
-                  lightbox.classList.remove("hidden");
-                  lightbox.classList.add("flex");
-                  document.body.style.overflow = "hidden";
-                };
-
-                const close = () => {
-                  lightbox.classList.add("hidden");
-                  lightbox.classList.remove("flex");
-                  document.body.style.overflow = "";
-                };
-
-                btns.forEach((btn, i) => btn.addEventListener("click", () => open(i)));
-                document.querySelector("[data-lightbox-close]")?.addEventListener("click", close);
-                document.querySelector("[data-lightbox-prev]")?.addEventListener("click", () => show(current - 1));
-                document.querySelector("[data-lightbox-next]")?.addEventListener("click", () => show(current + 1));
-
-                // Cerrar al hacer click fuera de la imagen
-                lightbox.addEventListener("click", (e) => {
-                  if (e.target === lightbox) close();
-                });
-
-                // NavegaciÃ³n con teclado
-                document.addEventListener("keydown", (e) => {
-                  if (lightbox.classList.contains("hidden")) return;
-                  if (e.key === "ArrowLeft") show(current - 1);
-                  if (e.key === "ArrowRight") show(current + 1);
-                  if (e.key === "Escape") close();
-                });
-              })();
-            </script>
-
-          </div>
-
-          {hasBookingCard ? (
-            <BookingCard
-              lang={lang}
-              titulo={stickyBookingTitle}
-              duracion={stickyBookingDuration}
-              disponibilidad={stickyBookingAvailability}
-              precioAdultoUsd={toNumber(sourceTour.adultUnitPrice) ?? 0}
-              precioNinoUsd={toNumber(sourceTour.childUnitPrice) ?? 0}
-              descuentoUsd={toNumber(sourceTour.discount) ?? 0}
-              discountMode="percent"
-              duracionDias={toNumber(sourceTour.durationDays) ?? 1}
-              calendarLocale={stickyCalendarLocale}
-              calendarStart={stickyCalendarStart}
-              calendarMonth={stickyBookingMonth}
-              weekdays={stickyCalendarWeekdays}
-            />
-          ) : null}
-        </div>
-      </section>
-
-
-      {hasFaqSection ? (
-      <section class="bg-white py-10 md:py-12">
-        <div class="mx-auto w-full max-w-7xl px-6">
-          {faqTitle ? (
-            <h3 class="mb-6 text-4xl font-semibold text-[#111827]">{faqTitle}</h3>
-          ) : null}
-          <div class="divide-y divide-[#e5e7eb] border-y border-[#e5e7eb]">
-            {faqItems.map((item) => (
-              <details class="group py-4">
-                <summary class="flex cursor-pointer list-none items-center gap-4 text-2xl font-medium text-[#374151] marker:hidden">
-                  <span class="text-3xl leading-none text-green-700 group-open:hidden">+</span>
-                  <span class="hidden text-3xl leading-none text-green-700 group-open:inline">-</span>
-                  <span>{item.question}</span>
-                </summary>
-                <p class="pl-10 pt-3 text-lg leading-relaxed text-[#4b5563]">{item.answer}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-      ) : null}
-
-      <div
-        class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 px-4"
-        data-itinerary-lightbox
-      >
-        <button
-          type="button"
-          class="absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
-          data-itinerary-lightbox-close
-          aria-label="Cerrar"
-        >
-          &times;
-        </button>
-
-        <button
-          type="button"
-          class="absolute left-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition hover:bg-white/20"
-          data-itinerary-lightbox-prev
-          aria-label="Anterior"
-        >
-          &lsaquo;
-        </button>
-
-        <div class="relative max-h-[90vh] max-w-[92vw]">
-          <img
-            src=""
-            alt=""
-            class="max-h-[90vh] max-w-[92vw] object-contain"
-            data-itinerary-lightbox-img
-          />
-          <p
-            class="absolute bottom-3 left-0 right-0 text-center text-sm text-white/75"
-            data-itinerary-lightbox-counter
-          ></p>
-        </div>
-
-        <button
-          type="button"
-          class="absolute right-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition hover:bg-white/20"
-          data-itinerary-lightbox-next
-          aria-label="Siguiente"
-        >
-          &rsaquo;
-        </button>
-      </div>
-    </main>
-    <Footer currentLang={lang} {t} />
-
-    <script is:inline>
-      (() => {
-        const slides = Array.from(
-          document.querySelectorAll("[data-tour-slide]")
-        );
-        const prev = document.querySelector("[data-tour-prev]");
-        const next = document.querySelector("[data-tour-next]");
-        if (slides.length) {
-          let current = 0;
-          const show = (index) => {
-            current = (index + slides.length) % slides.length;
-            slides.forEach((slide, i) => {
-              const active = i === current;
-              slide.classList.toggle("opacity-100", active);
-              slide.classList.toggle("opacity-0", !active);
-              slide.classList.toggle("pointer-events-none", !active);
-            });
-          };
-
-          let interval = setInterval(() => show(current + 1), 3000);
-          const reset = () => {
-            clearInterval(interval);
-            interval = setInterval(() => show(current + 1), 3000);
-          };
-
-          prev?.addEventListener("click", () => {
-            show(current - 1);
-            reset();
-          });
-
-          next?.addEventListener("click", () => {
-            show(current + 1);
-            reset();
-          });
-        }
-
-        const descriptionToggle = document.querySelector(
-          "[data-description-toggle]"
-        );
-        const descriptionExtra = document.querySelector(
-          "[data-description-extra]"
-        );
-        if (descriptionToggle && descriptionExtra) {
-          const moreLabel =
-            descriptionToggle.getAttribute("data-label-more") || "Leer mas";
-          const lessLabel =
-            descriptionToggle.getAttribute("data-label-less") || "Ver menos";
-
-          descriptionToggle.addEventListener("click", () => {
-            const expanded =
-              descriptionToggle.getAttribute("aria-expanded") === "true";
-            descriptionToggle.setAttribute("aria-expanded", String(!expanded));
-            descriptionExtra.classList.toggle("hidden", expanded);
-            descriptionExtra.setAttribute("aria-hidden", String(expanded));
-            descriptionToggle.textContent = expanded ? moreLabel : lessLabel;
-          });
-        }
-
-        const itineraryEntries = Array.from(
-          document.querySelectorAll("[data-itinerary-item]")
-        );
-        const itineraryExpandControls = Array.from(
-          document.querySelectorAll("[data-itinerary-expand]")
-        );
-        if (itineraryEntries.length) {
-          const firstExpandControl = itineraryExpandControls[0];
-          const moreLabel =
-            firstExpandControl?.getAttribute("data-label-more") ||
-            "Ver itinerario completo";
-          const lessLabel =
-            firstExpandControl?.getAttribute("data-label-less") || "Ver menos";
-
-          const setExpandControls = (expanded) => {
-            itineraryExpandControls.forEach((control) => {
-              control.setAttribute("aria-expanded", String(expanded));
-              control.textContent = expanded ? lessLabel : moreLabel;
-            });
-          };
-
-          const focusableSelector = [
-            "a[href]",
-            "area[href]",
-            "button",
-            "input",
-            "select",
-            "textarea",
-            "iframe",
-            "[tabindex]",
-            "[contenteditable='true']",
-          ].join(",");
-
-          const setPanelFocusableState = (panel, isOpen) => {
-            if (!panel) return;
-            const focusables = Array.from(panel.querySelectorAll(focusableSelector));
-            focusables.forEach((element) => {
-              if (!(element instanceof HTMLElement)) return;
-              if (isOpen) {
-                if (element.hasAttribute("data-itinerary-prev-tabindex")) {
-                  const previous = element.getAttribute("data-itinerary-prev-tabindex");
-                  if (previous === "__none__") {
-                    element.removeAttribute("tabindex");
-                  } else if (previous !== null) {
-                    element.setAttribute("tabindex", previous);
-                  }
-                  element.removeAttribute("data-itinerary-prev-tabindex");
-                }
-                return;
-              }
-
-              if (!element.hasAttribute("data-itinerary-prev-tabindex")) {
-                const currentTabindex = element.getAttribute("tabindex");
-                element.setAttribute(
-                  "data-itinerary-prev-tabindex",
-                  currentTabindex === null ? "__none__" : currentTabindex
-                );
-              }
-              element.setAttribute("tabindex", "-1");
-            });
-          };
-
-          const setPanelState = (panel, isOpen) => {
-            if (!panel) return;
-            panel.classList.toggle("pointer-events-none", !isOpen);
-            panel.setAttribute("aria-hidden", String(!isOpen));
-            panel.toggleAttribute("inert", !isOpen);
-            setPanelFocusableState(panel, isOpen);
-            panel.style.maxHeight = isOpen ? `${panel.scrollHeight}px` : "0px";
-            panel.style.opacity = isOpen ? "1" : "0";
-          };
-
-          const setSingleOpen = (activeIndex) => {
-            itineraryEntries.forEach((entry, index) => {
-              const panel = entry.querySelector("[data-itinerary-panel]");
-              const trigger = entry.querySelector("[data-itinerary-trigger]");
-              const isActive = index === activeIndex;
-              setPanelState(panel, isActive);
-              trigger?.setAttribute("aria-expanded", String(isActive));
-            });
-            setExpandControls(false);
-          };
-
-          setSingleOpen(0);
-
-          itineraryEntries.forEach((entry, index) => {
-            const trigger = entry.querySelector("[data-itinerary-trigger]");
-            trigger?.addEventListener("click", () => {
-              setSingleOpen(index);
-            });
-          });
-
-          if (itineraryExpandControls.length) {
-            itineraryExpandControls.forEach((control) => {
-              control.addEventListener("click", () => {
-                const expanded = control.getAttribute("aria-expanded") === "true";
-
-                if (expanded) {
-                  setSingleOpen(0);
-                  return;
-                }
-
-                itineraryEntries.forEach((entry) => {
-                  const panel = entry.querySelector("[data-itinerary-panel]");
-                  const trigger = entry.querySelector("[data-itinerary-trigger]");
-                  setPanelState(panel, true);
-                  trigger?.setAttribute("aria-expanded", "true");
-                });
-
-                setExpandControls(true);
-              });
-            });
-          }
-        }
-
-        const galleries = Array.from(
-          document.querySelectorAll("[data-itinerary-gallery]")
-        );
-        galleries.forEach((gallery) => {
-          const viewport = gallery.querySelector(
-            "[data-itinerary-gallery-viewport]"
-          );
-          const track = gallery.querySelector("[data-itinerary-gallery-track]");
-          const slides = Array.from(
-            gallery.querySelectorAll("[data-itinerary-gallery-slide]")
-          );
-          if (!viewport || !track || slides.length <= 1) return;
-
-          const prev = gallery.querySelector("[data-itinerary-gallery-prev]");
-          const next = gallery.querySelector("[data-itinerary-gallery-next]");
-          let current = 0;
-          let step = 0;
-          let touchStartX = 0;
-          let touchDeltaX = 0;
-          let touching = false;
-          const isDesktop = () =>
-            window.matchMedia("(min-width: 768px)").matches;
-
-          const updateStep = () => {
-            const firstSlide = slides[0];
-            if (!firstSlide) return;
-
-            const styles = window.getComputedStyle(track);
-            const gap =
-              parseFloat(styles.columnGap || "0") ||
-              parseFloat(styles.gap || "0") ||
-              0;
-            step = firstSlide.getBoundingClientRect().width + gap;
-          };
-
-          const show = (targetIndex, recalc = false) => {
-            if (recalc || step === 0) updateStep();
-            current = (targetIndex + slides.length) % slides.length;
-            track.style.transform = `translateX(-${step * current}px)`;
-
-            const nextIndex = (current + 1) % slides.length;
-            slides.forEach((slide, slideIndex) => {
-              if (isDesktop()) {
-                if (slideIndex === current) {
-                  slide.style.opacity = "1";
-                  slide.style.filter = "none";
-                } else if (slideIndex === nextIndex) {
-                  slide.style.opacity = "0.46";
-                  slide.style.filter = "saturate(0.78)";
-                } else {
-                  slide.style.opacity = "0.2";
-                  slide.style.filter = "saturate(0.65)";
-                }
-              } else {
-                if (slideIndex === current) {
-                  slide.style.opacity = "1";
-                  slide.style.filter = "none";
-                } else {
-                  slide.style.opacity = "0.35";
-                  slide.style.filter = "saturate(0.78)";
-                }
-              }
-            });
-          };
-
-          prev?.addEventListener("click", () => show(current - 1));
-          next?.addEventListener("click", () => show(current + 1));
-
-          const onTouchStart = (event) => {
-            if (!event.touches || event.touches.length === 0) return;
-            if (step === 0) updateStep();
-            touching = true;
-            touchStartX = event.touches[0].clientX;
-            touchDeltaX = 0;
-            track.style.transitionDuration = "0ms";
-          };
-
-          const onTouchMove = (event) => {
-            if (!touching || !event.touches || event.touches.length === 0) return;
-            touchDeltaX = event.touches[0].clientX - touchStartX;
-            track.style.transform = `translateX(${-step * current + touchDeltaX}px)`;
-          };
-
-          const onTouchEnd = () => {
-            if (!touching) return;
-            touching = false;
-            track.style.transitionDuration = "";
-            const threshold = Math.max(28, step * 0.08);
-            const moved = Math.abs(touchDeltaX) > 8;
-            if (moved) {
-              gallery.setAttribute(
-                "data-suppress-click-until",
-                String(Date.now() + 320)
-              );
-            }
-
-            if (touchDeltaX > threshold) show(current - 1);
-            else if (touchDeltaX < -threshold) show(current + 1);
-            else show(current);
-
-            touchDeltaX = 0;
-          };
-
-          viewport.addEventListener("touchstart", onTouchStart, { passive: true });
-          viewport.addEventListener("touchmove", onTouchMove, { passive: true });
-          viewport.addEventListener("touchend", onTouchEnd, { passive: true });
-          viewport.addEventListener("touchcancel", onTouchEnd, { passive: true });
-
-          window.addEventListener("resize", () => show(current, true), {
-            passive: true,
-          });
-          show(0, true);
-        });
-
-        const itineraryLightbox = document.querySelector(
-          "[data-itinerary-lightbox]"
-        );
-        if (itineraryLightbox) {
-          const lightboxImage = itineraryLightbox.querySelector(
-            "[data-itinerary-lightbox-img]"
-          );
-          const lightboxCounter = itineraryLightbox.querySelector(
-            "[data-itinerary-lightbox-counter]"
-          );
-          const closeButton = itineraryLightbox.querySelector(
-            "[data-itinerary-lightbox-close]"
-          );
-          const prevButton = itineraryLightbox.querySelector(
-            "[data-itinerary-lightbox-prev]"
-          );
-          const nextButton = itineraryLightbox.querySelector(
-            "[data-itinerary-lightbox-next]"
-          );
-          const openButtons = Array.from(
-            document.querySelectorAll("[data-itinerary-lightbox-open]")
-          );
-
-          let activeItems = [];
-          let activeIndex = 0;
-
-          const renderLightbox = () => {
-            if (!lightboxImage || !activeItems.length) return;
-            const currentItem = activeItems[activeIndex];
-            lightboxImage.src = currentItem.src;
-            lightboxImage.alt = currentItem.alt || "";
-            if (lightboxCounter) {
-              lightboxCounter.textContent = `${activeIndex + 1} / ${activeItems.length}`;
-            }
-          };
-
-          const closeLightbox = () => {
-            itineraryLightbox.classList.add("hidden");
-            itineraryLightbox.classList.remove("flex");
-            document.body.style.overflow = "";
-          };
-
-          const showLightboxSlide = (targetIndex) => {
-            if (!activeItems.length) return;
-            activeIndex = (targetIndex + activeItems.length) % activeItems.length;
-            renderLightbox();
-          };
-
-          const openLightbox = (galleryIndex, slideIndex) => {
-            activeItems = openButtons
-              .filter(
-                (button) =>
-                  button.getAttribute("data-gallery-index") === galleryIndex
-              )
-              .sort(
-                (a, b) =>
-                  Number(a.getAttribute("data-slide-index") || 0) -
-                  Number(b.getAttribute("data-slide-index") || 0)
-              )
-              .map((button) => ({
-                src: button.getAttribute("data-src") || "",
-                alt: button.getAttribute("data-alt") || "",
-              }))
-              .filter((item) => item.src);
-
-            if (!activeItems.length) return;
-            activeIndex = Math.max(
-              0,
-              Math.min(slideIndex, activeItems.length - 1)
-            );
-            renderLightbox();
-            itineraryLightbox.classList.remove("hidden");
-            itineraryLightbox.classList.add("flex");
-            document.body.style.overflow = "hidden";
-          };
-
-          openButtons.forEach((button) => {
-            button.addEventListener("click", () => {
-              const parentGallery = button.closest("[data-itinerary-gallery]");
-              const suppressClickUntil = Number(
-                parentGallery?.getAttribute("data-suppress-click-until") || 0
-              );
-              if (Date.now() < suppressClickUntil) return;
-
-              const galleryIndex = button.getAttribute("data-gallery-index") || "";
-              const slideIndex = Number(
-                button.getAttribute("data-slide-index") || 0
-              );
-              openLightbox(galleryIndex, slideIndex);
-            });
-          });
-
-          closeButton?.addEventListener("click", closeLightbox);
-          prevButton?.addEventListener("click", () =>
-            showLightboxSlide(activeIndex - 1)
-          );
-          nextButton?.addEventListener("click", () =>
-            showLightboxSlide(activeIndex + 1)
-          );
-
-          itineraryLightbox.addEventListener("click", (event) => {
-            if (event.target === itineraryLightbox) closeLightbox();
-          });
-
-          document.addEventListener("keydown", (event) => {
-            if (itineraryLightbox.classList.contains("hidden")) return;
-            if (event.key === "Escape") closeLightbox();
-            if (event.key === "ArrowLeft") showLightboxSlide(activeIndex - 1);
-            if (event.key === "ArrowRight") showLightboxSlide(activeIndex + 1);
-          });
-        }
-
-      })();
-    </script>
-
-    <!-- Inyecta el ID numÃ©rico del tour para que BookingModal pueda crear la reserva -->
-    <script is:inline define:vars={{ tourNumericId: sourceTour.id ?? null, tourDocumentId: sourceTour.documentId ?? null, tourSlugs }}>
-      window.__tourData = { numericId: tourNumericId, documentId: tourDocumentId };
+  <body class="bg-white text-stone-800 overflow-x-hidden flex flex-col min-h-screen">
+    <Navbar t={t} currentLang={lang} whatsappTourName={sourceTour.title} />
+    <script is:inline define:vars={{ tourSlugs, serviceId: sourceTour.serviceId ?? null, destinoNombre: destinationNames[0] ?? null }}>
+      window.__tourData = { serviceId, destinoNombre };
       window.__tourSlugs = tourSlugs;
     </script>
 
+    <main class="flex-1">
+      <section class="relative min-h-[70vh] overflow-hidden">
+        {heroImage ? <img src={heroImage} alt={sourceTour.title} class="absolute inset-0 w-full h-full object-cover" /> : <div class="absolute inset-0 bg-stone-300" />}
+        <div class="absolute inset-0 bg-black/45" />
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-20 text-white">
+          {destinationNames.length > 0 ? <p class="uppercase tracking-[0.25em] text-xs text-white/80 mb-4">{destinationNames.join(" · ")}</p> : null}
+          <h1 class="text-4xl md:text-6xl max-w-4xl" style="font-family: 'Playfair Display', serif; font-style: italic;">{sourceTour.title}</h1>
+          {sourceTour.highlightsLead ? <div class="mt-6 max-w-3xl text-lg text-white/90" set:html={sourceTour.highlightsLead} /> : null}
+        </div>
+      </section>
+
+      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
+          <div class="space-y-12">
+            {(sourceTour.highlightsTitle || sourceTour.highlightsItems?.length) && (
+              <section>
+                {sourceTour.highlightsTitle ? <h2 class="text-3xl text-stone-900 mb-6" style="font-family: 'Playfair Display', serif; font-style: italic;">{sourceTour.highlightsTitle}</h2> : null}
+                <div class="grid gap-4 md:grid-cols-2">
+                  {(sourceTour.highlightsItems ?? []).map((item: any) => (
+                    <article class="border border-stone-200 p-5 bg-stone-50">
+                      {item.title ? <h3 class="text-xl text-stone-900 mb-2" style="font-family: 'Playfair Display', serif; font-style: italic;">{item.title}</h3> : null}
+                      {item.description ? <div class="text-stone-700" set:html={item.description} /> : null}
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {itineraryItems.length > 0 && (
+              <section>
+                <h2 class="text-3xl text-stone-900 mb-6" style="font-family: 'Playfair Display', serif; font-style: italic;">
+                  {sourceTour.itineraryTitle || (lang === "en" ? "Itinerary" : "Itinerario")}
+                </h2>
+                <div class="space-y-8">
+                  {itineraryItems.map((item: any, index: number) => {
+                    const imageUrl = getOdooMediaUrl(item.image);
+                    return (
+                      <article class="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] items-start">
+                        {imageUrl ? <img src={imageUrl} alt={item.imageAlt || item.title || `Itinerary ${index + 1}`} class="w-full h-52 object-cover" /> : null}
+                        <div>
+                          {item.title ? <h3 class="text-2xl text-stone-900 mb-2" style="font-family: 'Playfair Display', serif; font-style: italic;">{item.title}</h3> : null}
+                          {item.description ? <div class="text-stone-700 prose prose-stone max-w-none" set:html={item.description} /> : null}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {scheduleItems.length > 0 && (
+              <section>
+                <h2 class="text-3xl text-stone-900 mb-6" style="font-family: 'Playfair Display', serif; font-style: italic;">
+                  {sourceTour.scheduleTitle || (lang === "en" ? "Schedules" : "Horarios")}
+                </h2>
+                <div class="grid gap-4 md:grid-cols-2">
+                  {scheduleItems.map((item: any) => (
+                    <div class="border border-stone-200 p-5 bg-white">
+                      <p class="text-sm uppercase tracking-[0.2em] text-[#1AA093]">{item.horaEntrada || "--"} {item.horaSalida ? `- ${item.horaSalida}` : ""}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {(includedItems.length > 0 || excludedItems.length > 0) && (
+              <section class="grid gap-8 md:grid-cols-2">
+                {includedItems.length > 0 && (
+                  <div>
+                    <h2 class="text-3xl text-stone-900 mb-4" style="font-family: 'Playfair Display', serif; font-style: italic;">
+                      {sourceTour.includedTitle || (lang === "en" ? "Included" : "Incluye")}
+                    </h2>
+                    <ul class="space-y-3">
+                      {includedItems.map((item: any) => <li class="flex items-start gap-3"><span class="text-[#1AA093]">✓</span><span>{item.text}</span></li>)}
+                    </ul>
+                  </div>
+                )}
+                {excludedItems.length > 0 && (
+                  <div>
+                    <h2 class="text-3xl text-stone-900 mb-4" style="font-family: 'Playfair Display', serif; font-style: italic;">
+                      {sourceTour.excludedTitle || (lang === "en" ? "Not Included" : "No incluye")}
+                    </h2>
+                    <ul class="space-y-3">
+                      {excludedItems.map((item: any) => <li class="flex items-start gap-3"><span class="text-stone-500">✕</span><span>{item.text}</span></li>)}
+                    </ul>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {featuredImages.length > 0 && (
+              <section>
+                <h2 class="text-3xl text-stone-900 mb-6" style="font-family: 'Playfair Display', serif; font-style: italic;">
+                  {sourceTour.featuredTitle || (lang === "en" ? "Gallery" : "Galeria")}
+                </h2>
+                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {featuredImages.map((item: any) => {
+                    const imageUrl = getOdooMediaUrl(item.image);
+                    return imageUrl ? <img src={imageUrl} alt={item.alt || sourceTour.title} class="w-full h-64 object-cover" /> : null;
+                  })}
+                </div>
+              </section>
+            )}
+
+            {faqItems.length > 0 && (
+              <section>
+                <h2 class="text-3xl text-stone-900 mb-6" style="font-family: 'Playfair Display', serif; font-style: italic;">
+                  {sourceTour.faqTitle || "FAQ"}
+                </h2>
+                <div class="space-y-4">
+                  {faqItems.map((item: any) => (
+                    <details class="border border-stone-200 p-5">
+                      <summary class="cursor-pointer font-semibold">{item.question}</summary>
+                      <div class="mt-3 text-stone-700" set:html={item.answer} />
+                    </details>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+
+          <aside class="mt-12 lg:mt-0">
+            <div class="lg:sticky lg:top-28">
+              <BookingCard
+                lang={bookingLang}
+                precioAdultoUsd={toNumber(sourceTour.adultUnitPrice)}
+                precioNinoUsd={toNumber(sourceTour.childUnitPrice)}
+                descuentoUsd={toNumber(sourceTour.discount)}
+                discountMode="percent"
+                duracionDias={toNumber(sourceTour.durationDays) || 1}
+                scheduleOptions={scheduleItems.map((item: any) => {
+                  const label = [item.horaEntrada, item.horaSalida].filter(Boolean).join(" - ");
+                  return { label: label || "Horario", value: label || "Horario" };
+                })}
+              />
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      {relatedTours.length > 0 && (
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+          <h2 class="text-3xl text-stone-900 mb-8" style="font-family: 'Playfair Display', serif; font-style: italic;">
+            {lang === "en" ? "Related Tours" : "Tours relacionados"}
+          </h2>
+          <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {relatedTours.map((tour: any) => {
+              const imageUrl = getOdooMediaUrl(tour.heroSlideImages?.[0]);
+              return (
+                <a href={`/${lang}/tours/${tour.slug}`} class="group block bg-white shadow-sm hover:shadow-lg transition overflow-hidden">
+                  {imageUrl ? <img src={imageUrl} alt={tour.title} class="w-full h-64 object-cover group-hover:scale-[1.02] transition-transform duration-500" /> : <div class="w-full h-64 bg-stone-300" />}
+                  <div class="p-5">
+                    <h3 class="text-2xl text-stone-900" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</h3>
+                    {tour.adultUnitPrice > 0 ? (
+                      <p class="mt-3 text-sm text-[#1AA093] font-semibold">
+                        {priceFromLabel} {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), lang)}
+                      </p>
+                    ) : null}
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
+    </main>
+
+    <BookingModal
+      lang={bookingLang}
+      tourTitle={sourceTour.title}
+      tourSlug={sourceTour.slug}
+      scheduleOptions={scheduleItems.map((item: any) => {
+        const label = [item.horaEntrada, item.horaSalida].filter(Boolean).join(" - ");
+        return { label: label || "Horario", value: label || "Horario" };
+      })}
+    />
+    <Footer currentLang={lang} {t} />
   </body>
 </html>
-
-<BookingModal
-  tourTitle={cleanText(sourceTour.title) ?? ""}
-  tourSlug={tourSlug}
-  lang={lang}
-  scheduleOptions={scheduleOptionTitles}
-/>
-

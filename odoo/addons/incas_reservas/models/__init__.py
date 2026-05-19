@@ -9,8 +9,7 @@ from . import incas_servicio_catalogo
 from . import incas_horario_opcion
 from . import incas_catalogo_vehiculo
 from . import incas_catalogo_vehiculo_caracteristica
-from . import incas_catalogo_tour
-from . import incas_estilo_tour
+from . import incas_estilo_viaje
 from . import incas_tour
 from . import incas_tour_destacado
 from . import incas_tour_itinerario

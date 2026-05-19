@@ -1,5 +1,5 @@
 // Configuración de divisas por idioma
-// Los precios base en Strapi están en USD
+// Los precios base del sitio están en USD
 const CURRENCY_CONFIG: Record<string, { symbol: string; code: string; rate: number }> = {
   es: { symbol: 'S/', code: 'PEN', rate: 3.70 },
   en: { symbol: '$',  code: 'USD', rate: 1.00 },

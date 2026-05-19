@@ -15,8 +15,8 @@ class IncasSubcategoriaTour(models.Model):
         ondelete="cascade",
     )
     tour_ids = fields.Many2many(
-        "incas.catalogo.tour",
-        "incas_subcategoria_tour_catalogo_tour_rel",
+        "incas.tour",
+        "incas_subcategoria_tour_web_tour_rel",
         "subcategoria_id",
         "tour_id",
         string="Tours",

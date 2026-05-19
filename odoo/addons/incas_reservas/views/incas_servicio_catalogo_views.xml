@@ -9,10 +9,10 @@
                 <field name="tipo_servicio"/>
                 <field name="tipo_tour"/>
                 <field name="estilo_transporte_id"/>
+                <field name="ip"/>
                 <field name="precio_adulto"/>
                 <field name="precio_nino"/>
                 <field name="descuento"/>
-                <field name="strapi_id"/>
                 <field name="slug"/>
                 <field name="active"/>
             </list>
@@ -28,6 +28,7 @@
                 <field name="tipo_servicio"/>
                 <field name="tipo_tour"/>
                 <field name="estilo_transporte_id"/>
+                <field name="ip"/>
                 <field name="slug"/>
                 <separator/>
                 <filter name="filter_tours" string="Tours" domain="[('tipo_servicio', '=', 'tour')]"/>
@@ -43,9 +44,6 @@
         <field name="model">incas.servicio.catalogo</field>
         <field name="arch" type="xml">
             <form string="Servicio">
-                <header>
-                    <button name="sync_from_strapi" type="object" string="Sincronizar desde Strapi" invisible="tipo_servicio != 'tour'"/>
-                </header>
                 <sheet>
                     <group>
                         <group>
@@ -53,14 +51,13 @@
                             <field name="tipo_servicio"/>
                             <field name="tipo_tour" invisible="tipo_servicio != 'tour'"/>
                             <field name="estilo_transporte_id" invisible="tipo_servicio != 'transporte'"/>
+                            <field name="ip"/>
                             <field name="precio_adulto"/>
                             <field name="precio_nino"/>
                             <field name="descuento"/>
                             <field name="active"/>
                         </group>
                         <group>
-                            <field name="strapi_id" invisible="tipo_servicio != 'tour'"/>
-                            <field name="strapi_document_id" invisible="tipo_servicio != 'tour'"/>
                             <field name="slug"/>
                         </group>
                     </group>
@@ -79,7 +76,7 @@
     <menuitem
         id="menu_incas_servicio_catalogo"
         name="Catálogo de servicios"
-        parent="incas_core.menu_incas_configuracion_root"
+        parent="menu_incas_catalogo_root"
         action="action_incas_servicio_catalogo"
         sequence="10"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"

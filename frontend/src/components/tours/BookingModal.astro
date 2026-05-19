@@ -698,8 +698,7 @@ const t = translations[lang] ?? translations.es;
   </div>
 </div>
 
-<script is:inline define:vars={{ strapiUrl: import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337', odooUrl: import.meta.env.PUBLIC_ODOO_URL || '', pagoTituloText: t.pagoTitulo, bookingTituloText: t.title, paypalClientId: import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || '', tourTitleVar: tourTitle, tourSlugVar: tourSlug, langVar: lang }}>
-  window.__strapiUrl = strapiUrl;
+<script is:inline define:vars={{ odooUrl: import.meta.env.PUBLIC_ODOO_URL || '', pagoTituloText: t.pagoTitulo, bookingTituloText: t.title, paypalClientId: import.meta.env.PUBLIC_PAYPAL_CLIENT_ID || '', tourTitleVar: tourTitle, tourSlugVar: tourSlug, langVar: lang }}>
   window.__odooUrl = odooUrl;
   window.__pagoTituloText = pagoTituloText;
   window.__bookingTituloText = bookingTituloText;
@@ -734,8 +733,9 @@ const t = translations[lang] ?? translations.es;
     notas: string | null; tipo_documento: string;
     numero_documento: string; nacionalidad: string; turno: string | null;
     vehiculo_seleccionado?: string | null;
-    tourDocumentId: string | null; tourNumericId: number | null;
-    transporteDocumentId: string | null; transporteNumericId: number | null; transporteSlug?: string | null;
+    serviceId: number | null;
+    transporteSlug?: string | null;
+    destinoNombre?: string | null;
     descuento_usd: number; monto_total: number; moneda: string;
     simbolo_moneda: string; decimales_moneda: number;
     porcentaje_pago: number; // Porcentaje a pagar: 30, 50 o 100
@@ -747,9 +747,8 @@ const t = translations[lang] ?? translations.es;
 
   declare global {
     interface Window {
-      __tourData?: { numericId: number | null; documentId: string | null };
-      __transporteData?: { numericId: number | null; documentId: string | null; slug?: string | null };
-      __strapiUrl?: string;
+      __tourData?: { serviceId: number | null; destinoNombre?: string | null };
+      __transporteData?: { serviceId: number | null; slug?: string | null };
       __odooUrl?: string;
       __pendingBooking?: PendingBooking;
       __lastCompletedBooking?: PendingBooking; // copia persistente para el comprobante PDF
@@ -825,7 +824,7 @@ const t = translations[lang] ?? translations.es;
 
       const tourData = window.__tourData;
       const transporteData = window.__transporteData;
-      if (!tourData?.documentId && !tourData?.numericId && !transporteData?.documentId && !transporteData?.numericId) {
+      if (!tourData?.serviceId && !transporteData?.serviceId) {
         alert("Error: Servicio no encontrado. Recarga la página.");
         return;
       }
@@ -848,11 +847,9 @@ const t = translations[lang] ?? translations.es;
         nacionalidad: str(raw.nacionalidad),
         turno: (str(raw.turno) || null),
         vehiculo_seleccionado: window.__selectedVehicleName ?? null,
-        tourDocumentId: tourData?.documentId ?? null,
-        tourNumericId: tourData?.numericId ?? null,
-        transporteDocumentId: transporteData?.documentId ?? null,
-        transporteNumericId: transporteData?.numericId ?? null,
+        serviceId: tourData?.serviceId ?? transporteData?.serviceId ?? null,
         transporteSlug: transporteData?.slug ?? null,
+        destinoNombre: tourData?.destinoNombre ?? null,
         descuento_usd: parseFloat(str(raw.descuento_usd)) || 0,
         monto_total: (pricing.totalConvertido ?? 0) * 0.3,
         moneda: monedaMap[pricing.simboloMoneda ?? "$"] ?? "USD",
@@ -957,7 +954,7 @@ const t = translations[lang] ?? translations.es;
       });
     });
 
-    // ── Función que crea la reserva en Strapi ──
+    // ── Función que crea la reserva en Odoo ──
     async function crearReserva(metodoPago: string, proveedorPago: string): Promise<{ ticket: string; voucherUrl?: string }> {
       const b = window.__pendingBooking;
       if (!b) throw new Error("Sin datos de reserva");
@@ -980,10 +977,8 @@ const t = translations[lang] ?? translations.es;
             vehiculo_seleccionado: b.vehiculo_seleccionado ?? null,
             turno: b.turno,
             idioma: window.__lang ?? "es",
-            tourDocumentId: b.tourDocumentId,
-            tourNumericId: b.tourNumericId,
-            transporteDocumentId: b.transporteDocumentId,
-            transporteNumericId: b.transporteNumericId,
+            serviceId: b.serviceId,
+            tourSlug: window.__tourSlug ?? null,
             transporteSlug: b.transporteSlug ?? null,
             precio_tour: b.monto_original,
             precio_adulto_web: b.precio_adulto_web,
@@ -1152,10 +1147,8 @@ const t = translations[lang] ?? translations.es;
                   vehiculo_seleccionado: b.vehiculo_seleccionado ?? null,
                   turno: b.turno,
                   idioma: window.__lang ?? "es",
-                  tourDocumentId: b.tourDocumentId,
-                  tourNumericId: b.tourNumericId,
-                  transporteDocumentId: b.transporteDocumentId,
-                  transporteNumericId: b.transporteNumericId,
+                  serviceId: b.serviceId,
+                  tourSlug: window.__tourSlug ?? null,
                   transporteSlug: b.transporteSlug ?? null,
                   monto_total: b.monto_total,
                   monto_original: b.monto_original,

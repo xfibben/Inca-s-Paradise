@@ -33,8 +33,8 @@ class IncasCatalogoDestino(models.Model):
     imagen = fields.Image(string="Imagen")
     imagen_fondo = fields.Image(string="Imagen de fondo")
     tour_ids = fields.Many2many(
-        "incas.catalogo.tour",
-        "incas_catalogo_destino_tour_rel",
+        "incas.tour",
+        "incas_catalogo_destino_web_tour_rel",
         "destino_id",
         "tour_id",
         string="Tours",
