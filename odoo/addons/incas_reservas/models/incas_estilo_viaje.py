@@ -29,6 +29,13 @@ class IncasEstiloViaje(models.Model):
         store=False,
     )
     image_file_id = fields.Many2one("dms.file", string="Archivo imagen", readonly=True, copy=False)
+    wallpaper = fields.Image(
+        string="Imagen de fondo",
+        compute="_compute_wallpaper",
+        inverse="_inverse_wallpaper",
+        store=False,
+    )
+    wallpaper_file_id = fields.Many2one("dms.file", string="Archivo imagen de fondo", readonly=True, copy=False)
     seo_title = fields.Char(string="Titulo SEO")
     seo_title_en = fields.Char(string="Titulo SEO en ingles")
     seo_title_pt = fields.Char(string="Titulo SEO en portugues")
@@ -114,6 +121,11 @@ class IncasEstiloViaje(models.Model):
         for record in self:
             record.image = record.image_file_id.content if record.image_file_id else False
 
+    @api.depends("wallpaper_file_id")
+    def _compute_wallpaper(self):
+        for record in self:
+            record.wallpaper = record.wallpaper_file_id.content if record.wallpaper_file_id else False
+
     def _inverse_image(self):
         for record in self:
             if not record.image:
@@ -127,6 +139,20 @@ class IncasEstiloViaje(models.Model):
                 archivo_actual=record.image_file_id,
             )
             record.image_file_id = archivo.id
+
+    def _inverse_wallpaper(self):
+        for record in self:
+            if not record.wallpaper:
+                if record.wallpaper_file_id:
+                    record.wallpaper_file_id.unlink()
+                    record.wallpaper_file_id = False
+                continue
+            archivo = record._guardar_archivo_dms(
+                record.wallpaper,
+                "estilo-viaje-fondo",
+                archivo_actual=record.wallpaper_file_id,
+            )
+            record.wallpaper_file_id = archivo.id
 
     @api.onchange(
         "name",
