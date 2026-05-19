@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import api, fields, models, tools
 
 
 class IncasEstiloViaje(models.Model):
@@ -57,9 +57,29 @@ class IncasEstiloViaje(models.Model):
     def _dms_root_directory_name(self):
         return "Estilos de viaje"
 
+    def _limpiar_texto_seo(self, valor):
+        if not isinstance(valor, str):
+            return valor
+        valor_limpio = tools.html2plaintext(valor).replace("\xa0", " ")
+        valor_limpio = " ".join(valor_limpio.split())
+        return valor_limpio or False
+
+    def _sanitizar_campos_seo_en_vals(self, vals):
+        for campo in (
+            "seo_title",
+            "seo_title_en",
+            "seo_title_pt",
+            "seo_description",
+            "seo_description_en",
+            "seo_description_pt",
+        ):
+            if campo in vals:
+                vals[campo] = self._limpiar_texto_seo(vals[campo])
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            self._sanitizar_campos_seo_en_vals(vals)
             self._autocompletar_traducciones_en_vals(vals)
         records = super().create(vals_list)
         records._asegurar_carpeta_documental()
@@ -67,7 +87,9 @@ class IncasEstiloViaje(models.Model):
         return records
 
     def write(self, vals):
-        result = super().write(vals)
+        valores = dict(vals)
+        self._sanitizar_campos_seo_en_vals(valores)
+        result = super().write(valores)
         if any(campo in vals for campo in ("name", "documento_directory_id")):
             self._asegurar_carpeta_documental()
         if not self.env.context.get("skip_autocompletar_traducciones"):
@@ -174,6 +196,15 @@ class IncasEstiloViaje(models.Model):
             ("seo_description", "seo_description_en", "seo_description_pt"),
         )
         for record in self:
+            for campo in (
+                "seo_title",
+                "seo_title_en",
+                "seo_title_pt",
+                "seo_description",
+                "seo_description_en",
+                "seo_description_pt",
+            ):
+                record[campo] = record._limpiar_texto_seo(record[campo])
             for base, campo_en, campo_pt in equivalencias:
                 valor_base = record[base]
                 if not valor_base:

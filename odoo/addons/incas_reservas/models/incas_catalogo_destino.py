@@ -1,4 +1,4 @@
-from odoo import api, fields, models
+from odoo import api, fields, models, tools
 
 
 class IncasCatalogoDestino(models.Model):
@@ -15,12 +15,12 @@ class IncasCatalogoDestino(models.Model):
     descripcion = fields.Html(string="Descripción")
     descripcion_en = fields.Html(string="Descripción en inglés")
     descripcion_pt = fields.Html(string="Descripción en portugués")
-    seo_titulo = fields.Html(string="SEO título")
-    seo_titulo_en = fields.Html(string="SEO título en inglés")
-    seo_titulo_pt = fields.Html(string="SEO título en portugués")
-    seo_descripcion = fields.Html(string="SEO descripción")
-    seo_descripcion_en = fields.Html(string="SEO descripción en inglés")
-    seo_descripcion_pt = fields.Html(string="SEO descripción en portugués")
+    seo_titulo = fields.Char(string="SEO título")
+    seo_titulo_en = fields.Char(string="SEO título en inglés")
+    seo_titulo_pt = fields.Char(string="SEO título en portugués")
+    seo_descripcion = fields.Text(string="SEO descripción")
+    seo_descripcion_en = fields.Text(string="SEO descripción en inglés")
+    seo_descripcion_pt = fields.Text(string="SEO descripción en portugués")
     titulo_intro = fields.Html(string="Título intro")
     titulo_intro_en = fields.Html(string="Título intro en inglés")
     titulo_intro_pt = fields.Html(string="Título intro en portugués")
@@ -58,6 +58,101 @@ class IncasCatalogoDestino(models.Model):
         ("incas_catalogo_destino_slug_pt_unique", "unique(slug_pt)", "El slug en portugués del destino ya existe."),
     ]
 
+    def _auto_init(self):
+        self._migrar_columnas_seo_a_texto()
+        return super()._auto_init()
+
+    def _migrar_columnas_seo_a_texto(self):
+        columnas = {
+            "seo_titulo": "varchar",
+            "seo_titulo_en": "varchar",
+            "seo_titulo_pt": "varchar",
+            "seo_descripcion": "text",
+            "seo_descripcion_en": "text",
+            "seo_descripcion_pt": "text",
+        }
+        for columna, tipo_destino in columnas.items():
+            self.env.cr.execute(
+                """
+                SELECT data_type
+                FROM information_schema.columns
+                WHERE table_name = 'incas_catalogo_destino'
+                  AND column_name = %s
+                """,
+                [columna],
+            )
+            fila = self.env.cr.fetchone()
+            if not fila:
+                continue
+            tipo_actual = fila[0]
+            if tipo_actual == "jsonb":
+                self.env.cr.execute(
+                    f"""
+                    ALTER TABLE incas_catalogo_destino
+                    ALTER COLUMN {columna} TYPE {tipo_destino}
+                    USING CASE
+                        WHEN {columna} IS NULL THEN NULL
+                        WHEN jsonb_typeof({columna}) = 'string' THEN trim(both '"' from {columna}::text)
+                        ELSE COALESCE(
+                            {columna}->>'es_PE',
+                            {columna}->>'es',
+                            {columna}->>'en_US',
+                            {columna}->>'en',
+                            {columna}->>'pt_BR',
+                            {columna}->>'pt',
+                            {columna}->>'fr_FR',
+                            {columna}->>'fr',
+                            {columna}->>'it_IT',
+                            {columna}->>'it'
+                        )
+                    END
+                    """
+                )
+                continue
+            if tipo_destino == "varchar" and tipo_actual == "text":
+                self.env.cr.execute(
+                    f"""
+                    ALTER TABLE incas_catalogo_destino
+                    ALTER COLUMN {columna} TYPE varchar
+                    """
+                )
+            self.env.cr.execute(
+                f"""
+                UPDATE incas_catalogo_destino
+                   SET {columna} = NULLIF(
+                       trim(
+                           regexp_replace(
+                               regexp_replace(COALESCE({columna}, ''), '<[^>]+>', ' ', 'g'),
+                               '\\s+',
+                               ' ',
+                               'g'
+                           )
+                       ),
+                       ''
+                   )
+                 WHERE {columna} IS NOT NULL
+                """
+            )
+
+    def _limpiar_texto_seo(self, valor):
+        if not isinstance(valor, str):
+            return valor
+        valor_limpio = tools.html2plaintext(valor).replace("\xa0", " ")
+        valor_limpio = " ".join(valor_limpio.split())
+        return valor_limpio or False
+
+    def _sanitizar_campos_seo_en_vals(self, vals):
+        for campo in (
+            "seo_titulo",
+            "seo_titulo_en",
+            "seo_titulo_pt",
+            "seo_descripcion",
+            "seo_descripcion_en",
+            "seo_descripcion_pt",
+        ):
+            if campo in vals:
+                vals[campo] = self._limpiar_texto_seo(vals[campo])
+
     def _copiar_traduccion_si_vacia(self, vals, campo_base):
         campo_en = f"{campo_base}_en"
         campo_pt = f"{campo_base}_pt"
@@ -70,7 +165,9 @@ class IncasCatalogoDestino(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        self._migrar_columnas_seo_a_texto()
         for vals in vals_list:
+            self._sanitizar_campos_seo_en_vals(vals)
             for campo in (
                 "slug",
                 "descripcion",
@@ -84,7 +181,9 @@ class IncasCatalogoDestino(models.Model):
         return super().create(vals_list)
 
     def write(self, vals):
+        self._migrar_columnas_seo_a_texto()
         valores = dict(vals)
+        self._sanitizar_campos_seo_en_vals(valores)
         for campo in (
             "slug",
             "descripcion",
@@ -115,6 +214,15 @@ class IncasCatalogoDestino(models.Model):
     )
     def _onchange_copiar_contenido_es(self):
         for record in self:
+            for campo in (
+                "seo_titulo",
+                "seo_titulo_en",
+                "seo_titulo_pt",
+                "seo_descripcion",
+                "seo_descripcion_en",
+                "seo_descripcion_pt",
+            ):
+                record[campo] = record._limpiar_texto_seo(record[campo])
             for campo in (
                 "slug",
                 "descripcion",

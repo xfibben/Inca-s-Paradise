@@ -1,6 +1,6 @@
 import json
 
-from odoo import api, fields, models
+from odoo import api, fields, models, tools
 
 
 class IncasTour(models.Model):
@@ -44,12 +44,12 @@ class IncasTour(models.Model):
     slug = fields.Char(string="Slug", required=True, index=True)
     slug_en = fields.Char(string="Slug en ingles", index=True)
     slug_pt = fields.Char(string="Slug en portugues", index=True)
-    meta_titulo = fields.Html(string="Meta titulo")
-    meta_titulo_en = fields.Html(string="Meta titulo en ingles")
-    meta_titulo_pt = fields.Html(string="Meta titulo en portugues")
-    meta_descripcion = fields.Html(string="Meta descripcion")
-    meta_descripcion_en = fields.Html(string="Meta descripcion en ingles")
-    meta_descripcion_pt = fields.Html(string="Meta descripcion en portugues")
+    meta_titulo = fields.Char(string="Meta titulo")
+    meta_titulo_en = fields.Char(string="Meta titulo en ingles")
+    meta_titulo_pt = fields.Char(string="Meta titulo en portugues")
+    meta_descripcion = fields.Text(string="Meta descripcion")
+    meta_descripcion_en = fields.Text(string="Meta descripcion en ingles")
+    meta_descripcion_pt = fields.Text(string="Meta descripcion en portugues")
     destacados_titulo = fields.Html(string="Titulo destacados")
     destacados_titulo_en = fields.Html(string="Titulo destacados en ingles")
     destacados_titulo_pt = fields.Html(string="Titulo destacados en portugues")
@@ -117,6 +117,7 @@ class IncasTour(models.Model):
     ]
 
     def _auto_init(self):
+        self._migrar_columnas_meta_a_texto()
         res = super()._auto_init()
         self.env.cr.execute(
             """
@@ -127,6 +128,78 @@ class IncasTour(models.Model):
         )
         return res
 
+    def _migrar_columnas_meta_a_texto(self):
+        columnas = {
+            "meta_titulo": "varchar",
+            "meta_titulo_en": "varchar",
+            "meta_titulo_pt": "varchar",
+            "meta_descripcion": "text",
+            "meta_descripcion_en": "text",
+            "meta_descripcion_pt": "text",
+        }
+        for columna, tipo_destino in columnas.items():
+            self.env.cr.execute(
+                """
+                SELECT data_type
+                FROM information_schema.columns
+                WHERE table_name = 'incas_tour'
+                  AND column_name = %s
+                """,
+                [columna],
+            )
+            fila = self.env.cr.fetchone()
+            if not fila:
+                continue
+            tipo_actual = fila[0]
+            if tipo_actual == "jsonb":
+                self.env.cr.execute(
+                    f"""
+                    ALTER TABLE incas_tour
+                    ALTER COLUMN {columna} TYPE {tipo_destino}
+                    USING CASE
+                        WHEN {columna} IS NULL THEN NULL
+                        WHEN jsonb_typeof({columna}) = 'string' THEN trim(both '"' from {columna}::text)
+                        ELSE COALESCE(
+                            {columna}->>'es_PE',
+                            {columna}->>'es',
+                            {columna}->>'en_US',
+                            {columna}->>'en',
+                            {columna}->>'pt_BR',
+                            {columna}->>'pt',
+                            {columna}->>'fr_FR',
+                            {columna}->>'fr',
+                            {columna}->>'it_IT',
+                            {columna}->>'it'
+                        )
+                    END
+                    """
+                )
+                continue
+            if tipo_destino == "varchar" and tipo_actual == "text":
+                self.env.cr.execute(
+                    f"""
+                    ALTER TABLE incas_tour
+                    ALTER COLUMN {columna} TYPE varchar
+                    """
+                )
+            self.env.cr.execute(
+                f"""
+                UPDATE incas_tour
+                   SET {columna} = NULLIF(
+                       trim(
+                           regexp_replace(
+                               regexp_replace(COALESCE({columna}, ''), '<[^>]+>', ' ', 'g'),
+                               '\\s+',
+                               ' ',
+                               'g'
+                           )
+                       ),
+                       ''
+                   )
+                 WHERE {columna} IS NOT NULL
+                """
+            )
+
     def _copiar_traduccion_si_vacia(self, vals, campo_base):
         campo_en = f"{campo_base}_en"
         campo_pt = f"{campo_base}_pt"
@@ -136,6 +209,25 @@ class IncasTour(models.Model):
             vals[campo_en] = vals[campo_base]
         if not vals.get(campo_pt):
             vals[campo_pt] = vals[campo_base]
+
+    def _limpiar_texto_seo(self, valor):
+        if not isinstance(valor, str):
+            return valor
+        valor_limpio = tools.html2plaintext(valor).replace("\xa0", " ")
+        valor_limpio = " ".join(valor_limpio.split())
+        return valor_limpio or False
+
+    def _sanitizar_campos_meta_en_vals(self, vals):
+        for campo in (
+            "meta_titulo",
+            "meta_titulo_en",
+            "meta_titulo_pt",
+            "meta_descripcion",
+            "meta_descripcion_en",
+            "meta_descripcion_pt",
+        ):
+            if campo in vals:
+                vals[campo] = self._limpiar_texto_seo(vals[campo])
 
     def _dms_storage_name(self):
         return "Tours"
@@ -172,6 +264,15 @@ class IncasTour(models.Model):
     )
     def _onchange_copiar_campos_es(self):
         for record in self:
+            for campo in (
+                "meta_titulo",
+                "meta_titulo_en",
+                "meta_titulo_pt",
+                "meta_descripcion",
+                "meta_descripcion_en",
+                "meta_descripcion_pt",
+            ):
+                record[campo] = record._limpiar_texto_seo(record[campo])
             for campo in (
                 "nombre",
                 "slug",
@@ -373,7 +474,9 @@ class IncasTour(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        self._migrar_columnas_meta_a_texto()
         for vals in vals_list:
+            self._sanitizar_campos_meta_en_vals(vals)
             for campo in (
                 "nombre",
                 "slug",
@@ -390,9 +493,11 @@ class IncasTour(models.Model):
         return records
 
     def write(self, vals):
+        self._migrar_columnas_meta_a_texto()
         if self.env.context.get("skip_catalog_sync"):
             return super().write(vals)
         valores = dict(vals)
+        self._sanitizar_campos_meta_en_vals(valores)
         for campo in (
             "nombre",
             "slug",

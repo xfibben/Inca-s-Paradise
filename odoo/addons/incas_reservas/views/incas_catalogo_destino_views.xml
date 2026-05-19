@@ -48,8 +48,8 @@
                                 <field name="titulo_intro" widget="html"/>
                                 <field name="contenido_intro" widget="html"/>
                                 <field name="cinta_principal" widget="html"/>
-                                <field name="seo_titulo" widget="html"/>
-                                <field name="seo_descripcion" widget="html"/>
+                                <field name="seo_titulo"/>
+                                <field name="seo_descripcion"/>
                             </group>
                         </page>
                         <page string="English">
@@ -59,8 +59,8 @@
                                 <field name="titulo_intro_en" widget="html"/>
                                 <field name="contenido_intro_en" widget="html"/>
                                 <field name="cinta_principal_en" widget="html"/>
-                                <field name="seo_titulo_en" widget="html"/>
-                                <field name="seo_descripcion_en" widget="html"/>
+                                <field name="seo_titulo_en"/>
+                                <field name="seo_descripcion_en"/>
                             </group>
                         </page>
                         <page string="Português">
@@ -70,8 +70,8 @@
                                 <field name="titulo_intro_pt" widget="html"/>
                                 <field name="contenido_intro_pt" widget="html"/>
                                 <field name="cinta_principal_pt" widget="html"/>
-                                <field name="seo_titulo_pt" widget="html"/>
-                                <field name="seo_descripcion_pt" widget="html"/>
+                                <field name="seo_titulo_pt"/>
+                                <field name="seo_descripcion_pt"/>
                             </group>
                         </page>
                         <page string="Iconos">

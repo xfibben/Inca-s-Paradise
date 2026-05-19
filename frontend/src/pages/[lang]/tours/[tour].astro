@@ -212,6 +212,7 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
                 <div class="border-t border-gray-300">
                   {itineraryItems.map((item: any, index: number) => {
                     const imageUrl = getOdooMediaUrl(item.image);
+                    const galleryId = `itinerary-gallery-${index}`;
                     return (
                       <details class="border-b border-gray-200 py-4" open={index === 0}>
                         <summary class="flex cursor-pointer list-none items-start gap-4 text-left">
@@ -223,21 +224,43 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
                         </summary>
                         <div class="mt-4 pl-0 md:pl-24">
                           {item.images.length > 0 ? (
-                            <div class="mt-2 flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
-                              {item.images.map((image: any, imageIndex: number) => (
+                            <div class="mt-2">
+                              <div class="mb-3 flex items-center justify-end gap-2">
                                 <button
                                   type="button"
-                                  class="group relative h-56 w-[82%] min-w-[82%] overflow-hidden snap-start md:h-64 md:max-w-2xl"
-                                  data-itinerary-lightbox-open
-                                  data-gallery-index={index}
-                                  data-slide-index={imageIndex}
-                                  data-src={image.url}
-                                  data-alt={image.alt}
-                                  aria-label="Ver imagen en grande"
+                                  class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d1d5db] bg-white text-xl text-[#111827] transition hover:border-[#1AA093] hover:text-[#1AA093]"
+                                  data-itinerary-gallery-prev
+                                  data-gallery-target={galleryId}
+                                  aria-label="Imagen anterior"
                                 >
-                                  <img src={image.url} alt={image.alt} class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" />
+                                  &lsaquo;
                                 </button>
-                              ))}
+                                <button
+                                  type="button"
+                                  class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d1d5db] bg-white text-xl text-[#111827] transition hover:border-[#1AA093] hover:text-[#1AA093]"
+                                  data-itinerary-gallery-next
+                                  data-gallery-target={galleryId}
+                                  aria-label="Imagen siguiente"
+                                >
+                                  &rsaquo;
+                                </button>
+                              </div>
+                              <div id={galleryId} class="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth" data-itinerary-gallery>
+                                {item.images.map((image: any, imageIndex: number) => (
+                                  <button
+                                    type="button"
+                                    class="group relative h-56 w-[82%] min-w-[82%] overflow-hidden snap-start md:h-64 md:max-w-2xl"
+                                    data-itinerary-lightbox-open
+                                    data-gallery-index={index}
+                                    data-slide-index={imageIndex}
+                                    data-src={image.url}
+                                    data-alt={image.alt}
+                                    aria-label="Ver imagen en grande"
+                                  >
+                                    <img src={image.url} alt={image.alt} class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" />
+                                  </button>
+                                ))}
+                              </div>
                             </div>
                           ) : imageUrl ? <img src={imageUrl} alt={item.imageAltText} class="mx-auto h-56 w-full max-w-2xl object-cover md:h-64" /> : null}
                           {item.descriptionHtml ? <div class="prose prose-sm md:prose-base mt-3 max-w-none text-black md:ml-6 md:mr-14 lg:ml-10 lg:mr-28 prose-p:mb-3 prose-p:leading-7 prose-p:text-justify prose-p:last:mb-0 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e] [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_[style*='text-align:center']]:text-center [&_[style*='text-align:right']]:text-right [&_[style*='text-align:left']]:text-left [&_img]:my-3 [&_img]:mx-auto [&_img]:block [&_img]:h-auto [&_img]:w-full [&_img]:max-w-[560px] [&_img]:max-h-[340px] [&_img]:object-cover" set:html={item.descriptionHtml} /> : null}
@@ -411,6 +434,18 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
     <Footer currentLang={lang} {t} />
     <script is:inline>
       (() => {
+        document.querySelectorAll("[data-itinerary-gallery-prev], [data-itinerary-gallery-next]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const targetId = button.getAttribute("data-gallery-target");
+            if (!targetId) return;
+            const gallery = document.getElementById(targetId);
+            if (!gallery) return;
+            const step = Math.max(gallery.clientWidth * 0.85, 240);
+            const direction = button.hasAttribute("data-itinerary-gallery-prev") ? -1 : 1;
+            gallery.scrollBy({ left: step * direction, behavior: "smooth" });
+          });
+        });
+
         const lightbox = document.querySelector("[data-itinerary-lightbox]");
         const img = document.querySelector("[data-itinerary-lightbox-img]");
         const counter = document.querySelector("[data-itinerary-lightbox-counter]");

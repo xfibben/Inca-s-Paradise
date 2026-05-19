@@ -174,6 +174,15 @@ def _serialize_tour_media_list(tour):
     return imagenes
 
 
+def _serialize_tour_featured_media_list(tour):
+    imagenes = []
+    for item in tour.imagen_destacada_ids.sorted(lambda rec: (rec.sequence, rec.id)):
+        payload = _image_payload(item, "imagen")
+        if payload:
+            imagenes.append(payload)
+    return imagenes
+
+
 def _serialize_tour_card(tour, lang):
     hero_images = _serialize_tour_media_list(tour)
     return {
@@ -303,12 +312,13 @@ def _serialize_estilo_viaje(estilo, lang, incluir_tours=False):
 
 def _serialize_web_tour(tour, lang, incluir_relaciones=True, incluir_relacionados=True):
     hero_images = _serialize_tour_media_list(tour)
+    featured_media = _serialize_tour_featured_media_list(tour)
     featured_images = [
         {
             "image": payload,
             "alt": f"{_campo_localizado(tour, 'nombre', lang) or 'Tour'} {index + 1}",
         }
-        for index, payload in enumerate(hero_images)
+        for index, payload in enumerate(featured_media)
     ]
     itinerary_items = []
     for item in tour.itinerario_item_ids.sorted(lambda rec: (rec.sequence, rec.id)):
