@@ -41,6 +41,8 @@ const toNumber = (value: any) => {
   const number = Number(value);
   return Number.isFinite(number) ? number : 0;
 };
+const toObjectList = (value: any) =>
+  Array.isArray(value) ? value.filter((item: any) => item && typeof item === "object") : [];
 const seoTitle =
   cleanText(sourceTour.seoTitle) ||
   cleanText(sourceTour.metaTitle) ||
@@ -48,18 +50,19 @@ const seoTitle =
   (lang === "en" ? "Tour details" : "Detalle del tour");
 const seoDescription = cleanText(sourceTour.seoDescription) || cleanText(sourceTour.metaDescription);
 const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(/\/$/, "");
-const canonical = `${siteOrigin}/${lang}/tours/${sourceTour.slug}`;
-const heroImages = Array.isArray(sourceTour.heroSlideImages) ? sourceTour.heroSlideImages : [];
+const canonical = `${siteOrigin}/${lang}/tours/${sourceTour.slug || tourSlug}`;
+const heroImages = toObjectList(sourceTour.heroSlideImages);
 const heroImage = getOdooMediaUrl(heroImages[0]);
-const featuredImages = Array.isArray(sourceTour.featuredImages) ? sourceTour.featuredImages : [];
-const itineraryItems = Array.isArray(sourceTour.itineraryItems) ? sourceTour.itineraryItems : [];
-const scheduleItems = Array.isArray(sourceTour.scheduleItems) ? sourceTour.scheduleItems : [];
-const includedItems = Array.isArray(sourceTour.includedItems) ? sourceTour.includedItems : [];
-const excludedItems = Array.isArray(sourceTour.excludedItems) ? sourceTour.excludedItems : [];
-const faqItems = Array.isArray(sourceTour.faqItems) ? sourceTour.faqItems : [];
-const relatedTours = Array.isArray(sourceTour.relatedTours) ? sourceTour.relatedTours : [];
+const featuredImages = toObjectList(sourceTour.featuredImages);
+const itineraryItems = toObjectList(sourceTour.itineraryItems);
+const scheduleItems = toObjectList(sourceTour.scheduleItems);
+const includedItems = toObjectList(sourceTour.includedItems);
+const excludedItems = toObjectList(sourceTour.excludedItems);
+const faqItems = toObjectList(sourceTour.faqItems);
+const relatedTours = toObjectList(sourceTour.relatedTours);
+const highlightItems = toObjectList(sourceTour.highlightsItems);
 const tourSlugs = sourceTour.slugs ?? buildLocalizedSlugs(sourceTour.slug || tourSlug);
-const destinationNames = (Array.isArray(sourceTour.destinos) ? sourceTour.destinos : []).map((item: any) => item.title).filter(Boolean);
+const destinationNames = toObjectList(sourceTour.destinos).map((item: any) => item.title).filter(Boolean);
 const priceFromLabel =
   lang === "en" ? "From"
   : lang === "pt" ? "Desde"
@@ -134,11 +137,11 @@ const getDiscountedPrice = (price: number, discountPercent: number) =>
       <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
           <div class="space-y-12">
-            {(sourceTour.highlightsTitle || sourceTour.highlightsItems?.length) && (
+            {(sourceTour.highlightsTitle || highlightItems.length) && (
               <section>
                 {sourceTour.highlightsTitle ? <h2 class="text-3xl text-stone-900 mb-6" style="font-family: 'Playfair Display', serif; font-style: italic;">{sourceTour.highlightsTitle}</h2> : null}
                 <div class="grid gap-4 md:grid-cols-2">
-                  {(sourceTour.highlightsItems ?? []).map((item: any) => (
+                  {highlightItems.map((item: any) => (
                     <article class="border border-stone-200 p-5 bg-stone-50">
                       {item.title ? <h3 class="text-xl text-stone-900 mb-2" style="font-family: 'Playfair Display', serif; font-style: italic;">{item.title}</h3> : null}
                       {item.description ? <div class="text-stone-700" set:html={item.description} /> : null}
@@ -290,7 +293,7 @@ const getDiscountedPrice = (price: number, discountPercent: number) =>
     <BookingModal
       lang={bookingLang}
       tourTitle={sourceTour.title}
-      tourSlug={sourceTour.slug}
+      tourSlug={sourceTour.slug || tourSlug}
       scheduleOptions={scheduleItems.map((item: any) => {
         const label = [item.horaEntrada, item.horaSalida].filter(Boolean).join(" - ");
         return { label: label || "Horario", value: label || "Horario" };
