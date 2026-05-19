@@ -295,8 +295,8 @@ def _serialize_estilo_viaje(estilo, lang, incluir_tours=False):
         "seoDescription": _campo_localizado(estilo, "seo_description", lang),
         "displayOrder": estilo.display_order or 0,
         "image": _image_payload(estilo, "image"),
-        "wallpaper": _image_payload(estilo, "image"),
-    }
+        "wallpaper": _image_payload(estilo, "wallpaper"),
+      }
     if incluir_tours:
         data["tours"] = [_serialize_tour_card(tour, lang) for tour in tours]
     return data
