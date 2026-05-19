@@ -112,21 +112,33 @@
                             <group>
                                 <field name="tour_ids" widget="many2many_tags"/>
                             </group>
-                            <field name="subcategoria_tour_ids" nolabel="1">
+                            <field name="subcategoria_destino_ids" nolabel="1">
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="nombre"/>
-                                    <field name="tour_ids" widget="many2many_tags"/>
+                                    <field name="nombre_en"/>
+                                    <field name="nombre_pt"/>
+                                    <field name="tour_count" readonly="1"/>
                                     <field name="active"/>
                                 </list>
-                                <form string="Subcategoría de tour">
+                                <form string="Subcategoría de destino">
                                     <sheet>
                                         <group>
                                             <field name="sequence"/>
                                             <field name="nombre"/>
-                                            <field name="tour_ids" widget="many2many_tags"/>
+                                            <field name="nombre_en"/>
+                                            <field name="nombre_pt"/>
+                                            <field name="tour_count" readonly="1"/>
                                             <field name="active"/>
                                         </group>
+                                        <field name="tour_ids" nolabel="1">
+                                            <list>
+                                                <field name="nombre"/>
+                                                <field name="slug"/>
+                                                <field name="tipo_tour"/>
+                                                <field name="active"/>
+                                            </list>
+                                        </field>
                                     </sheet>
                                 </form>
                             </field>

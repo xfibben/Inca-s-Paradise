@@ -6,6 +6,7 @@
         <field name="arch" type="xml">
             <list string="Historial de tours">
                 <field name="nombre_tour"/>
+                <field name="responsable_id"/>
                 <field name="enlace"/>
                 <field name="notas"/>
                 <field name="estado"/>
@@ -22,6 +23,7 @@
                     <group>
                         <group>
                             <field name="nombre_tour"/>
+                            <field name="responsable_id" readonly="1"/>
                             <field name="enlace"/>
                             <field name="estado"/>
                         </group>

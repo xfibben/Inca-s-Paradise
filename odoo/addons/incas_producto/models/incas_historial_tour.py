@@ -7,6 +7,13 @@ class IncasHistorialTour(models.Model):
     _order = "id desc"
 
     nombre_tour = fields.Char(string="Nombre de tour", required=True)
+    responsable_id = fields.Many2one(
+        "res.users",
+        string="Responsable",
+        related="create_uid",
+        store=True,
+        readonly=True,
+    )
     enlace = fields.Char(string="Enlace")
     notas = fields.Text(string="Notas")
     estado = fields.Selection(

@@ -300,7 +300,22 @@ try {
                       if (!activeDest) return null;
 
                       const subcategorias = sortSubcategoriasAlphabetically(normalizeSubcategorias(activeDest.subcategorias_tour));
-                      const toursSueltos = sortToursAlphabetically(normalizeRelatedTours(activeDest.tours));
+                      const toursSubcategorizados = new Set(
+                        subcategorias.flatMap((subcategoria: any) => {
+                          const attrs = subcategoria.attributes || subcategoria;
+                          return normalizeRelatedTours(attrs.tours).map((tour: any) => {
+                            const tourAttrs = tour.attributes || tour;
+                            return tourAttrs.slug || tourAttrs.title || tourAttrs.nombre;
+                          }).filter(Boolean);
+                        })
+                      );
+                      const toursSueltos = sortToursAlphabetically(
+                        normalizeRelatedTours(activeDest.tours).filter((tour: any) => {
+                          const attrs = tour.attributes || tour;
+                          const clave = attrs.slug || attrs.title || attrs.nombre;
+                          return !clave || !toursSubcategorizados.has(clave);
+                        })
+                      );
 
                       return (
                         <>

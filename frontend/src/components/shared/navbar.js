@@ -44,7 +44,22 @@ function renderDestinationToursHtml(destination, currentLang) {
   }
 
   const subcategorias = sortSubcategoriasAlphabetically(normalizeRows(destination.subcategorias_tour));
-  const toursSueltos = sortToursAlphabetically(normalizeRows(destination.tours));
+  const toursSubcategorizados = new Set();
+  subcategorias.forEach(subcategoria => {
+    const sub = subcategoria.attributes || subcategoria;
+    normalizeRows(sub.tours).forEach(tour => {
+      const t = tour.attributes || tour;
+      const clave = t.slug || t.title || t.nombre;
+      if (clave) toursSubcategorizados.add(String(clave));
+    });
+  });
+  const toursSueltos = sortToursAlphabetically(
+    normalizeRows(destination.tours).filter(tour => {
+      const t = tour.attributes || tour;
+      const clave = t.slug || t.title || t.nombre;
+      return !clave || !toursSubcategorizados.has(String(clave));
+    })
+  );
   let html = '';
 
   subcategorias.forEach(subcategoria => {

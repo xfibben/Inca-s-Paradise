@@ -231,7 +231,7 @@ def _serialize_estilo_viaje_minimo(estilo, lang):
 def _serialize_subcategoria_destino(subcategoria, lang):
     return {
         "id": subcategoria.id,
-        "nombre": subcategoria.nombre,
+        "nombre": _campo_localizado(subcategoria, "nombre", lang),
         "tours": [
             _serialize_tour_card(tour, lang)
             for tour in subcategoria.tour_ids.sorted(lambda rec: (_campo_localizado(rec, "nombre", lang) or "", rec.id))
@@ -284,7 +284,7 @@ def _serialize_destino(destino, lang, incluir_tours=False):
         "heroSlideImages": [payload for payload in [_image_payload(destino, "imagen_fondo"), _image_payload(destino, "imagen")] if payload],
         "iconCatalog": icon_items,
         "iconItems": icon_items,
-        "subcategorias_tour": [_serialize_subcategoria_destino(item, lang) for item in destino.subcategoria_tour_ids.sorted(lambda rec: (rec.sequence, rec.id))],
+        "subcategorias_tour": [_serialize_subcategoria_destino(item, lang) for item in destino.subcategoria_destino_ids.sorted(lambda rec: (rec.sequence, rec.id)) if item.active],
     }
     if incluir_tours:
         data["tours"] = [_serialize_tour_card(tour, lang) for tour in tours]

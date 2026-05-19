@@ -40,10 +40,10 @@ class IncasCatalogoDestino(models.Model):
         "tour_id",
         string="Tours",
     )
-    subcategoria_tour_ids = fields.One2many(
-        "incas.subcategoria.tour",
+    subcategoria_destino_ids = fields.One2many(
+        "incas.subcategoria.destino",
         "destino_id",
-        string="Subcategorías de tour",
+        string="Subcategorías de destino",
     )
     icono_item_ids = fields.One2many(
         "incas.catalogo.destino.icono",

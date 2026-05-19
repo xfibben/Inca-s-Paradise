@@ -21,6 +21,7 @@ from . import incas_tour_horario
 from . import incas_catalogo_destino
 from . import incas_catalogo_destino_icono
 from . import incas_catalogo_destino_hero_imagen
+from . import incas_subcategoria_destino
 from . import incas_subcategoria_tour
 from . import incas_catalogo_transporte
 from . import incas_catalogo_transporte_incluye

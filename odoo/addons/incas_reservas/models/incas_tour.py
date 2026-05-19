@@ -1,12 +1,14 @@
 import json
 
 from odoo import api, fields, models, tools
+from odoo.exceptions import ValidationError
 
 
 class IncasTour(models.Model):
     _name = "incas.tour"
     _description = "Tour"
     _order = "nombre, id"
+    _rec_name = "nombre"
     _inherit = ["incas.dms.asset.mixin"]
 
     nombre = fields.Char(string="Nombre", required=True)
@@ -76,6 +78,11 @@ class IncasTour(models.Model):
         "tour_id",
         "destino_id",
         string="Destinos",
+    )
+    subcategoria_destino_id = fields.Many2one(
+        "incas.subcategoria.destino",
+        string="Subcategoría de destino",
+        ondelete="set null",
     )
     destacado_item_ids = fields.One2many(
         "incas.tour.destacado",
@@ -264,6 +271,8 @@ class IncasTour(models.Model):
     )
     def _onchange_copiar_campos_es(self):
         for record in self:
+            if record.subcategoria_destino_id and record.destino_ids and record.subcategoria_destino_id.destino_id not in record.destino_ids:
+                record.subcategoria_destino_id = False
             for campo in (
                 "meta_titulo",
                 "meta_titulo_en",
@@ -288,6 +297,12 @@ class IncasTour(models.Model):
                     record[campo_en] = valor
                 if valor and not record[campo_pt]:
                     record[campo_pt] = valor
+
+    @api.constrains("subcategoria_destino_id", "destino_ids")
+    def _check_subcategoria_destino(self):
+        for record in self:
+            if record.subcategoria_destino_id and record.subcategoria_destino_id.destino_id not in record.destino_ids:
+                raise ValidationError("La subcategoría de destino debe pertenecer a uno de los destinos del tour.")
 
     def _copiar_imagenes_destacadas_desde_itinerario(self, si_vacio=False):
         for record in self:
