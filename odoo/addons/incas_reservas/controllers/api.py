@@ -19,6 +19,10 @@ def _lang_base(lang):
     return "es"
 
 
+def _normalizar_slug(valor):
+    return (valor or "").strip().strip("/").lower()
+
+
 def _domain_ip(ip_value):
     if ip_value in {"ip2", "ip3"}:
         return [("ip", "=", ip_value)]
@@ -146,13 +150,13 @@ def _serialize_tipo_transporte(estilo, lang, incluir_transportes=False):
 
 
 def _slug_localizado(record, lang):
-    return _campo_localizado(record, "slug", lang)
+    return _normalizar_slug(_campo_localizado(record, "slug", lang))
 
 
 def _slugs_localizados(record):
-    base = getattr(record, "slug", False) or ""
-    slug_en = getattr(record, "slug_en", False) or base
-    slug_pt = getattr(record, "slug_pt", False) or base
+    base = _normalizar_slug(getattr(record, "slug", False))
+    slug_en = _normalizar_slug(getattr(record, "slug_en", False) or base)
+    slug_pt = _normalizar_slug(getattr(record, "slug_pt", False) or base)
     return {
         "es": base,
         "en": slug_en or base,
@@ -422,17 +426,25 @@ def _serialize_web_tour(tour, lang, incluir_relaciones=True, incluir_relacionado
 
 
 def _buscar_por_slug_localizado(model_name, slug):
-    return request.env[model_name].sudo().search(
+    slug_normalizado = _normalizar_slug(slug)
+    if not slug_normalizado:
+        return request.env[model_name]
+    candidatos = request.env[model_name].sudo().search(
         [
             ("active", "=", True),
             "|",
             "|",
-            ("slug", "=", slug),
-            ("slug_en", "=", slug),
-            ("slug_pt", "=", slug),
-        ],
-        limit=1,
+            ("slug", "ilike", slug_normalizado),
+            ("slug_en", "ilike", slug_normalizado),
+            ("slug_pt", "ilike", slug_normalizado),
+        ]
     )
+    # Evita falsos positivos de ilike y tolera slugs guardados con espacios o mayusculas.
+    for record in candidatos:
+        for campo in ("slug", "slug_en", "slug_pt"):
+            if _normalizar_slug(getattr(record, campo, False)) == slug_normalizado:
+                return record
+    return request.env[model_name]
 
 
 def response_json(payload, status=200):
