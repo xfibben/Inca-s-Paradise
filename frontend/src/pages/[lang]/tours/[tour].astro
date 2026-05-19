@@ -6,6 +6,7 @@ import Navbar from "../../../components/shared/Navbar.astro";
 import Footer from "../../../components/shared/Footer.astro";
 import BookingModal from "../../../components/tours/BookingModal.astro";
 import BookingCard from "../../../components/tours/BookingCard.astro";
+import Ribbon from "../../../components/shared/Ribbon.astro";
 import { formatPrice } from "../../../utils/currency";
 import { buildLocalizedSlugs, fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from "../../../utils/odooWeb";
 
@@ -82,6 +83,22 @@ const weekdays = lang === "en"
 const bookingTitle = lang === "en" ? "BOOK NOW" : "RESERVA AHORA";
 const availability = lang === "en" ? "Real-time availability" : "Disponibilidad en tiempo real";
 const bookingDuration = cleanText(sourceTour.durationLabel) || `${toNumber(sourceTour.durationDays) || 1} ${lang === "en" ? "day" : "dia"}${(toNumber(sourceTour.durationDays) || 1) > 1 ? "s" : ""}`;
+const highlightsTitle = cleanText(sourceTour.highlightsTitle);
+const highlightsLead = sourceTour.highlightsLead ?? "";
+const hasHighlightsSection = Boolean(highlightsTitle || highlightsLead || highlightItems.length || heroImage);
+const itineraryTitle = cleanText(sourceTour.itineraryTitle) || (lang === "en" ? "Itinerary" : "Itinerario");
+const itineraryItemLabel = lang === "en" ? "Day" : "Dia";
+const scheduleTitle = cleanText(sourceTour.scheduleTitle) || (lang === "en" ? "Schedules" : "Horarios");
+const includedTitle = cleanText(sourceTour.includedTitle) || (lang === "en" ? "Included" : "Incluye");
+const excludedTitle = cleanText(sourceTour.excludedTitle) || (lang === "en" ? "Not Included" : "No incluye");
+const galleryTitle = cleanText(sourceTour.featuredTitle) || (lang === "en" ? "Gallery" : "Galeria");
+const faqTitle = cleanText(sourceTour.faqTitle) || "FAQ";
+const primaryDestinationName = destinationNames[0] ?? "";
+const moreToursRibbonText =
+  primaryDestinationName
+    ? `${lang === "en" ? "More tours in" : lang === "pt" ? "Mais tours em" : "Mas tours en"} ${primaryDestinationName}`
+    : (lang === "en" ? "Related tours" : "Tours relacionados");
+const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
 ---
 
 <html lang={lang}>
@@ -126,181 +143,210 @@ const bookingDuration = cleanText(sourceTour.durationLabel) || `${toNumber(sourc
     {heroImage && <link rel="preload" as="image" href={heroImage} fetchpriority="high" />}
     <GoogleAnalytics />
   </head>
-  <body class="bg-white text-stone-800 overflow-x-hidden flex flex-col min-h-screen">
+  <body class="tour-detail min-h-screen bg-white text-gray-900" data-navbar-solid>
     <Navbar t={t} currentLang={lang} whatsappTourName={sourceTour.title} />
     <script is:inline define:vars={{ tourSlugs, serviceId: sourceTour.serviceId ?? null, destinoNombre: destinationNames[0] ?? null }}>
       window.__tourData = { serviceId, destinoNombre };
       window.__tourSlugs = tourSlugs;
     </script>
 
-    <main class="flex-1">
-      <section class="relative min-h-[70vh] overflow-hidden">
-        {heroImage ? <img src={heroImage} alt={sourceTour.title} class="absolute inset-0 w-full h-full object-cover" /> : <div class="absolute inset-0 bg-stone-300" />}
-        <div class="absolute inset-0 bg-black/45" />
-        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-20 text-white">
-          {destinationNames.length > 0 ? <p class="uppercase tracking-[0.25em] text-xs text-white/80 mb-4">{destinationNames.join(" · ")}</p> : null}
-          <h1 class="text-4xl md:text-6xl max-w-4xl" style="font-family: 'Playfair Display', serif; font-style: italic;">{sourceTour.title}</h1>
-          {sourceTour.highlightsLead ? <div class="mt-6 max-w-3xl text-lg text-white/90" set:html={sourceTour.highlightsLead} /> : null}
-        </div>
-      </section>
-
-      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
-          <div class="space-y-12">
-            {(sourceTour.highlightsTitle || highlightItems.length) && (
-              <section>
-                {sourceTour.highlightsTitle ? <h2 class="text-3xl text-stone-900 mb-6" style="font-family: 'Playfair Display', serif; font-style: italic;">{sourceTour.highlightsTitle}</h2> : null}
-                <div class="grid gap-4 md:grid-cols-2">
-                  {highlightItems.map((item: any) => (
-                    <article class="border border-stone-200 p-5 bg-stone-50">
-                      {item.title ? <h3 class="text-xl text-stone-900 mb-2" style="font-family: 'Playfair Display', serif; font-style: italic;">{item.title}</h3> : null}
-                      {item.description ? <div class="text-stone-700" set:html={item.description} /> : null}
-                    </article>
-                  ))}
+    <main>
+      <section class="bg-[#f5f0e9]">
+        <div class="grid w-full gap-10 px-4 pb-16 pt-24 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-6 lg:px-12 lg:pt-28">
+          <div class="min-w-0">
+            {hasHighlightsSection ? (
+              <section class="pb-12 md:pb-14">
+                <div class="grid gap-6 border border-[#e2e8f0] bg-white p-4 shadow-sm md:grid-cols-[240px_1fr] md:gap-8 md:p-6">
+                  {heroImage ? (
+                    <div class="overflow-hidden">
+                      <img src={heroImage} alt={sourceTour.title} class="h-full min-h-[280px] w-full object-cover" fetchpriority="high" loading="eager" decoding="async" />
+                    </div>
+                  ) : null}
+                  <div>
+                    {destinationNames.length > 0 ? <p class="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#1AA093]">{destinationNames.join(" · ")}</p> : null}
+                    <h1 class="text-3xl leading-tight text-[#1f2937] md:text-4xl" style="font-family: 'Playfair Display', serif; font-style: italic;">{sourceTour.title}</h1>
+                    {highlightsTitle ? <h2 class="mt-4 text-2xl leading-tight text-[#1f2937] md:text-3xl">{highlightsTitle}</h2> : null}
+                    {highlightsLead ? <div class="mt-3 text-sm leading-relaxed text-[#1f2937] text-justify md:text-base [&_p]:mb-3 [&_p:last-child]:mb-0" set:html={highlightsLead} /> : null}
+                    <div class="mt-4 space-y-4">
+                      {highlightItems.map((item: any, index: number) => (
+                        <article class="flex items-start gap-3">
+                          <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-green-600 text-green-600">{index + 1}</span>
+                          <div>
+                            {item.title ? <p class="text-lg font-normal text-[#111827] md:text-xl" set:html={item.title} /> : null}
+                            {item.description ? <div class="mt-1 text-sm leading-relaxed text-[#4b5563] text-justify md:text-base [&_p]:mb-2 [&_p:last-child]:mb-0" set:html={item.description} /> : null}
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </section>
-            )}
+            ) : null}
 
-            {itineraryItems.length > 0 && (
-              <section>
-                <h2 class="text-3xl text-stone-900 mb-6" style="font-family: 'Playfair Display', serif; font-style: italic;">
-                  {sourceTour.itineraryTitle || (lang === "en" ? "Itinerary" : "Itinerario")}
-                </h2>
-                <div class="space-y-8">
+            {itineraryItems.length > 0 ? (
+              <section class="pb-16 md:pb-20">
+                <h2 class="mb-8 text-2xl font-bold italic text-gray-900 md:text-3xl" style="font-family: 'Playfair Display', serif;">{itineraryTitle}</h2>
+                <div class="border-t border-gray-300">
                   {itineraryItems.map((item: any, index: number) => {
                     const imageUrl = getOdooMediaUrl(item.image);
                     return (
-                      <article class="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] items-start">
-                        {imageUrl ? <img src={imageUrl} alt={item.imageAlt || item.title || `Itinerary ${index + 1}`} class="w-full h-52 object-cover" /> : null}
-                        <div>
-                          {item.title ? <h3 class="text-2xl text-stone-900 mb-2" style="font-family: 'Playfair Display', serif; font-style: italic;">{item.title}</h3> : null}
-                          {item.description ? <div class="text-stone-700 prose prose-stone max-w-none" set:html={item.description} /> : null}
+                      <details class="border-b border-gray-200 py-4" open={index === 0}>
+                        <summary class="flex cursor-pointer list-none items-start gap-4 text-left">
+                          <span class="mt-0.5 inline-flex shrink-0 items-center gap-2 text-green-700">
+                            <span class="text-base font-semibold">{itineraryItemLabel}</span>
+                            <span class="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-green-600 px-1 text-xs font-bold leading-none">{index + 1}</span>
+                          </span>
+                          <span class="pt-0.5 text-base font-semibold text-gray-900 md:text-lg" set:html={item.title || `${itineraryItemLabel} ${index + 1}`} />
+                        </summary>
+                        <div class="mt-4 pl-0 md:pl-24">
+                          {imageUrl ? <img src={imageUrl} alt={item.imageAlt || item.title || `${itineraryItemLabel} ${index + 1}`} class="mx-auto h-56 w-full max-w-2xl object-cover md:h-64" /> : null}
+                          {item.description ? <div class="prose prose-sm md:prose-base mt-3 max-w-none text-black md:ml-6 md:mr-14 lg:ml-10 lg:mr-28 prose-p:mb-3 prose-p:leading-7 prose-p:text-justify prose-p:last:mb-0 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e] [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_[style*='text-align:center']]:text-center [&_[style*='text-align:right']]:text-right [&_[style*='text-align:left']]:text-left [&_img]:my-3 [&_img]:mx-auto [&_img]:block [&_img]:h-auto [&_img]:w-full [&_img]:max-w-[560px] [&_img]:max-h-[340px] [&_img]:object-cover" set:html={item.description} /> : null}
                         </div>
-                      </article>
+                      </details>
                     );
                   })}
                 </div>
               </section>
-            )}
+            ) : null}
 
-            {scheduleItems.length > 0 && (
-              <section>
-                <h2 class="text-3xl text-stone-900 mb-6" style="font-family: 'Playfair Display', serif; font-style: italic;">
-                  {sourceTour.scheduleTitle || (lang === "en" ? "Schedules" : "Horarios")}
-                </h2>
-                <div class="grid gap-4 md:grid-cols-2">
+            {scheduleItems.length > 0 ? (
+              <section class="pb-16 md:pb-20">
+                <h2 class="mb-6 text-2xl font-bold italic text-gray-900 md:text-3xl" style="font-family: 'Playfair Display', serif;">{scheduleTitle}</h2>
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {scheduleItems.map((item: any) => (
-                    <div class="border border-stone-200 p-5 bg-white">
-                      <p class="text-sm uppercase tracking-[0.2em] text-[#1AA093]">{item.horaEntrada || "--"} {item.horaSalida ? `- ${item.horaSalida}` : ""}</p>
-                    </div>
+                    <article class="border border-[#e2e8f0] bg-white p-5 md:p-6">
+                      <h3 class="mb-3 text-base font-bold text-gray-900 md:text-lg">{[item.horaEntrada, item.horaSalida].filter(Boolean).join(" - ") || "--"}</h3>
+                    </article>
                   ))}
                 </div>
               </section>
-            )}
+            ) : null}
 
-            {(includedItems.length > 0 || excludedItems.length > 0) && (
-              <section class="grid gap-8 md:grid-cols-2">
-                {includedItems.length > 0 && (
-                  <div>
-                    <h2 class="text-3xl text-stone-900 mb-4" style="font-family: 'Playfair Display', serif; font-style: italic;">
-                      {sourceTour.includedTitle || (lang === "en" ? "Included" : "Incluye")}
-                    </h2>
-                    <ul class="space-y-3">
-                      {includedItems.map((item: any) => <li class="flex items-start gap-3"><span class="text-[#1AA093]">✓</span><span>{item.text}</span></li>)}
-                    </ul>
-                  </div>
-                )}
-                {excludedItems.length > 0 && (
-                  <div>
-                    <h2 class="text-3xl text-stone-900 mb-4" style="font-family: 'Playfair Display', serif; font-style: italic;">
-                      {sourceTour.excludedTitle || (lang === "en" ? "Not Included" : "No incluye")}
-                    </h2>
-                    <ul class="space-y-3">
-                      {excludedItems.map((item: any) => <li class="flex items-start gap-3"><span class="text-stone-500">✕</span><span>{item.text}</span></li>)}
-                    </ul>
-                  </div>
-                )}
+            {(includedItems.length > 0 || excludedItems.length > 0) ? (
+              <section class="pb-16 md:pb-20">
+                <div class="grid grid-cols-2 gap-3 lg:gap-6">
+                  {includedItems.length > 0 ? (
+                    <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
+                      <h3 class="mb-4 text-base font-bold italic text-[#111827] md:text-2xl lg:text-3xl" style="font-family: 'Playfair Display', serif;"><span class="mr-2 text-green-700">✓</span>{includedTitle}</h3>
+                      <div class="divide-y divide-[#e5e7eb]">
+                        {includedItems.map((item: any) => (
+                          <div class="flex items-start gap-2 py-1.5 md:py-2.5">
+                            <span class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-green-700 text-xs text-green-700 md:h-5 md:w-5">{item.icon || "✓"}</span>
+                            <p class="text-xs leading-snug text-[#374151] md:text-sm" set:html={item.text} />
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  ) : null}
+                  {excludedItems.length > 0 ? (
+                    <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
+                      <h3 class="mb-4 text-base font-bold italic text-[#111827] md:text-2xl lg:text-3xl" style="font-family: 'Playfair Display', serif;"><span class="mr-2 text-[#6b7280]">✕</span>{excludedTitle}</h3>
+                      <div class="divide-y divide-[#e5e7eb]">
+                        {excludedItems.map((item: any) => (
+                          <div class="flex items-start gap-2 py-1.5 md:py-2.5">
+                            <span class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[#9ca3af] text-xs text-[#6b7280] md:h-5 md:w-5">{item.icon || "✕"}</span>
+                            <p class="text-xs leading-snug text-[#374151] md:text-sm" set:html={item.text} />
+                          </div>
+                        ))}
+                      </div>
+                    </article>
+                  ) : null}
+                </div>
               </section>
-            )}
+            ) : null}
 
-            {featuredImages.length > 0 && (
-              <section>
-                <h2 class="text-3xl text-stone-900 mb-6" style="font-family: 'Playfair Display', serif; font-style: italic;">
-                  {sourceTour.featuredTitle || (lang === "en" ? "Gallery" : "Galeria")}
-                </h2>
-                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {featuredImages.map((item: any) => {
+            {featuredImages.length > 0 ? (
+              <section class="pb-14 md:pb-20">
+                <h2 class="mb-6 text-2xl font-bold italic text-gray-900 md:text-3xl" style="font-family: 'Playfair Display', serif;">{galleryTitle}</h2>
+                <div class="grid grid-cols-2 gap-px md:grid-cols-4">
+                  {featuredImages.map((item: any, index: number) => {
                     const imageUrl = getOdooMediaUrl(item.image);
-                    return imageUrl ? <img src={imageUrl} alt={item.alt || sourceTour.title} class="w-full h-64 object-cover" /> : null;
+                    return imageUrl ? (
+                      <div class="relative group overflow-hidden aspect-square" key={index}>
+                        <img src={imageUrl} alt={item.alt || sourceTour.title} class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                        <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300" />
+                      </div>
+                    ) : null;
                   })}
                 </div>
               </section>
-            )}
+            ) : null}
 
-            {faqItems.length > 0 && (
-              <section>
-                <h2 class="text-3xl text-stone-900 mb-6" style="font-family: 'Playfair Display', serif; font-style: italic;">
-                  {sourceTour.faqTitle || "FAQ"}
-                </h2>
-                <div class="space-y-4">
-                  {faqItems.map((item: any) => (
-                    <details class="border border-stone-200 p-5">
-                      <summary class="cursor-pointer font-semibold">{item.question}</summary>
-                      <div class="mt-3 text-stone-700" set:html={item.answer} />
-                    </details>
-                  ))}
-                </div>
-              </section>
-            )}
+            {relatedTours.length > 0 ? (
+              <>
+                <Ribbon
+                  text={moreToursRibbonText}
+                  backgroundClass="bg-white"
+                  maxWidthClass="max-w-7xl"
+                  paddingClass="py-6 md:py-8"
+                  textClass="text-base md:text-xl lg:text-2xl text-gray-900 leading-relaxed"
+                  accentClass="bg-orange-500"
+                  sectionClass="mb-4 md:mb-6"
+                />
+                <section class="pt-1 pb-10 md:pt-2 md:pb-14">
+                  <div class="mx-auto w-full max-w-7xl px-6">
+                    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                      {relatedTours.map((tour: any) => {
+                        const imageUrl = getOdooMediaUrl(tour.heroSlideImages?.[0]);
+                        return (
+                          <article class="flex h-full flex-col overflow-hidden border border-[#e2e8f0] bg-white">
+                            <a href={`/${lang}/tours/${tour.slug}`} class="block" aria-label={tour.title || tourDetailCtaLabel}>
+                              {imageUrl ? <img src={imageUrl} alt={tour.title} class="h-52 w-full object-cover" /> : <div class="h-52 w-full bg-gray-200" />}
+                            </a>
+                            <div class="flex flex-1 flex-col p-4 md:p-5">
+                              {tour.title ? <h3 class="text-lg font-semibold text-gray-900">{tour.title}</h3> : null}
+                              {tour.adultUnitPrice > 0 ? <p class="mt-2 text-sm leading-relaxed text-gray-600">{priceFromLabel} {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), lang)}</p> : null}
+                              <a href={`/${lang}/tours/${tour.slug}`} class="mt-auto inline-flex w-fit self-start items-center justify-center border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-700 hover:text-white">{tourDetailCtaLabel}</a>
+                            </div>
+                          </article>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </section>
+              </>
+            ) : null}
           </div>
 
           <aside class="mt-12 lg:mt-0">
-            <div class="lg:sticky lg:top-28">
-              <BookingCard
-                lang={bookingLang}
-                titulo={bookingTitle}
-                duracion={bookingDuration}
-                disponibilidad={availability}
-                precioAdultoUsd={toNumber(sourceTour.adultUnitPrice)}
-                precioNinoUsd={toNumber(sourceTour.childUnitPrice)}
-                descuentoUsd={toNumber(sourceTour.discount)}
-                discountMode="percent"
-                duracionDias={toNumber(sourceTour.durationDays) || 1}
-                calendarLocale={calendarLocale}
-                calendarStart={calendarStart}
-                calendarMonth={calendarMonth}
-                weekdays={weekdays}
-              />
-            </div>
+            <BookingCard
+              lang={bookingLang}
+              titulo={bookingTitle}
+              duracion={bookingDuration}
+              disponibilidad={availability}
+              precioAdultoUsd={toNumber(sourceTour.adultUnitPrice)}
+              precioNinoUsd={toNumber(sourceTour.childUnitPrice)}
+              descuentoUsd={toNumber(sourceTour.discount)}
+              discountMode="percent"
+              duracionDias={toNumber(sourceTour.durationDays) || 1}
+              calendarLocale={calendarLocale}
+              calendarStart={calendarStart}
+              calendarMonth={calendarMonth}
+              weekdays={weekdays}
+            />
           </aside>
         </div>
       </section>
 
-      {relatedTours.length > 0 && (
-        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-          <h2 class="text-3xl text-stone-900 mb-8" style="font-family: 'Playfair Display', serif; font-style: italic;">
-            {lang === "en" ? "Related Tours" : "Tours relacionados"}
-          </h2>
-          <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {relatedTours.map((tour: any) => {
-              const imageUrl = getOdooMediaUrl(tour.heroSlideImages?.[0]);
-              return (
-                <a href={`/${lang}/tours/${tour.slug}`} class="group block bg-white shadow-sm hover:shadow-lg transition overflow-hidden">
-                  {imageUrl ? <img src={imageUrl} alt={tour.title} class="w-full h-64 object-cover group-hover:scale-[1.02] transition-transform duration-500" /> : <div class="w-full h-64 bg-stone-300" />}
-                  <div class="p-5">
-                    <h3 class="text-2xl text-stone-900" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</h3>
-                    {tour.adultUnitPrice > 0 ? (
-                      <p class="mt-3 text-sm text-[#1AA093] font-semibold">
-                        {priceFromLabel} {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), lang)}
-                      </p>
-                    ) : null}
-                  </div>
-                </a>
-              );
-            })}
+      {faqItems.length > 0 ? (
+        <section class="bg-white py-10 md:py-12">
+          <div class="mx-auto w-full max-w-7xl px-6">
+            <h3 class="mb-6 text-4xl font-semibold text-[#111827]">{faqTitle}</h3>
+            <div class="divide-y divide-[#e5e7eb] border-y border-[#e5e7eb]">
+              {faqItems.map((item: any) => (
+                <details class="group py-4">
+                  <summary class="flex cursor-pointer list-none items-center gap-4 text-2xl font-medium text-[#374151] marker:hidden">
+                    <span class="text-3xl leading-none text-green-700 group-open:hidden">+</span>
+                    <span class="hidden text-3xl leading-none text-green-700 group-open:inline">-</span>
+                    <span>{item.question}</span>
+                  </summary>
+                  <div class="pl-10 pt-3 text-lg leading-relaxed text-[#4b5563] text-justify [&_p]:mb-3 [&_p:last-child]:mb-0" set:html={item.answer} />
+                </details>
+              ))}
+            </div>
           </div>
         </section>
-      )}
+      ) : null}
     </main>
 
     <BookingModal
