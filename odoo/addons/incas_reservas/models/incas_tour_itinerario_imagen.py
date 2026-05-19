@@ -5,6 +5,7 @@ class IncasTourItinerarioImagen(models.Model):
     _name = "incas.tour.itinerario.imagen"
     _description = "Imagen de itinerario de tour"
     _order = "sequence, id"
+    _rec_name = "nombre_display"
 
     sequence = fields.Integer(string="Secuencia", default=10)
     itinerario_id = fields.Many2one(
@@ -21,11 +22,17 @@ class IncasTourItinerarioImagen(models.Model):
         required=True,
     )
     imagen_file_id = fields.Many2one("dms.file", string="Archivo imagen", readonly=True, copy=False)
+    nombre_display = fields.Char(string="Nombre", compute="_compute_nombre_display")
 
     @api.depends("imagen_file_id")
     def _compute_imagen(self):
         for record in self:
             record.imagen = record.imagen_file_id.content if record.imagen_file_id else False
+
+    @api.depends("imagen_file_id", "sequence")
+    def _compute_nombre_display(self):
+        for record in self:
+            record.nombre_display = record.imagen_file_id.name or f"Imagen {record.sequence or record.id}"
 
     def _inverse_imagen(self):
         for record in self:

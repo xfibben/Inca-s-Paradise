@@ -7,6 +7,7 @@ import Footer from "../../../components/shared/Footer.astro";
 import Ribbon from "../../../components/shared/Ribbon.astro";
 import { formatPrice } from "../../../utils/currency";
 import { fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from "../../../utils/odooWeb";
+import { richContentToHtml } from "../../../utils/richContent";
 
 type SupportedLang = "es" | "en" | "pt" | "it" | "fr";
 
@@ -36,15 +37,18 @@ if (!destination) {
 }
 
 const pageTitle = destination.title ?? slugKey;
-const pageDescription = destination.description ?? "";
+const pageDescription = richContentToHtml(destination.description);
+const plainDescription = pageDescription.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(/\/$/, "");
 const canonical = `${siteOrigin}/${lang}/destinos/${destination.slug}`;
 const seoTitle = String(destination?.seoTitle ?? "").trim() || pageTitle;
-const seoDescription = String(destination?.seoDescription ?? "").trim() || pageDescription;
+const seoDescription = String(destination?.seoDescription ?? "").trim() || plainDescription;
 const heroSlides = Array.isArray(destination.heroSlideImages) ? destination.heroSlideImages : [];
 const heroImage = getOdooMediaUrl(heroSlides[0]) || getOdooMediaUrl(destination.galleryThumbnail);
 const iconItems = Array.isArray(destination.iconItems) ? destination.iconItems : [];
 const tours = Array.isArray(destination.tours) ? destination.tours : [];
+const introTitleHtml = richContentToHtml(destination.introTitle);
+const introContentHtml = richContentToHtml(destination.introContent);
 const smallTripItems = tours.filter((tour: any) => tour.tourType === "small_trip");
 const packageItems = tours.filter((tour: any) => tour.tourType !== "small_trip");
 const priceFromLabel =
@@ -100,7 +104,7 @@ const getDiscountedPrice = (price: number, discountPercent: number) =>
           <h1 class="text-4xl md:text-6xl italic leading-tight" style="font-family: 'Playfair Display', serif;">
             {pageTitle}
           </h1>
-          {pageDescription ? <div class="mt-6 max-w-3xl text-lg text-white/90" set:html={pageDescription} /> : null}
+          {pageDescription ? <div class="mt-6 max-w-3xl text-lg text-white/90 text-justify [&_p]:mb-3 [&_p:last-child]:mb-0" set:html={pageDescription} /> : null}
         </div>
       </section>
 
@@ -110,8 +114,8 @@ const getDiscountedPrice = (price: number, discountPercent: number) =>
         {(destination.introTitle || destination.introContent || iconItems.length > 0) && (
           <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] items-start">
             <div>
-              {destination.introTitle ? <h2 class="text-3xl md:text-4xl italic text-stone-900 mb-6" style="font-family: 'Playfair Display', serif;">{destination.introTitle}</h2> : null}
-              {destination.introContent ? <div class="prose prose-stone max-w-none text-gray-700" set:html={destination.introContent} /> : null}
+              {introTitleHtml ? <div class="text-3xl md:text-4xl italic text-stone-900 mb-6 [&_p]:m-0" style="font-family: 'Playfair Display', serif;" set:html={introTitleHtml} /> : null}
+              {introContentHtml ? <div class="prose prose-stone max-w-none text-gray-700 text-justify" set:html={introContentHtml} /> : null}
             </div>
             {iconItems.length > 0 && (
               <div class="grid gap-4 sm:grid-cols-2">
@@ -144,7 +148,7 @@ const getDiscountedPrice = (price: number, discountPercent: number) =>
                   {imageUrl ? <img src={imageUrl} alt={tour.title} class="w-full h-64 object-cover group-hover:scale-[1.02] transition-transform duration-500" /> : <div class="w-full h-64 bg-stone-300" />}
                   <div class="p-5">
                     <h3 class="text-2xl text-stone-900" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</h3>
-                    {tour.metaDescription ? <div class="mt-2 text-sm text-stone-600 line-clamp-3" set:html={tour.metaDescription} /> : null}
+                    {tour.metaDescription ? <div class="mt-2 text-sm text-stone-600 line-clamp-3" set:html={richContentToHtml(tour.metaDescription)} /> : null}
                     {tour.adultUnitPrice > 0 ? <p class="mt-3 text-sm text-[#1AA093] font-semibold">{priceFromLabel} {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), lang)}</p> : null}
                   </div>
                 </a>

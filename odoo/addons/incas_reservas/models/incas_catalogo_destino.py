@@ -5,6 +5,7 @@ class IncasCatalogoDestino(models.Model):
     _name = "incas.catalogo.destino"
     _description = "Catálogo local de destinos"
     _order = "orden_visual, nombre, id"
+    _rec_name = "nombre"
 
     nombre = fields.Char(string="Nombre", required=True)
     orden_visual = fields.Integer(string="Orden visual", default=100)

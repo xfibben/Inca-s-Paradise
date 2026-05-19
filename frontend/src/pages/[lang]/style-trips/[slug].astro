@@ -4,6 +4,7 @@ import Footer from "../../../components/shared/Footer.astro";
 import { getTranslation, languages } from "../../../i18n";
 import { formatPrice } from "../../../utils/currency";
 import { fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from "../../../utils/odooWeb";
+import { richContentToHtml } from "../../../utils/richContent";
 import "../../../styles/global.css";
 import GoogleAnalytics from "../../../components/shared/GoogleAnalytics.astro";
 
@@ -44,7 +45,10 @@ const tours: any[] = Array.isArray(trip.tours) ? trip.tours : [];
 const relatedTours = tours.filter((tour: any) => tour.tourType === "small_trip" && tour.showInStyles !== false);
 const carouselTours = tours.filter((tour: any) => tour.tourType !== "small_trip");
 const heroImageUrl = getOdooMediaUrl(trip.wallpaper) || getOdooMediaUrl(trip.image);
-const middleDescriptionHtml = trip.middle_description || "";
+const descriptionHtml = richContentToHtml(trip.description);
+const plainDescription = descriptionHtml.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+const middleTitleHtml = richContentToHtml(trip.middle_tittle);
+const middleDescriptionHtml = richContentToHtml(trip.middle_description);
 const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(/\/$/, "");
 const canonical = `${siteOrigin}/${currentLang}/style-trips/${trip.slug}`;
 ---
@@ -58,13 +62,13 @@ const canonical = `${siteOrigin}/${currentLang}/style-trips/${trip.slug}`;
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>{trip?.seoTitle || trip?.name || "Style Trip"} — Inca's Paradise</title>
-    <meta name="description" content={trip?.seoDescription || trip?.description || "Style Trip"} />
+    <meta name="description" content={trip?.seoDescription || plainDescription || "Style Trip"} />
     <link rel="canonical" href={canonical} />
     <script is:inline type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "TouristTrip",
       "name": trip?.seoTitle || trip?.name || "Style Trip",
-      "description": trip?.seoDescription || trip?.description || "Style Trip",
+      "description": trip?.seoDescription || plainDescription || "Style Trip",
       "url": canonical,
       "provider": {
         "@type": "TravelAgency",
@@ -103,13 +107,11 @@ const canonical = `${siteOrigin}/${currentLang}/style-trips/${trip.slug}`;
 
     <main class="bg-white pb-16 px-4 md:px-20 lg:px-32">
       <div class="pt-12 max-w-4xl mx-auto">
-        {trip?.description && <p class="text-xl text-gray-700 leading-relaxed text-center">{trip.description}</p>}
+        {descriptionHtml && <div class="text-xl text-gray-700 leading-relaxed text-center text-justify [&_p]:mb-3 [&_p:last-child]:mb-0" set:html={descriptionHtml} />}
         {trip?.middle_tittle && (
-          <h2 class="mt-12 text-3xl md:text-4xl text-gray-900 text-center" style="font-family: 'Playfair Display', serif; font-style: italic;">
-            {trip.middle_tittle}
-          </h2>
+          <div class="mt-12 text-3xl md:text-4xl text-gray-900 text-center [&_p]:m-0" style="font-family: 'Playfair Display', serif; font-style: italic;" set:html={middleTitleHtml} />
         )}
-        {middleDescriptionHtml && <div class="prose prose-stone max-w-none mt-6 text-gray-700" set:html={middleDescriptionHtml} />}
+        {middleDescriptionHtml && <div class="prose prose-stone max-w-none mt-6 text-gray-700 text-justify" set:html={middleDescriptionHtml} />}
       </div>
 
       {relatedTours.length > 0 && (

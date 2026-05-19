@@ -8,6 +8,7 @@ import BookingModal from "../../../components/tours/BookingModal.astro";
 import BookingCard from "../../../components/tours/BookingCard.astro";
 import Ribbon from "../../../components/shared/Ribbon.astro";
 import { formatPrice } from "../../../utils/currency";
+import { normalizeOdooHtml, richContentToHtml } from "../../../utils/richContent";
 import { buildLocalizedSlugs, fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from "../../../utils/odooWeb";
 
 export function getStaticPaths() {
@@ -49,19 +50,40 @@ const seoTitle =
   cleanText(sourceTour.metaTitle) ||
   cleanText(sourceTour.title) ||
   (lang === "en" ? "Tour details" : "Detalle del tour");
-const seoDescription = cleanText(sourceTour.seoDescription) || cleanText(sourceTour.metaDescription);
+const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+const seoDescription = stripHtml(normalizeOdooHtml(sourceTour.seoDescription) || normalizeOdooHtml(sourceTour.metaDescription));
 const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(/\/$/, "");
 const canonical = `${siteOrigin}/${lang}/tours/${sourceTour.slug || tourSlug}`;
 const heroImages = toObjectList(sourceTour.heroSlideImages);
 const heroImage = getOdooMediaUrl(heroImages[0]);
-const featuredImages = toObjectList(sourceTour.featuredImages);
-const itineraryItems = toObjectList(sourceTour.itineraryItems);
+const featuredImages = toObjectList(sourceTour.featuredImages).map((item: any) => ({
+  ...item,
+  alt: stripHtml(normalizeOdooHtml(item?.alt || sourceTour.title)),
+}));
+const itineraryItems = toObjectList(sourceTour.itineraryItems).map((item: any, index: number) => ({
+  ...item,
+  titleHtml: richContentToHtml(item.title),
+  descriptionHtml: richContentToHtml(item.description),
+  imageAltText: stripHtml(normalizeOdooHtml(item.imageAlt || item.title || `${lang === "en" ? "Day" : "Dia"} ${index + 1}`)),
+  images: toObjectList(item.images).map((image: any) => ({
+    url: getOdooMediaUrl(image),
+    alt: stripHtml(normalizeOdooHtml(item.imageAlt || item.title || `${lang === "en" ? "Day" : "Dia"} ${index + 1}`)),
+  })).filter((image: any) => image.url),
+}));
 const scheduleItems = toObjectList(sourceTour.scheduleItems);
 const includedItems = toObjectList(sourceTour.includedItems);
 const excludedItems = toObjectList(sourceTour.excludedItems);
-const faqItems = toObjectList(sourceTour.faqItems);
+const faqItems = toObjectList(sourceTour.faqItems).map((item: any) => ({
+  ...item,
+  questionText: stripHtml(normalizeOdooHtml(item.question)),
+  answerHtml: richContentToHtml(item.answer),
+}));
 const relatedTours = toObjectList(sourceTour.relatedTours);
-const highlightItems = toObjectList(sourceTour.highlightsItems);
+const highlightItems = toObjectList(sourceTour.highlightsItems).map((item: any) => ({
+  ...item,
+  titleHtml: richContentToHtml(item.title),
+  descriptionHtml: richContentToHtml(item.description),
+}));
 const tourSlugs = sourceTour.slugs ?? buildLocalizedSlugs(sourceTour.slug || tourSlug);
 const destinationNames = toObjectList(sourceTour.destinos).map((item: any) => item.title).filter(Boolean);
 const priceFromLabel =
@@ -82,17 +104,18 @@ const weekdays = lang === "en"
   : ["L", "M", "X", "Ju", "V", "S", "D"];
 const bookingTitle = lang === "en" ? "BOOK NOW" : "RESERVA AHORA";
 const availability = lang === "en" ? "Real-time availability" : "Disponibilidad en tiempo real";
-const bookingDuration = cleanText(sourceTour.durationLabel) || `${toNumber(sourceTour.durationDays) || 1} ${lang === "en" ? "day" : "dia"}${(toNumber(sourceTour.durationDays) || 1) > 1 ? "s" : ""}`;
-const highlightsTitle = cleanText(sourceTour.highlightsTitle);
-const highlightsLead = sourceTour.highlightsLead ?? "";
+const durationDays = toNumber(sourceTour.durationDays) || 1;
+const bookingDuration = `${durationDays} ${lang === "en" ? "day" : "dia"}${durationDays > 1 ? "s" : ""}`;
+const highlightsTitle = stripHtml(normalizeOdooHtml(sourceTour.highlightsTitle));
+const highlightsLead = richContentToHtml(sourceTour.highlightsLead);
 const hasHighlightsSection = Boolean(highlightsTitle || highlightsLead || highlightItems.length || heroImage);
-const itineraryTitle = cleanText(sourceTour.itineraryTitle) || (lang === "en" ? "Itinerary" : "Itinerario");
+const itineraryTitle = stripHtml(normalizeOdooHtml(sourceTour.itineraryTitle)) || (lang === "en" ? "Itinerary" : "Itinerario");
 const itineraryItemLabel = lang === "en" ? "Day" : "Dia";
-const scheduleTitle = cleanText(sourceTour.scheduleTitle) || (lang === "en" ? "Schedules" : "Horarios");
-const includedTitle = cleanText(sourceTour.includedTitle) || (lang === "en" ? "Included" : "Incluye");
-const excludedTitle = cleanText(sourceTour.excludedTitle) || (lang === "en" ? "Not Included" : "No incluye");
-const galleryTitle = cleanText(sourceTour.featuredTitle) || (lang === "en" ? "Gallery" : "Galeria");
-const faqTitle = cleanText(sourceTour.faqTitle) || "FAQ";
+const scheduleTitle = stripHtml(normalizeOdooHtml(sourceTour.scheduleTitle)) || (lang === "en" ? "Schedules" : "Horarios");
+const includedTitle = stripHtml(normalizeOdooHtml(sourceTour.includedTitle)) || (lang === "en" ? "Included" : "Incluye");
+const excludedTitle = stripHtml(normalizeOdooHtml(sourceTour.excludedTitle)) || (lang === "en" ? "Not Included" : "No incluye");
+const galleryTitle = stripHtml(normalizeOdooHtml(sourceTour.featuredTitle)) || (lang === "en" ? "Gallery" : "Galeria");
+const faqTitle = stripHtml(normalizeOdooHtml(sourceTour.faqTitle)) || "FAQ";
 const primaryDestinationName = destinationNames[0] ?? "";
 const moreToursRibbonText =
   primaryDestinationName
@@ -172,8 +195,8 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
                         <article class="flex items-start gap-3">
                           <span class="mt-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-green-600 text-green-600">{index + 1}</span>
                           <div>
-                            {item.title ? <p class="text-lg font-normal text-[#111827] md:text-xl" set:html={item.title} /> : null}
-                            {item.description ? <div class="mt-1 text-sm leading-relaxed text-[#4b5563] text-justify md:text-base [&_p]:mb-2 [&_p:last-child]:mb-0" set:html={item.description} /> : null}
+                            {item.titleHtml ? <div class="text-lg font-normal text-[#111827] md:text-xl [&_p]:m-0" set:html={item.titleHtml} /> : null}
+                            {item.descriptionHtml ? <div class="mt-1 text-sm leading-relaxed text-[#4b5563] text-justify md:text-base [&_p]:mb-2 [&_p:last-child]:mb-0" set:html={item.descriptionHtml} /> : null}
                           </div>
                         </article>
                       ))}
@@ -196,11 +219,28 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
                             <span class="text-base font-semibold">{itineraryItemLabel}</span>
                             <span class="inline-flex h-6 min-w-6 items-center justify-center rounded-full border border-green-600 px-1 text-xs font-bold leading-none">{index + 1}</span>
                           </span>
-                          <span class="pt-0.5 text-base font-semibold text-gray-900 md:text-lg" set:html={item.title || `${itineraryItemLabel} ${index + 1}`} />
+                          <span class="pt-0.5 text-base font-semibold text-gray-900 md:text-lg" set:html={item.titleHtml || `${itineraryItemLabel} ${index + 1}`} />
                         </summary>
                         <div class="mt-4 pl-0 md:pl-24">
-                          {imageUrl ? <img src={imageUrl} alt={item.imageAlt || item.title || `${itineraryItemLabel} ${index + 1}`} class="mx-auto h-56 w-full max-w-2xl object-cover md:h-64" /> : null}
-                          {item.description ? <div class="prose prose-sm md:prose-base mt-3 max-w-none text-black md:ml-6 md:mr-14 lg:ml-10 lg:mr-28 prose-p:mb-3 prose-p:leading-7 prose-p:text-justify prose-p:last:mb-0 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e] [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_[style*='text-align:center']]:text-center [&_[style*='text-align:right']]:text-right [&_[style*='text-align:left']]:text-left [&_img]:my-3 [&_img]:mx-auto [&_img]:block [&_img]:h-auto [&_img]:w-full [&_img]:max-w-[560px] [&_img]:max-h-[340px] [&_img]:object-cover" set:html={item.description} /> : null}
+                          {item.images.length > 0 ? (
+                            <div class="mt-2 flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
+                              {item.images.map((image: any, imageIndex: number) => (
+                                <button
+                                  type="button"
+                                  class="group relative h-56 w-[82%] min-w-[82%] overflow-hidden snap-start md:h-64 md:max-w-2xl"
+                                  data-itinerary-lightbox-open
+                                  data-gallery-index={index}
+                                  data-slide-index={imageIndex}
+                                  data-src={image.url}
+                                  data-alt={image.alt}
+                                  aria-label="Ver imagen en grande"
+                                >
+                                  <img src={image.url} alt={image.alt} class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" />
+                                </button>
+                              ))}
+                            </div>
+                          ) : imageUrl ? <img src={imageUrl} alt={item.imageAltText} class="mx-auto h-56 w-full max-w-2xl object-cover md:h-64" /> : null}
+                          {item.descriptionHtml ? <div class="prose prose-sm md:prose-base mt-3 max-w-none text-black md:ml-6 md:mr-14 lg:ml-10 lg:mr-28 prose-p:mb-3 prose-p:leading-7 prose-p:text-justify prose-p:last:mb-0 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-a:text-[#1AA093] prose-a:no-underline hover:prose-a:text-[#0e8a7e] [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_[style*='text-align:center']]:text-center [&_[style*='text-align:right']]:text-right [&_[style*='text-align:left']]:text-left [&_img]:my-3 [&_img]:mx-auto [&_img]:block [&_img]:h-auto [&_img]:w-full [&_img]:max-w-[560px] [&_img]:max-h-[340px] [&_img]:object-cover" set:html={item.descriptionHtml} /> : null}
                         </div>
                       </details>
                     );
@@ -232,7 +272,7 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
                         {includedItems.map((item: any) => (
                           <div class="flex items-start gap-2 py-1.5 md:py-2.5">
                             <span class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-green-700 text-xs text-green-700 md:h-5 md:w-5">{item.icon || "✓"}</span>
-                            <p class="text-xs leading-snug text-[#374151] md:text-sm" set:html={item.text} />
+                            <p class="text-xs leading-snug text-[#374151] md:text-sm" set:html={richContentToHtml(item.text)} />
                           </div>
                         ))}
                       </div>
@@ -245,7 +285,7 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
                         {excludedItems.map((item: any) => (
                           <div class="flex items-start gap-2 py-1.5 md:py-2.5">
                             <span class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[#9ca3af] text-xs text-[#6b7280] md:h-5 md:w-5">{item.icon || "✕"}</span>
-                            <p class="text-xs leading-snug text-[#374151] md:text-sm" set:html={item.text} />
+                            <p class="text-xs leading-snug text-[#374151] md:text-sm" set:html={richContentToHtml(item.text)} />
                           </div>
                         ))}
                       </div>
@@ -318,7 +358,7 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
               precioNinoUsd={toNumber(sourceTour.childUnitPrice)}
               descuentoUsd={toNumber(sourceTour.discount)}
               discountMode="percent"
-              duracionDias={toNumber(sourceTour.durationDays) || 1}
+              duracionDias={durationDays}
               calendarLocale={calendarLocale}
               calendarStart={calendarStart}
               calendarMonth={calendarMonth}
@@ -338,15 +378,25 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
                   <summary class="flex cursor-pointer list-none items-center gap-4 text-2xl font-medium text-[#374151] marker:hidden">
                     <span class="text-3xl leading-none text-green-700 group-open:hidden">+</span>
                     <span class="hidden text-3xl leading-none text-green-700 group-open:inline">-</span>
-                    <span>{item.question}</span>
+                    <span>{item.questionText}</span>
                   </summary>
-                  <div class="pl-10 pt-3 text-lg leading-relaxed text-[#4b5563] text-justify [&_p]:mb-3 [&_p:last-child]:mb-0" set:html={item.answer} />
+                  <div class="pl-10 pt-3 text-lg leading-relaxed text-[#4b5563] text-justify [&_p]:mb-3 [&_p:last-child]:mb-0" set:html={item.answerHtml} />
                 </details>
               ))}
             </div>
           </div>
         </section>
       ) : null}
+
+      <div class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90 px-4" data-itinerary-lightbox>
+        <button type="button" class="absolute right-4 top-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20" data-itinerary-lightbox-close aria-label="Cerrar">&times;</button>
+        <button type="button" class="absolute left-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition hover:bg-white/20" data-itinerary-lightbox-prev aria-label="Anterior">&lsaquo;</button>
+        <div class="relative max-h-[90vh] max-w-[92vw]">
+          <img src="" alt="" class="max-h-[90vh] max-w-[92vw] object-contain" data-itinerary-lightbox-img />
+          <p class="absolute bottom-3 left-0 right-0 text-center text-sm text-white/75" data-itinerary-lightbox-counter></p>
+        </div>
+        <button type="button" class="absolute right-4 top-1/2 inline-flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-3xl text-white transition hover:bg-white/20" data-itinerary-lightbox-next aria-label="Siguiente">&rsaquo;</button>
+      </div>
     </main>
 
     <BookingModal
@@ -359,5 +409,53 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
       })}
     />
     <Footer currentLang={lang} {t} />
+    <script is:inline>
+      (() => {
+        const lightbox = document.querySelector("[data-itinerary-lightbox]");
+        const img = document.querySelector("[data-itinerary-lightbox-img]");
+        const counter = document.querySelector("[data-itinerary-lightbox-counter]");
+        if (!lightbox || !(img instanceof HTMLImageElement)) return;
+
+        const buttons = Array.from(document.querySelectorAll("[data-itinerary-lightbox-open]"));
+        const images = buttons.map((button) => ({
+          src: button.getAttribute("data-src") || "",
+          alt: button.getAttribute("data-alt") || "",
+        })).filter((image) => image.src);
+        if (!images.length) return;
+
+        let current = 0;
+        const render = (index) => {
+          current = (index + images.length) % images.length;
+          img.src = images[current].src;
+          img.alt = images[current].alt;
+          if (counter) counter.textContent = `${current + 1} / ${images.length}`;
+        };
+        const open = (index) => {
+          render(index);
+          lightbox.classList.remove("hidden");
+          lightbox.classList.add("flex");
+          document.body.style.overflow = "hidden";
+        };
+        const close = () => {
+          lightbox.classList.add("hidden");
+          lightbox.classList.remove("flex");
+          document.body.style.overflow = "";
+        };
+
+        buttons.forEach((button, index) => button.addEventListener("click", () => open(index)));
+        document.querySelector("[data-itinerary-lightbox-close]")?.addEventListener("click", close);
+        document.querySelector("[data-itinerary-lightbox-prev]")?.addEventListener("click", () => render(current - 1));
+        document.querySelector("[data-itinerary-lightbox-next]")?.addEventListener("click", () => render(current + 1));
+        lightbox.addEventListener("click", (event) => {
+          if (event.target === lightbox) close();
+        });
+        document.addEventListener("keydown", (event) => {
+          if (lightbox.classList.contains("hidden")) return;
+          if (event.key === "ArrowLeft") render(current - 1);
+          if (event.key === "ArrowRight") render(current + 1);
+          if (event.key === "Escape") close();
+        });
+      })();
+    </script>
   </body>
 </html>

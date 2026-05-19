@@ -164,13 +164,12 @@ def _slugs_localizados(record):
 
 def _serialize_tour_media_list(tour):
     imagenes = []
+    payload_principal = _image_payload(tour, "imagen")
+    if payload_principal:
+        imagenes.append(payload_principal)
     for item in tour.imagen_destacada_ids.sorted(lambda rec: (rec.sequence, rec.id)):
         payload = _image_payload(item, "imagen")
-        if payload:
-            imagenes.append(payload)
-    if not imagenes:
-        payload = _image_payload(tour, "imagen")
-        if payload:
+        if payload and payload not in imagenes:
             imagenes.append(payload)
     return imagenes
 
@@ -192,7 +191,7 @@ def _serialize_tour_card(tour, lang):
         "childUnitPrice": tour.precio_nino or 0,
         "discount": tour.descuento or 0,
         "tourType": tour.tipo_tour or "tour",
-        "durationDays": max(len(tour.itinerario_item_ids), 1),
+        "durationDays": tour.dias or max(len(tour.itinerario_item_ids), 1),
         "showInStyles": bool(tour.estilo_ids),
         "heroSlideImages": hero_images,
     }
@@ -313,10 +312,12 @@ def _serialize_web_tour(tour, lang, incluir_relaciones=True, incluir_relacionado
     ]
     itinerary_items = []
     for item in tour.itinerario_item_ids.sorted(lambda rec: (rec.sequence, rec.id)):
-        imagen = False
-        primera_imagen = item.imagen_ids.sorted(lambda rec: (rec.sequence, rec.id))[:1]
-        if primera_imagen:
-            imagen = _image_payload(primera_imagen, "imagen")
+        imagenes = [
+            _image_payload(imagen, "imagen")
+            for imagen in item.imagen_ids.sorted(lambda rec: (rec.sequence, rec.id))
+            if _image_payload(imagen, "imagen")
+        ]
+        imagen = imagenes[0] if imagenes else False
         itinerary_items.append(
             {
                 "title": _campo_localizado(item, "titulo", lang),
@@ -325,6 +326,7 @@ def _serialize_web_tour(tour, lang, incluir_relaciones=True, incluir_relacionado
                 "optional": "",
                 "imageAlt": _campo_localizado(item, "titulo", lang),
                 "image": imagen,
+                "images": imagenes,
                 "includes": [],
             }
         )
@@ -398,7 +400,7 @@ def _serialize_web_tour(tour, lang, incluir_relaciones=True, incluir_relacionado
         "childUnitPrice": tour.precio_nino or 0,
         "discount": tour.descuento or 0,
         "tourType": tour.tipo_tour or "tour",
-        "durationDays": max(len(tour.itinerario_item_ids), 1),
+        "durationDays": tour.dias or max(len(tour.itinerario_item_ids), 1),
         "showInStyles": bool(tour.estilo_ids),
     }
     if incluir_relaciones:

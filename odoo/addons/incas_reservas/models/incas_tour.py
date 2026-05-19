@@ -31,6 +31,7 @@ class IncasTour(models.Model):
     precio_adulto = fields.Float(string="Precio adulto USD")
     precio_nino = fields.Float(string="Precio niño USD")
     descuento = fields.Float(string="Descuento")
+    dias = fields.Integer(string="Dias", default=1)
     ip = fields.Selection(
         [
             ("ip3", "IP 3"),
@@ -217,6 +218,9 @@ class IncasTour(models.Model):
         if not value:
             return False
         return json.dumps(value, ensure_ascii=False, indent=2)
+
+    def name_get(self):
+        return [(record.id, record.nombre or f"Tour {record.id}") for record in self]
 
     def _serializar_destinos(self):
         self.ensure_one()
