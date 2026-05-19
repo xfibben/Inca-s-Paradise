@@ -72,6 +72,16 @@ const priceFromLabel =
 const bookingLang = (["es", "en", "pt", "fr", "it"].includes(lang) ? lang : "es") as "es" | "en" | "pt" | "fr" | "it";
 const getDiscountedPrice = (price: number, discountPercent: number) =>
   Math.max(0, price - (price * Math.max(0, discountPercent)) / 100);
+const nowPeru = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Lima" }));
+const calendarLocale = lang === "en" ? "en-US" : "es-PE";
+const calendarStart = `${nowPeru.getFullYear()}-${String(nowPeru.getMonth() + 1).padStart(2, "0")}`;
+const calendarMonth = nowPeru.toLocaleDateString(calendarLocale, { month: "long", year: "numeric", timeZone: "America/Lima" });
+const weekdays = lang === "en"
+  ? ["M", "T", "W", "Th", "F", "S", "S"]
+  : ["L", "M", "X", "Ju", "V", "S", "D"];
+const bookingTitle = lang === "en" ? "BOOK NOW" : "RESERVA AHORA";
+const availability = lang === "en" ? "Real-time availability" : "Disponibilidad en tiempo real";
+const bookingDuration = cleanText(sourceTour.durationLabel) || `${toNumber(sourceTour.durationDays) || 1} ${lang === "en" ? "day" : "dia"}${(toNumber(sourceTour.durationDays) || 1) > 1 ? "s" : ""}`;
 ---
 
 <html lang={lang}>
@@ -248,15 +258,18 @@ const getDiscountedPrice = (price: number, discountPercent: number) =>
             <div class="lg:sticky lg:top-28">
               <BookingCard
                 lang={bookingLang}
+                titulo={bookingTitle}
+                duracion={bookingDuration}
+                disponibilidad={availability}
                 precioAdultoUsd={toNumber(sourceTour.adultUnitPrice)}
                 precioNinoUsd={toNumber(sourceTour.childUnitPrice)}
                 descuentoUsd={toNumber(sourceTour.discount)}
                 discountMode="percent"
                 duracionDias={toNumber(sourceTour.durationDays) || 1}
-                scheduleOptions={scheduleItems.map((item: any) => {
-                  const label = [item.horaEntrada, item.horaSalida].filter(Boolean).join(" - ");
-                  return { label: label || "Horario", value: label || "Horario" };
-                })}
+                calendarLocale={calendarLocale}
+                calendarStart={calendarStart}
+                calendarMonth={calendarMonth}
+                weekdays={weekdays}
               />
             </div>
           </aside>
