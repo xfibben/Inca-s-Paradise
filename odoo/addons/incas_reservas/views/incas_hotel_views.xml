@@ -223,7 +223,7 @@
     <menuitem
         id="menu_incas_hotel"
         name="Hoteles"
-        parent="incas_core.menu_incas_configuracion_root"
+        parent="menu_incas_catalogo_root"
         action="action_incas_hotel"
         sequence="15"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
@@ -232,7 +232,7 @@
     <menuitem
         id="menu_incas_hotel_tarifa"
         name="Tarifas de hotel"
-        parent="incas_core.menu_incas_configuracion_root"
+        parent="menu_incas_catalogo_root"
         action="action_incas_hotel_tarifa"
         sequence="16"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"

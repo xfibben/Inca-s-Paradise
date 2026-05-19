@@ -9,8 +9,8 @@ interface PendingBooking {
   nacionalidad?: string;
   tourNombre?: string;
   vehiculo_seleccionado?: string | null;
-  tourDocumentId?: string | null;
-  transporteDocumentId?: string | null;
+  serviceId?: number | null;
+  transporteSlug?: string | null;
   fecha_inicio?: string;
   fecha_fin?: string;
   turno?: string | null;
@@ -23,6 +23,7 @@ interface PendingBooking {
   monto_total?: number;
   porcentaje_pago?: number;
   moneda?: string;
+  destinoNombre?: string | null;
 }
 
 async function cargarLogo(): Promise<string | null> {
@@ -51,18 +52,6 @@ async function cargarLogo(): Promise<string | null> {
   }
 }
 
-async function obtenerDestino(tourDocumentId: string, strapiBase: string): Promise<string> {
-  try {
-    const r = await fetch(`${strapiBase}/api/tour-detalles/${tourDocumentId}?populate[destinos][fields][0]=nombre`);
-    if (!r.ok) return "";
-    const tj = await r.json();
-    const destinos = tj?.data?.destinos;
-    if (Array.isArray(destinos) && destinos.length > 0) return destinos[0]?.nombre ?? "";
-    if (destinos?.nombre) return destinos.nombre;
-  } catch { /* continuar sin destino */ }
-  return "";
-}
-
 export async function generarVoucherPDF(ticket: string, booking: PendingBooking | undefined): Promise<void> {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -83,7 +72,7 @@ export async function generarVoucherPDF(ticket: string, booking: PendingBooking 
   doc.text("Inca's Paradise", logoDataUrl ? 32 : 15, 17);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  const esTransporte = !!booking?.transporteDocumentId;
+  const esTransporte = !!booking?.transporteSlug;
   const tipoServicio = esTransporte ? "Transporte" : "Tour";
   doc.text(`Comprobante de Reserva de ${tipoServicio}`, logoDataUrl ? 32 : 15, 26);
 
@@ -106,12 +95,8 @@ export async function generarVoucherPDF(ticket: string, booking: PendingBooking 
   doc.setFont("helvetica", "bold");
   doc.text(ticket, 105, 67, { align: "center" });
 
-  // ── Destino desde Strapi ──
-  let destinoNombre = "";
-  if (booking?.tourDocumentId) {
-    const strapiBase = (window as any).__strapiUrl ?? "http://localhost:1337";
-    destinoNombre = await obtenerDestino(booking.tourDocumentId, strapiBase);
-  }
+  // ── Destino de la reserva ──
+  const destinoNombre = booking?.destinoNombre ?? "";
 
   // ── Helpers de layout ──
   let y = 84;

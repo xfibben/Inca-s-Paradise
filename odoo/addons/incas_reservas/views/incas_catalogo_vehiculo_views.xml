@@ -18,6 +18,14 @@
         <field name="arch" type="xml">
             <form string="Vehículo">
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_ver_documentos" type="object" class="oe_stat_button" icon="fa-folder-open">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Documentos</span>
+                            </div>
+                        </button>
+                    </div>
+                    <field name="documento_directory_id" invisible="1"/>
                     <group>
                         <group>
                             <field name="numero_asientos"/>
@@ -45,23 +53,22 @@
                         </page>
                         <page string="Características">
                             <field name="caracteristica_ids" nolabel="1">
-                                <list>
+                                <list editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="titulo"/>
+                                    <field name="titulo_en"/>
+                                    <field name="titulo_pt"/>
                                 </list>
                                 <form string="Característica">
                                     <sheet>
                                         <group string="Español">
                                             <field name="titulo"/>
-                                            <field name="descripcion" widget="html"/>
                                         </group>
                                         <group string="English">
                                             <field name="titulo_en"/>
-                                            <field name="descripcion_en" widget="html"/>
                                         </group>
                                         <group string="Português">
                                             <field name="titulo_pt"/>
-                                            <field name="descripcion_pt" widget="html"/>
                                         </group>
                                     </sheet>
                                 </form>

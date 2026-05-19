@@ -19,6 +19,12 @@ def _lang_base(lang):
     return "es"
 
 
+def _domain_ip(ip_value):
+    if ip_value in {"ip2", "ip3"}:
+        return [("ip", "=", ip_value)]
+    return []
+
+
 def _campo_localizado(record, base, lang):
     lang = _lang_base(lang)
     if lang == "en" and hasattr(record, f"{base}_en"):
@@ -41,13 +47,11 @@ def _serialize_vehiculo(vehiculo, lang):
     features = []
     for caracteristica in vehiculo.caracteristica_ids.sorted(lambda item: (item.sequence, item.id)):
         texto = _campo_localizado(caracteristica, "titulo", lang)
-        descripcion = _campo_localizado(caracteristica, "descripcion", lang)
-        if texto or descripcion:
+        if texto:
             features.append(
                 {
-                    "text": texto or descripcion or "",
+                    "text": texto or "",
                     "title": texto or "",
-                    "description": descripcion or "",
                 }
             )
     return {
@@ -84,6 +88,7 @@ def _serialize_transporte(transporte, lang, incluir_tipos=True):
     data = {
         "id": transporte.id,
         "documentId": None,
+        "ip": transporte.ip or "ip3",
         "slug": transporte.slug,
         "nombre": _campo_localizado(transporte, "name", lang),
         "seoTitle": _campo_localizado(transporte, "seo_title", lang),
@@ -140,6 +145,296 @@ def _serialize_tipo_transporte(estilo, lang, incluir_transportes=False):
     return data
 
 
+def _slug_localizado(record, lang):
+    return _campo_localizado(record, "slug", lang)
+
+
+def _slugs_localizados(record):
+    base = getattr(record, "slug", False) or ""
+    slug_en = getattr(record, "slug_en", False) or base
+    slug_pt = getattr(record, "slug_pt", False) or base
+    return {
+        "es": base,
+        "en": slug_en or base,
+        "pt": slug_pt or base,
+        "fr": base,
+        "it": base,
+    }
+
+
+def _serialize_tour_media_list(tour):
+    imagenes = []
+    for item in tour.imagen_destacada_ids.sorted(lambda rec: (rec.sequence, rec.id)):
+        payload = _image_payload(item, "imagen")
+        if payload:
+            imagenes.append(payload)
+    if not imagenes:
+        payload = _image_payload(tour, "imagen")
+        if payload:
+            imagenes.append(payload)
+    return imagenes
+
+
+def _serialize_tour_card(tour, lang):
+    hero_images = _serialize_tour_media_list(tour)
+    return {
+        "id": tour.id,
+        "documentId": None,
+        "ip": tour.ip or "ip3",
+        "serviceId": tour.servicio_id.id if tour.servicio_id else None,
+        "slug": _slug_localizado(tour, lang),
+        "slugs": _slugs_localizados(tour),
+        "title": _campo_localizado(tour, "nombre", lang),
+        "nombre": _campo_localizado(tour, "nombre", lang),
+        "metaTitle": _campo_localizado(tour, "meta_titulo", lang),
+        "metaDescription": _campo_localizado(tour, "meta_descripcion", lang),
+        "adultUnitPrice": tour.precio_adulto or 0,
+        "childUnitPrice": tour.precio_nino or 0,
+        "discount": tour.descuento or 0,
+        "tourType": tour.tipo_tour or "tour",
+        "durationDays": max(len(tour.itinerario_item_ids), 1),
+        "showInStyles": bool(tour.estilo_ids),
+        "heroSlideImages": hero_images,
+    }
+
+
+def _serialize_destino_minimo(destino, lang):
+    return {
+        "id": destino.id,
+        "title": _campo_localizado(destino, "nombre", lang),
+        "name": _campo_localizado(destino, "nombre", lang),
+        "slug": _slug_localizado(destino, lang),
+        "slugs": _slugs_localizados(destino),
+        "galleryThumbnail": _image_payload(destino, "imagen"),
+        "heroSlideImages": [payload for payload in [_image_payload(destino, "imagen_fondo"), _image_payload(destino, "imagen")] if payload],
+    }
+
+
+def _serialize_estilo_viaje_minimo(estilo, lang):
+    return {
+        "id": estilo.id,
+        "name": _campo_localizado(estilo, "name", lang),
+        "slug": _slug_localizado(estilo, lang),
+        "slugs": _slugs_localizados(estilo),
+        "image": _image_payload(estilo, "image"),
+    }
+
+
+def _serialize_subcategoria_destino(subcategoria, lang):
+    return {
+        "id": subcategoria.id,
+        "nombre": subcategoria.nombre,
+        "tours": [
+            _serialize_tour_card(tour, lang)
+            for tour in subcategoria.tour_ids.sorted(lambda rec: (_campo_localizado(rec, "nombre", lang) or "", rec.id))
+            if tour.active
+        ],
+    }
+
+
+def _serialize_destino(destino, lang, incluir_tours=False):
+    tours = destino.tour_ids.sorted(lambda rec: (_campo_localizado(rec, "nombre", lang) or "", rec.id))
+    icon_items = []
+    for item in destino.icono_item_ids.sorted(lambda rec: (rec.sequence, rec.id)):
+        label = _campo_localizado(item, "titulo", lang)
+        icon_items.append(
+            {
+                "iconKey": "",
+                "label": label,
+                "description": "",
+                "iconAlt": label or "",
+                "icon": _image_payload(item, "imagen"),
+            }
+        )
+    data = {
+        "id": destino.id,
+        "documentId": None,
+        "title": _campo_localizado(destino, "nombre", lang),
+        "name": _campo_localizado(destino, "nombre", lang),
+        "slug": _slug_localizado(destino, lang),
+        "slugs": _slugs_localizados(destino),
+        "description": _campo_localizado(destino, "descripcion", lang),
+        "seoTitle": _campo_localizado(destino, "seo_titulo", lang),
+        "seoDescription": _campo_localizado(destino, "seo_descripcion", lang),
+        "ogTitle": _campo_localizado(destino, "seo_titulo", lang),
+        "ogDescription": _campo_localizado(destino, "seo_descripcion", lang),
+        "twitterTitle": _campo_localizado(destino, "seo_titulo", lang),
+        "twitterDescription": _campo_localizado(destino, "seo_descripcion", lang),
+        "introTitle": _campo_localizado(destino, "titulo_intro", lang),
+        "introContent": _campo_localizado(destino, "contenido_intro", lang),
+        "primaryRibbon": _campo_localizado(destino, "cinta_principal", lang),
+        "secondaryRibbon": False,
+        "blogTitle": False,
+        "blogButton": False,
+        "catalogViewMoreLabel": False,
+        "catalogViewLessLabel": False,
+        "catalogInitialVisibleCount": destino.cantidad_inicial_catalogo or 6,
+        "galleryThumbnail": _image_payload(destino, "imagen"),
+        "heroSlideImages": [payload for payload in [_image_payload(destino, "imagen_fondo"), _image_payload(destino, "imagen")] if payload],
+        "iconCatalog": icon_items,
+        "iconItems": icon_items,
+        "subcategorias_tour": [_serialize_subcategoria_destino(item, lang) for item in destino.subcategoria_tour_ids.sorted(lambda rec: (rec.sequence, rec.id))],
+    }
+    if incluir_tours:
+        data["tours"] = [_serialize_tour_card(tour, lang) for tour in tours if tour.active]
+    return data
+
+
+def _serialize_estilo_viaje(estilo, lang, incluir_tours=False):
+    tours = request.env["incas.tour"].sudo().search([("estilo_ids", "in", estilo.id), ("active", "=", True)], order="nombre, id")
+    data = {
+        "id": estilo.id,
+        "documentId": None,
+        "name": _campo_localizado(estilo, "name", lang),
+        "slug": _slug_localizado(estilo, lang),
+        "slugs": _slugs_localizados(estilo),
+        "description": _campo_localizado(estilo, "description", lang),
+        "middle_tittle": _campo_localizado(estilo, "middle_title", lang),
+        "middle_description": _campo_localizado(estilo, "middle_description", lang),
+        "seoTitle": _campo_localizado(estilo, "seo_title", lang),
+        "seoDescription": _campo_localizado(estilo, "seo_description", lang),
+        "displayOrder": estilo.display_order or 0,
+        "image": _image_payload(estilo, "image"),
+        "wallpaper": _image_payload(estilo, "image"),
+    }
+    if incluir_tours:
+        data["tours"] = [_serialize_tour_card(tour, lang) for tour in tours]
+    return data
+
+
+def _serialize_web_tour(tour, lang, incluir_relaciones=True, incluir_relacionados=True):
+    hero_images = _serialize_tour_media_list(tour)
+    featured_images = [
+        {
+            "image": payload,
+            "alt": f"{_campo_localizado(tour, 'nombre', lang) or 'Tour'} {index + 1}",
+        }
+        for index, payload in enumerate(hero_images)
+    ]
+    itinerary_items = []
+    for item in tour.itinerario_item_ids.sorted(lambda rec: (rec.sequence, rec.id)):
+        imagen = False
+        primera_imagen = item.imagen_ids.sorted(lambda rec: (rec.sequence, rec.id))[:1]
+        if primera_imagen:
+            imagen = _image_payload(primera_imagen, "imagen")
+        itinerary_items.append(
+            {
+                "title": _campo_localizado(item, "titulo", lang),
+                "highlight": "",
+                "description": _campo_localizado(item, "descripcion", lang),
+                "optional": "",
+                "imageAlt": _campo_localizado(item, "titulo", lang),
+                "image": imagen,
+                "includes": [],
+            }
+        )
+    schedule_items = [
+        {
+            "title": "",
+            "horaEntrada": item.horario_inicial or "",
+            "horaSalida": item.horario_final or "",
+        }
+        for item in tour.horario_ids.sorted(lambda rec: (rec.sequence, rec.id))
+        if item.horario_inicial or item.horario_final
+    ]
+    data = {
+        "id": tour.id,
+        "documentId": None,
+        "ip": tour.ip or "ip3",
+        "serviceId": tour.servicio_id.id if tour.servicio_id else None,
+        "slug": _slug_localizado(tour, lang),
+        "slugs": _slugs_localizados(tour),
+        "title": _campo_localizado(tour, "nombre", lang),
+        "nombre": _campo_localizado(tour, "nombre", lang),
+        "metaTitle": _campo_localizado(tour, "meta_titulo", lang),
+        "metaDescription": _campo_localizado(tour, "meta_descripcion", lang),
+        "seoTitle": _campo_localizado(tour, "meta_titulo", lang),
+        "seoDescription": _campo_localizado(tour, "meta_descripcion", lang),
+        "seoKeywords": False,
+        "seoCanonicalUrl": False,
+        "seoNoIndex": False,
+        "ogTitle": _campo_localizado(tour, "meta_titulo", lang),
+        "ogDescription": _campo_localizado(tour, "meta_descripcion", lang),
+        "twitterTitle": _campo_localizado(tour, "meta_titulo", lang),
+        "twitterDescription": _campo_localizado(tour, "meta_descripcion", lang),
+        "heroSlideImages": hero_images,
+        "highlightsTitle": _campo_localizado(tour, "destacados_titulo", lang),
+        "highlightsLead": _campo_localizado(tour, "destacados_lead", lang),
+        "highlightsQuestion": False,
+        "highlightsCtaLabel": False,
+        "highlightsCtaUrl": False,
+        "highlightsItems": [
+            {
+                "title": _campo_localizado(item, "titulo", lang),
+                "description": _campo_localizado(item, "contenido", lang),
+            }
+            for item in tour.destacado_item_ids.sorted(lambda rec: (rec.sequence, rec.id))
+            if _campo_localizado(item, "titulo", lang) or _campo_localizado(item, "contenido", lang)
+        ],
+        "featuredTitle": False,
+        "featuredImages": featured_images,
+        "itineraryTitle": False,
+        "itineraryItemLabel": False,
+        "itineraryExpandLabel": False,
+        "itineraryCollapseLabel": False,
+        "itineraryItems": itinerary_items,
+        "scheduleTitle": False,
+        "scheduleItems": schedule_items,
+        "includedTitle": False,
+        "includedItems": [
+            {"text": _campo_localizado(item, "titulo", lang), "icon": "✓"}
+            for item in tour.incluye_item_ids.sorted(lambda rec: (rec.sequence, rec.id))
+            if _campo_localizado(item, "titulo", lang)
+        ],
+        "excludedTitle": False,
+        "excludedItems": [
+            {"text": _campo_localizado(item, "titulo", lang), "icon": "✕"}
+            for item in tour.no_incluye_item_ids.sorted(lambda rec: (rec.sequence, rec.id))
+            if _campo_localizado(item, "titulo", lang)
+        ],
+        "faqTitle": False,
+        "faqItems": [],
+        "adultUnitPrice": tour.precio_adulto or 0,
+        "childUnitPrice": tour.precio_nino or 0,
+        "discount": tour.descuento or 0,
+        "tourType": tour.tipo_tour or "tour",
+        "durationDays": max(len(tour.itinerario_item_ids), 1),
+        "showInStyles": bool(tour.estilo_ids),
+    }
+    if incluir_relaciones:
+        data["destinos"] = [_serialize_destino_minimo(destino, lang) for destino in tour.destino_ids.sorted(lambda rec: (_campo_localizado(rec, "nombre", lang) or "", rec.id))]
+        data["estilos"] = [_serialize_estilo_viaje_minimo(estilo, lang) for estilo in tour.estilo_ids.sorted(lambda rec: (rec.display_order, _campo_localizado(rec, "name", lang) or "", rec.id))]
+    if incluir_relacionados:
+        related_domain = [("active", "=", True), ("id", "!=", tour.id)]
+        destino_ids = tour.destino_ids.ids
+        estilo_ids = tour.estilo_ids.ids
+        if destino_ids and estilo_ids:
+            related_domain += ["|", ("destino_ids", "in", destino_ids), ("estilo_ids", "in", estilo_ids)]
+        elif destino_ids:
+            related_domain += [("destino_ids", "in", destino_ids)]
+        elif estilo_ids:
+            related_domain += [("estilo_ids", "in", estilo_ids)]
+        else:
+            related_domain += [("tipo_tour", "=", tour.tipo_tour or "tour")]
+        related_tours = request.env["incas.tour"].sudo().search(related_domain, order="nombre, id", limit=12)
+        data["relatedTours"] = [_serialize_tour_card(item, lang) for item in related_tours]
+    return data
+
+
+def _buscar_por_slug_localizado(model_name, slug):
+    return request.env[model_name].sudo().search(
+        [
+            ("active", "=", True),
+            "|",
+            "|",
+            ("slug", "=", slug),
+            ("slug_en", "=", slug),
+            ("slug_pt", "=", slug),
+        ],
+        limit=1,
+    )
+
+
 def response_json(payload, status=200):
     headers = [
         ("Content-Type", "application/json"),
@@ -160,6 +455,62 @@ def body_json():
 
 
 class IncasReservasApiController(http.Controller):
+    @http.route("/incas/api/web/estilos-viaje", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_estilos_viaje(self, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        estilos = request.env["incas.estilo.viaje"].sudo().search([("active", "=", True)], order="display_order, name")
+        return response_json({"data": [_serialize_estilo_viaje(estilo, lang) for estilo in estilos]})
+
+    @http.route("/incas/api/web/estilos-viaje/<string:slug>", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_estilo_viaje_detalle(self, slug, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        estilo = _buscar_por_slug_localizado("incas.estilo.viaje", slug)
+        if not estilo:
+            return response_json({"error": {"message": "Estilo de viaje no encontrado"}}, 404)
+        return response_json({"data": _serialize_estilo_viaje(estilo, lang, incluir_tours=True)})
+
+    @http.route("/incas/api/web/destinos", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_destinos(self, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        destinos = request.env["incas.catalogo.destino"].sudo().search([("active", "=", True)], order="orden_visual, nombre")
+        return response_json({"data": [_serialize_destino(destino, lang, incluir_tours=True) for destino in destinos]})
+
+    @http.route("/incas/api/web/destinos/<string:slug>", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_destino_detalle(self, slug, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        destino = _buscar_por_slug_localizado("incas.catalogo.destino", slug)
+        if not destino:
+            return response_json({"error": {"message": "Destino no encontrado"}}, 404)
+        return response_json({"data": _serialize_destino(destino, lang, incluir_tours=True)})
+
+    @http.route("/incas/api/web/tours", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_tours(self, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        ip_value = request.params.get("ip")
+        domain = [("active", "=", True)] + _domain_ip(ip_value)
+        tours = request.env["incas.tour"].sudo().search(domain, order="nombre, id")
+        return response_json({"data": [_serialize_tour_card(tour, lang) for tour in tours]})
+
+    @http.route("/incas/api/web/tours/<string:slug>", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_tour_detalle(self, slug, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        tour = _buscar_por_slug_localizado("incas.tour", slug)
+        if not tour:
+            return response_json({"error": {"message": "Tour no encontrado"}}, 404)
+        return response_json({"data": _serialize_web_tour(tour, lang)})
+
     @http.route("/incas/api/web/tipo-transportes", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
     def web_tipo_transportes(self, **kwargs):
         if request.httprequest.method == "OPTIONS":
@@ -183,7 +534,9 @@ class IncasReservasApiController(http.Controller):
         if request.httprequest.method == "OPTIONS":
             return options_response()
         lang = request.params.get("lang") or "es"
-        transportes = request.env["incas.catalogo.transporte"].sudo().search([("active", "=", True)], order="name")
+        ip_value = request.params.get("ip")
+        domain = [("active", "=", True)] + _domain_ip(ip_value)
+        transportes = request.env["incas.catalogo.transporte"].sudo().search(domain, order="name")
         return response_json({"data": [_serialize_transporte(transporte, lang) for transporte in transportes]})
 
     @http.route("/incas/api/web/transportes/<string:slug>", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)

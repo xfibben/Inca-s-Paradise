@@ -1,1247 +1,189 @@
-﻿---
+---
 import { getTranslation } from "../../../i18n";
 import "../../../styles/global.css";
-import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
-import DestinationsGallery from "../../../components/LandingPage/DestinationsGallery.astro";
-import Ribbon from "../../../components/shared/Ribbon.astro";
+import GoogleAnalytics from "../../../components/shared/GoogleAnalytics.astro";
 import Navbar from "../../../components/shared/Navbar.astro";
 import Footer from "../../../components/shared/Footer.astro";
+import Ribbon from "../../../components/shared/Ribbon.astro";
 import { formatPrice } from "../../../utils/currency";
+import { fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from "../../../utils/odooWeb";
 
 type SupportedLang = "es" | "en" | "pt" | "it" | "fr";
 
-const STRAPI_BASE_URLS = Array.from(
-  new Set([
-    import.meta.env.STRAPI_URL,
-    import.meta.env.PUBLIC_STRAPI_URL,
-  ].filter(Boolean))
-);
-const STRAPI_DETAIL_ENDPOINT = "/api/destino-detalles";
-const STRAPI_TOUR_ENDPOINT = "/api/tour-detalles";
-
-const getLocales = (lang: SupportedLang) =>
-  lang === "en"
-    ? (["en", "en-US", null] as const)
-    : lang === "es"
-    ? (["es-PE", "es", null] as const)
-    : lang === "pt"
-    ? (["pt-BR", "pt", null] as const)
-    : lang === "it"
-    ? (["it", null] as const)
-    : (["fr", null] as const);
-
-function localePrefix(locale: string | null) {
-  return locale ? `locale=${encodeURIComponent(locale)}&` : "";
-}
-
-function normalizeRow(row: any) {
-  return row?.attributes ?? row ?? null;
-}
-
-function toAbsoluteMediaUrl(value: any) {
-  const url =
-    typeof value === "string"
-      ? value
-      : value?.formats?.large?.url ??
-        value?.formats?.medium?.url ??
-        value?.formats?.small?.url ??
-        value?.url ??
-        "";
-  if (!url) return "";
-  if (/^https?:\/\//i.test(url)) return url;
-
-  const publicBase =
-    import.meta.env.PUBLIC_STRAPI_URL ??
-    "http://localhost:1337";
-  const normalizedBase = String(publicBase).replace(/\/$/, "");
-  const normalizedPath = String(url).startsWith("/") ? String(url) : `/${url}`;
-  return `${normalizedBase}${normalizedPath}`;
-}
-
-function toMediaObject(value: any) {
-  if (!value) return null;
-  const source = value?.data ?? value;
-  const media = source?.attributes ?? source;
-  if (!media || typeof media !== "object") return null;
-  return media;
-}
-
-function paragraphsFromRichText(value: any) {
-  if (typeof value !== "string") return [];
-  const raw = value.trim();
-  if (!raw) return [];
-
-  const normalized = raw
-    .replace(/<\/p>\s*<p[^>]*>/gi, "\n\n")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<(?!\/?(u|strong|em|b|i)\b)[^>]+>/gi, "")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .trim();
-
-  return normalized
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.replace(/\n+/g, " ").trim())
-    .filter(Boolean);
-}
-
-function toPlainText(value: any) {
-  if (typeof value !== "string") return "";
-  return value
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function firstNonEmptyText(...values: any[]) {
-  for (const value of values) {
-    const text = toPlainText(value);
-    if (text) return text;
-  }
-  return "";
-}
-
-function toCardImageFromTour(tour: any) {
-  const mediaRows = Array.isArray(tour?.heroSlideImages?.data)
-    ? tour.heroSlideImages.data
-    : Array.isArray(tour?.heroSlideImages)
-      ? tour.heroSlideImages
-      : [];
-  const mediaCandidate = toMediaObject(mediaRows[0]);
-  const mediaImage = toAbsoluteMediaUrl(mediaCandidate);
-  if (mediaImage) return mediaImage;
-
-  const heroSlides = Array.isArray(tour?.hero?.slides) ? tour.hero.slides : [];
-  const heroImage = toAbsoluteMediaUrl(heroSlides[0]?.image);
-  if (heroImage) return heroImage;
-
-  return "";
-}
-
-function toRouteFromTour(tour: any) {
-  const rootAtGlanceItems = Array.isArray(tour?.atGlanceItems)
-    ? tour.atGlanceItems
-        .map((entry: any) => normalizeRow(entry))
-        .filter(Boolean)
-    : [];
-  const legacyAtGlanceItems = Array.isArray(tour?.atGlance?.items)
-    ? tour.atGlance.items
-    : [];
-  const candidateAtGlanceItems =
-    rootAtGlanceItems.length > 0 ? rootAtGlanceItems : legacyAtGlanceItems;
-
-  const locations = candidateAtGlanceItems.length > 0
-    ? candidateAtGlanceItems
-        .map((item: any) => firstNonEmptyText(item?.location))
-        .filter(Boolean)
-    : [];
-  if (locations.length > 0) return locations.slice(0, 3).join(", ");
-
-  const bullets = Array.isArray(tour?.summary?.bullets)
-    ? tour.summary.bullets.map((item: any) => firstNonEmptyText(item)).filter(Boolean)
-    : [];
-  return bullets.slice(0, 2).join(", ");
-}
-
-function toCatalogCardFromTour(tour: any, lang: SupportedLang) {
-  const slug = String(tour?.slug ?? "").toLowerCase();
-  const title = firstNonEmptyText(tour?.metaTitle, tour?.metatitle?.title, tour?.title) ||
-    (lang === "en" ? "Tour" : "Tour");
-  const description =
-    firstNonEmptyText(
-      tour?.summaryParagraph,
-      tour?.summary?.paragraph,
-      tour?.summary?.description,
-      tour?.metaDescription,
-      tour?.metatitle?.description,
-      tour?.description
-    ) ||
-    (lang === "en" ? "Custom itinerary tailored by specialists." : "Itinerario personalizado por especialistas.");
-  const meta =
-    firstNonEmptyText(tour?.summaryMetaLine, tour?.summary?.metaLine) ||
-    (lang === "en" ? "Custom itinerary" : "Itinerario personalizado");
-  const image =
-    toCardImageFromTour(tour) ||
-    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80";
-  const route = toRouteFromTour(tour);
-
-  return {
-    type: "card",
-    tourSlug: slug || undefined,
-    title,
-    description,
-    meta,
-    route,
-    image,
-    adultUnitPrice: Number(tour?.adultUnitPrice ?? 0),
-    discount: Number(tour?.discount ?? 0)
-  };
-}
-
-async function fetchStrapiDetailBySlug(
-  slugValue: string,
-  locales: readonly (string | null)[]
-) {
-  for (const baseUrl of STRAPI_BASE_URLS) {
-    for (const locale of locales) {
-      const localePart = localePrefix(locale);
-      const url =
-        `${baseUrl}${STRAPI_DETAIL_ENDPOINT}?${localePart}` +
-        `filters[slug][$eq]=${encodeURIComponent(slugValue)}&pagination[pageSize]=1&` +
-        `populate[heroSlideImages][fields][0]=url&` +
-        `populate[heroSlideImages][fields][1]=alternativeText&` +
-        `populate[heroSlideImages][fields][2]=formats&` +
-        `populate[ogImage][fields][0]=url&` +
-        `populate[ogImage][fields][1]=alternativeText&` +
-        `populate[ogImage][fields][2]=formats&` +
-        `populate[twitterImage][fields][0]=url&` +
-        `populate[twitterImage][fields][1]=alternativeText&` +
-        `populate[twitterImage][fields][2]=formats&` +
-        `populate[iconCatalog][fields][0]=iconKey&` +
-        `populate[iconCatalog][fields][1]=iconAlt&` +
-        `populate[iconCatalog][populate][icon][fields][0]=url&` +
-        `populate[iconCatalog][populate][icon][fields][1]=alternativeText&` +
-        `populate[iconCatalog][populate][icon][fields][2]=formats&` +
-        `populate[iconItems][populate][icon][fields][0]=url&` +
-        `populate[iconItems][populate][icon][fields][1]=alternativeText&` +
-        `populate[iconItems][populate][icon][fields][2]=formats&` +
-        `populate[iconItems][fields][0]=iconKey&` +
-        `populate[iconItems][fields][1]=label&` +
-        `populate[iconItems][fields][2]=description&` +
-        `populate[iconItems][fields][3]=iconAlt`
-        ;
-
-      try {
-        const res = await fetch(url);
-        if (!res.ok) continue;
-
-        const json = await res.json();
-        const rows = Array.isArray(json?.data) ? json.data : [];
-        const first = rows[0];
-        const attrs = normalizeRow(first);
-        if (attrs) return { ...attrs, __fetchedBaseUrl: baseUrl };
-      } catch {
-        // Try next locale / URL.
-      }
-    }
-  }
-
-  return null;
-}
-
-async function fetchStrapiToursByDestination(
-  destinationSlug: string,
-  locales: readonly (string | null)[]
-) {
-  for (const baseUrl of STRAPI_BASE_URLS) {
-    for (const locale of locales) {
-      const localePart = localePrefix(locale);
-
-      // Step 1: get tour slugs from destino-detalle
-      const destUrl =
-        `${baseUrl}${STRAPI_DETAIL_ENDPOINT}?${localePart}` +
-        `filters[slug][$eq]=${encodeURIComponent(destinationSlug)}&pagination[pageSize]=1&` +
-        `populate[tours][fields][0]=slug`;
-
-      try {
-        const destRes = await fetch(destUrl);
-        if (!destRes.ok) continue;
-
-        const destJson = await destRes.json();
-        const first = normalizeRow(destJson?.data?.[0] ?? destJson?.data ?? null);
-        if (!first) continue;
-
-        const tourSlugs: string[] = (
-          Array.isArray(first?.tours?.data)
-            ? first.tours.data.map((t: any) => normalizeRow(t)?.slug)
-            : Array.isArray(first?.tours)
-            ? first.tours.map((t: any) => t?.slug)
-            : []
-        ).filter(Boolean);
-
-        if (tourSlugs.length === 0) continue;
-
-        // Step 2: fetch full tour data by slugs
-        const slugFilters = tourSlugs
-          .map((s, i) => `filters[slug][$in][${i}]=${encodeURIComponent(s)}`)
-          .join('&');
-        const toursUrl =
-          `${baseUrl}${STRAPI_TOUR_ENDPOINT}?${localePart}` +
-          `${slugFilters}&pagination[pageSize]=100&` +
-          `populate[heroSlideImages][fields][0]=url&` +
-          `populate[heroSlideImages][fields][1]=alternativeText&` +
-          `populate[heroSlideImages][fields][2]=formats`;
-
-        const toursRes = await fetch(toursUrl);
-        if (!toursRes.ok) continue;
-
-        const toursJson = await toursRes.json();
-        const rows = Array.isArray(toursJson?.data)
-          ? toursJson.data.map((t: any) => normalizeRow(t)).filter(Boolean)
-          : [];
-
-        if (rows.length > 0) return rows;
-      } catch {
-        // Try next locale / URL.
-      }
-    }
-  }
-
+export function getStaticPaths() {
   return [];
 }
 
-export async function getStaticPaths() {
-  const strapiBaseUrls = Array.from(
-    new Set([
-      import.meta.env.PUBLIC_STRAPI_URL,
-    ].filter(Boolean))
-  );
-
-  const allPaths: Array<{ params: { lang: SupportedLang; slug: string } }> = [];
-  const langs: SupportedLang[] = ["es", "en", "pt", "it", "fr"];
-
-  for (const lang of langs) {
-    const strapiSlugs = new Set<string>();
-
-    for (const baseUrl of strapiBaseUrls) {
-      for (const locale of getLocales(lang)) {
-        const localePart = locale ? `locale=${encodeURIComponent(locale)}&` : "";
-        const url = `${baseUrl}${STRAPI_DETAIL_ENDPOINT}?${localePart}fields[0]=slug&pagination[pageSize]=200`;
-
-        try {
-          const res = await fetch(url);
-          if (!res.ok) continue;
-
-          const json = await res.json();
-          const rows = Array.isArray(json?.data) ? json.data : [];
-          rows.forEach((row: any) => {
-            const attrs = row?.attributes ?? row;
-            const value = String(attrs?.slug ?? "").toLowerCase();
-            if (value) strapiSlugs.add(value);
-          });
-
-          if (strapiSlugs.size > 0) break;
-        } catch {
-          // Try next locale / URL.
-        }
-      }
-
-      if (strapiSlugs.size > 0) break;
-    }
-
-    Array.from(strapiSlugs).forEach((value) => {
-      allPaths.push({ params: { lang, slug: value } });
-    });
-  }
-
-  return allPaths;
-}
-
 const rawLang = (Astro.params.lang ?? "es").toLowerCase();
-const supportedLangs = ["es", "en", "pt", "fr", "it"];
-const lang: SupportedLang = supportedLangs.includes(rawLang) ? rawLang : "es";
+const lang: SupportedLang = ["es", "en", "pt", "it", "fr"].includes(rawLang) ? (rawLang as SupportedLang) : "es";
 const slugKey = String(Astro.params.slug ?? "").toLowerCase();
+const t = getTranslation(lang);
 
-if (!supportedLangs.includes(rawLang)) {
+if (rawLang !== lang) {
   return Astro.redirect(`/es/destinos/${slugKey}`);
 }
 
-const t = getTranslation(lang);
+let destination: any = null;
+try {
+  const json = await fetchOdooWebJson(`/incas/api/web/destinos/${encodeURIComponent(slugKey)}?lang=${getOdooWebLang(lang)}`);
+  destination = json?.data ?? null;
+} catch (error) {
+  console.error("[destino] Error:", error);
+}
 
-const strapiDetail = await fetchStrapiDetailBySlug(slugKey, getLocales(lang));
-const strapiToursForCatalog = await fetchStrapiToursByDestination(
-  slugKey,
-  getLocales(lang)
-);
-const sharedIconSourceDetail =
-  lang === "es"
-    ? strapiDetail
-    : await fetchStrapiDetailBySlug(slugKey, ["es-PE", "es", null]);
-
-if (!strapiDetail) {
+if (!destination) {
   return Astro.redirect(`/${lang}/destinos`);
 }
 
-const pageTitle = strapiDetail?.title ?? slugKey;
-const pageDescription = strapiDetail?.description ?? "";
-const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(
-  /\/$/,
-  ""
-);
-const canonicalRaw = String(strapiDetail?.seoCanonicalUrl ?? "").trim();
-const canonical =
-  canonicalRaw.length > 0
-    ? /^https?:\/\//i.test(canonicalRaw)
-      ? canonicalRaw
-      : `${siteOrigin}${canonicalRaw.startsWith("/") ? canonicalRaw : `/${canonicalRaw}`}`
-    : `${siteOrigin}/${lang}/destinos/${slugKey || ""}`;
-const seoTitle = String(strapiDetail?.seoTitle ?? "").trim() || pageTitle;
-const seoDescription =
-  String(strapiDetail?.seoDescription ?? "").trim() || pageDescription;
-const seoKeywords = String(strapiDetail?.seoKeywords ?? "").trim();
-const seoNoIndex = Boolean(strapiDetail?.seoNoIndex);
-const ogTitle = String(strapiDetail?.ogTitle ?? "").trim() || seoTitle;
-const ogDescription =
-  String(strapiDetail?.ogDescription ?? "").trim() || seoDescription;
-const twitterTitle =
-  String(strapiDetail?.twitterTitle ?? "").trim() || ogTitle;
-const twitterDescription =
-  String(strapiDetail?.twitterDescription ?? "").trim() || ogDescription;
-const ogLocale = lang === "en" ? "en_US" : "es_PE";
-const strapiSlideText =
-  Array.isArray(strapiDetail?.heroSlides) && strapiDetail.heroSlides.length > 0
-    ? strapiDetail.heroSlides
-    : [];
-const strapiSlideImagesRaw = Array.isArray(strapiDetail?.heroSlideImages?.data)
-  ? strapiDetail.heroSlideImages.data
-  : Array.isArray(strapiDetail?.heroSlideImages)
-    ? strapiDetail.heroSlideImages
-    : [];
-const strapiSlideImages = strapiSlideImagesRaw
-  .map((item: any) => toMediaObject(item))
-  .filter(Boolean);
-const strapiFixedSlides = [1, 2, 3]
-  .map((index) => {
-    const media = strapiSlideImages[index - 1] ?? null;
-    const image = toAbsoluteMediaUrl(media);
-
-    const title =
-      strapiDetail?.[`heroTitle${index}`] ??
-      strapiSlideText[index - 1]?.title ??
-      pageTitle;
-    const description =
-      strapiDetail?.[`heroDescription${index}`] ??
-      strapiSlideText[index - 1]?.description ??
-      "";
-    if (!image) return null;
-
-    return {
-      image,
-      title,
-      description,
-      alt: media?.alternativeText ?? title ?? pageTitle
-    };
-  })
-  .filter(Boolean);
-const strapiSlidesFromMedia = strapiSlideImagesRaw
-  .map((item: any, index: number) => {
-    const media = item?.attributes ?? item ?? {};
-    const image = toAbsoluteMediaUrl(media);
-    if (!image) return null;
-
-    return {
-      image,
-      title: strapiSlideText[index]?.title ?? pageTitle,
-      description: strapiSlideText[index]?.description ?? "",
-      alt: media?.alternativeText ?? strapiSlideText[index]?.title ?? pageTitle
-    };
-  })
-  .filter(Boolean);
-const strapiSlidesFromJson = strapiSlideText
-  .map((slide: any) => {
-    const image = toAbsoluteMediaUrl(slide?.image);
-    if (!image) return null;
-    return {
-      ...slide,
-      image
-    };
-  })
-  .filter(Boolean);
-const slides =
-  strapiFixedSlides.length > 0
-    ? strapiFixedSlides
-    : strapiSlidesFromMedia.length > 0
-    ? strapiSlidesFromMedia
-    : strapiSlidesFromJson;
-const resolvedSlides = slides;
-const ogImage =
-  toAbsoluteMediaUrl(toMediaObject(strapiDetail?.ogImage)) ||
-  resolvedSlides[0]?.image ||
-  "";
-const twitterImage =
-  toAbsoluteMediaUrl(toMediaObject(strapiDetail?.twitterImage)) || ogImage;
-const introTitle = strapiDetail?.introTitle ?? "";
-const introParagraphsFromEditor = paragraphsFromRichText(strapiDetail?.introContent);
-const introParagraphs = introParagraphsFromEditor;
-const strapiIconCatalogRaw = Array.isArray(strapiDetail?.iconCatalog)
-  ? strapiDetail.iconCatalog
-  : [];
-const sharedIconCatalogRaw = Array.isArray(sharedIconSourceDetail?.iconCatalog)
-  ? sharedIconSourceDetail.iconCatalog
-  : [];
-const strapiIconCatalog = strapiIconCatalogRaw
-  .map((entry: any) => {
-    const item = normalizeRow(entry);
-    const media = toMediaObject(item?.icon);
-    const iconUrl = toAbsoluteMediaUrl(media);
-    const iconKey = String(item?.iconKey ?? "").trim().toLowerCase();
-    const iconAlt = String(item?.iconAlt ?? media?.alternativeText ?? "").trim();
-    return { iconKey, iconUrl, iconAlt };
-  })
-  .filter((item) => item.iconUrl);
-const sharedIconCatalog = sharedIconCatalogRaw
-  .map((entry: any) => {
-    const item = normalizeRow(entry);
-    const media = toMediaObject(item?.icon);
-    const iconUrl = toAbsoluteMediaUrl(media);
-    const iconKey = String(item?.iconKey ?? "").trim().toLowerCase();
-    const iconAlt = String(item?.iconAlt ?? media?.alternativeText ?? "").trim();
-    return { iconKey, iconUrl, iconAlt };
-  })
-  .filter((item) => item.iconUrl);
-const iconCatalogByKey = new Map(
-  [...sharedIconCatalog, ...strapiIconCatalog]
-    .filter((item) => Boolean(item.iconKey))
-    .map((item) => [item.iconKey, item] as const)
-);
-const iconCatalogByIndex =
-  strapiIconCatalog.length > 0 ? strapiIconCatalog : sharedIconCatalog;
-
-const strapiIconItemsRaw = Array.isArray(strapiDetail?.iconItems)
-  ? strapiDetail.iconItems
-  : [];
-const sharedIconItemsRaw = Array.isArray(sharedIconSourceDetail?.iconItems)
-  ? sharedIconSourceDetail.iconItems
-  : [];
-const mapIconItems = (entries: any[], catalogEntries: Array<{ iconKey: string; iconUrl: string; iconAlt: string }>) =>
-  entries
-  .map((entry: any, index: number) => {
-    const item = normalizeRow(entry);
-    const iconKey = String(item?.iconKey ?? "").trim().toLowerCase();
-    const catalogItem =
-      (iconKey ? iconCatalogByKey.get(iconKey) : null) ??
-      catalogEntries[index] ??
-      null;
-    const media = toMediaObject(item?.icon);
-    const iconUrl = catalogItem?.iconUrl || toAbsoluteMediaUrl(media);
-    const label = String(item?.label ?? "").trim();
-    const description = String(item?.description ?? "").trim();
-    return {
-      iconKey,
-      label,
-      description,
-      iconUrl,
-      iconAlt: String(
-        catalogItem?.iconAlt ?? item?.iconAlt ?? media?.alternativeText ?? label
-      ).trim()
-    };
-  })
-  .filter((item) => item.label || item.iconUrl);
-const strapiIconItems = mapIconItems(strapiIconItemsRaw, iconCatalogByIndex);
-const sharedIconItems = mapIconItems(sharedIconItemsRaw, sharedIconCatalog);
-const hydratedIconItems = strapiIconItems.map((item, index) => {
-  if (item.iconUrl) return item;
-  const fallbackByKey = item.iconKey
-    ? sharedIconItems.find(
-        (sharedItem) =>
-          sharedItem.iconKey === item.iconKey && Boolean(sharedItem.iconUrl)
-      )
-    : null;
-  const fallbackByIndex = sharedIconItems[index];
-  const fallbackIcon =
-    fallbackByKey?.iconUrl ? fallbackByKey : fallbackByIndex?.iconUrl ? fallbackByIndex : null;
-  if (!fallbackIcon) return item;
-  return {
-    ...item,
-    iconUrl: fallbackIcon.iconUrl,
-    iconAlt: item.iconAlt || fallbackIcon.iconAlt
-  };
-});
-const iconItems =
-  hydratedIconItems.length > 0
-    ? hydratedIconItems
-    : sharedIconItems.length > 0
-      ? sharedIconItems
-      : [];
-const primaryRibbon = String(strapiDetail?.primaryRibbon ?? "").trim();
-const secondaryRibbon = String(strapiDetail?.secondaryRibbon ?? "").trim();
-const blogTitle = String(strapiDetail?.blogTitle ?? "").trim();
-const blogButton = String(strapiDetail?.blogButton ?? "").trim();
-const prevLabel = lang === "en" ? "Previous" : "Anterior";
-const nextLabel = lang === "en" ? "Next" : "Siguiente";
-const itineraryLabel = lang === "en" ? "See itinerary" : "Ver itinerario";
-const tabReadMoreLabel = lang === "en" ? "See more" : "Ver más";
+const pageTitle = destination.title ?? slugKey;
+const pageDescription = destination.description ?? "";
+const siteOrigin = (Astro.site?.origin ?? "https://incasparadise.com").replace(/\/$/, "");
+const canonical = `${siteOrigin}/${lang}/destinos/${destination.slug}`;
+const seoTitle = String(destination?.seoTitle ?? "").trim() || pageTitle;
+const seoDescription = String(destination?.seoDescription ?? "").trim() || pageDescription;
+const heroSlides = Array.isArray(destination.heroSlideImages) ? destination.heroSlideImages : [];
+const heroImage = getOdooMediaUrl(heroSlides[0]) || getOdooMediaUrl(destination.galleryThumbnail);
+const iconItems = Array.isArray(destination.iconItems) ? destination.iconItems : [];
+const tours = Array.isArray(destination.tours) ? destination.tours : [];
+const smallTripItems = tours.filter((tour: any) => tour.tourType === "small_trip");
+const packageItems = tours.filter((tour: any) => tour.tourType !== "small_trip");
 const priceFromLabel =
-  lang === "en" ? "From" :
-  lang === "pt" ? "Desde" :
-  lang === "fr" ? "Des" :
-  lang === "it" ? "Da" :
-  "Desde";
-
-const strapiCatalogCards = strapiToursForCatalog
-  .map((tour: any) => ({
-    ...toCatalogCardFromTour(tour, lang),
-    tourType: String(tour?.tourType ?? "").toLowerCase()
-  }))
-  .filter((item) => item.title && item.image);
-const strapiSmallTripItems = strapiCatalogCards
-  .filter((item) => item.tourType === "small_trip")
-  .map(({ tourType: _t, ...item }) => item);
-const strapiPackageItems = strapiCatalogCards
-  .filter((item) => item.tourType !== "small_trip")
-  .map(({ tourType: _t, ...item }) => item);
-const smallTripItems = strapiSmallTripItems;
-const packageItemsFlat = strapiPackageItems;
-const smallTripRows: Array<any[]> = [];
-for (let i = 0; i < smallTripItems.length; i += 3) {
-  smallTripRows.push(smallTripItems.slice(i, i + 3));
-}
-
-const packagesTabLabel = lang === "en" ? "Packages" : "Paquetes";
-const smallTripsTabLabel = "Small Trips";
-const catalogMoreLabel =
-  strapiDetail?.catalogViewMoreLabel ??
-  (lang === "en" ? "View more destination tours" : "Ver mas tours de destino");
-const catalogLessLabel =
-  strapiDetail?.catalogViewLessLabel ??
-  (lang === "en"
-    ? "View fewer destination tours"
-    : "Ver menos tours de destino");
+  lang === "en" ? "From"
+  : lang === "pt" ? "Desde"
+  : lang === "fr" ? "Des"
+  : lang === "it" ? "Da"
+  : "Desde";
 const getDiscountedPrice = (price: number, discountPercent: number) =>
   Math.max(0, price - (price * Math.max(0, discountPercent)) / 100);
-
-const rawPackageInitialVisibleCount = 8;
-const packageInitialCount = Number.isFinite(Number(rawPackageInitialVisibleCount))
-  ? Math.max(1, Number(rawPackageInitialVisibleCount))
-  : 8;
-
-const rawSmallInitialRows = 2;
-const smallInitialRows = Number.isFinite(Number(rawSmallInitialRows))
-  ? Math.max(1, Number(rawSmallInitialRows))
-  : 2;
-
-const rawSmallRowsPerLoad = 2;
-const smallRowsPerLoad = Number.isFinite(Number(rawSmallRowsPerLoad))
-  ? Math.max(1, Number(rawSmallRowsPerLoad))
-  : 2;
-
-const smallInitialCount =
-  Number.isFinite(Number(strapiDetail?.catalogInitialVisibleCount))
-    ? Math.max(1, Number(strapiDetail?.catalogInitialVisibleCount))
-    : smallInitialRows * 3;
-const smallStepCount = smallRowsPerLoad * 3;
-const hasIntroSection = Boolean(
-  introTitle || introParagraphs.length > 0 || iconItems.length > 0
-);
-const hasCatalogSection = Boolean(
-  packageItemsFlat.length > 0 || smallTripItems.length > 0
-);
-const hasBlogSection = Boolean(blogTitle || blogButton);
 ---
 
 <html lang={lang}>
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{seoTitle}</title>
-		<meta name="description" content={seoDescription} />
-		{seoKeywords ? <meta name="keywords" content={seoKeywords} /> : null}
-		<meta name="robots" content={seoNoIndex ? "noindex,nofollow" : "index,follow"} />
-		<link rel="canonical" href={canonical} />
-		{resolvedSlides[0]?.image && (
-			<link rel="preload" as="image" href={resolvedSlides[0].image} fetchpriority="high" />
-		)}
-		<meta property="og:type" content="website" />
-		<meta property="og:locale" content={ogLocale} />
-		<meta property="og:title" content={ogTitle} />
-		<meta property="og:description" content={ogDescription} />
-		<meta property="og:url" content={canonical} />
-		{ogImage ? <meta property="og:image" content={ogImage} /> : null}
-		<meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
-		<meta name="twitter:title" content={twitterTitle} />
-		<meta name="twitter:description" content={twitterDescription} />
-		{twitterImage ? <meta name="twitter:image" content={twitterImage} /> : null}
-    <!-- Schema JSON-LD TouristDestination -->
-    <script is:inline type="application/ld+json" set:html={JSON.stringify((() => {
-      const schema: Record<string, any> = {
-        "@context": "https://schema.org",
-        "@type": "TouristDestination",
-        "name": seoTitle,
-        "description": seoDescription,
-        "url": canonical,
-        "touristType": "Adventure, Cultural",
-        "provider": {
-          "@type": "TravelAgency",
-          "name": "Inca's Paradise",
-          "url": "https://incasparadise.com"
-        }
-      };
-      if (ogImage) schema["image"] = ogImage;
-      return schema;
-    })())} />
-	  <GoogleAnalytics />
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{seoTitle}</title>
+    <meta name="description" content={seoDescription} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={seoTitle} />
+    <meta property="og:description" content={seoDescription} />
+    <meta property="og:url" content={canonical} />
+    {heroImage ? <meta property="og:image" content={heroImage} /> : null}
+    <meta name="twitter:card" content={heroImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={seoTitle} />
+    <meta name="twitter:description" content={seoDescription} />
+    {heroImage ? <meta name="twitter:image" content={heroImage} /> : null}
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "TouristDestination",
+      name: seoTitle,
+      description: seoDescription,
+      url: canonical,
+      ...(heroImage ? { image: heroImage } : {}),
+    })} />
+    <GoogleAnalytics />
   </head>
-	<body class="min-h-screen bg-white text-gray-900">
-		<Navbar {t} currentLang={lang} />
-		<main>
-			{resolvedSlides.length > 0 ? (
-			<section class="relative w-full bg-black overflow-hidden h-[91vw] min-h-80 md:h-screen md:min-h-screen">
-				<div id="destino-carousel" class="relative h-full w-full">
-					<div class="relative h-full w-full overflow-hidden">
-						{resolvedSlides.map((slide, index) => (
-							<div
-								class={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-									index === 0 ? "opacity-100" : "opacity-0"
-								}`}
-								data-destino-slide
-								data-index={index}
-							>
-								<img
-									src={slide.image}
-									alt={slide.alt || slide.title || pageTitle}
-									class="absolute inset-0 h-full w-full object-cover object-center scale-[1.02]"
-									loading={index === 0 ? "eager" : "lazy"}
-									fetchpriority={index === 0 ? "high" : "auto"}
-									decoding={index === 0 ? "sync" : "async"}
-								/>
-								<div class="absolute inset-0 bg-black/40"></div>
-								<div class="absolute inset-0 z-10 flex h-full w-full items-center justify-center px-6 text-center">
-									<div class="mx-auto max-w-2xl text-white">
-										<div class="mb-5 flex justify-center">
-											<svg
-												width="54"
-												height="54"
-												viewBox="0 0 64 64"
-												fill="none"
-												aria-hidden="true"
-											>
-												<path
-													d="M32 6L37 20L52 14L44 28L58 32L44 36L52 50L37 44L32 58L27 44L12 50L20 36L6 32L20 28L12 14L27 20L32 6Z"
-													fill="white"
-													fill-opacity="0.95"
-												/>
-											</svg>
-										</div>
-										{slide.title ? (
-											<h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight mb-4 md:mb-6 lg:mb-8 italic drop-shadow-sm" style="font-family: 'Playfair Display', serif;">
-												{slide.title}
-											</h1>
-										) : null}
-										{slide.description ? (
-											<p class="text-sm md:text-base lg:text-lg text-white/90 leading-relaxed mb-3 md:mb-4 lg:mb-6">
-												{slide.description}
-											</p>
-										) : null}
-									</div>
-								</div>
-							</div>
-						))}
-					</div>
+  <body class="min-h-screen bg-white text-gray-900">
+    <Navbar {t} currentLang={lang} />
+    <script is:inline define:vars={{ langSlugs: destination.slugs ?? { [lang]: destination.slug } }}>
+      window.__langSlugs = langSlugs;
+      window.__slugBasePath = "/destinos/";
+    </script>
+    <main>
+      <section class="relative min-h-[60vh] overflow-hidden">
+        {heroImage ? <img src={heroImage} alt={pageTitle} class="absolute inset-0 w-full h-full object-cover" /> : <div class="absolute inset-0 bg-stone-300" />}
+        <div class="absolute inset-0 bg-black/45" />
+        <div class="relative z-10 max-w-6xl mx-auto px-6 py-28 md:py-36 text-white">
+          <h1 class="text-4xl md:text-6xl italic leading-tight" style="font-family: 'Playfair Display', serif;">
+            {pageTitle}
+          </h1>
+          {pageDescription ? <div class="mt-6 max-w-3xl text-lg text-white/90" set:html={pageDescription} /> : null}
+        </div>
+      </section>
 
-					<button
-						type="button"
-						class="absolute top-0 left-0 z-30 flex h-full items-center justify-center px-4 cursor-pointer group focus:outline-none"
-						aria-label={prevLabel}
-						data-destino-prev
-					>
-						<span class="inline-flex items-center justify-center text-white/90 group-hover:text-white">
-							<svg class="w-5 h-5" viewBox="0 0 6 10" fill="none" aria-hidden="true">
-								<path
-									d="M5 1 1 5l4 4"
-									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-								/>
-							</svg>
-						</span>
-					</button>
-					<button
-						type="button"
-						class="absolute top-0 right-0 z-30 flex h-full items-center justify-center px-4 cursor-pointer group focus:outline-none"
-						aria-label={nextLabel}
-						data-destino-next
-					>
-						<span class="inline-flex items-center justify-center text-white/90 group-hover:text-white">
-							<svg class="w-5 h-5" viewBox="0 0 6 10" fill="none" aria-hidden="true">
-								<path
-									d="m1 9 4-4-4-4"
-									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-								/>
-							</svg>
-						</span>
-					</button>
-				</div>
-			</section>
-			) : null}
+      {destination.primaryRibbon ? <Ribbon text={destination.primaryRibbon} maxWidthClass="max-w-6xl" /> : null}
 
-			{hasIntroSection ? (
-			<section class="bg-[#f5f0e9]">
-				<div class="mx-auto grid w-full max-w-6xl gap-8 px-6 py-10 md:grid-cols-[2fr_1fr] md:items-center md:py-14 lg:py-16">
-					<div class="min-w-0">
-						<h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight mb-4 md:mb-6 lg:mb-8 italic">
-							{introTitle}
-						</h2>
-						{introParagraphs[0] ? (
-							<p
-								class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed mb-3 md:mb-4 lg:mb-6 wrap-break-word text-justify"
-								set:html={introParagraphs[0]}
-							></p>
-						) : null}
-						{introParagraphs[1] ? (
-							<p
-								class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed mb-3 md:mb-4 lg:mb-6"
-								set:html={introParagraphs[1]}
-							></p>
-						) : null}
-					</div>
-					<div class="mx-auto w-full max-w-md">
-						<div class="grid grid-cols-2 gap-x-8 gap-y-10 text-center">
-							{iconItems.map((item) => (
-								<div class="flex flex-col items-center gap-2">
-									{item.iconUrl ? (
-										<div class="h-12 w-12 text-slate-900">
-											<img
-												src={item.iconUrl}
-												alt={item.iconAlt || item.label || pageTitle}
-												class="h-full w-full object-contain"
-												loading="lazy"
-												decoding="async"
-											/>
-										</div>
-									) : null}
-									<p class="text-sm md:text-base lg:text-lg text-gray-700 leading-relaxed">{item.label}</p>
-									{item.description ? (
-										<p class="text-xs md:text-sm text-gray-600 leading-relaxed">{item.description}</p>
-									) : null}
-								</div>
-							))}
-						</div>
-					</div>
-				</div>
-			</section>
-			) : null}
+      <section class="max-w-6xl mx-auto px-6 py-16">
+        {(destination.introTitle || destination.introContent || iconItems.length > 0) && (
+          <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] items-start">
+            <div>
+              {destination.introTitle ? <h2 class="text-3xl md:text-4xl italic text-stone-900 mb-6" style="font-family: 'Playfair Display', serif;">{destination.introTitle}</h2> : null}
+              {destination.introContent ? <div class="prose prose-stone max-w-none text-gray-700" set:html={destination.introContent} /> : null}
+            </div>
+            {iconItems.length > 0 && (
+              <div class="grid gap-4 sm:grid-cols-2">
+                {iconItems.map((item: any) => {
+                  const iconUrl = getOdooMediaUrl(item.icon);
+                  return (
+                    <article class="border border-stone-200 bg-stone-50 p-5 text-center">
+                      {iconUrl ? <img src={iconUrl} alt={item.iconAlt || item.label} class="w-14 h-14 object-cover mx-auto mb-4" /> : null}
+                      {item.label ? <h3 class="text-lg font-semibold text-stone-900">{item.label}</h3> : null}
+                      {item.description ? <p class="mt-2 text-sm text-stone-600">{item.description}</p> : null}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
-			{primaryRibbon ? <Ribbon text={primaryRibbon} maxWidthClass="max-w-6xl" /> : null}
+      {packageItems.length > 0 && (
+        <section class="max-w-6xl mx-auto px-6 pb-10">
+          <h2 class="text-3xl md:text-4xl italic text-stone-900 mb-8" style="font-family: 'Playfair Display', serif;">
+            {lang === "en" ? "Packages" : "Paquetes"}
+          </h2>
+          <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {packageItems.map((tour: any) => {
+              const imageUrl = getOdooMediaUrl(tour.heroSlideImages?.[0]);
+              return (
+                <a href={`/${lang}/tours/${tour.slug}`} class="group block bg-white shadow-sm hover:shadow-lg transition overflow-hidden">
+                  {imageUrl ? <img src={imageUrl} alt={tour.title} class="w-full h-64 object-cover group-hover:scale-[1.02] transition-transform duration-500" /> : <div class="w-full h-64 bg-stone-300" />}
+                  <div class="p-5">
+                    <h3 class="text-2xl text-stone-900" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</h3>
+                    {tour.metaDescription ? <div class="mt-2 text-sm text-stone-600 line-clamp-3" set:html={tour.metaDescription} /> : null}
+                    {tour.adultUnitPrice > 0 ? <p class="mt-3 text-sm text-[#1AA093] font-semibold">{priceFromLabel} {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), lang)}</p> : null}
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
-			{hasCatalogSection ? (
-			<section class="bg-white">
-				<div class="mx-auto w-full max-w-7xl px-6 pb-14 md:pb-18 lg:pb-20">
-					<div
-						class="mb-8 flex flex-wrap items-center gap-3 border-b border-gray-200 pb-4"
-						role="tablist"
-						aria-label={lang === "en" ? "Tour catalog tabs" : "Pestañas del catálogo de tours"}
-					>
-						<button
-							type="button"
-							class="inline-flex items-center justify-center border border-[#0b2b3a] bg-[#0b2b3a] px-5 py-2 text-xs font-semibold uppercase tracking-wide text-white transition"
-							data-catalog-tab="smallTrips"
-							id="catalog-tab-smallTrips"
-							role="tab"
-							aria-controls="catalog-panel-smallTrips"
-							aria-selected="true"
-							tabindex="0"
-						>
-							{smallTripsTabLabel}
-						</button>
-						<button
-							type="button"
-							class="inline-flex items-center justify-center border border-[#0b2b3a] bg-white px-5 py-2 text-xs font-semibold uppercase tracking-wide text-[#0b2b3a] transition hover:bg-[#0b2b3a] hover:text-white"
-							data-catalog-tab="packages"
-							id="catalog-tab-packages"
-							role="tab"
-							aria-controls="catalog-panel-packages"
-							aria-selected="false"
-							tabindex="-1"
-						>
-							{packagesTabLabel}
-						</button>
-					</div>
-
-					<div
-						class="hidden grid gap-8 md:grid-cols-2 lg:grid-cols-4"
-						data-catalog-panel="packages"
-						id="catalog-panel-packages"
-						role="tabpanel"
-						aria-labelledby="catalog-tab-packages"
-						data-initial-count={String(packageInitialCount)}
-						data-step-count="4"
-						hidden
-					>
-						{packageItemsFlat.map((item, index) =>
-							item.type === "quote" ? (
-								<div
-									class={`flex min-h-[400px] items-center justify-center bg-[#0b2b3a] px-6 py-10 text-center text-white ${
-										index >= packageInitialCount ? "hidden" : ""
-									}`}
-									data-catalog-extra={index >= packageInitialCount ? "true" : "false"}
-									data-catalog-index={String(index)}
-								>
-									<div>
-										<p class="text-base md:text-lg lg:text-xl font-semibold italic leading-snug">
-											&quot;{item.quote}&quot;
-										</p>
-										<p class="mt-5 text-xs md:text-sm lg:text-base font-semibold">
-											{item.author}
-										</p>
-									</div>
-								</div>
-							) : (
-								<article
-									class={`flex flex-col ${
-										index >= packageInitialCount ? "hidden" : ""
-									}`}
-									data-catalog-extra={index >= packageInitialCount ? "true" : "false"}
-									data-catalog-index={String(index)}
-								>
-									<div class="relative aspect-[4/3] overflow-hidden bg-gray-100 group">
-										<img
-											src={item.image}
-											alt={item.title}
-											class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-										/>
-										<div class="absolute inset-0 bg-black/0 transition duration-300 group-hover:bg-black/40"></div>
-										{item.discount > 0 ? (
-											<span class="absolute top-3 left-3 bg-[#1AA093] px-3 py-1 text-xs font-bold text-white rounded-full shadow">
-												-{item.discount.toFixed(0)}%
-											</span>
-										) : null}
-									</div>
-									<div class="mt-3 flex flex-col gap-0.5">
-										<h3 class="text-sm md:text-base lg:text-lg font-semibold text-gray-900 leading-snug">
-											{item.title}
-										</h3>
-										<p class="text-xs md:text-sm lg:text-base font-semibold text-gray-900 leading-relaxed">
-											{item.meta}
-										</p>
-										<p class="text-xs md:text-sm lg:text-base text-gray-700 leading-relaxed mt-1">
-											{item.description}
-										</p>
-										{item.adultUnitPrice > 0 ? (
-											<div class="mt-3">
-												{item.discount > 0 ? (
-													<p class="text-xs text-gray-400 line-through">
-														{formatPrice(item.adultUnitPrice, lang)}
-													</p>
-												) : null}
-												<p class="text-sm md:text-base font-bold text-gray-900">
-													{priceFromLabel} {formatPrice(getDiscountedPrice(item.adultUnitPrice, item.discount), lang)}
-												</p>
-											</div>
-										) : null}
-										{item.tourSlug ? (
-											<a
-												href={`/${lang}/tours/${item.tourSlug}`}
-												class="mt-3 inline-flex w-fit items-center justify-center border border-gray-900 px-4 py-2 text-[11px] md:text-xs uppercase tracking-wide text-gray-900 transition hover:bg-gray-900 hover:text-white"
-											>
-												{itineraryLabel}
-											</a>
-										) : (
-											<button
-												type="button"
-												class="mt-3 inline-flex w-fit items-center justify-center border border-gray-900 px-4 py-2 text-[11px] md:text-xs uppercase tracking-wide text-gray-900 transition hover:bg-gray-900 hover:text-white"
-											>
-												{itineraryLabel}
-											</button>
-										)}
-									</div>
-								</article>
-							)
-						)}
-					</div>
-
-					<div
-						class="grid gap-2"
-						data-catalog-panel="smallTrips"
-						id="catalog-panel-smallTrips"
-						role="tabpanel"
-						aria-labelledby="catalog-tab-smallTrips"
-						data-initial-count={String(smallInitialCount)}
-						data-step-count={String(smallStepCount)}
-					>
-						{smallTripRows.map((row, rowIndex) => (
-							<div
-								class={`grid grid-cols-1 gap-2 ${
-									rowIndex % 2 === 0
-										? "md:grid-cols-[48%_26%_26%]"
-										: "md:grid-cols-[26%_26%_48%]"
-								}`}
-								data-catalog-row
-							>
-								{row.map((item, colIndex) => {
-									const index = rowIndex * 3 + colIndex;
-									return (
-										<article
-											class={`group relative h-[380px] overflow-hidden md:h-[520px] ${
-												index >= smallInitialCount ? "hidden" : ""
-											}`}
-											data-catalog-extra={index >= smallInitialCount ? "true" : "false"}
-											data-catalog-index={String(index)}
-											data-catalog-card
-										>
-											<img
-												src={item.image}
-												alt={item.title}
-												class="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-											/>
-											<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/10"></div>
-											{item.discount > 0 ? (
-												<span class="absolute top-4 left-4 z-20 bg-[#1AA093] px-3 py-1 text-xs font-bold text-white rounded-full shadow">
-													-{item.discount.toFixed(0)}%
-												</span>
-											) : null}
-											<div class="relative z-10 flex h-full flex-col justify-end p-4 text-white">
-												<h3 class="text-xl md:text-2xl font-semibold leading-tight">{item.title}</h3>
-												{item.adultUnitPrice > 0 ? (
-													<div class="mt-2">
-														{item.discount > 0 ? (
-															<p class="text-xs text-white/60 line-through">
-																{formatPrice(item.adultUnitPrice, lang)}
-															</p>
-														) : null}
-														<p class="text-sm font-bold text-white">
-															{priceFromLabel} {formatPrice(getDiscountedPrice(item.adultUnitPrice, item.discount), lang)}
-														</p>
-													</div>
-												) : null}
-												<div class="mt-2 flex items-end justify-between gap-3">
-													{item.description ? (
-														<p class="text-sm text-white/85 leading-snug line-clamp-3 flex-1">{item.description}</p>
-													) : <span class="flex-1" />}
-													{item.tourSlug ? (
-														<a
-															href={`/${lang}/tours/${item.tourSlug}`}
-															class="shrink-0 inline-flex items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-[#0b2b3a] transition hover:bg-[#ff8e46]"
-														>
-															{item.buttonLabel ?? tabReadMoreLabel}
-														</a>
-													) : (
-														<button
-															type="button"
-															class="shrink-0 inline-flex items-center justify-center bg-[#ff7b2f] px-5 py-2 text-xs font-semibold text-[#0b2b3a] transition hover:bg-[#ff8e46]"
-														>
-															{item.buttonLabel ?? tabReadMoreLabel}
-														</button>
-													)}
-												</div>
-											</div>
-										</article>
-									);
-								})}
-							</div>
-						))}
-					</div>
-
-					<div class="mt-12 flex justify-center">
-						<button
-							type="button"
-							class="inline-flex items-center justify-center border border-gray-900 px-6 py-2 text-xs md:text-sm uppercase tracking-wide text-gray-900 transition hover:bg-gray-900 hover:text-white"
-							data-catalog-more
-							data-more-label={catalogMoreLabel}
-							data-less-label={catalogLessLabel}
-							aria-expanded="false"
-						>
-							{catalogMoreLabel}
-						</button>
-					</div>
-				</div>
-			</section>
-			) : null}
-
-			{secondaryRibbon ? (
-			<Ribbon
-				text={secondaryRibbon}
-				backgroundClass="bg-[#f5f0e9]"
-				maxWidthClass="max-w-6xl"
-			/>
-			) : null}
-
-			<DestinationsGallery t={t} currentLang={lang} />
-
-			{hasBlogSection ? (
-			<section class="bg-white">
-				<div class="mx-auto w-full max-w-6xl px-6 py-12 md:py-14 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-					<h2 class="text-lg md:text-xl lg:text-2xl font-semibold text-gray-800 leading-snug italic">
-						{blogTitle}
-					</h2>
-					<button
-						type="button"
-						class="inline-flex items-center justify-center border border-gray-900 px-5 py-2 text-xs md:text-sm uppercase tracking-wide text-gray-900 transition hover:bg-gray-900 hover:text-white"
-					>
-						{blogButton}
-					</button>
-				</div>
-			</section>
-			) : null}
-		</main>
-		<Footer currentLang={lang} {t} />
-		<script is:inline>
-			(() => {
-				const slides = Array.from(document.querySelectorAll("[data-destino-slide]"));
-				const prev = document.querySelector("[data-destino-prev]");
-				const next = document.querySelector("[data-destino-next]");
-				if (!slides.length) return;
-
-				let index = 0;
-				const show = (i) => {
-					index = (i + slides.length) % slides.length;
-					slides.forEach((slide, idx) => {
-						slide.classList.toggle("opacity-100", idx === index);
-						slide.classList.toggle("opacity-0", idx !== index);
-						slide.classList.toggle("pointer-events-none", idx !== index);
-					});
-				};
-
-				let timer = slides.length > 1 ? setInterval(() => show(index + 1), 3000) : null;
-				const resetTimer = () => {
-					if (timer) clearInterval(timer);
-					if (slides.length > 1) timer = setInterval(() => show(index + 1), 3000);
-				};
-
-				prev?.addEventListener("click", () => {
-					show(index - 1);
-					resetTimer();
-				});
-				next?.addEventListener("click", () => {
-					show(index + 1);
-					resetTimer();
-				});
-			})();
-
-			(() => {
-				const tabButtons = Array.from(
-					document.querySelectorAll("[data-catalog-tab]")
-				);
-				const panels = Array.from(
-					document.querySelectorAll("[data-catalog-panel]")
-				);
-				const toggle = document.querySelector("[data-catalog-more]");
-				if (!tabButtons.length || !panels.length || !toggle) return;
-
-				let activeTab = "smallTrips";
-				const stateByTab = {};
-				panels.forEach((panel) => {
-					const tab = panel.dataset.catalogPanel;
-					if (!tab) return;
-					const initial = Number(panel.dataset.initialCount || "0");
-					const step = Number(panel.dataset.stepCount || "1");
-					stateByTab[tab] = {
-						initial: initial > 0 ? initial : 1,
-						step: step > 0 ? step : 1,
-						visible: initial > 0 ? initial : 1
-					};
-				});
-
-				const applyTabStyles = () => {
-					tabButtons.forEach((button) => {
-						const tab = button.dataset.catalogTab;
-						const isActive = tab === activeTab;
-						button.setAttribute("aria-selected", isActive ? "true" : "false");
-						button.setAttribute("tabindex", isActive ? "0" : "-1");
-						button.classList.toggle("bg-[#0b2b3a]", isActive);
-						button.classList.toggle("text-white", isActive);
-						button.classList.toggle("bg-white", !isActive);
-						button.classList.toggle("text-[#0b2b3a]", !isActive);
-					});
-				};
-
-				const getActivePanel = () =>
-					panels.find((panel) => panel.dataset.catalogPanel === activeTab);
-
-				const updatePanels = () => {
-					panels.forEach((panel) => {
-						const panelTab = panel.dataset.catalogPanel;
-						if (!panelTab) return;
-						const isPanelActive = panelTab === activeTab;
-						panel.classList.toggle("hidden", !isPanelActive);
-						panel.setAttribute("aria-hidden", isPanelActive ? "false" : "true");
-						if (isPanelActive) {
-							panel.removeAttribute("hidden");
-						} else {
-							panel.setAttribute("hidden", "");
-						}
-
-						const cards = Array.from(
-							panel.querySelectorAll("[data-catalog-index]")
-						);
-						const state = stateByTab[panelTab];
-						const visibleLimit = Math.min(state.visible, cards.length);
-						cards.forEach((card) => {
-							const index = Number(card.dataset.catalogIndex || "0");
-							const isVisible = index < visibleLimit;
-							card.classList.toggle("hidden", !isPanelActive || !isVisible);
-						});
-
-						const rows = Array.from(
-							panel.querySelectorAll("[data-catalog-row]")
-						);
-						rows.forEach((row) => {
-							const cards = Array.from(
-								row.querySelectorAll("[data-catalog-card]")
-							);
-							const hasVisibleCards = cards.some(
-								(card) => !card.classList.contains("hidden")
-							);
-							row.classList.toggle(
-								"hidden",
-								!isPanelActive || !hasVisibleCards
-							);
-						});
-					});
-				};
-
-				const updateToggle = () => {
-					const activePanel = getActivePanel();
-					if (!activePanel) {
-						toggle.classList.add("hidden");
-						return;
-					}
-					const panelTab = activePanel.dataset.catalogPanel;
-					if (!panelTab) return;
-					const state = stateByTab[panelTab];
-					const totalCards = activePanel.querySelectorAll("[data-catalog-index]").length;
-					const canExpand = totalCards > state.initial;
-					toggle.classList.toggle("hidden", !canExpand);
-					if (!canExpand) return;
-					const moreLabel = toggle.dataset.moreLabel || "View more destination tours";
-					const lessLabel = toggle.dataset.lessLabel || "View fewer destination tours";
-					const isFullyExpanded = state.visible >= totalCards;
-					toggle.textContent = isFullyExpanded ? lessLabel : moreLabel;
-					toggle.setAttribute(
-						"aria-expanded",
-						state.visible > state.initial ? "true" : "false"
-					);
-				};
-
-				tabButtons.forEach((button) => {
-					button.addEventListener("click", () => {
-						const nextTab = button.dataset.catalogTab;
-						if (!nextTab || nextTab === activeTab) return;
-						activeTab = nextTab;
-						applyTabStyles();
-						updatePanels();
-						updateToggle();
-					});
-				});
-
-				toggle.addEventListener("click", () => {
-					const activePanel = getActivePanel();
-					if (!activePanel) return;
-					const panelTab = activePanel.dataset.catalogPanel;
-					if (!panelTab) return;
-					const state = stateByTab[panelTab];
-					const totalCards = activePanel.querySelectorAll("[data-catalog-index]").length;
-					if (state.visible < totalCards) {
-						state.visible = Math.min(totalCards, state.visible + state.step);
-					} else {
-						state.visible = state.initial;
-					}
-					updatePanels();
-					updateToggle();
-				});
-
-				applyTabStyles();
-				updatePanels();
-				updateToggle();
-			})();
-		</script>
-	</body>
+      {smallTripItems.length > 0 && (
+        <section class="max-w-6xl mx-auto px-6 pb-20">
+          <h2 class="text-3xl md:text-4xl italic text-stone-900 mb-8" style="font-family: 'Playfair Display', serif;">
+            Small Trips
+          </h2>
+          <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {smallTripItems.map((tour: any) => {
+              const imageUrl = getOdooMediaUrl(tour.heroSlideImages?.[0]);
+              return (
+                <a href={`/${lang}/tours/${tour.slug}`} class="relative overflow-hidden group min-h-[320px]">
+                  {imageUrl ? <img src={imageUrl} alt={tour.title} class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" /> : <div class="absolute inset-0 bg-stone-300" />}
+                  <span class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/70 flex flex-col justify-end p-6 text-white">
+                    {tour.discount > 0 ? <span class="absolute top-4 left-4 bg-[#1AA093] px-3 py-1 text-xs font-bold text-white rounded-full shadow">-{tour.discount.toFixed(0)}%</span> : null}
+                    <div class="text-2xl font-bold leading-tight" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</div>
+                    {tour.adultUnitPrice > 0 ? (
+                      <div class="mt-3">
+                        {tour.discount > 0 ? <p class="text-xs text-white/60 line-through">{formatPrice(tour.adultUnitPrice, lang)}</p> : null}
+                        <p class="text-sm font-bold text-white">
+                          {priceFromLabel} {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), lang)}
+                        </p>
+                      </div>
+                    ) : null}
+                  </span>
+                </a>
+              );
+            })}
+          </div>
+        </section>
+      )}
+    </main>
+    <Footer currentLang={lang} {t} />
+  </body>
 </html>

@@ -32,7 +32,7 @@ function sortToursAlphabetically(rows) {
   return [...rows].sort((a, b) => {
     const left = a?.attributes || a;
     const right = b?.attributes || b;
-    return String(left?.title ?? '').localeCompare(String(right?.title ?? ''), undefined, {
+    return String(left?.title ?? left?.nombre ?? '').localeCompare(String(right?.title ?? right?.nombre ?? ''), undefined, {
       sensitivity: 'base'
     });
   });
@@ -58,7 +58,7 @@ function renderDestinationToursHtml(destination, currentLang) {
         ${tours.map(tour => {
           const t = tour.attributes || tour;
           return `<a href="/${currentLang}/tours/${escapeHtml(t.slug || toSlug(t.title))}" class="block font-semibold text-gray-800 text-sm hover:text-[#1AA093] transition">
-            ${escapeHtml(t.title)}
+            ${escapeHtml(t.title || t.nombre)}
           </a>`;
         }).join('')}
       </div>
@@ -69,7 +69,7 @@ function renderDestinationToursHtml(destination, currentLang) {
     const t = tour.attributes || tour;
     return `<div class="break-inside-avoid pb-3 border-b border-gray-100 last:border-0">
       <a href="/${currentLang}/tours/${escapeHtml(t.slug || toSlug(t.title))}" class="font-semibold text-gray-800 text-sm hover:text-[#1AA093] transition">
-        ${escapeHtml(t.title)}
+        ${escapeHtml(t.title || t.nombre)}
       </a>
     </div>`;
   }).join('');
@@ -428,18 +428,12 @@ document.addEventListener('DOMContentLoaded', function () {
       const subitemsContainer = document.getElementById('mobile-style-subitems');
       if (!subitemsContainer) return;
 
-      // travelStyles: usar datos de Strapi
+      // travelStyles: usar datos entregados por Odoo
       if (optionKey === 'travelStyles' && window.__navbarStyleTrips?.length) {
         const lang = window.__currentLang || 'es';
-        const pubUrl = window.__strapiPublicUrl || 'http://localhost:1337';
         subitemsContainer.innerHTML = `<div class="flex flex-col gap-1">${window.__navbarStyleTrips.map(item => {
-          const ogImgObj = Array.isArray(item.ogImage) ? item.ogImage[0] : item.ogImage;
-          const imgSrc = ogImgObj?.formats?.medium?.url
-            ? pubUrl + ogImgObj.formats.medium.url
-            : ogImgObj?.url
-            ? pubUrl + ogImgObj.url
-            : '';
-          const slug = toSlug(item.name);
+          const imgSrc = item.image?.url || '';
+          const slug = item.slug || toSlug(item.name);
           return `
             <a href="/${lang}/style-trips/${slug}" class="relative h-16 overflow-hidden rounded block">
               ${imgSrc ? `<img src="${imgSrc}" alt="${item.name}" class="w-full h-full object-cover" />` : `<div class="w-full h-full bg-gray-400"></div>`}

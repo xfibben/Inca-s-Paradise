@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem
+        id="menu_incas_catalogo_root"
+        name="Catalogo"
+        parent="incas_core.menu_incas_root"
+        sequence="30"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

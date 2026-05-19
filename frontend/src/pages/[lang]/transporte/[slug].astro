@@ -395,8 +395,8 @@ const hasExcludedBlock = Boolean(excludedItems.length);
     <Footer currentLang={currentLang} t={t} />
 
     <!-- Inyecta datos del transporte para el BookingModal -->
-    <script is:inline define:vars={{ transporteDocumentId: transporte.documentId, transporteNumericId: transporte.id, transporteSlug: transporte.slug, selectedVehiculoNombre }}>
-      window.__transporteData = { documentId: transporteDocumentId, numericId: transporteNumericId, slug: transporteSlug };
+    <script is:inline define:vars={{ transporteServiceId: transporte.serviceId ?? null, transporteSlug: transporte.slug, selectedVehiculoNombre }}>
+      window.__transporteData = { serviceId: transporteServiceId, slug: transporteSlug };
       window.__selectedVehicleName = selectedVehiculoNombre;
     </script>
 

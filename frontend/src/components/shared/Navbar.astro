@@ -2,6 +2,7 @@
 import LanguageSwitcher from './LanguageSwitcher.astro';
 import { languages } from '../../i18n';
 import { fetchOdooTransportJson, getOdooTransportLang } from '../../utils/odooTransport';
+import { fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from '../../utils/odooWeb';
 
 interface Props {
   t: any;
@@ -56,11 +57,6 @@ const desktopWhatsappHref = `https://wa.me/51953556680?text=${encodeURIComponent
 const mobileWhatsappHref = `https://wa.me/51984434547?text=${encodeURIComponent(
   whatsappText
 )}`;
-
-const STRAPI_URL = import.meta.env.STRAPI_URL;
-const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL;
-// const strapiLocale = currentLang === 'pt' ? 'pt-BR' : currentLang === 'es' ? 'es-PE' : currentLang;
-  const strapiLocale = currentLang === 'pt' ? 'pt' : currentLang === 'es' ? 'es-PE' : currentLang;
 
 const NAV_CACHE_TTL_MS = 5 * 60 * 1000;
 const NAV_CACHE_KEY = '__incas_nav_cache_v1__';
@@ -118,10 +114,7 @@ function sortToursAlphabetically(rows: any[]) {
 }
 
 function resolveMediaUrl(media: any) {
-  if (!media) return null;
-  const url = media?.formats?.medium?.url || media?.formats?.small?.url || media?.url || '';
-  if (!url) return null;
-  return url.startsWith('http') ? url : `${STRAPI_PUBLIC_URL}${url}`;
+  return getOdooMediaUrl(media);
 }
 
 let navStyleTrips: any[] = [];
@@ -134,19 +127,11 @@ try {
   console.error('[Navbar] Error tipo-transportes:', e);
 }
 try {
-  const styleUrl = `${STRAPI_URL}/api/style-trips?populate=*&locale=${strapiLocale}&status=published`;
-  const destUrl = `${STRAPI_URL}/api/destino-detalles?locale=${strapiLocale}` +
-    `&fields[0]=title` +
-    `&fields[1]=slug` +
-    `&populate[galleryThumbnail][fields][0]=url` +
-    `&populate[galleryThumbnail][fields][1]=alternativeText` +
-    `&populate[tours][fields][0]=title` +
-    `&populate[tours][fields][1]=slug` +
-    `&populate[tours][populate][heroSlideImages][fields][0]=url` +
-    `&populate[tours][populate][heroSlideImages][fields][1]=alternativeText`;
+  const styleUrl = `/incas/api/web/estilos-viaje?lang=${getOdooWebLang(currentLang)}`;
+  const destUrl = `/incas/api/web/destinos?lang=${getOdooWebLang(currentLang)}`;
   const [styleJson, destJson] = await Promise.all([
-    fetchJsonCached(styleUrl),
-    fetchJsonCached(destUrl)
+    fetchOdooWebJson(styleUrl),
+    fetchOdooWebJson(destUrl)
   ]);
   navStyleTrips = styleJson.data ?? [];
   navDestinations = destJson.data ?? [];
@@ -331,8 +316,8 @@ try {
                                   {tours.map((tour: any) => {
                                     const tourAttrs = tour.attributes || tour;
                                     return (
-                                      <a href={`/${currentLang}/tours/${tourAttrs.slug || toSlug(tourAttrs.title)}`} class="block font-semibold text-gray-800 text-sm hover:text-[#1AA093] transition">
-                                        {tourAttrs.title}
+                                      <a href={`/${currentLang}/tours/${tourAttrs.slug || toSlug(tourAttrs.title || tourAttrs.nombre)}`} class="block font-semibold text-gray-800 text-sm hover:text-[#1AA093] transition">
+                                        {tourAttrs.title || tourAttrs.nombre}
                                       </a>
                                     );
                                   })}
@@ -345,8 +330,8 @@ try {
                             const attrs = tour.attributes || tour;
                             return (
                               <div class="break-inside-avoid pb-3 border-b border-gray-100 last:border-0">
-                                <a href={`/${currentLang}/tours/${attrs.slug || toSlug(attrs.title)}`} class="font-semibold text-gray-800 text-sm hover:text-[#1AA093] transition">
-                                  {attrs.title}
+                                <a href={`/${currentLang}/tours/${attrs.slug || toSlug(attrs.title || attrs.nombre)}`} class="font-semibold text-gray-800 text-sm hover:text-[#1AA093] transition">
+                                  {attrs.title || attrs.nombre}
                                 </a>
                               </div>
                             );
@@ -400,14 +385,7 @@ try {
                   <div class="styles-menu-content h-full" id="content-travelStyles">
                     <div class="grid grid-cols-5 gap-2 h-full w-full px-2 py-2">
                       {navStyleTrips.map((item: any) => {
-                        const navImg = Array.isArray(item.image) ? item.image[0] : item.image;
-                        const imgUrl = navImg?.formats?.small?.url
-                          ? `${STRAPI_PUBLIC_URL}${navImg.formats.small.url}`
-                          : navImg?.formats?.medium?.url
-                          ? `${STRAPI_PUBLIC_URL}${navImg.formats.medium.url}`
-                          : navImg?.url
-                          ? `${STRAPI_PUBLIC_URL}${navImg.url}`
-                          : null;
+                        const imgUrl = getOdooMediaUrl(item.image);
                         return (
                           <a
                             href={`/${currentLang}/style-trips/${item.slug || toSlug(item.name)}`}
@@ -601,15 +579,15 @@ try {
                 // Usar ogImage como principal, fallback a heroSlides
                 let imgUrl = '';
                 if (dest.galleryThumbnail && dest.galleryThumbnail.url) {
-                  imgUrl = `${STRAPI_PUBLIC_URL}${dest.galleryThumbnail.url}`;
+                  imgUrl = dest.galleryThumbnail.url;
                 } else {
-                  const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
-                  if (slides.length > 0 && slides[0]?.image?.url) {
-                    imgUrl = `${STRAPI_PUBLIC_URL}${slides[0].image.url}`;
+                  const slides = dest.heroSlideImages && Array.isArray(dest.heroSlideImages) ? dest.heroSlideImages : [];
+                  if (slides.length > 0 && slides[0]?.url) {
+                    imgUrl = slides[0].url;
                   }
                 }
                 return (
-                  <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} class="mobile-destination-item relative h-16 overflow-hidden rounded block">
+                  <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} data-dest={dest.slug} class="mobile-destination-item relative h-16 overflow-hidden rounded block">
                     {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
                     <div class="absolute inset-0 bg-black/50"></div>
                     <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.title}</span>
@@ -623,15 +601,15 @@ try {
                 // Usar ogImage como principal, fallback a heroSlides
                 let imgUrl = '';
                 if (dest.galleryThumbnail && dest.galleryThumbnail.url) {
-                  imgUrl = `${STRAPI_PUBLIC_URL}${dest.galleryThumbnail.url}`;
+                  imgUrl = dest.galleryThumbnail.url;
                 } else {
-                  const slides = dest.heroSlides && Array.isArray(dest.heroSlides) ? dest.heroSlides : [];
-                  if (slides.length > 0 && slides[0]?.image?.url) {
-                    imgUrl = `${STRAPI_PUBLIC_URL}${slides[0].image.url}`;
+                  const slides = dest.heroSlideImages && Array.isArray(dest.heroSlideImages) ? dest.heroSlideImages : [];
+                  if (slides.length > 0 && slides[0]?.url) {
+                    imgUrl = slides[0].url;
                   }
                 }
                 return (
-                  <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} class="mobile-destination-item relative h-16 overflow-hidden rounded block">
+                  <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} data-dest={dest.slug} class="mobile-destination-item relative h-16 overflow-hidden rounded block">
                     {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
                     <div class="absolute inset-0 bg-black/50"></div>
                     <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.title}</span>
@@ -663,17 +641,7 @@ try {
           <!-- Main Menu Options -->
           <div id="mobile-styles-list" class="flex flex-col gap-1 p-1">
             {navStyleTrips.map((item: any) => {
-              let imgUrl = '';
-              if (item.image) {
-                const navImg = Array.isArray(item.image) ? item.image[0] : item.image;
-                if (navImg?.formats?.small?.url) {
-                  imgUrl = `${STRAPI_PUBLIC_URL}${navImg.formats.small.url}`;
-                } else if (navImg?.formats?.medium?.url) {
-                  imgUrl = `${STRAPI_PUBLIC_URL}${navImg.formats.medium.url}`;
-                } else if (navImg?.url) {
-                  imgUrl = `${STRAPI_PUBLIC_URL}${navImg.url}`;
-                }
-              }
+              const imgUrl = getOdooMediaUrl(item.image) || '';
               return (
                 <a href={`/${currentLang}/style-trips/${item.slug || toSlug(item.name)}`} class="relative h-16 overflow-hidden rounded block">
                   {imgUrl ? (
@@ -776,12 +744,11 @@ try {
 <div id="mobile-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" onclick="document.getElementById('mobile-menu-btn').click()"></div>
 
 <!-- Exponer traducciones al script externo -->
-<script is:inline define:vars={{ translations: t, navStyleTrips, navDestinations, navTipoTransportes, STRAPI_PUBLIC_URL, currentLang, languages }}>
+<script is:inline define:vars={{ translations: t, navStyleTrips, navDestinations, navTipoTransportes, currentLang, languages }}>
   window.__navbarT = translations;
   window.__navbarStyleTrips = navStyleTrips;
   window.__navbarDestinations = navDestinations;
   window.__navbarTipoTransportes = navTipoTransportes;
-  window.__strapiPublicUrl = STRAPI_PUBLIC_URL;
   window.__currentLang = currentLang;
   window.__navbarLanguages = languages;
 </script>

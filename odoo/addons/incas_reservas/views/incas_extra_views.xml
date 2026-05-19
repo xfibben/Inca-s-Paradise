@@ -148,7 +148,7 @@
     <menuitem
         id="menu_incas_extra"
         name="Extras"
-        parent="incas_core.menu_incas_configuracion_root"
+        parent="menu_incas_catalogo_root"
         action="action_incas_extra"
         sequence="17"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
@@ -157,7 +157,7 @@
     <menuitem
         id="menu_incas_extra_tarifa"
         name="Tarifas de extra"
-        parent="incas_core.menu_incas_configuracion_root"
+        parent="menu_incas_catalogo_root"
         action="action_incas_extra_tarifa"
         sequence="18"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
