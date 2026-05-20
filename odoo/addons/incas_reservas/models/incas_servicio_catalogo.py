@@ -188,22 +188,47 @@ class IncasServicioCatalogo(models.Model):
 
     @api.model
     def _get_currency_rates(self):
-        self._asegurar_tasas_monitoreadas()
-        company = self.env.company
-        fecha = fields.Date.context_today(self)
-        currency_model = self.env["res.currency"].with_context(active_test=False)
-        usd_currency = currency_model.search([("name", "=", "USD")], limit=1)
-        pen_currency = currency_model.search([("name", "=", "PEN")], limit=1)
-        eur_currency = currency_model.search([("name", "=", "EUR")], limit=1)
+        tasas_fallback = self._obtener_tasas_usd_desde_api()
+        try:
+            self._asegurar_tasas_monitoreadas()
+            company = self.env.company
+            fecha = fields.Date.context_today(self)
+            currency_model = self.env["res.currency"].with_context(active_test=False)
+            usd_currency = currency_model.search([("name", "=", "USD")], limit=1)
+            pen_currency = currency_model.search([("name", "=", "PEN")], limit=1)
+            eur_currency = currency_model.search([("name", "=", "EUR")], limit=1)
 
-        if not usd_currency:
-            raise ValueError("No se encontró la moneda USD en Odoo")
+            if not usd_currency:
+                return {
+                    "PEN": tasas_fallback["PEN"],
+                    "EUR": tasas_fallback["EUR"],
+                }
 
-        # Las tarifas del frontend usan USD como base.
-        return {
-            "PEN": float(usd_currency._convert(1.0, pen_currency, company, fecha)) if pen_currency else 3.75,
-            "EUR": float(usd_currency._convert(1.0, eur_currency, company, fecha)) if eur_currency else 0.92,
-        }
+            # Si una tasa no está cargada en Odoo, cae a la API externa sin romper el frontend.
+            pen_rate = tasas_fallback["PEN"]
+            eur_rate = tasas_fallback["EUR"]
+
+            if pen_currency:
+                try:
+                    pen_rate = float(usd_currency._convert(1.0, pen_currency, company, fecha))
+                except Exception:
+                    pen_rate = tasas_fallback["PEN"]
+
+            if eur_currency:
+                try:
+                    eur_rate = float(usd_currency._convert(1.0, eur_currency, company, fecha))
+                except Exception:
+                    eur_rate = tasas_fallback["EUR"]
+
+            return {
+                "PEN": pen_rate,
+                "EUR": eur_rate,
+            }
+        except Exception:
+            return {
+                "PEN": tasas_fallback["PEN"],
+                "EUR": tasas_fallback["EUR"],
+            }
 
     @api.model
     def _obtener_tasas_usd_desde_api(self):

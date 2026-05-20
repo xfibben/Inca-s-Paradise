@@ -438,9 +438,8 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
         const stopAutoScroll = (gallery) => {
           const state = galleryState.get(gallery);
           if (!state) return;
-          if (state.frameId) cancelAnimationFrame(state.frameId);
-          state.frameId = 0;
-          state.running = false;
+          if (state.timerId) window.clearTimeout(state.timerId);
+          state.timerId = 0;
         };
 
         const startAutoScroll = (gallery) => {
@@ -451,28 +450,21 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
           stopAutoScroll(gallery);
 
           const state = {
-            frameId: 0,
-            running: true,
-            lastTs: 0,
+            timerId: 0,
           };
 
-          const tick = (ts) => {
-            if (!state.running) return;
-            if (!state.lastTs) {
-              state.lastTs = ts;
-            }
-            const delta = ts - state.lastTs;
-            state.lastTs = ts;
-            const speed = 0.03;
-            gallery.scrollLeft += delta * speed;
-            const maxScroll = Math.max(gallery.scrollWidth - gallery.clientWidth, 0);
-            if (gallery.scrollLeft >= maxScroll) {
-              gallery.scrollLeft = 0;
-            }
-            state.frameId = requestAnimationFrame(tick);
+          const advance = () => {
+            const currentLeft = gallery.scrollLeft;
+            const positions = slides
+              .map((slide) => slide instanceof HTMLElement ? slide.offsetLeft : 0)
+              .sort((a, b) => a - b);
+            const nextLeft = positions.find((position) => position > currentLeft + 8) ?? 0;
+
+            gallery.scrollTo({ left: nextLeft, behavior: "smooth" });
+            state.timerId = window.setTimeout(advance, 4200);
           };
 
-          state.frameId = requestAnimationFrame(tick);
+          state.timerId = window.setTimeout(advance, 4200);
           galleryState.set(gallery, state);
         };
 
