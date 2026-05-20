@@ -6,6 +6,13 @@ import { factories } from "@strapi/strapi";
 
 type GenericRecord = Record<string, any>;
 const SUBCATEGORIA_TOUR_UID = "api::subcategoria-tour.subcategoria-tour" as any;
+const DESTINO_UID = "api::destino-detalle.destino-detalle";
+const DEFAULT_STATUS = "published";
+const ODOO_LOCALE_CODES = {
+  es: ["es-PE", "es"],
+  en: ["en-US", "en"],
+  pt: ["pt-BR", "pt"],
+};
 
 function toMediaObject(value: any): GenericRecord | null {
   if (!value) return null;
@@ -123,8 +130,39 @@ function normalizeTourItem(tour: any) {
   };
 }
 
+const escapeCsvValue = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  const text = String(value).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  return `"${text.replace(/"/g, '""')}"`;
+};
+
+const normalizeStatus = (status: unknown): "draft" | "published" => {
+  return status === "draft" ? "draft" : "published";
+};
+
+const getPreferredLocale = (availableLocales: string[], candidates: string[]) => {
+  for (const candidate of candidates) {
+    if (availableLocales.includes(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+};
+
+const buildIconosJson = (items: any[]) =>
+  JSON.stringify(
+    items.map((item, index) => ({
+      orden: index + 1,
+      titulo: item?.label ?? "",
+    }))
+  );
+
 export default factories.createCoreController(
-  "api::destino-detalle.destino-detalle",
+  DESTINO_UID,
   ({ strapi }) => ({
     async find(ctx) {
       ctx.query = {
@@ -234,6 +272,145 @@ export default factories.createCoreController(
         ...response,
         data: decorateResponseData((response as any).data)
       };
+    },
+
+    async exportCsv(ctx) {
+      const status = normalizeStatus(ctx.query?.status ?? DEFAULT_STATUS);
+      const locales = await strapi.query("plugin::i18n.locale").findMany({
+        orderBy: { id: "asc" },
+      } as any);
+      const availableLocaleCodes = locales.map((item: { code: string }) => item.code);
+      const localeCodes = {
+        es: getPreferredLocale(availableLocaleCodes, ODOO_LOCALE_CODES.es),
+        en: getPreferredLocale(availableLocaleCodes, ODOO_LOCALE_CODES.en),
+        pt: getPreferredLocale(availableLocaleCodes, ODOO_LOCALE_CODES.pt),
+      };
+      const localesToExport = Array.from(
+        new Set(Object.values(localeCodes).filter((value): value is string => Boolean(value)))
+      );
+      const destinosByDocument = new Map<string, Record<string, any>>();
+
+      for (const localeCode of localesToExport) {
+        const destinos = await strapi.documents(DESTINO_UID).findMany({
+          locale: localeCode,
+          status,
+          sort: ["displayOrder:asc", "title:asc"],
+          fields: [
+            "documentId",
+            "publishedAt",
+            "title",
+            "displayOrder",
+            "slug",
+            "description",
+            "seoTitle",
+            "seoDescription",
+            "introTitle",
+            "introContent",
+            "primaryRibbon",
+            "catalogInitialVisibleCount",
+          ] as any,
+          populate: {
+            iconItems: {
+              fields: ["label"] as any,
+            },
+          } as any,
+        });
+
+        for (const destino of Array.isArray(destinos) ? destinos : []) {
+          const documentId = destino?.documentId;
+          if (!documentId) {
+            continue;
+          }
+
+          const current = destinosByDocument.get(documentId) ?? {};
+          current[localeCode] = destino;
+          destinosByDocument.set(documentId, current);
+        }
+      }
+
+      const headers = [
+        "nombre",
+        "orden_visual",
+        "slug",
+        "slug_en",
+        "slug_pt",
+        "descripcion",
+        "descripcion_en",
+        "descripcion_pt",
+        "seo_titulo",
+        "seo_titulo_en",
+        "seo_titulo_pt",
+        "seo_descripcion",
+        "seo_descripcion_en",
+        "seo_descripcion_pt",
+        "titulo_intro",
+        "titulo_intro_en",
+        "titulo_intro_pt",
+        "contenido_intro",
+        "contenido_intro_en",
+        "contenido_intro_pt",
+        "cinta_principal",
+        "cinta_principal_en",
+        "cinta_principal_pt",
+        "cantidad_inicial_catalogo",
+        "iconos_import_json",
+        "iconos_import_json_en",
+        "iconos_import_json_pt",
+        "active",
+      ];
+
+      const rows = Array.from(destinosByDocument.values())
+        .sort((left, right) => {
+          const leftDestino = (localeCodes.es && left[localeCodes.es]) || (localeCodes.en && left[localeCodes.en]) || {};
+          const rightDestino = (localeCodes.es && right[localeCodes.es]) || (localeCodes.en && right[localeCodes.en]) || {};
+          return String(leftDestino?.title ?? "").localeCompare(String(rightDestino?.title ?? ""));
+        })
+        .map((destinoByLocale) => {
+          const destinoEs = localeCodes.es ? destinoByLocale[localeCodes.es] ?? null : null;
+          const destinoEn = localeCodes.en ? destinoByLocale[localeCodes.en] ?? null : null;
+          const destinoPt = localeCodes.pt ? destinoByLocale[localeCodes.pt] ?? null : null;
+          const baseDestino = destinoEs ?? destinoEn ?? destinoPt ?? {};
+
+          return [
+            destinoEs?.title ?? "",
+            baseDestino?.displayOrder ?? "",
+            destinoEs?.slug ?? "",
+            destinoEn?.slug ?? "",
+            destinoPt?.slug ?? "",
+            destinoEs?.description ?? "",
+            destinoEn?.description ?? "",
+            destinoPt?.description ?? "",
+            destinoEs?.seoTitle ?? "",
+            destinoEn?.seoTitle ?? "",
+            destinoPt?.seoTitle ?? "",
+            destinoEs?.seoDescription ?? "",
+            destinoEn?.seoDescription ?? "",
+            destinoPt?.seoDescription ?? "",
+            destinoEs?.introTitle ?? "",
+            destinoEn?.introTitle ?? "",
+            destinoPt?.introTitle ?? "",
+            destinoEs?.introContent ?? "",
+            destinoEn?.introContent ?? "",
+            destinoPt?.introContent ?? "",
+            destinoEs?.primaryRibbon ?? "",
+            destinoEn?.primaryRibbon ?? "",
+            destinoPt?.primaryRibbon ?? "",
+            baseDestino?.catalogInitialVisibleCount ?? "",
+            buildIconosJson(Array.isArray(destinoEs?.iconItems) ? destinoEs.iconItems : []),
+            buildIconosJson(Array.isArray(destinoEn?.iconItems) ? destinoEn.iconItems : []),
+            buildIconosJson(Array.isArray(destinoPt?.iconItems) ? destinoPt.iconItems : []),
+            baseDestino?.publishedAt ? "True" : "False",
+          ];
+        });
+
+      const csv = [
+        headers.map(escapeCsvValue).join(","),
+        ...rows.map((row) => row.map(escapeCsvValue).join(",")),
+      ].join("\n");
+
+      ctx.set("Content-Type", "text/csv; charset=utf-8");
+      ctx.set("Content-Disposition", `attachment; filename="destinos-odoo-${status}.csv"`);
+      ctx.body = `\uFEFF${csv}`;
     }
   })
 );

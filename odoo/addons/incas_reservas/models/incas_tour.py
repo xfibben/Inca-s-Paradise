@@ -34,6 +34,23 @@ class IncasTour(models.Model):
     precio_nino = fields.Float(string="Precio niño USD")
     descuento = fields.Float(string="Descuento")
     dias = fields.Integer(string="Dias", default=1)
+    comentario = fields.Text(string="Comentario")
+    observacion = fields.Selection(
+        [
+            ("corregir", "Corregir"),
+            ("arreglar_imagenes", "Arreglar imágenes"),
+            ("perfecto", "Perfecto"),
+        ],
+        string="Observación",
+        default="corregir",
+    )
+    ultimo_editor_id = fields.Many2one(
+        "res.users",
+        string="Último editor",
+        related="write_uid",
+        readonly=True,
+        store=False,
+    )
     ip = fields.Selection(
         [
             ("ip3", "IP 3"),
@@ -58,6 +75,18 @@ class IncasTour(models.Model):
     destacados_lead = fields.Html(string="Lead destacados")
     destacados_lead_en = fields.Html(string="Lead destacados en ingles")
     destacados_lead_pt = fields.Html(string="Lead destacados en portugues")
+    destacados_items_import_json = fields.Text(string="Importar destacados JSON")
+    destacados_items_import_json_en = fields.Text(string="Importar destacados JSON en ingles")
+    destacados_items_import_json_pt = fields.Text(string="Importar destacados JSON en portugues")
+    itinerario_import_json = fields.Text(string="Importar itinerario JSON")
+    itinerario_import_json_en = fields.Text(string="Importar itinerario JSON en ingles")
+    itinerario_import_json_pt = fields.Text(string="Importar itinerario JSON en portugues")
+    incluye_import_json = fields.Text(string="Importar incluidos JSON")
+    incluye_import_json_en = fields.Text(string="Importar incluidos JSON en ingles")
+    incluye_import_json_pt = fields.Text(string="Importar incluidos JSON en portugues")
+    no_incluye_import_json = fields.Text(string="Importar no incluidos JSON")
+    no_incluye_import_json_en = fields.Text(string="Importar no incluidos JSON en ingles")
+    no_incluye_import_json_pt = fields.Text(string="Importar no incluidos JSON en portugues")
     imagen = fields.Image(
         string="Imagen",
         compute="_compute_imagen",
@@ -223,6 +252,115 @@ class IncasTour(models.Model):
         valor_limpio = tools.html2plaintext(valor).replace("\xa0", " ")
         valor_limpio = " ".join(valor_limpio.split())
         return valor_limpio or False
+
+    def _cargar_json_importacion(self, valor):
+        if not valor:
+            return []
+        if isinstance(valor, list):
+            return valor
+        try:
+            data = json.loads(valor)
+            return data if isinstance(data, list) else []
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return []
+
+    def _aplicar_itinerario_importado(self):
+        itinerario_model = self.env["incas.tour.itinerario"]
+        for record in self:
+            items_por_orden = {}
+            for sufijo, campo in (
+                ("", "itinerario_import_json"),
+                ("_en", "itinerario_import_json_en"),
+                ("_pt", "itinerario_import_json_pt"),
+            ):
+                for indice, item in enumerate(record._cargar_json_importacion(record[campo]), start=1):
+                    if not isinstance(item, dict):
+                        continue
+                    orden = int(item.get("orden") or indice)
+                    valores = items_por_orden.setdefault(
+                        orden,
+                        {
+                            "sequence": orden * 10,
+                            "tour_id": record.id,
+                            "titulo": False,
+                            "titulo_en": False,
+                            "titulo_pt": False,
+                            "descripcion": False,
+                            "descripcion_en": False,
+                            "descripcion_pt": False,
+                        },
+                    )
+                    valores[f"titulo{sufijo}"] = item.get("titulo") or False
+                    valores[f"descripcion{sufijo}"] = item.get("descripcion") or False
+
+            record.itinerario_item_ids.unlink()
+            for orden in sorted(items_por_orden):
+                itinerario_model.create(items_por_orden[orden])
+
+    def _aplicar_destacados_importados(self):
+        destacado_model = self.env["incas.tour.destacado"]
+        for record in self:
+            items_por_orden = {}
+            for sufijo, campo in (
+                ("", "destacados_items_import_json"),
+                ("_en", "destacados_items_import_json_en"),
+                ("_pt", "destacados_items_import_json_pt"),
+            ):
+                for indice, item in enumerate(record._cargar_json_importacion(record[campo]), start=1):
+                    if not isinstance(item, dict):
+                        continue
+                    orden = int(item.get("orden") or indice)
+                    valores = items_por_orden.setdefault(
+                        orden,
+                        {
+                            "sequence": orden * 10,
+                            "tour_id": record.id,
+                            "titulo": False,
+                            "titulo_en": False,
+                            "titulo_pt": False,
+                            "contenido": False,
+                            "contenido_en": False,
+                            "contenido_pt": False,
+                        },
+                    )
+                    valores[f"titulo{sufijo}"] = item.get("titulo") or False
+                    valores[f"contenido{sufijo}"] = item.get("contenido") or item.get("descripcion") or False
+
+            record.destacado_item_ids.unlink()
+            for orden in sorted(items_por_orden):
+                destacado_model.create(items_por_orden[orden])
+
+    def _aplicar_lista_importada(self, campo_es, campo_en, campo_pt, modelo):
+        item_model = self.env[modelo]
+        for record in self:
+            items_por_orden = {}
+            for sufijo, campo in (
+                ("", campo_es),
+                ("_en", campo_en),
+                ("_pt", campo_pt),
+            ):
+                for indice, item in enumerate(record._cargar_json_importacion(record[campo]), start=1):
+                    if not isinstance(item, dict):
+                        continue
+                    orden = int(item.get("orden") or indice)
+                    valores = items_por_orden.setdefault(
+                        orden,
+                        {
+                            "sequence": orden * 10,
+                            "tour_id": record.id,
+                            "titulo": False,
+                            "titulo_en": False,
+                            "titulo_pt": False,
+                        },
+                    )
+                    valores[f"titulo{sufijo}"] = item.get("texto") or item.get("titulo") or False
+
+            if modelo == "incas.tour.incluido":
+                record.incluye_item_ids.unlink()
+            else:
+                record.no_incluye_item_ids.unlink()
+            for orden in sorted(items_por_orden):
+                item_model.create(items_por_orden[orden])
 
     def _sanitizar_campos_meta_en_vals(self, vals):
         for campo in (
@@ -503,6 +641,25 @@ class IncasTour(models.Model):
                 self._copiar_traduccion_si_vacia(vals, campo)
         records = super().create(vals_list)
         records._asegurar_carpeta_documental()
+        for record, vals in zip(records, vals_list):
+            if any(campo in vals for campo in ("destacados_items_import_json", "destacados_items_import_json_en", "destacados_items_import_json_pt")):
+                record._aplicar_destacados_importados()
+            if any(campo in vals for campo in ("itinerario_import_json", "itinerario_import_json_en", "itinerario_import_json_pt")):
+                record._aplicar_itinerario_importado()
+            if any(campo in vals for campo in ("incluye_import_json", "incluye_import_json_en", "incluye_import_json_pt")):
+                record._aplicar_lista_importada(
+                    "incluye_import_json",
+                    "incluye_import_json_en",
+                    "incluye_import_json_pt",
+                    "incas.tour.incluido",
+                )
+            if any(campo in vals for campo in ("no_incluye_import_json", "no_incluye_import_json_en", "no_incluye_import_json_pt")):
+                record._aplicar_lista_importada(
+                    "no_incluye_import_json",
+                    "no_incluye_import_json_en",
+                    "no_incluye_import_json_pt",
+                    "incas.tour.no.incluido",
+                )
         records._copiar_imagenes_destacadas_desde_itinerario(si_vacio=True)
         records._sincronizar_servicio_operativo()
         return records
@@ -530,6 +687,24 @@ class IncasTour(models.Model):
             if campo_pt not in valores and any(not record[campo_pt] for record in self):
                 valores[campo_pt] = valores[campo]
         result = super().write(valores)
+        if any(campo in valores for campo in ("destacados_items_import_json", "destacados_items_import_json_en", "destacados_items_import_json_pt")):
+            self._aplicar_destacados_importados()
+        if any(campo in valores for campo in ("itinerario_import_json", "itinerario_import_json_en", "itinerario_import_json_pt")):
+            self._aplicar_itinerario_importado()
+        if any(campo in valores for campo in ("incluye_import_json", "incluye_import_json_en", "incluye_import_json_pt")):
+            self._aplicar_lista_importada(
+                "incluye_import_json",
+                "incluye_import_json_en",
+                "incluye_import_json_pt",
+                "incas.tour.incluido",
+            )
+        if any(campo in valores for campo in ("no_incluye_import_json", "no_incluye_import_json_en", "no_incluye_import_json_pt")):
+            self._aplicar_lista_importada(
+                "no_incluye_import_json",
+                "no_incluye_import_json_en",
+                "no_incluye_import_json_pt",
+                "incas.tour.no.incluido",
+            )
         if any(campo in valores for campo in ("nombre", "slug", "documento_directory_id")):
             self._asegurar_carpeta_documental()
         self._copiar_imagenes_destacadas_desde_itinerario(si_vacio=True)

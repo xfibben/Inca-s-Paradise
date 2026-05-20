@@ -3,14 +3,14 @@ import { Download } from '@strapi/icons';
 import { useIntl } from 'react-intl';
 import { useParams } from 'react-router-dom';
 
-const TOUR_MODEL_UID = 'api::tour-detalle.tour-detalle';
+const DESTINO_MODEL_UID = 'api::destino-detalle.destino-detalle';
 const DEFAULT_STATUS = 'published';
 
-export const TourExportButton = () => {
+export const DestinoExportButton = () => {
   const { formatMessage } = useIntl();
   const { slug } = useParams();
 
-  if (slug !== TOUR_MODEL_UID) {
+  if (slug !== DESTINO_MODEL_UID) {
     return null;
   }
 
@@ -20,14 +20,14 @@ export const TourExportButton = () => {
       status: DEFAULT_STATUS,
     });
 
-    window.open(`/api/tour-detalles/export-csv?${params.toString()}`, '_blank', 'noopener,noreferrer');
+    window.open(`/api/destino-detalles/export-csv?${params.toString()}`, '_blank', 'noopener,noreferrer');
   };
 
   return (
     <Button variant="secondary" startIcon={<Download />} onClick={handleExport}>
       {formatMessage({
-        id: 'tour-detalle.export.csv',
-        defaultMessage: 'Exportar CSV',
+        id: 'destino-detalle.export.csv',
+        defaultMessage: 'Exportar destinos CSV',
       })}
     </Button>
   );

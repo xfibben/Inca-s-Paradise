@@ -1,3 +1,5 @@
+import json
+
 from odoo import api, fields, models, tools
 
 
@@ -31,6 +33,9 @@ class IncasCatalogoDestino(models.Model):
     cinta_principal_en = fields.Html(string="Cinta principal en inglés")
     cinta_principal_pt = fields.Html(string="Cinta principal en portugués")
     cantidad_inicial_catalogo = fields.Integer(string="Cantidad inicial catálogo", default=6)
+    iconos_import_json = fields.Text(string="Importar iconos JSON")
+    iconos_import_json_en = fields.Text(string="Importar iconos JSON en inglés")
+    iconos_import_json_pt = fields.Text(string="Importar iconos JSON en portugués")
     imagen = fields.Image(string="Imagen")
     imagen_fondo = fields.Image(string="Imagen de fondo")
     tour_ids = fields.Many2many(
@@ -169,6 +174,46 @@ class IncasCatalogoDestino(models.Model):
         valor_limpio = " ".join(valor_limpio.split())
         return valor_limpio or False
 
+    def _cargar_json_importacion(self, valor):
+        if not valor:
+            return []
+        if isinstance(valor, list):
+            return valor
+        try:
+            data = json.loads(valor)
+            return data if isinstance(data, list) else []
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return []
+
+    def _aplicar_iconos_importados(self):
+        icono_model = self.env["incas.catalogo.destino.icono"]
+        for record in self:
+            items_por_orden = {}
+            for sufijo, campo in (
+                ("", "iconos_import_json"),
+                ("_en", "iconos_import_json_en"),
+                ("_pt", "iconos_import_json_pt"),
+            ):
+                for indice, item in enumerate(record._cargar_json_importacion(record[campo]), start=1):
+                    if not isinstance(item, dict):
+                        continue
+                    orden = int(item.get("orden") or indice)
+                    valores = items_por_orden.setdefault(
+                        orden,
+                        {
+                            "sequence": orden * 10,
+                            "destino_id": record.id,
+                            "titulo": False,
+                            "titulo_en": False,
+                            "titulo_pt": False,
+                        },
+                    )
+                    valores[f"titulo{sufijo}"] = item.get("titulo") or item.get("texto") or False
+
+            record.icono_item_ids.unlink()
+            for orden in sorted(items_por_orden):
+                icono_model.create(items_por_orden[orden])
+
     def _sanitizar_campos_seo_en_vals(self, vals):
         for campo in (
             "seo_titulo",
@@ -206,7 +251,11 @@ class IncasCatalogoDestino(models.Model):
                 "seo_descripcion",
             ):
                 self._copiar_traduccion_si_vacia(vals, campo)
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        for record, vals in zip(records, vals_list):
+            if any(campo in vals for campo in ("iconos_import_json", "iconos_import_json_en", "iconos_import_json_pt")):
+                record._aplicar_iconos_importados()
+        return records
 
     def write(self, vals):
         self._migrar_columnas_seo_a_texto()
@@ -229,7 +278,10 @@ class IncasCatalogoDestino(models.Model):
                 valores[campo_en] = valores[campo]
             if campo_pt not in valores and any(not record[campo_pt] for record in self):
                 valores[campo_pt] = valores[campo]
-        return super().write(valores)
+        result = super().write(valores)
+        if any(campo in valores for campo in ("iconos_import_json", "iconos_import_json_en", "iconos_import_json_pt")):
+            self._aplicar_iconos_importados()
+        return result
 
     @api.onchange(
         "slug",

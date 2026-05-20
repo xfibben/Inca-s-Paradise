@@ -187,8 +187,7 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
                   ) : null}
                   <div>
                     {destinationNames.length > 0 ? <p class="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#1AA093]">{destinationNames.join(" · ")}</p> : null}
-                    <h1 class="text-3xl leading-tight text-[#1f2937] md:text-4xl" style="font-family: 'Playfair Display', serif; font-style: italic;">{sourceTour.title}</h1>
-                    {highlightsTitle ? <h2 class="mt-4 text-2xl leading-tight text-[#1f2937] md:text-3xl">{highlightsTitle}</h2> : null}
+                    {highlightsTitle ? <h1 class="text-3xl leading-tight text-[#1f2937] md:text-4xl" style="font-family: 'Playfair Display', serif; font-style: italic;">{highlightsTitle}</h1> : null}
                     {highlightsLead ? <div class="mt-3 text-sm leading-relaxed text-[#1f2937] text-justify md:text-base [&_p]:mb-3 [&_p:last-child]:mb-0" set:html={highlightsLead} /> : null}
                     <div class="mt-4 space-y-4">
                       {highlightItems.map((item: any, index: number) => (
@@ -245,7 +244,7 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
                                   &rsaquo;
                                 </button>
                               </div>
-                              <div id={galleryId} class="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth" data-itinerary-gallery>
+                              <div id={galleryId} class="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory" data-itinerary-gallery>
                                 {item.images.map((image: any, imageIndex: number) => (
                                   <button
                                     type="button"
@@ -434,15 +433,69 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
     <Footer currentLang={lang} {t} />
     <script is:inline>
       (() => {
+        const galleryState = new WeakMap();
+
+        const stopAutoScroll = (gallery) => {
+          const state = galleryState.get(gallery);
+          if (!state) return;
+          if (state.frameId) cancelAnimationFrame(state.frameId);
+          state.frameId = 0;
+          state.running = false;
+        };
+
+        const startAutoScroll = (gallery) => {
+          if (!(gallery instanceof HTMLElement)) return;
+          const slides = Array.from(gallery.children);
+          if (slides.length <= 1) return;
+
+          stopAutoScroll(gallery);
+
+          const state = {
+            frameId: 0,
+            running: true,
+            lastTs: 0,
+          };
+
+          const tick = (ts) => {
+            if (!state.running) return;
+            if (!state.lastTs) {
+              state.lastTs = ts;
+            }
+            const delta = ts - state.lastTs;
+            state.lastTs = ts;
+            const speed = 0.03;
+            gallery.scrollLeft += delta * speed;
+            const maxScroll = Math.max(gallery.scrollWidth - gallery.clientWidth, 0);
+            if (gallery.scrollLeft >= maxScroll) {
+              gallery.scrollLeft = 0;
+            }
+            state.frameId = requestAnimationFrame(tick);
+          };
+
+          state.frameId = requestAnimationFrame(tick);
+          galleryState.set(gallery, state);
+        };
+
+        document.querySelectorAll("[data-itinerary-gallery]").forEach((gallery) => {
+          if (!(gallery instanceof HTMLElement)) return;
+          startAutoScroll(gallery);
+          gallery.addEventListener("mouseenter", () => stopAutoScroll(gallery));
+          gallery.addEventListener("mouseleave", () => startAutoScroll(gallery));
+          gallery.addEventListener("touchstart", () => stopAutoScroll(gallery), { passive: true });
+          gallery.addEventListener("touchend", () => startAutoScroll(gallery), { passive: true });
+        });
+
         document.querySelectorAll("[data-itinerary-gallery-prev], [data-itinerary-gallery-next]").forEach((button) => {
           button.addEventListener("click", () => {
             const targetId = button.getAttribute("data-gallery-target");
             if (!targetId) return;
             const gallery = document.getElementById(targetId);
             if (!gallery) return;
+            stopAutoScroll(gallery);
             const step = Math.max(gallery.clientWidth * 0.85, 240);
             const direction = button.hasAttribute("data-itinerary-gallery-prev") ? -1 : 1;
             gallery.scrollBy({ left: step * direction, behavior: "smooth" });
+            window.setTimeout(() => startAutoScroll(gallery), 2500);
           });
         });
 
