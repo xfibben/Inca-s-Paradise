@@ -255,6 +255,110 @@ try {
         <!-- Destinations with Megamenu -->
         <div class="relative h-full flex items-center" id="megamenu-container">
           <a href={`/${currentLang}/destinos/`} class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.destinations}</a>
+
+          <!-- Megamenu -->
+          <div id="megamenu-dropdown" class="fixed left-0 right-0 top-24 pt-0 hidden z-50 w-full" style="display:none;">
+            <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
+              <!-- Megamenu Container -->
+              <div class="flex h-full">
+                <!-- Column 1: Destinations List with Vertical Slider -->
+                <div class="w-1/3 bg-gray-50 border-r border-gray-200 flex flex-col relative">
+                  <!-- Scroll Up Button -->
+                  <button id="scroll-up" class="bg-white/90 hover:bg-white p-2 border-b border-gray-200 transition">
+                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                    </svg>
+                  </button>
+
+                  <!-- Destinations scroll container -->
+                  <div id="destinations-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
+                    {navDestinations.map((dest: any) => (
+                      <a
+                        href={`/${currentLang}/destinos/${dest.slug || toSlug(getDestTitle(dest))}`}
+                        class="destination-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-[#e0f7f5] hover:text-[#1AA093] transition border-b border-gray-100 whitespace-normal block"
+                        title={getDestTitle(dest)}
+                        data-dest={dest.slug}
+                      >
+                        {getDestTitle(dest)}
+                      </a>
+                    ))}
+                  </div>
+
+                  <!-- Scroll Down Button -->
+                  <button id="scroll-down" class="bg-white/90 hover:bg-white p-2 border-t border-gray-200 transition">
+                    <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Column 2: Tours -->
+                <div class="w-2/3 bg-white p-6 overflow-y-auto">
+                  <div id="megamenu-tours" class="columns-2 gap-8 space-y-3">
+                    {(() => {
+                      const activeDest = navDestinations.length > 0 ? navDestinations[0] : null;
+                      if (!activeDest) return null;
+
+                      const subcategorias = sortSubcategoriasAlphabetically(normalizeSubcategorias(activeDest.subcategorias_tour));
+                      const toursSubcategorizados = new Set(
+                        subcategorias.flatMap((subcategoria: any) => {
+                          const attrs = subcategoria.attributes || subcategoria;
+                          return normalizeRelatedTours(attrs.tours).map((tour: any) => {
+                            const tourAttrs = tour.attributes || tour;
+                            return tourAttrs.slug || tourAttrs.title || tourAttrs.nombre;
+                          }).filter(Boolean);
+                        })
+                      );
+                      const toursSueltos = sortToursAlphabetically(
+                        normalizeRelatedTours(activeDest.tours).filter((tour: any) => {
+                          const attrs = tour.attributes || tour;
+                          const clave = attrs.slug || attrs.title || attrs.nombre;
+                          return !clave || !toursSubcategorizados.has(clave);
+                        })
+                      );
+
+                      return (
+                        <>
+                          {subcategorias.map((subcategoria: any) => {
+                            const attrs = subcategoria.attributes || subcategoria;
+                            const tours = sortToursAlphabetically(normalizeRelatedTours(attrs.tours));
+                            if (!attrs.nombre || tours.length === 0) return null;
+
+                            return (
+                              <div class="break-inside-avoid pb-3 border-b border-gray-100 last:border-0">
+                                <p class="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-gray-500">{attrs.nombre}</p>
+                                <div class="space-y-2">
+                                  {tours.map((tour: any) => {
+                                    const tourAttrs = tour.attributes || tour;
+                                    return (
+                                      <a href={`/${currentLang}/tours/${tourAttrs.slug || toSlug(tourAttrs.title || tourAttrs.nombre)}`} class="block font-semibold text-gray-800 text-sm hover:text-[#1AA093] transition">
+                                        {tourAttrs.title || tourAttrs.nombre}
+                                      </a>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {toursSueltos.map((tour: any) => {
+                            const attrs = tour.attributes || tour;
+                            return (
+                              <div class="break-inside-avoid pb-3 border-b border-gray-100 last:border-0">
+                                <a href={`/${currentLang}/tours/${attrs.slug || toSlug(attrs.title || attrs.nombre)}`} class="font-semibold text-gray-800 text-sm hover:text-[#1AA093] transition">
+                                  {attrs.title || attrs.nombre}
+                                </a>
+                              </div>
+                            );
+                          })}
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Trip Styles with Megamenu -->

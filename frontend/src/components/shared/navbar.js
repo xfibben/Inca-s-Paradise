@@ -223,6 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
       clearTimeout(timeout);
       activeDropdown = dropdownId;
       dropdown.classList.remove('hidden');
+      dropdown.style.display = 'block';
       navbar.classList.add('bg-white', 'shadow-md');
       navbar.classList.remove('bg-transparent');
       document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
@@ -234,6 +235,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const close = () => {
       timeout = setTimeout(() => {
         dropdown.classList.add('hidden');
+        dropdown.style.display = 'none';
         // Only revert navbar if NO dropdowns are open
         if (!isAnyDropdownOpen() && window.scrollY <= 50) {
           navbar.classList.remove('bg-white', 'shadow-md');
