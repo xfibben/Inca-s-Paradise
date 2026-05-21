@@ -237,6 +237,15 @@ try {
   #transport-dropdown .transport-item-grid h3 {
     color: #ffffff !important;
   }
+
+  /* Si el megamenu se filtra visualmente estando inactivo, ocultar su texto */
+  #megamenu-dropdown.hidden .destination-item {
+    color: transparent !important;
+  }
+
+  #megamenu-dropdown:not(.hidden) .destination-item {
+    color: #374151 !important;
+  }
 </style>
 
 <!-- Navbar -->
