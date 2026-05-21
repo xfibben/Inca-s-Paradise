@@ -6,6 +6,10 @@ export function getOdooWebBaseUrl(): string {
   return (internalUrl || publicUrl || "http://localhost:8069").replace(/\/$/, "");
 }
 
+function getOdooPublicBaseUrl(): string {
+  return (import.meta.env.PUBLIC_ODOO_URL || import.meta.env.ODOO_URL || "http://localhost:8069").replace(/\/$/, "");
+}
+
 export function getOdooDatabaseName(): string {
   return (import.meta.env.PUBLIC_ODOO_DB || import.meta.env.ODOO_DB_NAME || "").trim();
 }
@@ -45,16 +49,25 @@ export async function fetchOdooWebJson(path: string) {
 export function getOdooMediaUrl(media: any): string | null {
   const url = typeof media === "string" ? media : media?.url;
   if (!url || typeof url !== "string") return null;
+  const publicBaseUrl = getOdooPublicBaseUrl();
   const databaseName = getOdooDatabaseName();
-  if (!databaseName) return url;
+
   try {
-    const parsedUrl = new URL(url);
-    if (parsedUrl.pathname === "/web/image" && !parsedUrl.searchParams.has("db")) {
-      parsedUrl.searchParams.set("db", databaseName);
-      return parsedUrl.toString();
+    // Fuerza el host publico para que las imagenes no hereden localhost o hosts internos.
+    const parsedUrl = new URL(url, `${publicBaseUrl}/`);
+    const publicBase = new URL(publicBaseUrl);
+
+    if (parsedUrl.pathname === "/web/image") {
+      parsedUrl.protocol = publicBase.protocol;
+      parsedUrl.host = publicBase.host;
     }
+
+    if (parsedUrl.pathname === "/web/image" && databaseName && !parsedUrl.searchParams.has("db")) {
+      parsedUrl.searchParams.set("db", databaseName);
+    }
+
+    return parsedUrl.toString();
   } catch {
     return url;
   }
-  return url;
 }
