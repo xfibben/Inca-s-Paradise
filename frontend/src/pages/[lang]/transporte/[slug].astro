@@ -7,6 +7,7 @@ import Footer from '../../../components/shared/Footer.astro';
 import BookingCard from '../../../components/tours/BookingCard.astro';
 import BookingModal from '../../../components/tours/BookingModal.astro';
 import { buildLocalizedSlugs, fetchOdooTransportJson, getOdooTransportLang } from '../../../utils/odooTransport';
+import { getOdooMediaUrl } from '../../../utils/odooWeb';
 import { richContentToHtml } from '../../../utils/richContent';
 
 export function getStaticPaths() {
@@ -54,7 +55,7 @@ function getImageUrl(media: any): string | null {
   if (!media) return null;
   const url = media?.formats?.large?.url ?? media?.formats?.medium?.url ?? media?.url;
   if (!url) return null;
-  return url.startsWith('http') ? url : url;
+  return getOdooMediaUrl(url);
 }
 
 // Variables para el BookingCard

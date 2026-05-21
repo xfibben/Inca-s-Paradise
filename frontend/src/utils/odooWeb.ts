@@ -45,5 +45,16 @@ export async function fetchOdooWebJson(path: string) {
 export function getOdooMediaUrl(media: any): string | null {
   const url = typeof media === "string" ? media : media?.url;
   if (!url || typeof url !== "string") return null;
+  const databaseName = getOdooDatabaseName();
+  if (!databaseName) return url;
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.pathname === "/web/image" && !parsedUrl.searchParams.has("db")) {
+      parsedUrl.searchParams.set("db", databaseName);
+      return parsedUrl.toString();
+    }
+  } catch {
+    return url;
+  }
   return url;
 }

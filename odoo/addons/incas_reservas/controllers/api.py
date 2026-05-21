@@ -1,6 +1,7 @@
 import json
 import logging
 
+from urllib.parse import urlencode
 from urllib.error import HTTPError
 
 from odoo import http
@@ -38,8 +39,16 @@ def _image_payload(record, field):
     if not getattr(record, field, False):
         return None
     base_url = request.env["ir.config_parameter"].sudo().get_param("web.base.url") or ""
+    db_name = request.db or request.session.db or request.env.cr.dbname or ""
+    query_params = {
+        "model": record._name,
+        "id": record.id,
+        "field": field,
+    }
+    if db_name:
+        query_params["db"] = db_name
     return {
-        "url": f"{base_url}/web/image?model={record._name}&id={record.id}&field={field}",
+        "url": f"{base_url}/web/image?{urlencode(query_params)}",
     }
 
 
