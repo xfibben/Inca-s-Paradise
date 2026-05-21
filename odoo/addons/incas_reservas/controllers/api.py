@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 
@@ -6,11 +7,24 @@ from urllib.error import HTTPError
 
 from odoo import http
 from odoo.http import request
+from odoo.tools.mimetypes import guess_mimetype
 
 from ..utils import capturar_orden_paypal, crear_orden_paypal, error_http_text
 
 
 _logger = logging.getLogger(__name__)
+
+_PUBLIC_IMAGE_FIELDS = {
+    "incas.catalogo.destino": {"imagen", "imagen_fondo"},
+    "incas.catalogo.destino.icono": {"imagen"},
+    "incas.catalogo.transporte": {"image_data", "wallpaper_data"},
+    "incas.catalogo.vehiculo": {"imagen"},
+    "incas.estilo.transporte": {"image_data", "wallpaper_data"},
+    "incas.estilo.viaje": {"image", "wallpaper"},
+    "incas.tour": {"imagen"},
+    "incas.tour.imagen.destacada": {"imagen"},
+    "incas.tour.itinerario.imagen": {"imagen"},
+}
 
 
 def _lang_base(lang):
@@ -48,8 +62,15 @@ def _image_payload(record, field):
     if db_name:
         query_params["db"] = db_name
     return {
-        "url": f"{base_url}/web/image?{urlencode(query_params)}",
+        "url": f"{base_url}/incas/public/image?{urlencode(query_params)}",
     }
+
+
+def _binary_content_type(record, field, binary_value):
+    archivo = getattr(record, f"{field}_file_id", False)
+    if archivo and archivo.mimetype:
+        return archivo.mimetype
+    return guess_mimetype(base64.b64decode(binary_value)) or "image/png"
 
 
 def _serialize_vehiculo(vehiculo, lang):
@@ -479,6 +500,37 @@ def body_json():
 
 
 class IncasReservasApiController(http.Controller):
+    @http.route("/incas/public/image", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def public_image(self, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+
+        model = (request.params.get("model") or "").strip()
+        field = (request.params.get("field") or "").strip()
+        record_id = request.params.get("id")
+
+        if model not in _PUBLIC_IMAGE_FIELDS or field not in _PUBLIC_IMAGE_FIELDS[model]:
+            return request.not_found()
+
+        try:
+            record_id = int(record_id)
+        except (TypeError, ValueError):
+            return request.not_found()
+
+        record = request.env[model].sudo().browse(record_id)
+        if not record.exists():
+            return request.not_found()
+
+        binary_value = getattr(record, field, False)
+        if not binary_value:
+            return request.not_found()
+
+        headers = [
+            ("Content-Type", _binary_content_type(record, field, binary_value)),
+            ("Cache-Control", "public, max-age=86400"),
+        ]
+        return request.make_response(base64.b64decode(binary_value), headers=headers)
+
     @http.route("/incas/api/web/estilos-viaje", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
     def web_estilos_viaje(self, **kwargs):
         if request.httprequest.method == "OPTIONS":
