@@ -246,6 +246,25 @@ try {
   #megamenu-dropdown:not(.hidden) .destination-item {
     color: #374151 !important;
   }
+
+  /* Ocultamiento total del megamenu cuando no esta activo */
+  #megamenu-dropdown.hidden {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  #megamenu-dropdown.hidden * {
+    visibility: hidden !important;
+  }
+
+  #megamenu-dropdown:not(.hidden) {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
 </style>
 
 <!-- Navbar -->
