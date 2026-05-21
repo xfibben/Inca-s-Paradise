@@ -92,6 +92,19 @@ function renderDestinationToursHtml(destination, currentLang) {
   return html || '<p class="text-sm text-gray-400 italic">Sin tours disponibles</p>';
 }
 
+function renderDestinationListHtml(destinations, currentLang) {
+  return destinations.map(dest => `
+    <a
+      href="/${currentLang}/destinos/${escapeHtml(dest.slug || toSlug(dest.title || dest.name || ''))}"
+      class="destination-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-[#e0f7f5] hover:text-[#1AA093] transition border-b border-gray-100 whitespace-normal block"
+      title="${escapeHtml(dest.title || dest.name || '')}"
+      data-dest="${escapeHtml(dest.slug || '')}"
+    >
+      ${escapeHtml(dest.title || dest.name || '')}
+    </a>
+  `).join('');
+}
+
 function buildLanguageUrl(languageCode) {
   const currentPath = window.location.pathname;
   const pathMatch = currentPath.match(/^\/[a-z]{2}(.*)/);
@@ -279,18 +292,27 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('megamenu-tours').innerHTML = renderDestinationToursHtml(destination, currentLang);
   }
 
+  function bindDestinationHover() {
+    document.querySelectorAll('.destination-item').forEach(item => {
+      item.addEventListener('mouseenter', () => {
+        updateMegamenu(item.dataset.dest);
+        document.querySelectorAll('.destination-item').forEach(i => i.classList.remove('bg-[#e0f7f5]', 'text-[#1AA093]'));
+        item.classList.add('bg-[#e0f7f5]', 'text-[#1AA093]');
+      });
+    });
+  }
+
   const destinationsList = window.__navbarDestinations || [];
+  const destinationsScroll = document.getElementById('destinations-scroll');
+  if (destinationsScroll && destinationsList.length > 0) {
+    const currentLang = window.__currentLang || 'es';
+    destinationsScroll.innerHTML = renderDestinationListHtml(destinationsList, currentLang);
+  }
   if (destinationsList.length > 0) {
     updateMegamenu(destinationsList[0].slug);
     document.querySelector('[data-dest="' + destinationsList[0].slug + '"]')?.classList.add('bg-[#e0f7f5]', 'text-[#1AA093]');
   }
-  document.querySelectorAll('.destination-item').forEach(item => {
-    item.addEventListener('mouseenter', () => {
-      updateMegamenu(item.dataset.dest);
-      document.querySelectorAll('.destination-item').forEach(i => i.classList.remove('bg-[#e0f7f5]', 'text-[#1AA093]'));
-      item.classList.add('bg-[#e0f7f5]', 'text-[#1AA093]');
-    });
-  });
+  bindDestinationHover();
 
   // ── Styles megamenu ───────────────────────────────────────────────────────
   function updateStylesMenuFooter(menu) {
