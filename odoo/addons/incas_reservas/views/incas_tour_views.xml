@@ -6,11 +6,12 @@
         <field name="arch" type="xml">
             <list string="Tours">
                 <field name="nombre"/>
-                <field name="observacion" widget="badge" decoration-danger="observacion == 'corregir'" decoration-warning="observacion == 'arreglar_imagenes'" decoration-success="observacion == 'perfecto'"/>
+                <field name="observacion" widget="badge" decoration-danger="observacion == 'corregir'" decoration-warning="observacion == 'por_aprobar'" decoration-success="observacion == 'aprobado'" decoration-info="observacion == 'observado'"/>
                 <field name="ultimo_editor_id"/>
                 <field name="tipo_tour"/>
                 <field name="ip"/>
                 <field name="slug"/>
+                <field name="enlace_tour" widget="url"/>
                 <field name="destino_ids" widget="many2many_tags"/>
                 <field name="subcategoria_destino_id"/>
                 <field name="active"/>
@@ -56,6 +57,7 @@
                             <field name="servicio_id" readonly="1"/>
                             <field name="tipo_tour"/>
                             <field name="ip"/>
+                            <field name="enlace_tour" widget="url" readonly="1"/>
                             <field name="precio_adulto"/>
                             <field name="precio_nino"/>
                             <field name="descuento"/>
@@ -77,6 +79,7 @@
                             <group>
                                 <field name="nombre"/>
                                 <field name="slug"/>
+                                <field name="enlace_tour" widget="url" readonly="1"/>
                                 <field name="meta_titulo"/>
                                 <field name="meta_descripcion"/>
                                 <field name="destacados_titulo" widget="html"/>

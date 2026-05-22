@@ -38,8 +38,9 @@ class IncasTour(models.Model):
     observacion = fields.Selection(
         [
             ("corregir", "Corregir"),
-            ("arreglar_imagenes", "Arreglar imágenes"),
-            ("perfecto", "Perfecto"),
+            ("por_aprobar", "Por aprobar"),
+            ("aprobado", "Aprobado"),
+            ("observado", "Observado"),
         ],
         string="Observación",
         default="corregir",
@@ -63,6 +64,12 @@ class IncasTour(models.Model):
     slug = fields.Char(string="Slug", required=True, index=True)
     slug_en = fields.Char(string="Slug en ingles", index=True)
     slug_pt = fields.Char(string="Slug en portugues", index=True)
+    enlace_tour = fields.Char(
+        string="Enlace del tour",
+        compute="_compute_enlace_tour",
+        readonly=True,
+        store=False,
+    )
     meta_titulo = fields.Char(string="Meta titulo")
     meta_titulo_en = fields.Char(string="Meta titulo en ingles")
     meta_titulo_pt = fields.Char(string="Meta titulo en portugues")
@@ -155,6 +162,20 @@ class IncasTour(models.Model):
     def _auto_init(self):
         self._migrar_columnas_meta_a_texto()
         res = super()._auto_init()
+        self.env.cr.execute(
+            """
+            UPDATE incas_tour
+               SET observacion = 'por_aprobar'
+             WHERE observacion = 'arreglar_imagenes'
+            """
+        )
+        self.env.cr.execute(
+            """
+            UPDATE incas_tour
+               SET observacion = 'aprobado'
+             WHERE observacion = 'perfecto'
+            """
+        )
         self.env.cr.execute(
             """
             UPDATE incas_tour
@@ -252,6 +273,12 @@ class IncasTour(models.Model):
         valor_limpio = tools.html2plaintext(valor).replace("\xa0", " ")
         valor_limpio = " ".join(valor_limpio.split())
         return valor_limpio or False
+
+    @api.depends("slug")
+    def _compute_enlace_tour(self):
+        base_url = "https://incasparadise.com"
+        for record in self:
+            record.enlace_tour = f"{base_url}/es/tours/{record.slug}" if record.slug else False
 
     def _cargar_json_importacion(self, valor):
         if not valor:

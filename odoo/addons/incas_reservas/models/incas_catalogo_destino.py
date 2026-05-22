@@ -10,6 +10,8 @@ class IncasCatalogoDestino(models.Model):
     _rec_name = "nombre"
 
     nombre = fields.Char(string="Nombre", required=True)
+    nombre_en = fields.Char(string="Nombre en inglés")
+    nombre_pt = fields.Char(string="Nombre en portugués")
     orden_visual = fields.Integer(string="Orden visual", default=100)
     slug = fields.Char(string="Slug", required=True, index=True)
     slug_en = fields.Char(string="Slug en inglés", index=True)
@@ -242,6 +244,7 @@ class IncasCatalogoDestino(models.Model):
         for vals in vals_list:
             self._sanitizar_campos_seo_en_vals(vals)
             for campo in (
+                "nombre",
                 "slug",
                 "descripcion",
                 "titulo_intro",
@@ -262,6 +265,7 @@ class IncasCatalogoDestino(models.Model):
         valores = dict(vals)
         self._sanitizar_campos_seo_en_vals(valores)
         for campo in (
+            "nombre",
             "slug",
             "descripcion",
             "titulo_intro",
@@ -284,6 +288,7 @@ class IncasCatalogoDestino(models.Model):
         return result
 
     @api.onchange(
+        "nombre",
         "slug",
         "descripcion",
         "titulo_intro",
@@ -304,6 +309,7 @@ class IncasCatalogoDestino(models.Model):
             ):
                 record[campo] = record._limpiar_texto_seo(record[campo])
             for campo in (
+                "nombre",
                 "slug",
                 "descripcion",
                 "titulo_intro",

@@ -35,6 +35,8 @@
                     <group>
                         <group>
                             <field name="nombre"/>
+                            <field name="nombre_en"/>
+                            <field name="nombre_pt"/>
                             <field name="orden_visual"/>
                             <field name="cantidad_inicial_catalogo"/>
                             <field name="active"/>
