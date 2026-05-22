@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_incas_dms_file_multi_upload_wizard_user,access.incas.dms.file.multi.upload.wizard.user,model_incas_dms_file_multi_upload_wizard,dms.group_dms_user,1,1,1,1

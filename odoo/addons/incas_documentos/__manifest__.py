@@ -8,6 +8,7 @@
     "post_init_hook": "post_init_hook",
     "depends": ["incas_core", "dms"],
     "data": [
+        "security/ir.model.access.csv",
         "security/incas_documentos_security.xml",
         "views/incas_documentos_dms_overrides.xml",
         "views/incas_documentos_menu.xml",
