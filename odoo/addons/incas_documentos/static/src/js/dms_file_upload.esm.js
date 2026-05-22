@@ -100,6 +100,27 @@ function crearUploadPorArchivo() {
             this.pendingFiles = null;
         },
 
+        uploadDocument() {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.multiple = true;
+            input.setAttribute("multiple", "multiple");
+            input.accept = this.fileInput?.el?.getAttribute("accept") || "*";
+
+            input.addEventListener(
+                "change",
+                async () => {
+                    this.pendingFiles = [...(input.files || [])];
+                    await this.onChangeFileInput();
+                    input.remove();
+                },
+                {once: true}
+            );
+
+            document.body.appendChild(input);
+            input.click();
+        },
+
         async onChangeFileInput() {
             const files = this.pendingFiles || [...this.fileInput.el.files];
             const attachments = [];
