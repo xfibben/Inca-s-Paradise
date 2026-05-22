@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t
+        t-name="incas_documentos.DmsListButtonsMobileUpload"
+        t-inherit="dms.ListButtons"
+        t-inherit-mode="extension"
+    >
+        <xpath expr="//button[contains(@class, 'd-inline') and contains(@class, 'd-md-none')]" position="replace">
+            <button
+                type="button"
+                class="o_button_upload_expense btn btn-primary mx-1"
+                t-on-click.prevent="uploadDocument"
+            >
+                Subir
+            </button>
+        </xpath>
+    </t>
+
+    <t
+        t-name="incas_documentos.DmsKanbanButtonsMobileUpload"
+        t-inherit="dms.KanbanButtons"
+        t-inherit-mode="extension"
+    >
+        <xpath expr="//button[contains(@class, 'd-inline') and contains(@class, 'd-md-none')]" position="replace">
+            <button
+                type="button"
+                class="btn btn-primary mx-1"
+                t-on-click.prevent="uploadDocument"
+            >
+                Subir
+            </button>
+        </xpath>
+    </t>
+</templates>
