@@ -5,6 +5,7 @@ class IncasSubcategoriaDestino(models.Model):
     _name = "incas.subcategoria.destino"
     _description = "Subcategoría de destino"
     _order = "sequence, nombre, id"
+    _rec_name = "nombre"
 
     sequence = fields.Integer(string="Secuencia", default=10)
     nombre = fields.Char(string="Nombre", required=True)
