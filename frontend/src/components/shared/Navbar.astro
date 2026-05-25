@@ -182,7 +182,7 @@ try {
 }
 try {
   const json = await fetchOdooWebJson(`/incas/api/web/sostenibilidad?lang=${getOdooWebLang(currentLang)}`);
-  const rows = Array.isArray(json?.data) ? json.data.filter((item: any) => item?.showInMenu) : [];
+  const rows = Array.isArray(json?.data) ? json.data : [];
   if (rows.length) {
     navSustainabilityItems = rows.map((item: any) => ({
       title: item.title || '',
@@ -476,7 +476,7 @@ try {
                     {navSustainabilityItems.map((item: any, index: number) => {
                       return (
                         <a
-                          class="sustainability-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-[#e0f7f5] hover:text-[#1AA093] transition border-b border-gray-100 whitespace-normal"
+                          class="sustainability-item block w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-[#e0f7f5] hover:text-[#1AA093] transition border-b border-gray-100 whitespace-normal"
                           href={`/${currentLang}/blog/${item.slug}`}
                           data-sustainability={String(index)}
                           data-name={item.title}
