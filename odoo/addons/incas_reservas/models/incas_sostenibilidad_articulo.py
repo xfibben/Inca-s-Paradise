@@ -160,6 +160,11 @@ class IncasSostenibilidadArticulo(models.Model):
             comandos.append(comando)
         vals["etiqueta_ids"] = comandos
 
+    def _limpiar_campos_legacy_en_vals(self, vals):
+        # La BD puede seguir enviando campos viejos desde vistas no actualizadas.
+        for campo in ("tour_ids_en", "tour_ids_pt", "tour_ids_fr", "tour_ids_it"):
+            vals.pop(campo, None)
+
     def _validar_limite_portada(self, vals):
         if not vals.get("mostrar_en_portada"):
             return
@@ -216,22 +221,24 @@ class IncasSostenibilidadArticulo(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            self._limpiar_campos_legacy_en_vals(vals)
             self._sanitizar_campos_seo_en_vals(vals)
             self._normalizar_etiquetas_en_vals(vals)
-            for campo in ("titulo", "contenido_html", "slug", "seo_titulo", "seo_descripcion", "tour_ids"):
+            for campo in ("titulo", "contenido_html", "slug", "seo_titulo", "seo_descripcion"):
                 self._copiar_traducciones_si_vacias(vals, campo)
             self._validar_limite_portada(vals)
         return super().create(vals_list)
 
     def write(self, vals):
         valores = dict(vals)
+        self._limpiar_campos_legacy_en_vals(valores)
         self._sanitizar_campos_seo_en_vals(valores)
         self._normalizar_etiquetas_en_vals(valores)
         self._propagar_traducciones_faltantes_en_write(valores)
         self._validar_limite_portada(valores)
         return super().write(valores)
 
-    @api.onchange("titulo", "contenido_html", "slug", "seo_titulo", "seo_descripcion", "tour_ids", "etiqueta_ids")
+    @api.onchange("titulo", "contenido_html", "slug", "seo_titulo", "seo_descripcion", "etiqueta_ids")
     def _onchange_copiar_contenido_es(self):
         for record in self:
             for campo in (
@@ -249,7 +256,7 @@ class IncasSostenibilidadArticulo(models.Model):
                 record[campo] = record._limpiar_texto_seo(record[campo])
             for etiqueta in record.etiqueta_ids:
                 etiqueta.name = etiqueta.name.upper() if etiqueta.name else etiqueta.name
-            for campo in ("titulo", "contenido_html", "slug", "seo_titulo", "seo_descripcion", "tour_ids"):
+            for campo in ("titulo", "contenido_html", "slug", "seo_titulo", "seo_descripcion"):
                 valor = record[campo]
                 for sufijo in ("_en", "_pt"):
                     campo_trad = f"{campo}{sufijo}"
