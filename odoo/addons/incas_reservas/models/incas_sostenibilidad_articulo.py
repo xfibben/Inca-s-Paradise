@@ -11,11 +11,9 @@ class IncasSostenibilidadArticulo(models.Model):
     titulo = fields.Char(string="Titulo", required=True)
     titulo_en = fields.Char(string="Titulo en ingles")
     titulo_pt = fields.Char(string="Titulo en portugues")
-    titulo_fr = fields.Char(string="Titulo en frances")
-    titulo_it = fields.Char(string="Titulo en italiano")
-    contenido_html = fields.Html(string="Contenido HTML")
-    contenido_html_en = fields.Html(string="Contenido HTML en ingles")
-    contenido_html_pt = fields.Html(string="Contenido HTML en portugues")
+    contenido_html = fields.Html(string="Contenido")
+    contenido_html_en = fields.Html(string="Contenido en ingles")
+    contenido_html_pt = fields.Html(string="Contenido en portugues")
     contenido_html_fr = fields.Html(string="Contenido HTML en frances")
     contenido_html_it = fields.Html(string="Contenido HTML en italiano")
     slug = fields.Char(string="Slug", required=True, index=True)
@@ -40,34 +38,6 @@ class IncasSostenibilidadArticulo(models.Model):
         "articulo_id",
         "tour_id",
         string="Tours relacionados",
-    )
-    tour_ids_en = fields.Many2many(
-        "incas.tour",
-        "incas_sostenibilidad_articulo_tour_en_rel",
-        "articulo_id",
-        "tour_id",
-        string="Tours relacionados en ingles",
-    )
-    tour_ids_pt = fields.Many2many(
-        "incas.tour",
-        "incas_sostenibilidad_articulo_tour_pt_rel",
-        "articulo_id",
-        "tour_id",
-        string="Tours relacionados en portugues",
-    )
-    tour_ids_fr = fields.Many2many(
-        "incas.tour",
-        "incas_sostenibilidad_articulo_tour_fr_rel",
-        "articulo_id",
-        "tour_id",
-        string="Tours relacionados en frances",
-    )
-    tour_ids_it = fields.Many2many(
-        "incas.tour",
-        "incas_sostenibilidad_articulo_tour_it_rel",
-        "articulo_id",
-        "tour_id",
-        string="Tours relacionados en italiano",
     )
     destino_ids = fields.Many2many(
         "incas.catalogo.destino",
@@ -151,7 +121,7 @@ class IncasSostenibilidadArticulo(models.Model):
         if campo_base not in vals:
             return
         valor_base = vals[campo_base]
-        for sufijo in ("_en", "_pt", "_fr", "_it"):
+        for sufijo in ("_en", "_pt"):
             campo = f"{campo_base}{sufijo}"
             if not vals.get(campo):
                 vals[campo] = valor_base
@@ -160,18 +130,10 @@ class IncasSostenibilidadArticulo(models.Model):
         for campo in ("titulo", "contenido_html", "slug", "seo_titulo", "seo_descripcion"):
             if campo not in vals:
                 continue
-            for sufijo in ("_en", "_pt", "_fr", "_it"):
+            for sufijo in ("_en", "_pt"):
                 campo_trad = f"{campo}{sufijo}"
                 if campo_trad not in vals and any(not record[campo_trad] for record in self):
                     vals[campo_trad] = vals[campo]
-
-    def _propagar_tours_relacionados_faltantes_en_write(self, vals):
-        if "tour_ids" not in vals:
-            return
-        for sufijo in ("_en", "_pt", "_fr", "_it"):
-            campo = f"tour_ids{sufijo}"
-            if campo not in vals and any(not record[campo] for record in self):
-                vals[campo] = vals["tour_ids"]
 
     def _normalizar_etiquetas_en_vals(self, vals):
         if "etiqueta_ids" not in vals:
@@ -266,7 +228,6 @@ class IncasSostenibilidadArticulo(models.Model):
         self._sanitizar_campos_seo_en_vals(valores)
         self._normalizar_etiquetas_en_vals(valores)
         self._propagar_traducciones_faltantes_en_write(valores)
-        self._propagar_tours_relacionados_faltantes_en_write(valores)
         self._validar_limite_portada(valores)
         return super().write(valores)
 
@@ -290,7 +251,7 @@ class IncasSostenibilidadArticulo(models.Model):
                 etiqueta.name = etiqueta.name.upper() if etiqueta.name else etiqueta.name
             for campo in ("titulo", "contenido_html", "slug", "seo_titulo", "seo_descripcion", "tour_ids"):
                 valor = record[campo]
-                for sufijo in ("_en", "_pt", "_fr", "_it"):
+                for sufijo in ("_en", "_pt"):
                     campo_trad = f"{campo}{sufijo}"
                     if valor and not record[campo_trad]:
                         record[campo_trad] = valor

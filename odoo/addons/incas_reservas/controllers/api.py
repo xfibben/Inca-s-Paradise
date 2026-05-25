@@ -200,15 +200,7 @@ def _slugs_localizados(record):
 
 
 def _tours_relacionados_sostenibilidad(articulo, lang):
-    campo = {
-        "en": "tour_ids_en",
-        "pt": "tour_ids_pt",
-        "fr": "tour_ids_fr",
-        "it": "tour_ids_it",
-    }.get(_lang_base(lang), "tour_ids")
-    tours = getattr(articulo, campo, request.env["incas.tour"])
-    if not tours:
-        tours = articulo.tour_ids
+    tours = articulo.tour_ids
     return [
         _serialize_tour_card(tour, lang)
         for tour in tours.sorted(lambda rec: (_campo_localizado(rec, "nombre", lang) or "", rec.id))

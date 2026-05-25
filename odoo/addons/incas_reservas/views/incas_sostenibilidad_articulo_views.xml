@@ -49,12 +49,6 @@
                     <group>
                         <group>
                             <field name="titulo"/>
-                            <field name="titulo_en"/>
-                            <field name="titulo_pt"/>
-                            <field name="titulo_fr"/>
-                            <field name="titulo_it"/>
-                        </group>
-                        <group>
                             <field name="fecha_publicacion"/>
                             <field name="sequence"/>
                             <field name="mostrar_en_portada"/>
@@ -65,51 +59,34 @@
                     <group>
                         <field name="destino_ids" widget="many2many_tags"/>
                         <field name="etiqueta_ids" widget="many2many_tags"/>
+                        <field name="tour_ids" widget="many2many_tags"/>
                     </group>
                     <notebook>
                         <page string="Español">
                             <group>
+                                <field name="titulo"/>
                                 <field name="slug"/>
                                 <field name="contenido_html" widget="html"/>
                                 <field name="seo_titulo"/>
                                 <field name="seo_descripcion"/>
-                                <field name="tour_ids" widget="many2many_tags"/>
                             </group>
                         </page>
                         <page string="English">
                             <group>
+                                <field name="titulo_en"/>
                                 <field name="slug_en"/>
                                 <field name="contenido_html_en" widget="html"/>
                                 <field name="seo_titulo_en"/>
                                 <field name="seo_descripcion_en"/>
-                                <field name="tour_ids_en" widget="many2many_tags"/>
                             </group>
                         </page>
                         <page string="Português">
                             <group>
+                                <field name="titulo_pt"/>
                                 <field name="slug_pt"/>
                                 <field name="contenido_html_pt" widget="html"/>
                                 <field name="seo_titulo_pt"/>
                                 <field name="seo_descripcion_pt"/>
-                                <field name="tour_ids_pt" widget="many2many_tags"/>
-                            </group>
-                        </page>
-                        <page string="Français">
-                            <group>
-                                <field name="slug_fr"/>
-                                <field name="contenido_html_fr" widget="html"/>
-                                <field name="seo_titulo_fr"/>
-                                <field name="seo_descripcion_fr"/>
-                                <field name="tour_ids_fr" widget="many2many_tags"/>
-                            </group>
-                        </page>
-                        <page string="Italiano">
-                            <group>
-                                <field name="slug_it"/>
-                                <field name="contenido_html_it" widget="html"/>
-                                <field name="seo_titulo_it"/>
-                                <field name="seo_descripcion_it"/>
-                                <field name="tour_ids_it" widget="many2many_tags"/>
                             </group>
                         </page>
                     </notebook>
