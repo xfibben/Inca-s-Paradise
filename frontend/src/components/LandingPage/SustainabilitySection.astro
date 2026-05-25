@@ -16,20 +16,33 @@ function localImagePath(value: string) {
   return value.startsWith('landing page images') ? `/${value}` : value;
 }
 
+function toSlug(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
 function buildFallbackItems() {
   return [
     {
       title: t.sustainability.fairTourism.name,
+      slug: toSlug(t.sustainability.fairTourism.name),
       contentHtml: `<p>${t.sustainability.fairTourism.description}</p>`,
       imageUrl: localImagePath(t.sustainability.images.fairTourism),
     },
     {
       title: t.sustainability.sustainability.name,
+      slug: toSlug(t.sustainability.sustainability.name),
       contentHtml: `<p>${t.sustainability.sustainability.description}</p>`,
       imageUrl: localImagePath(t.sustainability.images.sustainability),
     },
     {
       title: t.sustainability.socialProjects.name,
+      slug: toSlug(t.sustainability.socialProjects.name),
       contentHtml: `<p>${t.sustainability.socialProjects.description}</p>`,
       imageUrl: localImagePath(t.sustainability.images.socialProjects),
     },
@@ -44,9 +57,9 @@ try {
   if (rows.length) {
     sustainabilityItems = rows.map((item: any) => ({
       title: item.title || '',
+      slug: item.slug || toSlug(item.title || ''),
       contentHtml: item.contentHtml || '',
       imageUrl: getOdooMediaUrl(item.image) || '',
-      descriptionText: stripHtml(item.contentHtml || ''),
     }));
   }
 } catch (error) {
@@ -148,10 +161,11 @@ try {
     <!-- Cards Container with Scroll Snap on Mobile -->
     <div class="sustainability-container">
       {sustainabilityItems.map((item: any, index: number) => (
-        <div
+        <a
           class={`sustainability-card ${index === 0 ? 'active' : ''} flex-1 transition-all duration-500 ease-out cursor-pointer md:h-[600px]`}
           data-card={String(index)}
           style={index === 0 ? 'flex: 2;' : undefined}
+          href={`/${currentLang}/blog/${item.slug}`}
         >
           <div class="card-content h-full md:flex md:flex-col">
             <h3 class="card-title text-md lg:text-xl font-semibold text-gray-900 mb-3 md:mb-4 flex-shrink-0">
@@ -174,7 +188,7 @@ try {
               />
             </div>
           </div>
-        </div>
+        </a>
       ))}
     </div>
   </div>

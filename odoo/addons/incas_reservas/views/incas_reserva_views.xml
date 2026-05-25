@@ -5,7 +5,15 @@
         <field name="model">incas.reserva</field>
         <field name="arch" type="xml">
             <list string="Reservas">
-                <field name="estado_reserva"/>
+                <field
+                    name="estado_reserva"
+                    widget="badge"
+                    decoration-info="estado_reserva == 'reservado'"
+                    decoration-primary="estado_reserva == 'por_coordinar'"
+                    decoration-warning="estado_reserva == 'falta_pago'"
+                    decoration-success="estado_reserva in ['pagado', 'completado', 'finalizado']"
+                    decoration-danger="estado_reserva == 'cancelado'"
+                />
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="fecha_reserva"/>
@@ -25,7 +33,14 @@
                 <field name="monto_extra"/>
                 <field name="precio_grupal"/>
                 <field name="estado_comercial"/>
-                <field name="estado_pago"/>
+                <field
+                    name="estado_pago"
+                    widget="badge"
+                    decoration-warning="estado_pago == 'pendiente'"
+                    decoration-info="estado_pago == 'parcial'"
+                    decoration-success="estado_pago == 'pagado'"
+                    decoration-danger="estado_pago in ['reembolsado', 'cancelado']"
+                />
                 <field
                     name="estado_documental"
                     widget="badge"
@@ -55,19 +70,14 @@
                 <field name="estado_documental"/>
                 <field name="fecha_viaje"/>
                 <separator/>
-                <filter name="filter_reserva_reservado" string="Reservado" domain="[('estado_reserva', '=', 'reservado')]"/>
-                <filter name="filter_reserva_por_coordinar" string="Por coordinar" domain="[('estado_reserva', '=', 'por_coordinar')]"/>
-                <filter name="filter_reserva_falta_pago" string="Falta pago" domain="[('estado_reserva', '=', 'falta_pago')]"/>
-                <filter name="filter_reserva_pagado" string="Pagado reserva" domain="[('estado_reserva', '=', 'pagado')]"/>
-                <filter name="filter_reserva_completado" string="Completado" domain="[('estado_reserva', '=', 'completado')]"/>
-                <filter name="filter_reserva_finalizado" string="Finalizado" domain="[('estado_reserva', '=', 'finalizado')]"/>
-                <filter name="filter_reserva_cancelado" string="Cancelado reserva" domain="[('estado_reserva', '=', 'cancelado')]"/>
-                <filter name="filter_pagado" string="Pagado" domain="[('estado_pago', '=', 'pagado')]"/>
-                <filter name="filter_cotizada" string="Cotizada" domain="[('estado_comercial', '=', 'cotizada')]"/>
-                <filter name="filter_confirmada" string="Confirmada" domain="[('estado_comercial', '=', 'confirmada')]"/>
-                <filter name="filter_pendiente" string="Pendiente" domain="[('estado_pago', '=', 'pendiente')]"/>
-                <filter name="filter_documental_completo" string="Documentación completa" domain="[('estado_documental', '=', 'completo')]"/>
-                <filter name="filter_documental_pendiente" string="Documentación pendiente" domain="[('estado_documental', 'in', ['pendiente', 'parcial'])]"/>
+                <filter name="filter_pagadas" string="Pagadas" domain="[('estado_pago', '=', 'pagado')]"/>
+                <filter name="filter_canceladas" string="Canceladas" domain="[('estado_comercial', '=', 'cancelada')]"/>
+                <filter name="filter_falta_pagar" string="Falta pagar" domain="[('estado_reserva', '=', 'falta_pago')]"/>
+                <filter name="filter_documentacion_pendiente" string="Falta documentación" domain="[('estado_documental', 'in', ['pendiente', 'parcial'])]"/>
+                <filter name="filter_documentacion_completa" string="Documentación completa" domain="[('estado_documental', '=', 'completo')]"/>
+                <filter name="filter_fecha_inicio_pasada" string="Fecha inicio pasada" domain="[('fecha_inicio', '&lt;', context_today())]"/>
+                <filter name="filter_en_viaje" string="En viaje" domain="[('fecha_inicio', '&lt;=', context_today()), ('fecha_fin', '&gt;=', context_today())]"/>
+                <filter name="filter_no_empiezan" string="No empiezan" domain="[('fecha_inicio', '&gt;', context_today())]"/>
                 <separator/>
                 <filter name="group_estado_comercial" string="Estado comercial" domain="[]" context="{'group_by': 'estado_comercial'}"/>
                 <filter name="group_estado_reserva" string="Estado de reserva" domain="[]" context="{'group_by': 'estado_reserva'}"/>

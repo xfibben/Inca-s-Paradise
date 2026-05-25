@@ -37,18 +37,20 @@ export async function GET() {
   await Promise.all(
     langs.map(async (lang) => {
       if (!slugsByLangAndEndpoint[lang]) slugsByLangAndEndpoint[lang] = {};
-      const [tours, destinos, styleTrips, tipoTransporte, transporte] = await Promise.all([
+      const [tours, destinos, styleTrips, tipoTransporte, transporte, blogs] = await Promise.all([
         fetchOdooSlugs("/incas/api/web/tours", lang),
         fetchOdooSlugs("/incas/api/web/destinos", lang),
         fetchOdooSlugs("/incas/api/web/estilos-viaje", lang),
         fetchOdooSlugs("/incas/api/web/tipo-transportes", lang),
         fetchOdooSlugs("/incas/api/web/transportes", lang),
+        fetchOdooSlugs("/incas/api/web/sostenibilidad", lang),
       ]);
       slugsByLangAndEndpoint[lang].tours = tours;
       slugsByLangAndEndpoint[lang].destinos = destinos;
       slugsByLangAndEndpoint[lang].styleTrips = styleTrips;
       slugsByLangAndEndpoint[lang].tipoTransporte = tipoTransporte;
       slugsByLangAndEndpoint[lang].transporte = transporte;
+      slugsByLangAndEndpoint[lang].blogs = blogs;
     })
   );
 
@@ -78,6 +80,7 @@ export async function GET() {
     for (const slug of langSlugs.styleTrips ?? []) addUrl(`${baseUrl}/${lang}/style-trips/${slug}`, "monthly", "0.7");
     for (const slug of langSlugs.tipoTransporte ?? []) addUrl(`${baseUrl}/${lang}/tipo-transporte/${slug}`, "monthly", "0.7");
     for (const slug of langSlugs.transporte ?? []) addUrl(`${baseUrl}/${lang}/transporte/${slug}`, "monthly", "0.7");
+    for (const slug of langSlugs.blogs ?? []) addUrl(`${baseUrl}/${lang}/blog/${slug}`, "weekly", "0.7");
   }
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

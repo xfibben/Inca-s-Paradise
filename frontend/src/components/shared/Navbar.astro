@@ -125,20 +125,33 @@ function localImagePath(value: string) {
   return value.startsWith('landing page images') ? `/${value}` : value;
 }
 
+function toSlug(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
 function buildFallbackSustainabilityItems() {
   return [
     {
       title: t.sustainability.fairTourism.name,
+      slug: toSlug(t.sustainability.fairTourism.name),
       description: t.sustainability.fairTourism.description,
       imageUrl: localImagePath(t.sustainability.images.fairTourism),
     },
     {
       title: t.sustainability.sustainability.name,
+      slug: toSlug(t.sustainability.sustainability.name),
       description: t.sustainability.sustainability.description,
       imageUrl: localImagePath(t.sustainability.images.sustainability),
     },
     {
       title: t.sustainability.socialProjects.name,
+      slug: toSlug(t.sustainability.socialProjects.name),
       description: t.sustainability.socialProjects.description,
       imageUrl: localImagePath(t.sustainability.images.socialProjects),
     },
@@ -173,6 +186,7 @@ try {
   if (rows.length) {
     navSustainabilityItems = rows.map((item: any) => ({
       title: item.title || '',
+      slug: item.slug || toSlug(item.title || ''),
       description: stripHtml(item.contentHtml || ''),
       imageUrl: getOdooMediaUrl(item.image) || '',
     }));
@@ -461,15 +475,16 @@ try {
                   <div id="sustainability-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
                     {navSustainabilityItems.map((item: any, index: number) => {
                       return (
-                        <button
+                        <a
                           class="sustainability-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-[#e0f7f5] hover:text-[#1AA093] transition border-b border-gray-100 whitespace-normal"
+                          href={`/${currentLang}/blog/${item.slug}`}
                           data-sustainability={String(index)}
                           data-name={item.title}
                           data-image={item.imageUrl}
                           data-description={item.description}
                         >
                           {item.title}
-                        </button>
+                        </a>
                       );
                     })}
                   </div>
@@ -721,9 +736,9 @@ try {
           <div id="mobile-sustainability-list" class="flex flex-col">
             {navSustainabilityItems.map((item: any, index: number) => {
               return (
-                <button class="mobile-sustainability-item w-full text-left px-4 py-2 text-gray-700 text-sm hover:bg-[#e0f7f5] hover:text-[#1AA093] transition border-b border-gray-200" data-sustainability={String(index)} data-name={item.title} data-description={item.description}>
+                <a href={`/${currentLang}/blog/${item.slug}`} class="mobile-sustainability-item block w-full text-left px-4 py-2 text-gray-700 text-sm hover:bg-[#e0f7f5] hover:text-[#1AA093] transition border-b border-gray-200" data-sustainability={String(index)} data-name={item.title} data-description={item.description}>
                   {item.title}
-                </button>
+                </a>
               );
             })}
           </div>
