@@ -117,9 +117,38 @@ function resolveMediaUrl(media: any) {
   return getOdooMediaUrl(media);
 }
 
+function stripHtml(value: string) {
+  return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function localImagePath(value: string) {
+  return value.startsWith('landing page images') ? `/${value}` : value;
+}
+
+function buildFallbackSustainabilityItems() {
+  return [
+    {
+      title: t.sustainability.fairTourism.name,
+      description: t.sustainability.fairTourism.description,
+      imageUrl: localImagePath(t.sustainability.images.fairTourism),
+    },
+    {
+      title: t.sustainability.sustainability.name,
+      description: t.sustainability.sustainability.description,
+      imageUrl: localImagePath(t.sustainability.images.sustainability),
+    },
+    {
+      title: t.sustainability.socialProjects.name,
+      description: t.sustainability.socialProjects.description,
+      imageUrl: localImagePath(t.sustainability.images.socialProjects),
+    },
+  ];
+}
+
 let navStyleTrips: any[] = [];
 let navDestinations: any[] = [];
 let navTipoTransportes: any[] = [];
+let navSustainabilityItems: any[] = buildFallbackSustainabilityItems();
 try {
   const json = await fetchOdooTransportJson(`/incas/api/web/tipo-transportes?lang=${getOdooTransportLang(currentLang)}`);
   navTipoTransportes = json.data ?? [];
@@ -137,6 +166,19 @@ try {
   navDestinations = destJson.data ?? [];
 } catch (e) {
   console.error('[Navbar] Fetch error:', e);
+}
+try {
+  const json = await fetchOdooWebJson(`/incas/api/web/sostenibilidad?lang=${getOdooWebLang(currentLang)}`);
+  const rows = Array.isArray(json?.data) ? json.data.filter((item: any) => item?.showInMenu) : [];
+  if (rows.length) {
+    navSustainabilityItems = rows.map((item: any) => ({
+      title: item.title || '',
+      description: stripHtml(item.contentHtml || ''),
+      imageUrl: getOdooMediaUrl(item.image) || '',
+    }));
+  }
+} catch (e) {
+  console.error('[Navbar] Error sostenibilidad:', e);
 }
 ---
 
@@ -417,17 +459,16 @@ try {
                   
                   <!-- Sustainability scroll container -->
                   <div id="sustainability-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
-                    {Object.entries(t.sustainability).filter(([key]: [string, any]) => !['title', 'images'].includes(key)).map(([key, item]: [string, any]) => {
-                      const itemObj = item as { name: string; description: string };
+                    {navSustainabilityItems.map((item: any, index: number) => {
                       return (
                         <button
                           class="sustainability-item w-full px-4 py-3 text-left text-sm font-medium text-gray-700 hover:bg-[#e0f7f5] hover:text-[#1AA093] transition border-b border-gray-100 whitespace-normal"
-                          data-sustainability={key}
-                          data-name={itemObj.name}
-                          data-image={(t.sustainability as any).images[key]}
-                          data-description={itemObj.description}
+                          data-sustainability={String(index)}
+                          data-name={item.title}
+                          data-image={item.imageUrl}
+                          data-description={item.description}
                         >
-                          {itemObj.name}
+                          {item.title}
                         </button>
                       );
                     })}
@@ -678,11 +719,10 @@ try {
         </button>
         <div id="mobile-sustainability-menu" class="hidden bg-gray-100 rounded mt-1 max-h-60 overflow-y-auto">
           <div id="mobile-sustainability-list" class="flex flex-col">
-            {Object.entries(t.sustainability).filter(([key]: [string, any]) => !['title', 'images'].includes(key)).map(([key, item]: [string, any]) => {
-              const itemObj = item as { name: string; description: string };
+            {navSustainabilityItems.map((item: any, index: number) => {
               return (
-                <button class="mobile-sustainability-item w-full text-left px-4 py-2 text-gray-700 text-sm hover:bg-[#e0f7f5] hover:text-[#1AA093] transition border-b border-gray-200" data-sustainability={key} data-name={itemObj.name} data-description={itemObj.description}>
-                  {itemObj.name}
+                <button class="mobile-sustainability-item w-full text-left px-4 py-2 text-gray-700 text-sm hover:bg-[#e0f7f5] hover:text-[#1AA093] transition border-b border-gray-200" data-sustainability={String(index)} data-name={item.title} data-description={item.description}>
+                  {item.title}
                 </button>
               );
             })}

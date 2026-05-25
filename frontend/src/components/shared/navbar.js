@@ -351,31 +351,30 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('sustainability-scroll')?.scrollBy({ top: scrollAmount, behavior: 'smooth' });
   });
 
-  function updateSustainabilityMenu(sustKey) {
-    const entry = Object.entries(t.sustainability).find(([key]) => key === sustKey);
-    if (!entry) return;
-    const [, sustItem] = entry;
-
+  function updateSustainabilityMenu(item) {
+    if (!item) return;
+    const description = item.getAttribute('data-description') || '';
+    const sustImage = item.getAttribute('data-image') || '';
+    const sustName = item.getAttribute('data-name') || '';
     document.getElementById('sustainability-description').innerHTML =
-      `<p class="text-sm text-gray-600">${sustItem.description}</p>`;
+      `<p class="text-sm text-gray-600">${description}</p>`;
 
-    const sustImage = t.sustainability.images[sustKey];
     const img = document.getElementById('sustainability-image');
-    img.src = sustImage.startsWith('landing page images')
-      ? `/${sustImage}`
-      : `https://images.unsplash.com/${sustImage}?w=400&h=400&fit=crop`;
-    document.getElementById('sustainability-name').textContent = sustItem.name;
+    if (img && sustImage) {
+      img.src = sustImage;
+    }
+    document.getElementById('sustainability-name').textContent = sustName;
   }
 
-  const firstSustKey = Object.keys(t.sustainability).find(k => !['title', 'images'].includes(k));
-  if (firstSustKey) {
-    updateSustainabilityMenu(firstSustKey);
-    document.querySelector(`[data-sustainability="${firstSustKey}"]`)?.classList.add('bg-[#e0f7f5]', 'text-[#1AA093]');
+  const firstSustItem = document.querySelector('.sustainability-item');
+  if (firstSustItem) {
+    updateSustainabilityMenu(firstSustItem);
+    firstSustItem.classList.add('bg-[#e0f7f5]', 'text-[#1AA093]');
   }
 
   document.querySelectorAll('.sustainability-item').forEach(item => {
     item.addEventListener('mouseenter', () => {
-      updateSustainabilityMenu(item.dataset.sustainability);
+      updateSustainabilityMenu(item);
       document.querySelectorAll('.sustainability-item').forEach(i => i.classList.remove('bg-[#e0f7f5]', 'text-[#1AA093]'));
       item.classList.add('bg-[#e0f7f5]', 'text-[#1AA093]');
     });
