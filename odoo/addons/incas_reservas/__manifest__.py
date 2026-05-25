@@ -24,6 +24,8 @@
         "views/incas_catalogo_vehiculo_views.xml",
         "views/incas_tour_views.xml",
         "views/incas_catalogo_destino_views.xml",
+        "views/incas_sostenibilidad_articulo_views.xml",
+        "views/incas_sostenibilidad_portada_wizard_views.xml",
         "views/incas_catalogo_transporte_views.xml",
         "views/incas_currency_rate_views.xml",
         "views/incas_reserva_pdf_wizard_views.xml",

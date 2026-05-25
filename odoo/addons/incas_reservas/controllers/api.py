@@ -17,6 +17,7 @@ _logger = logging.getLogger(__name__)
 _PUBLIC_IMAGE_FIELDS = {
     "incas.catalogo.destino": {"imagen", "imagen_fondo"},
     "incas.catalogo.destino.icono": {"imagen"},
+    "incas.sostenibilidad.articulo": {"imagen_portada"},
     "incas.catalogo.transporte": {"image_data", "wallpaper_data"},
     "incas.catalogo.vehiculo": {"imagen"},
     "incas.estilo.transporte": {"image_data", "wallpaper_data"},
@@ -29,7 +30,7 @@ _PUBLIC_IMAGE_FIELDS = {
 
 def _lang_base(lang):
     lang = (lang or "es").split("_")[0].split("-")[0].lower()
-    if lang in {"en", "pt"}:
+    if lang in {"en", "pt", "fr", "it"}:
         return lang
     return "es"
 
@@ -46,6 +47,10 @@ def _campo_localizado(record, base, lang):
         return getattr(record, f"{base}_en") or getattr(record, base, False)
     if lang == "pt" and hasattr(record, f"{base}_pt"):
         return getattr(record, f"{base}_pt") or getattr(record, base, False)
+    if lang == "fr" and hasattr(record, f"{base}_fr"):
+        return getattr(record, f"{base}_fr") or getattr(record, base, False)
+    if lang == "it" and hasattr(record, f"{base}_it"):
+        return getattr(record, f"{base}_it") or getattr(record, base, False)
     return getattr(record, base, False)
 
 
@@ -183,12 +188,54 @@ def _slugs_localizados(record):
     base = getattr(record, "slug", False) or ""
     slug_en = getattr(record, "slug_en", False) or base
     slug_pt = getattr(record, "slug_pt", False) or base
+    slug_fr = getattr(record, "slug_fr", False) or base
+    slug_it = getattr(record, "slug_it", False) or base
     return {
         "es": base,
         "en": slug_en or base,
         "pt": slug_pt or base,
-        "fr": base,
-        "it": base,
+        "fr": slug_fr or base,
+        "it": slug_it or base,
+    }
+
+
+def _tours_relacionados_sostenibilidad(articulo, lang):
+    campo = {
+        "en": "tour_ids_en",
+        "pt": "tour_ids_pt",
+        "fr": "tour_ids_fr",
+        "it": "tour_ids_it",
+    }.get(_lang_base(lang), "tour_ids")
+    tours = getattr(articulo, campo, request.env["incas.tour"])
+    if not tours:
+        tours = articulo.tour_ids
+    return [
+        _serialize_tour_card(tour, lang)
+        for tour in tours.sorted(lambda rec: (_campo_localizado(rec, "nombre", lang) or "", rec.id))
+        if tour.active
+    ]
+
+
+def _serialize_sostenibilidad_articulo(articulo, lang):
+    return {
+        "id": articulo.id,
+        "title": _campo_localizado(articulo, "titulo", lang),
+        "slug": _slug_localizado(articulo, lang),
+        "slugs": _slugs_localizados(articulo),
+        "contentHtml": _campo_localizado(articulo, "contenido_html", lang),
+        "seoTitle": _campo_localizado(articulo, "seo_titulo", lang),
+        "seoDescription": _campo_localizado(articulo, "seo_descripcion", lang),
+        "image": _image_payload(articulo, "imagen_portada"),
+        "publishedAt": articulo.fecha_publicacion.isoformat() if articulo.fecha_publicacion else None,
+        "showInHome": bool(articulo.mostrar_en_portada),
+        "showInMenu": bool(articulo.mostrar_en_portada),
+        "destinations": [
+            _serialize_destino_minimo(destino, lang)
+            for destino in articulo.destino_ids.sorted(lambda rec: (_campo_localizado(rec, "nombre", lang) or "", rec.id))
+            if destino.active
+        ],
+        "tags": [etiqueta.name for etiqueta in articulo.etiqueta_ids.sorted(lambda rec: (rec.name or "", rec.id)) if etiqueta.name],
+        "relatedTours": _tours_relacionados_sostenibilidad(articulo, lang),
     }
 
 
@@ -467,17 +514,17 @@ def _serialize_web_tour(tour, lang, incluir_relaciones=True, incluir_relacionado
 
 
 def _buscar_por_slug_localizado(model_name, slug):
-    return request.env[model_name].sudo().search(
-        [
-            ("active", "=", True),
-            "|",
-            "|",
-            ("slug", "=", slug),
-            ("slug_en", "=", slug),
-            ("slug_pt", "=", slug),
-        ],
-        limit=1,
-    )
+    model = request.env[model_name].sudo()
+    campos_slug = [campo for campo in ("slug", "slug_en", "slug_pt", "slug_fr", "slug_it") if campo in model._fields]
+    domain = [("active", "=", True)]
+    if not campos_slug:
+        return model.browse()
+    if len(campos_slug) == 1:
+        domain.append((campos_slug[0], "=", slug))
+    else:
+        domain.extend(["|"] * (len(campos_slug) - 1))
+        domain.extend((campo, "=", slug) for campo in campos_slug)
+    return model.search(domain, limit=1)
 
 
 def response_json(payload, status=200):
@@ -566,6 +613,27 @@ class IncasReservasApiController(http.Controller):
         if not destino:
             return response_json({"error": {"message": "Destino no encontrado"}}, 404)
         return response_json({"data": _serialize_destino(destino, lang, incluir_tours=True)})
+
+    @http.route("/incas/api/web/sostenibilidad", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_sostenibilidad(self, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        articulos = request.env["incas.sostenibilidad.articulo"].sudo().search(
+            [("active", "=", True)],
+            order="fecha_publicacion desc, sequence, id desc",
+        )
+        return response_json({"data": [_serialize_sostenibilidad_articulo(articulo, lang) for articulo in articulos]})
+
+    @http.route("/incas/api/web/sostenibilidad/<string:slug>", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_sostenibilidad_detalle(self, slug, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        articulo = _buscar_por_slug_localizado("incas.sostenibilidad.articulo", slug)
+        if not articulo:
+            return response_json({"error": {"message": "Articulo de sostenibilidad no encontrado"}}, 404)
+        return response_json({"data": _serialize_sostenibilidad_articulo(articulo, lang)})
 
     @http.route("/incas/api/web/tours", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
     def web_tours(self, **kwargs):

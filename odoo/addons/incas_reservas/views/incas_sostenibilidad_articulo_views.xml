@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_sostenibilidad_articulo_list" model="ir.ui.view">
+        <field name="name">incas.sostenibilidad.articulo.list</field>
+        <field name="model">incas.sostenibilidad.articulo</field>
+        <field name="arch" type="xml">
+            <list string="Sostenibilidad">
+                <field name="sequence"/>
+                <field name="fecha_publicacion"/>
+                <field name="titulo"/>
+                <field name="mostrar_en_portada"/>
+                <field name="slug"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_sostenibilidad_articulo_search" model="ir.ui.view">
+        <field name="name">incas.sostenibilidad.articulo.search</field>
+        <field name="model">incas.sostenibilidad.articulo</field>
+        <field name="arch" type="xml">
+            <search string="Buscar articulos de sostenibilidad">
+                <field name="titulo"/>
+                <field name="slug"/>
+                <field name="fecha_publicacion"/>
+                <filter name="group_fecha_publicacion" string="Fecha publicacion" domain="[]" context="{'group_by': 'fecha_publicacion'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_sostenibilidad_articulo_form" model="ir.ui.view">
+        <field name="name">incas.sostenibilidad.articulo.form</field>
+        <field name="model">incas.sostenibilidad.articulo</field>
+        <field name="arch" type="xml">
+            <form string="Articulo de sostenibilidad">
+                <header>
+                    <button
+                        name="action_abrir_confirmacion_portada"
+                        type="object"
+                        string="Reemplazar en portada"
+                        class="btn-primary"
+                        invisible="not portada_requiere_confirmacion"
+                    />
+                </header>
+                <sheet>
+                    <group invisible="not portada_requiere_confirmacion">
+                        <field name="portada_resumen" readonly="1" nolabel="1"/>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="titulo"/>
+                            <field name="titulo_en"/>
+                            <field name="titulo_pt"/>
+                            <field name="titulo_fr"/>
+                            <field name="titulo_it"/>
+                        </group>
+                        <group>
+                            <field name="fecha_publicacion"/>
+                            <field name="sequence"/>
+                            <field name="mostrar_en_portada"/>
+                            <field name="active"/>
+                            <field name="imagen_portada" widget="image" options="{'size': [256, 256]}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="destino_ids" widget="many2many_tags"/>
+                        <field name="etiqueta_ids" widget="many2many_tags"/>
+                    </group>
+                    <notebook>
+                        <page string="Español">
+                            <group>
+                                <field name="slug"/>
+                                <field name="contenido_html" widget="html"/>
+                                <field name="seo_titulo"/>
+                                <field name="seo_descripcion"/>
+                                <field name="tour_ids" widget="many2many_tags"/>
+                            </group>
+                        </page>
+                        <page string="English">
+                            <group>
+                                <field name="slug_en"/>
+                                <field name="contenido_html_en" widget="html"/>
+                                <field name="seo_titulo_en"/>
+                                <field name="seo_descripcion_en"/>
+                                <field name="tour_ids_en" widget="many2many_tags"/>
+                            </group>
+                        </page>
+                        <page string="Português">
+                            <group>
+                                <field name="slug_pt"/>
+                                <field name="contenido_html_pt" widget="html"/>
+                                <field name="seo_titulo_pt"/>
+                                <field name="seo_descripcion_pt"/>
+                                <field name="tour_ids_pt" widget="many2many_tags"/>
+                            </group>
+                        </page>
+                        <page string="Français">
+                            <group>
+                                <field name="slug_fr"/>
+                                <field name="contenido_html_fr" widget="html"/>
+                                <field name="seo_titulo_fr"/>
+                                <field name="seo_descripcion_fr"/>
+                                <field name="tour_ids_fr" widget="many2many_tags"/>
+                            </group>
+                        </page>
+                        <page string="Italiano">
+                            <group>
+                                <field name="slug_it"/>
+                                <field name="contenido_html_it" widget="html"/>
+                                <field name="seo_titulo_it"/>
+                                <field name="seo_descripcion_it"/>
+                                <field name="tour_ids_it" widget="many2many_tags"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_sostenibilidad_articulo" model="ir.actions.act_window">
+        <field name="name">Sostenibilidad</field>
+        <field name="res_model">incas.sostenibilidad.articulo</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_sostenibilidad_articulo_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_sostenibilidad_articulo"
+        name="Sostenibilidad"
+        parent="menu_incas_catalogo_root"
+        action="action_incas_sostenibilidad_articulo"
+        sequence="14"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+</odoo>
