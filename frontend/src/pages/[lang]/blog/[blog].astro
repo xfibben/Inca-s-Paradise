@@ -1,11 +1,11 @@
 ---
-import { defaultLanguage, getTranslation, languages } from "../../../../i18n";
-import "../../../../styles/global.css";
-import GoogleAnalytics from "../../../../components/shared/GoogleAnalytics.astro";
-import Navbar from "../../../../components/shared/Navbar.astro";
-import Footer from "../../../../components/shared/Footer.astro";
-import { fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from "../../../../utils/odooWeb";
-import { normalizeOdooHtml, richContentToHtml } from "../../../../utils/richContent";
+import { defaultLanguage, getTranslation, languages } from "../../../i18n";
+import "../../../styles/global.css";
+import GoogleAnalytics from "../../../components/shared/GoogleAnalytics.astro";
+import Navbar from "../../../components/shared/Navbar.astro";
+import Footer from "../../../components/shared/Footer.astro";
+import { fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from "../../../utils/odooWeb";
+import { normalizeOdooHtml, richContentToHtml } from "../../../utils/richContent";
 
 export function getStaticPaths() {
   return [];
