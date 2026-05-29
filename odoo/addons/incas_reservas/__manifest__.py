@@ -1,7 +1,7 @@
 {
     "name": "Inca's Paradise Reservas",
     "summary": "Gestión interna de reservas y pasajeros",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     "category": "Inca's Paradise",
     "author": "Inca's Paradise",
     "license": "LGPL-3",
