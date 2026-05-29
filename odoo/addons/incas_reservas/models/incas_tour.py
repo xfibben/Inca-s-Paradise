@@ -1,4 +1,5 @@
 import json
+from urllib.parse import urlencode
 
 from odoo import api, fields, models, tools
 from odoo.exceptions import ValidationError
@@ -541,7 +542,14 @@ class IncasTour(models.Model):
         self.ensure_one()
         valores = []
         for item in self.itinerario_item_ids.sorted(lambda rec: (rec.sequence, rec.id)):
-            imagenes = [{"url": imagen.imagen} for imagen in item.imagen_ids.sorted(lambda rec: (rec.sequence, rec.id)) if imagen.imagen]
+            imagenes = [
+                self._serializar_imagen_publica(
+                    imagen,
+                    alt=imagen.nombre_display or tools.html2plaintext(item.titulo or "") or self.nombre,
+                )
+                for imagen in item.imagen_ids.sorted(lambda rec: (rec.sequence, rec.id))
+            ]
+            imagenes = [imagen for imagen in imagenes if imagen]
             valores.append(
                 {
                     "title": item.titulo,
@@ -573,11 +581,20 @@ class IncasTour(models.Model):
 
     def _serializar_imagenes_destacadas(self):
         self.ensure_one()
-        return [
-            {"url": imagen.imagen}
-            for imagen in self.imagen_destacada_ids.sorted(lambda rec: (rec.sequence, rec.id))
-            if imagen.imagen
-        ]
+        imagenes = []
+        for imagen in self.imagen_destacada_ids.sorted(lambda rec: (rec.sequence, rec.id)):
+            payload = self._serializar_imagen_publica(imagen, alt=self.nombre)
+            if payload:
+                imagenes.append(payload)
+        return imagenes
+
+    def _serializar_imagen_publica(self, imagen, alt=False):
+        if not imagen or not imagen.id or not getattr(imagen, "imagen_file_id", False):
+            return False
+        return {
+            "url": f"/incas/public/image?{urlencode({'model': imagen._name, 'id': imagen.id, 'field': 'imagen'})}",
+            "alt": alt or False,
+        }
 
     def _valores_snapshot_operativo(self):
         self.ensure_one()

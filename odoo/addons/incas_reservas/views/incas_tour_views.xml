@@ -168,9 +168,7 @@
                                                             <div class="d-flex align-items-center gap-3 p-2">
                                                                 <field name="imagen" widget="image" options="{'size': [96, 96]}"/>
                                                                 <div class="flex-grow-1">
-                                                                    <div class="fw-bold">
-                                                                        <field name="nombre_display"/>
-                                                                    </div>
+                                                                    <field name="nombre" placeholder="nombre-imagen"/>
                                                                 </div>
                                                             </div>
                                                         </t>
@@ -179,13 +177,13 @@
                                                 <list editable="bottom" open_form_view="True">
                                                     <field name="sequence" widget="handle"/>
                                                     <field name="imagen" widget="image" options="{'size': [128, 128]}"/>
-                                                    <field name="nombre_display" readonly="1"/>
+                                                    <field name="nombre" placeholder="nombre-imagen"/>
                                                 </list>
                                                 <form string="Imagen de itinerario">
                                                     <sheet>
                                                         <group>
                                                             <field name="sequence"/>
-                                                            <field name="nombre_display" readonly="1"/>
+                                                            <field name="nombre" placeholder="nombre-imagen"/>
                                                             <field name="imagen" widget="image" options="{'size': [512, 512]}"/>
                                                         </group>
                                                     </sheet>

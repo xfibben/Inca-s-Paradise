@@ -67,7 +67,7 @@ const itineraryItems = toObjectList(sourceTour.itineraryItems).map((item: any, i
   imageAltText: stripHtml(normalizeOdooHtml(item.imageAlt || item.title || `${lang === "en" ? "Day" : "Dia"} ${index + 1}`)),
   images: toObjectList(item.images).map((image: any) => ({
     url: getOdooMediaUrl(image),
-    alt: stripHtml(normalizeOdooHtml(item.imageAlt || item.title || `${lang === "en" ? "Day" : "Dia"} ${index + 1}`)),
+    alt: stripHtml(normalizeOdooHtml(image?.alt || item.imageAlt || item.title || `${lang === "en" ? "Day" : "Dia"} ${index + 1}`)),
   })).filter((image: any) => image.url),
 }));
 const scheduleItems = toObjectList(sourceTour.scheduleItems);

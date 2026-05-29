@@ -71,6 +71,14 @@ def _image_payload(record, field):
     }
 
 
+def _normalizar_alt_imagen(nombre):
+    texto = (nombre or "").strip()
+    if not texto:
+        return False
+    texto = texto.rsplit(".", 1)[0]
+    return "-".join(texto.split()) or False
+
+
 def _binary_content_type(record, field, binary_value):
     archivo = getattr(record, f"{field}_file_id", False)
     if archivo and archivo.mimetype:
@@ -395,9 +403,12 @@ def _serialize_web_tour(tour, lang, incluir_relaciones=True, incluir_relacionado
     itinerary_items = []
     for item in tour.itinerario_item_ids.sorted(lambda rec: (rec.sequence, rec.id)):
         imagenes = [
-            _image_payload(imagen, "imagen")
+            {
+                **payload,
+                "alt": _normalizar_alt_imagen(imagen.nombre or imagen.imagen_file_id.name),
+            }
             for imagen in item.imagen_ids.sorted(lambda rec: (rec.sequence, rec.id))
-            if _image_payload(imagen, "imagen")
+            if (payload := _image_payload(imagen, "imagen"))
         ]
         imagen = imagenes[0] if imagenes else False
         itinerary_items.append(
@@ -406,7 +417,7 @@ def _serialize_web_tour(tour, lang, incluir_relaciones=True, incluir_relacionado
                 "highlight": "",
                 "description": _campo_localizado(item, "descripcion", lang),
                 "optional": "",
-                "imageAlt": _campo_localizado(item, "titulo", lang),
+                "imageAlt": (imagen or {}).get("alt") or _campo_localizado(item, "titulo", lang),
                 "image": imagen,
                 "images": imagenes,
                 "includes": [],
