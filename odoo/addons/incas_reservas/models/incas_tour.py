@@ -582,11 +582,12 @@ class IncasTour(models.Model):
     def _valores_snapshot_operativo(self):
         self.ensure_one()
         destinos = self._serializar_destinos()
+        itinerarios = self._serializar_itinerarios()
         return {
             "destino_slug": destinos[0]["slug"] if destinos else False,
             "destinos_data": self._json_dump(destinos),
             "estilos_data": self._json_dump(self._serializar_estilos()),
-            "duration_days": 0,
+            "duration_days": self.dias or len(itinerarios) or 1,
             "hero_title": False,
             "hero_description": False,
             "hero_slide_images_data": False,
@@ -596,7 +597,7 @@ class IncasTour(models.Model):
             "highlights_items_data": self._json_dump(self._serializar_destacados()),
             "featured_images_data": self._json_dump(self._serializar_imagenes_destacadas()),
             "itinerary_title": False,
-            "itinerary_items_data": self._json_dump(self._serializar_itinerarios()),
+            "itinerary_items_data": self._json_dump(itinerarios),
             "schedule_title": False,
             "schedule_items_data": self._json_dump(self._serializar_horarios()),
             "included_title": False,
@@ -609,7 +610,7 @@ class IncasTour(models.Model):
 
     def _preparar_valores_servicio_catalogo(self):
         self.ensure_one()
-        return {
+        valores = {
             "name": self.nombre,
             "tipo_servicio": "tour",
             "tipo_tour": self.tipo_tour,
@@ -621,6 +622,14 @@ class IncasTour(models.Model):
             "slug": self.slug,
             "active": self.active,
         }
+        valores.update(
+            {
+                clave: valor
+                for clave, valor in self._valores_snapshot_operativo().items()
+                if clave in {"duration_days", "itinerary_items_data", "schedule_items_data", "included_items_data", "excluded_items_data"}
+            }
+        )
+        return valores
 
     def _sincronizar_servicio_operativo(self):
         service_model = self.env["incas.servicio.catalogo"].sudo()
@@ -631,7 +640,11 @@ class IncasTour(models.Model):
             if servicio:
                 servicio.write(service_vals)
             else:
-                servicio = service_model.create(service_vals)
+                servicio = service_model._buscar_servicio_huerfano_reutilizable("tour", slug=record.slug, name=record.nombre).sudo()
+                if servicio:
+                    servicio.write(service_vals)
+                else:
+                    servicio = service_model.create(service_vals)
                 record.with_context(skip_catalog_sync=True).write({"servicio_id": servicio.id})
             horarios_existentes = horario_model.search([("servicio_id", "=", servicio.id)])
             vistos = self.env["incas.horario.opcion"]
@@ -739,4 +752,7 @@ class IncasTour(models.Model):
         return result
 
     def unlink(self):
-        return super().unlink()
+        servicios = self.mapped("servicio_id").sudo()
+        result = super().unlink()
+        servicios.exists()._desactivar_o_eliminar_si_huerfano()
+        return result

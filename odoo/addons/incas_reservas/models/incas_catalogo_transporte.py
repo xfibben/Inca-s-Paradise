@@ -299,6 +299,37 @@ class IncasCatalogoTransporte(models.Model):
         except (TypeError, ValueError, json.JSONDecodeError):
             return []
 
+    def _valores_snapshot_operativo(self):
+        self.ensure_one()
+        return {
+            "duration_days": 1,
+            "itinerary_items_data": False,
+            "schedule_items_data": False,
+            "included_items_data": self.included_items_data,
+            "excluded_items_data": self.excluded_items_data,
+        }
+
+    def _preparar_valores_servicio_catalogo(self):
+        self.ensure_one()
+        valores = {
+            "name": self.name,
+            "tipo_servicio": "transporte",
+            "tipo_tour": False,
+            "estilo_transporte_id": self.estilo_transporte_ids[:1].id or False,
+            "precio_adulto": self.tarifa_ids[:1].precio_adulto_usd if self.tarifa_ids[:1] else 0,
+            "precio_nino": self.tarifa_ids[:1].precio_nino_usd if self.tarifa_ids[:1] else 0,
+            "descuento": self.tarifa_ids[:1].descuento if self.tarifa_ids[:1] else 0,
+            "ip": self.ip or "ip3",
+            "slug": self.slug,
+            "active": self.active,
+        }
+        valores.update(self._valores_snapshot_operativo())
+        return valores
+
+    def _sincronizar_servicio_operativo(self):
+        for record in self:
+            record.servicio_id.sudo().write(record._preparar_valores_servicio_catalogo())
+
     @api.model_create_multi
     def create(self, vals_list):
         self._migrar_columnas_legadas_jsonb()
@@ -315,11 +346,20 @@ class IncasCatalogoTransporte(models.Model):
                 "ip": vals.get("ip") or "ip3",
                 "active": vals.get("active", True),
             }
-            servicio = servicio_model.create(servicio_vals)
+            servicio = servicio_model._buscar_servicio_huerfano_reutilizable(
+                "transporte",
+                slug=vals.get("slug"),
+                name=vals.get("name"),
+            )
+            if servicio:
+                servicio.write(servicio_vals)
+            else:
+                servicio = servicio_model.create(servicio_vals)
             vals["servicio_id"] = servicio.id
         records = super().create(vals_list)
         records._asegurar_carpeta_documental()
         records._completar_traducciones_vacias()
+        records._sincronizar_servicio_operativo()
         return records
 
     def write(self, vals):
@@ -331,6 +371,13 @@ class IncasCatalogoTransporte(models.Model):
             self._asegurar_carpeta_documental()
         if not self.env.context.get("skip_autocompletar_traducciones"):
             self._completar_traducciones_vacias()
+        self._sincronizar_servicio_operativo()
+        return result
+
+    def unlink(self):
+        servicios = self.mapped("servicio_id").sudo()
+        result = super().unlink()
+        servicios.exists()._desactivar_o_eliminar_si_huerfano()
         return result
 
     def _dms_storage_name(self):

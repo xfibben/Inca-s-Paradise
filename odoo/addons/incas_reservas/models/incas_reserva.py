@@ -599,6 +599,23 @@ class IncasReserva(models.Model):
                     else:
                         record.estado_comercial = "confirmada"
 
+    def _sincronizar_cancelacion_en_vals(self, vals):
+        if self.env.context.get("skip_estado_comercial_sync"):
+            return vals
+        valores = dict(vals)
+        estado_comercial = valores.get("estado_comercial")
+        estado_reserva = valores.get("estado_reserva")
+
+        if estado_comercial == "cancelada":
+            valores["estado_reserva"] = "cancelado"
+            return valores
+
+        if estado_reserva == "cancelado":
+            valores["estado_comercial"] = "cancelada"
+            return valores
+
+        return valores
+
     def _aplicar_moneda_desde_base(self):
         rates = self.env["incas.servicio.catalogo"]._get_currency_rates()
         for record in self:
@@ -1228,17 +1245,18 @@ class IncasReserva(models.Model):
     def write(self, vals):
         if self.env.context.get("skip_resumen_paquete_sync") or self.env.context.get("skip_estado_comercial_sync"):
             return super().write(vals)
-        self._completar_datos_servicio(vals)
-        self._completar_datos_hotel(vals)
-        self._completar_datos_extra(vals)
-        result = super().write(vals)
+        valores = self._sincronizar_cancelacion_en_vals(vals)
+        self._completar_datos_servicio(valores)
+        self._completar_datos_hotel(valores)
+        self._completar_datos_extra(valores)
+        result = super().write(valores)
         self._aplicar_resumen_paquete()
-        if "moneda" in vals:
-            self.paquete_linea_ids._actualizar_precios_desde_usd(vals["moneda"])
-            self.hotel_linea_ids._actualizar_precio_desde_usd(vals["moneda"])
-            self.extra_linea_ids._actualizar_precio_desde_usd(vals["moneda"])
+        if "moneda" in valores:
+            self.paquete_linea_ids._actualizar_precios_desde_usd(valores["moneda"])
+            self.hotel_linea_ids._actualizar_precio_desde_usd(valores["moneda"])
+            self.extra_linea_ids._actualizar_precio_desde_usd(valores["moneda"])
         self._actualizar_estado_comercial_desde_pagos()
-        if any(campo in vals for campo in ["name"]):
+        if any(campo in valores for campo in ["name"]):
             self._asegurar_carpeta_documental()
         return result
 

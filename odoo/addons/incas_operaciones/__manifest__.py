@@ -10,6 +10,7 @@
     "data": [
         "security/ir.model.access.csv",
         "data/incas_operaciones_sync.xml",
+        "views/incas_reserva_operaciones_views.xml",
         "views/incas_agenda_evento_views.xml",
         "views/mail_activity_views.xml",
     ],

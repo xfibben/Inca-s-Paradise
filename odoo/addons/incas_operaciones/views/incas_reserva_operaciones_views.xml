@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_reserva_operaciones_list" model="ir.ui.view">
+        <field name="name">incas.reserva.operaciones.list</field>
+        <field name="model">incas.reserva</field>
+        <field name="arch" type="xml">
+            <list string="Operaciones IP" default_order="fecha_inicio asc, fecha_viaje asc, id asc">
+                <field
+                    name="estado_reserva"
+                    widget="badge"
+                    decoration-info="estado_reserva == 'reservado'"
+                    decoration-primary="estado_reserva == 'por_coordinar'"
+                    decoration-warning="estado_reserva == 'falta_pago'"
+                    decoration-success="estado_reserva in ['pagado', 'completado', 'finalizado']"
+                    decoration-danger="estado_reserva == 'cancelado'"
+                />
+                <field name="operacion_agencia"/>
+                <field name="fecha_inicio"/>
+                <field name="fecha_fin"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="cantidad_pasajeros"/>
+                <field name="servicio_nombre"/>
+                <field name="operacion_rango_fechas"/>
+                <field name="operacion_resumen"/>
+                <field
+                    name="estado_pago"
+                    widget="badge"
+                    decoration-warning="estado_pago == 'pendiente'"
+                    decoration-info="estado_pago == 'parcial'"
+                    decoration-success="estado_pago == 'pagado'"
+                    decoration-danger="estado_pago in ['reembolsado', 'cancelado']"
+                />
+                <field name="saldo_pendiente"/>
+                <field name="responsable_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_reserva_operaciones_search" model="ir.ui.view">
+        <field name="name">incas.reserva.operaciones.search</field>
+        <field name="model">incas.reserva</field>
+        <field name="arch" type="xml">
+            <search string="Buscar operaciones">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="servicio_nombre"/>
+                <field name="fecha_inicio"/>
+                <field name="estado_reserva"/>
+                <field name="estado_pago"/>
+                <separator/>
+                <filter name="filter_activas" string="Activas" domain="[('estado_reserva', '!=', 'cancelado')]"/>
+                <filter name="filter_canceladas" string="Canceladas" domain="[('estado_reserva', '=', 'cancelado')]"/>
+                <filter name="filter_hoy" string="Hoy" domain="[('fecha_inicio', '&lt;=', context_today()), ('fecha_fin', '&gt;=', context_today())]"/>
+                <filter name="filter_proximas" string="Proximas" domain="[('fecha_inicio', '&gt;=', context_today())]"/>
+                <separator/>
+                <filter name="group_fecha_inicio" string="Fecha inicio" domain="[]" context="{'group_by': 'fecha_inicio'}"/>
+                <filter name="group_responsable" string="Responsable" domain="[]" context="{'group_by': 'responsable_id'}"/>
+                <filter name="group_estado" string="Estado" domain="[]" context="{'group_by': 'estado_reserva'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_reserva_operaciones_form" model="ir.ui.view">
+        <field name="name">incas.reserva.operaciones.form</field>
+        <field name="model">incas.reserva</field>
+        <field name="arch" type="xml">
+            <form string="Operacion IP">
+                <header>
+                    <button name="action_print_pase_operativo" type="object" string="Imprimir pase"/>
+                    <button name="action_regenerar_matriz_operativa" type="object" string="Regenerar matriz"/>
+                    <field
+                        name="estado_reserva"
+                        widget="statusbar"
+                        statusbar_visible="reservado,por_coordinar,falta_pago,pagado,completado,finalizado,cancelado"
+                    />
+                    <field
+                        name="estado_pago"
+                        widget="badge"
+                        decoration-warning="estado_pago == 'pendiente'"
+                        decoration-info="estado_pago == 'parcial'"
+                        decoration-success="estado_pago == 'pagado'"
+                        decoration-danger="estado_pago in ['reembolsado', 'cancelado']"
+                    />
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                        <div>
+                            <field name="servicio_nombre" readonly="1"/>
+                        </div>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="operacion_agencia" readonly="1"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="cantidad_pasajeros" readonly="1"/>
+                            <field name="responsable_id"/>
+                            <field name="ticket" readonly="1"/>
+                            <field name="lugar_recojo"/>
+                        </group>
+                        <group>
+                            <field name="fecha_inicio"/>
+                            <field name="fecha_fin"/>
+                            <field name="fecha_viaje"/>
+                            <field name="operacion_rango_fechas" readonly="1"/>
+                            <field name="operacion_resumen" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="observaciones" placeholder="Notas operativas"/>
+                    </group>
+                    <notebook>
+                        <page string="Cronograma">
+                            <field name="operacion_linea_ids">
+                                <list editable="bottom">
+                                    <field name="fecha"/>
+                                    <field name="agencia"/>
+                                    <field name="proveedor"/>
+                                    <field name="guia"/>
+                                    <field name="asistencia"/>
+                                    <field name="estado_operacion"/>
+                                    <field name="nro_pasajeros"/>
+                                    <field name="horario"/>
+                                    <field name="lugar_recojo"/>
+                                    <field name="servicio"/>
+                                    <field name="tipo_servicio"/>
+                                    <field name="hotel_nombre"/>
+                                    <field name="extras"/>
+                                    <field name="saldo_pagar"/>
+                                    <field name="saldo_cobrar"/>
+                                    <field name="pagado"/>
+                                    <field name="observacion"/>
+                                    <field name="seguimiento"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Paquete">
+                            <field name="paquete_linea_ids" readonly="1">
+                                <list>
+                                    <field name="fecha"/>
+                                    <field name="nombre"/>
+                                    <field name="horario_id"/>
+                                    <field name="tipo_servicio"/>
+                                    <field name="vehiculo_id"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Hoteles">
+                            <field name="hotel_linea_ids" readonly="1">
+                                <list>
+                                    <field name="fecha_check_in"/>
+                                    <field name="fecha_check_out"/>
+                                    <field name="hotel_nombre"/>
+                                    <field name="cantidad_noches"/>
+                                    <field name="cantidad_habitaciones"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Extras">
+                            <field name="extra_linea_ids" readonly="1">
+                                <list>
+                                    <field name="extra_nombre"/>
+                                    <field name="cantidad_extra"/>
+                                    <field name="extra_unidad"/>
+                                    <field name="monto_extra"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_reserva_operaciones" model="ir.actions.act_window">
+        <field name="name">Operaciones IP</field>
+        <field name="res_model">incas.reserva</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_reserva_operaciones_search"/>
+        <field name="context">{'search_default_filter_activas': 1}</field>
+    </record>
+
+    <record id="action_incas_reserva_operaciones_list_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="view_incas_reserva_operaciones_list"/>
+        <field name="act_window_id" ref="action_incas_reserva_operaciones"/>
+    </record>
+
+    <record id="action_incas_reserva_operaciones_form_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_incas_reserva_operaciones_form"/>
+        <field name="act_window_id" ref="action_incas_reserva_operaciones"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_operaciones_ip"
+        name="Operaciones IP"
+        parent="incas_core.menu_incas_operaciones_root"
+        action="action_incas_reserva_operaciones"
+        sequence="5"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_operaciones,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

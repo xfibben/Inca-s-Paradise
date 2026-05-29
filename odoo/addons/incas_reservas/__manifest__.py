@@ -14,6 +14,7 @@
         "data/incas_reserva_cambio_sequence.xml",
         "data/incas_currency_rate_cron.xml",
         "data/incas_cleanup_legacy_tour.xml",
+        "data/incas_servicio_catalogo_cleanup.xml",
         "reports/incas_reservas_reports.xml",
         "views/incas_catalogo_menu.xml",
         "views/incas_servicio_catalogo_views.xml",

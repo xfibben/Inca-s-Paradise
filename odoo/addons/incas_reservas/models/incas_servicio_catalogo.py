@@ -43,6 +43,11 @@ class IncasServicioCatalogo(models.Model):
         index=True,
     )
     slug = fields.Char(string="Slug")
+    duration_days = fields.Integer(string="Duracion en dias", default=1)
+    itinerary_items_data = fields.Text(string="Itinerary items")
+    schedule_items_data = fields.Text(string="Schedule items")
+    included_items_data = fields.Text(string="Included items")
+    excluded_items_data = fields.Text(string="Excluded items")
     active = fields.Boolean(default=True)
 
     def _auto_init(self):
@@ -64,6 +69,51 @@ class IncasServicioCatalogo(models.Model):
         else:
             service = self.create(values)
         return service
+
+    @api.model
+    def _buscar_servicio_huerfano_reutilizable(self, tipo_servicio, slug=None, name=None):
+        dominio = [("tipo_servicio", "=", tipo_servicio)]
+        if slug:
+            dominio.append(("slug", "=", slug))
+        elif name:
+            dominio.append(("name", "=", name))
+        candidatos = self.with_context(active_test=False).search(dominio, order="active desc, id asc")
+        if not candidatos:
+            return self
+        if tipo_servicio == "tour":
+            usados = self.env["incas.tour"].with_context(active_test=False).search([("servicio_id", "in", candidatos.ids)]).mapped("servicio_id")
+        else:
+            usados = self.env["incas.catalogo.transporte"].with_context(active_test=False).search([("servicio_id", "in", candidatos.ids)]).mapped("servicio_id")
+        return (candidatos - usados)[:1]
+
+    def _esta_usado_en_reservas(self):
+        self.ensure_one()
+        modelos_operativos = [
+            "incas.reserva.paquete.linea",
+            "incas.cotizacion.paquete.linea",
+        ]
+        for nombre_modelo in modelos_operativos:
+            if nombre_modelo not in self.env:
+                continue
+            if self.env[nombre_modelo].with_context(active_test=False).search_count([("servicio_id", "=", self.id)]):
+                return True
+        return False
+
+    def _desactivar_o_eliminar_si_huerfano(self):
+        for record in self.with_context(active_test=False):
+            if record.tipo_servicio == "tour":
+                tiene_origen = bool(self.env["incas.tour"].with_context(active_test=False).search_count([("servicio_id", "=", record.id)]))
+            else:
+                tiene_origen = bool(self.env["incas.catalogo.transporte"].with_context(active_test=False).search_count([("servicio_id", "=", record.id)]))
+            if tiene_origen:
+                continue
+            record.write({"active": False})
+
+    @api.model
+    def action_depurar_catalogo_huerfano(self):
+        servicios = self.with_context(active_test=False).search([])
+        servicios._desactivar_o_eliminar_si_huerfano()
+        return True
 
     @api.model
     def _json_lista(self, valor):
