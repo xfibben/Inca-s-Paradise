@@ -76,7 +76,7 @@
     <menuitem
         id="menu_incas_servicio_catalogo"
         name="Catálogo de servicios"
-        parent="menu_incas_catalogo_root"
+        parent="menu_incas_catalogo_catalogo_root"
         action="action_incas_servicio_catalogo"
         sequence="10"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"

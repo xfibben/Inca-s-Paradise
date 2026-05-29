@@ -105,9 +105,9 @@
     <menuitem
         id="menu_incas_sostenibilidad_articulo"
         name="Sostenibilidad"
-        parent="menu_incas_catalogo_root"
+        parent="menu_incas_vlog_root"
         action="action_incas_sostenibilidad_articulo"
-        sequence="14"
+        sequence="10"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
     />
 </odoo>

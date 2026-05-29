@@ -148,18 +148,18 @@
     <menuitem
         id="menu_incas_extra"
         name="Extras"
-        parent="menu_incas_catalogo_root"
+        parent="menu_incas_extras_root"
         action="action_incas_extra"
-        sequence="17"
+        sequence="10"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
     />
 
     <menuitem
         id="menu_incas_extra_tarifa"
         name="Tarifas de extra"
-        parent="menu_incas_catalogo_root"
+        parent="menu_incas_extras_root"
         action="action_incas_extra_tarifa"
-        sequence="18"
+        sequence="20"
         groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
     />
 </odoo>
