@@ -285,6 +285,60 @@ def _serialize_nosotros(nosotros, lang):
     }
 
 
+def _serialize_politica(politica, lang):
+    return {
+        "id": politica.id,
+        "titulo": _campo_localizado(politica, "titulo", lang),
+        "descripcion": _campo_localizado(politica, "descripcion", lang),
+        "metaTitle": _campo_localizado(politica, "meta_titulo", lang),
+        "metaDescription": _campo_localizado(politica, "meta_descripcion", lang),
+        "secciones": [
+            {
+                "titulo": _campo_localizado(seccion, "titulo", lang),
+                "contenido": _campo_localizado(seccion, "contenido", lang),
+            }
+            for seccion in politica.seccion_ids.sorted(lambda rec: (rec.sequence, rec.id))
+            if _campo_localizado(seccion, "titulo", lang) or _campo_localizado(seccion, "contenido", lang)
+        ],
+    }
+
+
+def _serialize_cancelacion(cancelacion, lang):
+    return {
+        "id": cancelacion.id,
+        "titulo": _campo_localizado(cancelacion, "titulo", lang),
+        "descripcion": _campo_localizado(cancelacion, "descripcion", lang),
+        "metaTitle": _campo_localizado(cancelacion, "meta_titulo", lang),
+        "metaDescription": _campo_localizado(cancelacion, "meta_descripcion", lang),
+        "secciones": [
+            {
+                "titulo": _campo_localizado(seccion, "titulo", lang),
+                "contenido": _campo_localizado(seccion, "contenido", lang),
+            }
+            for seccion in cancelacion.seccion_ids.sorted(lambda rec: (rec.sequence, rec.id))
+            if _campo_localizado(seccion, "titulo", lang) or _campo_localizado(seccion, "contenido", lang)
+        ],
+    }
+
+
+def _serialize_pregunta_frecuente(pregunta_frecuente, lang):
+    return {
+        "id": pregunta_frecuente.id,
+        "titulo": _campo_localizado(pregunta_frecuente, "titulo", lang),
+        "descripcion": _campo_localizado(pregunta_frecuente, "descripcion", lang),
+        "metaTitle": _campo_localizado(pregunta_frecuente, "meta_titulo", lang),
+        "metaDescription": _campo_localizado(pregunta_frecuente, "meta_descripcion", lang),
+        "sections": [
+            {
+                "pregunta": _campo_localizado(seccion, "pregunta", lang),
+                "respuesta": _campo_localizado(seccion, "respuesta", lang),
+            }
+            for seccion in pregunta_frecuente.seccion_ids.sorted(lambda rec: (rec.sequence, rec.id))
+            if _campo_localizado(seccion, "pregunta", lang) or _campo_localizado(seccion, "respuesta", lang)
+        ],
+    }
+
+
 def _serialize_tour_media_list(tour):
     imagenes = []
     payload_principal = _image_payload(tour, "imagen")
@@ -703,6 +757,36 @@ class IncasReservasApiController(http.Controller):
         if not nosotros:
             return response_json({"data": None})
         return response_json({"data": _serialize_nosotros(nosotros, lang)})
+
+    @http.route("/incas/api/web/politicas", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_politicas(self, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        politica = request.env["incas.politica"].sudo().search([("active", "=", True)], order="id asc", limit=1)
+        if not politica:
+            return response_json({"data": None})
+        return response_json({"data": _serialize_politica(politica, lang)})
+
+    @http.route("/incas/api/web/cancelaciones", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_cancelaciones(self, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        cancelacion = request.env["incas.cancelacion"].sudo().search([("active", "=", True)], order="id asc", limit=1)
+        if not cancelacion:
+            return response_json({"data": None})
+        return response_json({"data": _serialize_cancelacion(cancelacion, lang)})
+
+    @http.route("/incas/api/web/preguntas-frecuentes", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_preguntas_frecuentes(self, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        pregunta_frecuente = request.env["incas.pregunta.frecuente"].sudo().search([("active", "=", True)], order="id asc", limit=1)
+        if not pregunta_frecuente:
+            return response_json({"data": None})
+        return response_json({"data": _serialize_pregunta_frecuente(pregunta_frecuente, lang)})
 
     @http.route("/incas/api/web/tours", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
     def web_tours(self, **kwargs):

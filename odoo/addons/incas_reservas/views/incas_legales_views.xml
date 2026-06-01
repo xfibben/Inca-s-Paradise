@@ -130,6 +130,14 @@
         <field name="model">incas.cancelacion</field>
         <field name="arch" type="xml">
             <form string="Cancelaciones">
+                <header>
+                    <button
+                        name="action_importar_desde_strapi"
+                        type="object"
+                        string="Importar desde Strapi"
+                        class="btn-primary"
+                    />
+                </header>
                 <sheet>
                     <group>
                         <group>
@@ -233,6 +241,14 @@
         <field name="model">incas.pregunta.frecuente</field>
         <field name="arch" type="xml">
             <form string="Preguntas frecuentes">
+                <header>
+                    <button
+                        name="action_importar_desde_strapi"
+                        type="object"
+                        string="Importar desde Strapi"
+                        class="btn-primary"
+                    />
+                </header>
                 <sheet>
                     <group>
                         <group>
