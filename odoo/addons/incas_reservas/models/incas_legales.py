@@ -151,7 +151,7 @@ class IncasLegalMixin(models.AbstractModel):
         return {}
 
     def _strapi_base_url(self):
-        return (os.getenv("PUBLIC_STRAPI_URL") or os.getenv("STRAPI_URL") or "http://backend:1337").rstrip("/")
+        return (os.getenv("PUBLIC_STRAPI_URL") or "https://api.incasparadise.com").rstrip("/")
 
     def _strapi_fetch_single_type(self, locale):
         endpoint = self._strapi_endpoint()
