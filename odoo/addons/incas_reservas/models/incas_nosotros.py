@@ -1,39 +1,30 @@
 from odoo import api, fields, models, tools
 
 
-class IncasTerminoCondicion(models.Model):
-    _name = "incas.termino.condicion"
-    _description = "Terminos y condiciones"
+class IncasNosotros(models.Model):
+    _name = "incas.nosotros"
+    _description = "Nosotros"
     _order = "id desc"
     _rec_name = "titulo"
 
     titulo = fields.Char(string="Titulo", required=True)
     titulo_en = fields.Char(string="Titulo en ingles")
     titulo_pt = fields.Char(string="Titulo en portugues")
-    slug = fields.Char(string="Slug", required=True, default="terminos", index=True)
-    slug_en = fields.Char(string="Slug en ingles", index=True)
-    slug_pt = fields.Char(string="Slug en portugues", index=True)
     descripcion = fields.Html(string="Descripcion")
     descripcion_en = fields.Html(string="Descripcion en ingles")
     descripcion_pt = fields.Html(string="Descripcion en portugues")
-    seo_titulo = fields.Char(string="SEO titulo")
-    seo_titulo_en = fields.Char(string="SEO titulo en ingles")
-    seo_titulo_pt = fields.Char(string="SEO titulo en portugues")
-    seo_descripcion = fields.Text(string="SEO descripcion")
-    seo_descripcion_en = fields.Text(string="SEO descripcion en ingles")
-    seo_descripcion_pt = fields.Text(string="SEO descripcion en portugues")
+    meta_titulo = fields.Char(string="Meta titulo")
+    meta_titulo_en = fields.Char(string="Meta titulo en ingles")
+    meta_titulo_pt = fields.Char(string="Meta titulo en portugues")
+    meta_descripcion = fields.Text(string="Meta descripcion")
+    meta_descripcion_en = fields.Text(string="Meta descripcion en ingles")
+    meta_descripcion_pt = fields.Text(string="Meta descripcion en portugues")
     seccion_ids = fields.One2many(
-        "incas.termino.condicion.seccion",
-        "termino_id",
+        "incas.nosotros.seccion",
+        "nosotros_id",
         string="Secciones",
     )
     active = fields.Boolean(string="Activo", default=True)
-
-    _sql_constraints = [
-        ("incas_termino_condicion_slug_unique", "unique(slug)", "El slug ya existe."),
-        ("incas_termino_condicion_slug_en_unique", "unique(slug_en)", "El slug en ingles ya existe."),
-        ("incas_termino_condicion_slug_pt_unique", "unique(slug_pt)", "El slug en portugues ya existe."),
-    ]
 
     def _limpiar_texto_seo(self, valor):
         if not isinstance(valor, str):
@@ -44,12 +35,12 @@ class IncasTerminoCondicion(models.Model):
 
     def _sanitizar_campos_seo_en_vals(self, vals):
         for campo in (
-            "seo_titulo",
-            "seo_titulo_en",
-            "seo_titulo_pt",
-            "seo_descripcion",
-            "seo_descripcion_en",
-            "seo_descripcion_pt",
+            "meta_titulo",
+            "meta_titulo_en",
+            "meta_titulo_pt",
+            "meta_descripcion",
+            "meta_descripcion_en",
+            "meta_descripcion_pt",
         ):
             if campo in vals:
                 vals[campo] = self._limpiar_texto_seo(vals[campo])
@@ -57,10 +48,9 @@ class IncasTerminoCondicion(models.Model):
     def _autocompletar_traducciones_en_vals(self, vals):
         equivalencias = (
             ("titulo", "titulo_en", "titulo_pt"),
-            ("slug", "slug_en", "slug_pt"),
             ("descripcion", "descripcion_en", "descripcion_pt"),
-            ("seo_titulo", "seo_titulo_en", "seo_titulo_pt"),
-            ("seo_descripcion", "seo_descripcion_en", "seo_descripcion_pt"),
+            ("meta_titulo", "meta_titulo_en", "meta_titulo_pt"),
+            ("meta_descripcion", "meta_descripcion_en", "meta_descripcion_pt"),
         )
         for base, campo_en, campo_pt in equivalencias:
             valor_base = vals.get(base)
@@ -74,10 +64,9 @@ class IncasTerminoCondicion(models.Model):
     def _completar_traducciones_vacias(self):
         equivalencias = (
             ("titulo", "titulo_en", "titulo_pt"),
-            ("slug", "slug_en", "slug_pt"),
             ("descripcion", "descripcion_en", "descripcion_pt"),
-            ("seo_titulo", "seo_titulo_en", "seo_titulo_pt"),
-            ("seo_descripcion", "seo_descripcion_en", "seo_descripcion_pt"),
+            ("meta_titulo", "meta_titulo_en", "meta_titulo_pt"),
+            ("meta_descripcion", "meta_descripcion_en", "meta_descripcion_pt"),
         )
         for record in self:
             valores = {}
@@ -109,49 +98,46 @@ class IncasTerminoCondicion(models.Model):
             self._completar_traducciones_vacias()
         return result
 
-    @api.onchange("titulo", "slug", "descripcion", "seo_titulo", "seo_descripcion")
+    @api.onchange("titulo", "descripcion", "meta_titulo", "meta_descripcion")
     def _onchange_autocompletar_traducciones(self):
         for record in self:
             for campo in (
-                "seo_titulo",
-                "seo_titulo_en",
-                "seo_titulo_pt",
-                "seo_descripcion",
-                "seo_descripcion_en",
-                "seo_descripcion_pt",
+                "meta_titulo",
+                "meta_titulo_en",
+                "meta_titulo_pt",
+                "meta_descripcion",
+                "meta_descripcion_en",
+                "meta_descripcion_pt",
             ):
                 record[campo] = record._limpiar_texto_seo(record[campo])
             if record.titulo and not record.titulo_en:
                 record.titulo_en = record.titulo
             if record.titulo and not record.titulo_pt:
                 record.titulo_pt = record.titulo
-            if record.slug and not record.slug_en:
-                record.slug_en = record.slug
-            if record.slug and not record.slug_pt:
-                record.slug_pt = record.slug
             if record.descripcion and not record.descripcion_en:
                 record.descripcion_en = record.descripcion
             if record.descripcion and not record.descripcion_pt:
                 record.descripcion_pt = record.descripcion
-            if record.seo_titulo and not record.seo_titulo_en:
-                record.seo_titulo_en = record.seo_titulo
-            if record.seo_titulo and not record.seo_titulo_pt:
-                record.seo_titulo_pt = record.seo_titulo
-            if record.seo_descripcion and not record.seo_descripcion_en:
-                record.seo_descripcion_en = record.seo_descripcion
-            if record.seo_descripcion and not record.seo_descripcion_pt:
-                record.seo_descripcion_pt = record.seo_descripcion
+            if record.meta_titulo and not record.meta_titulo_en:
+                record.meta_titulo_en = record.meta_titulo
+            if record.meta_titulo and not record.meta_titulo_pt:
+                record.meta_titulo_pt = record.meta_titulo
+            if record.meta_descripcion and not record.meta_descripcion_en:
+                record.meta_descripcion_en = record.meta_descripcion
+            if record.meta_descripcion and not record.meta_descripcion_pt:
+                record.meta_descripcion_pt = record.meta_descripcion
 
-class IncasTerminoCondicionSeccion(models.Model):
-    _name = "incas.termino.condicion.seccion"
-    _description = "Seccion de terminos y condiciones"
+
+class IncasNosotrosSeccion(models.Model):
+    _name = "incas.nosotros.seccion"
+    _description = "Seccion de nosotros"
     _order = "sequence, id"
     _rec_name = "titulo"
 
     sequence = fields.Integer(string="Orden", default=10)
-    termino_id = fields.Many2one(
-        "incas.termino.condicion",
-        string="Terminos y condiciones",
+    nosotros_id = fields.Many2one(
+        "incas.nosotros",
+        string="Nosotros",
         required=True,
         ondelete="cascade",
     )
@@ -161,6 +147,7 @@ class IncasTerminoCondicionSeccion(models.Model):
     texto_html = fields.Html(string="Contenido")
     texto_html_en = fields.Html(string="Contenido en ingles")
     texto_html_pt = fields.Html(string="Contenido en portugues")
+    imagen = fields.Image(string="Imagen")
 
     def _autocompletar_traducciones_en_vals(self, vals):
         equivalencias = (

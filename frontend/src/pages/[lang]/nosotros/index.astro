@@ -1,68 +1,23 @@
 ---
-import MarkdownIt from 'markdown-it';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import { getTranslation, languages } from '../../../i18n';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import SEOHead from '../../../components/SEO/SEOHead.astro';
-import { strapiRichTextToMarkdown } from '../../../utils/strapiRichText';
+import { fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from '../../../utils/odooWeb';
 
 const { lang } = Astro.params;
 const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
 const t = getTranslation(currentLang);
 
-const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
-const STRAPI_BASE_URLS = Array.from(
-  new Set([
-    import.meta.env.STRAPI_URL,
-    import.meta.env.PUBLIC_STRAPI_URL,
-  ].filter(Boolean))
-);
-const STRAPI_NOSOTROS_ENDPOINT = '/api/nosotros';
-const strapiLocale =
-  currentLang === 'pt' ? 'pt'
-  : currentLang === 'es' ? 'es-PE'
-  : currentLang === 'it' ? 'it'
-  : currentLang === 'fr' ? 'fr'
-  : currentLang;
+const plainText = (value: string) => value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
 let data: any = null;
-let spanishData: any = null;
-for (const baseUrl of STRAPI_BASE_URLS) {
-  try {
-    const res = await fetch(
-      `${baseUrl}${STRAPI_NOSOTROS_ENDPOINT}?populate[sections][populate]=image&locale=${strapiLocale}&status=published`
-    );
-    if (!res.ok) continue;
-
-    const json = await res.json();
-    const row = json.data ?? null;
-    if (row) {
-      data = row;
-      break;
-    }
-  } catch (e) {
-  }
-}
-
-if (strapiLocale !== 'es-PE') {
-  for (const baseUrl of STRAPI_BASE_URLS) {
-    try {
-      const res = await fetch(
-        `${baseUrl}${STRAPI_NOSOTROS_ENDPOINT}?populate[sections][populate]=image&locale=es-PE&status=published`
-      );
-      if (!res.ok) continue;
-
-      const json = await res.json();
-      const row = json.data ?? null;
-      if (row) {
-        spanishData = row;
-        break;
-      }
-    } catch (e) {
-    }
-  }
+try {
+  const json = await fetchOdooWebJson(`/incas/api/web/nosotros?lang=${getOdooWebLang(currentLang)}`);
+  data = json.data ?? null;
+} catch (e) {
 }
 
 const fallbackTitles: Record<string, string> = {
@@ -82,12 +37,10 @@ const fallbackDescriptions: Record<string, string> = {
 };
 
 const title = typeof data?.title === 'string' ? data.title.trim() : '';
-const description = strapiRichTextToMarkdown(data?.description ?? '');
+const description = typeof data?.description === 'string' ? data.description : '';
 const seoTitle = data?.metaTitle ?? title ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
-const seoDescription = data?.metaDescription ?? description ?? fallbackDescriptions[currentLang] ?? fallbackDescriptions.es;
-const md = new MarkdownIt({ html: true });
-const descriptionHtml = md.render(description);
-const strapiPublicUrl = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
+const seoDescription = data?.metaDescription || plainText(description) || fallbackDescriptions[currentLang] || fallbackDescriptions.es;
+const descriptionHtml = description;
 
 const fallbackSections: Record<string, Array<{ title: string; text: string; imageUrl?: string }>> = {
   es: [
@@ -124,28 +77,18 @@ const fallbackSections: Record<string, Array<{ title: string; text: string; imag
 };
 
 const sections = Array.isArray(data?.sections) && data.sections.length > 0
-  ? data.sections.map((section: any, index: number) => {
-      const currentImageUrl = section?.image?.url
-        ? `${strapiPublicUrl}${section.image.url}`
-        : '';
-      const fallbackSection = Array.isArray(spanishData?.sections)
-        ? spanishData.sections[index]
-        : null;
-      const fallbackImageUrl = fallbackSection?.image?.url
-        ? `${strapiPublicUrl}${fallbackSection.image.url}`
-        : '';
-      const imageUrl = currentImageUrl || fallbackImageUrl || null;
-
+  ? data.sections.map((section: any) => {
+      const imageUrl = getOdooMediaUrl(section?.image) || null;
       return {
         title: section?.title ?? '',
         imageUrl,
-        renderedText: md.render(strapiRichTextToMarkdown(section?.text ?? ''))
+        renderedText: String(section?.text ?? '')
       };
     })
   : (fallbackSections[currentLang] ?? fallbackSections.es).map((section) => ({
       title: section.title,
       imageUrl: section.imageUrl ?? null,
-      renderedText: md.render(section.text)
+      renderedText: `<p>${section.text}</p>`
     }));
 
 const siteOrigin = (Astro.site?.origin ?? 'https://incasparadise.com').replace(/\/$/, '');

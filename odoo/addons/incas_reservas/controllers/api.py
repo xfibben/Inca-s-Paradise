@@ -17,6 +17,7 @@ _logger = logging.getLogger(__name__)
 _PUBLIC_IMAGE_FIELDS = {
     "incas.catalogo.destino": {"imagen", "imagen_fondo"},
     "incas.catalogo.destino.icono": {"imagen"},
+    "incas.nosotros.seccion": {"imagen"},
     "incas.sostenibilidad.articulo": {"imagen_portada"},
     "incas.catalogo.transporte": {"image_data", "wallpaper_data"},
     "incas.catalogo.vehiculo": {"imagen"},
@@ -243,6 +244,11 @@ def _serialize_termino_condicion(termino, lang):
     return {
         "id": termino.id,
         "slug": termino.slug,
+        "slugs": {
+            "es": termino.slug,
+            "en": termino.slug_en or termino.slug,
+            "pt": termino.slug_pt or termino.slug,
+        },
         "title": _campo_localizado(termino, "titulo", lang),
         "description": _campo_localizado(termino, "descripcion", lang),
         "seoTitle": _campo_localizado(termino, "seo_titulo", lang),
@@ -254,6 +260,27 @@ def _serialize_termino_condicion(termino, lang):
             }
             for seccion in termino.seccion_ids.sorted(lambda rec: (rec.sequence, rec.id))
             if _campo_localizado(seccion, "titulo", lang) or _campo_localizado(seccion, "texto_html", lang)
+        ],
+    }
+
+
+def _serialize_nosotros(nosotros, lang):
+    return {
+        "id": nosotros.id,
+        "title": _campo_localizado(nosotros, "titulo", lang),
+        "description": _campo_localizado(nosotros, "descripcion", lang),
+        "metaTitle": _campo_localizado(nosotros, "meta_titulo", lang),
+        "metaDescription": _campo_localizado(nosotros, "meta_descripcion", lang),
+        "sections": [
+            {
+                "title": _campo_localizado(seccion, "titulo", lang),
+                "text": _campo_localizado(seccion, "texto_html", lang),
+                "image": _image_payload(seccion, "imagen"),
+            }
+            for seccion in nosotros.seccion_ids.sorted(lambda rec: (rec.sequence, rec.id))
+            if _campo_localizado(seccion, "titulo", lang)
+            or _campo_localizado(seccion, "texto_html", lang)
+            or seccion.imagen
         ],
     }
 
@@ -666,6 +693,16 @@ class IncasReservasApiController(http.Controller):
         if not termino:
             return response_json({"data": None})
         return response_json({"data": _serialize_termino_condicion(termino, lang)})
+
+    @http.route("/incas/api/web/nosotros", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_nosotros(self, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        nosotros = request.env["incas.nosotros"].sudo().search([("active", "=", True)], order="id asc", limit=1)
+        if not nosotros:
+            return response_json({"data": None})
+        return response_json({"data": _serialize_nosotros(nosotros, lang)})
 
     @http.route("/incas/api/web/tours", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
     def web_tours(self, **kwargs):

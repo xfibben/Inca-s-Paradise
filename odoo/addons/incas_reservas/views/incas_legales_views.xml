@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_politica_list" model="ir.ui.view">
+        <field name="name">incas.politica.list</field>
+        <field name="model">incas.politica</field>
+        <field name="arch" type="xml">
+            <list string="Políticas">
+                <field name="titulo"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_politica_search" model="ir.ui.view">
+        <field name="name">incas.politica.search</field>
+        <field name="model">incas.politica</field>
+        <field name="arch" type="xml">
+            <search string="Buscar políticas">
+                <field name="titulo"/>
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_politica_form" model="ir.ui.view">
+        <field name="name">incas.politica.form</field>
+        <field name="model">incas.politica</field>
+        <field name="arch" type="xml">
+            <form string="Políticas">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="titulo"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Español">
+                            <group>
+                                <field name="titulo"/>
+                                <field name="descripcion" widget="html"/>
+                                <field name="meta_titulo"/>
+                                <field name="meta_descripcion"/>
+                            </group>
+                        </page>
+                        <page string="English">
+                            <group>
+                                <field name="titulo_en"/>
+                                <field name="descripcion_en" widget="html"/>
+                                <field name="meta_titulo_en"/>
+                                <field name="meta_descripcion_en"/>
+                            </group>
+                        </page>
+                        <page string="Português">
+                            <group>
+                                <field name="titulo_pt"/>
+                                <field name="descripcion_pt" widget="html"/>
+                                <field name="meta_titulo_pt"/>
+                                <field name="meta_descripcion_pt"/>
+                            </group>
+                        </page>
+                        <page string="Contenido">
+                            <field name="seccion_ids">
+                                <list editable="bottom" open_form_view="True">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="titulo"/>
+                                </list>
+                                <form string="Sección">
+                                    <notebook>
+                                        <page string="Español">
+                                            <group>
+                                                <field name="sequence"/>
+                                                <field name="titulo"/>
+                                                <field name="contenido" widget="html"/>
+                                            </group>
+                                        </page>
+                                        <page string="English">
+                                            <group>
+                                                <field name="titulo_en"/>
+                                                <field name="contenido_en" widget="html"/>
+                                            </group>
+                                        </page>
+                                        <page string="Português">
+                                            <group>
+                                                <field name="titulo_pt"/>
+                                                <field name="contenido_pt" widget="html"/>
+                                            </group>
+                                        </page>
+                                    </notebook>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_politica" model="ir.actions.act_window">
+        <field name="name">Políticas</field>
+        <field name="res_model">incas.politica</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_politica_search"/>
+    </record>
+
+    <record id="view_incas_cancelacion_list" model="ir.ui.view">
+        <field name="name">incas.cancelacion.list</field>
+        <field name="model">incas.cancelacion</field>
+        <field name="arch" type="xml">
+            <list string="Cancelaciones">
+                <field name="titulo"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_cancelacion_search" model="ir.ui.view">
+        <field name="name">incas.cancelacion.search</field>
+        <field name="model">incas.cancelacion</field>
+        <field name="arch" type="xml">
+            <search string="Buscar cancelaciones">
+                <field name="titulo"/>
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_cancelacion_form" model="ir.ui.view">
+        <field name="name">incas.cancelacion.form</field>
+        <field name="model">incas.cancelacion</field>
+        <field name="arch" type="xml">
+            <form string="Cancelaciones">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="titulo"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Español">
+                            <group>
+                                <field name="titulo"/>
+                                <field name="descripcion" widget="html"/>
+                                <field name="meta_titulo"/>
+                                <field name="meta_descripcion"/>
+                            </group>
+                        </page>
+                        <page string="English">
+                            <group>
+                                <field name="titulo_en"/>
+                                <field name="descripcion_en" widget="html"/>
+                                <field name="meta_titulo_en"/>
+                                <field name="meta_descripcion_en"/>
+                            </group>
+                        </page>
+                        <page string="Português">
+                            <group>
+                                <field name="titulo_pt"/>
+                                <field name="descripcion_pt" widget="html"/>
+                                <field name="meta_titulo_pt"/>
+                                <field name="meta_descripcion_pt"/>
+                            </group>
+                        </page>
+                        <page string="Contenido">
+                            <field name="seccion_ids">
+                                <list editable="bottom" open_form_view="True">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="titulo"/>
+                                </list>
+                                <form string="Sección">
+                                    <notebook>
+                                        <page string="Español">
+                                            <group>
+                                                <field name="sequence"/>
+                                                <field name="titulo"/>
+                                                <field name="contenido" widget="html"/>
+                                            </group>
+                                        </page>
+                                        <page string="English">
+                                            <group>
+                                                <field name="titulo_en"/>
+                                                <field name="contenido_en" widget="html"/>
+                                            </group>
+                                        </page>
+                                        <page string="Português">
+                                            <group>
+                                                <field name="titulo_pt"/>
+                                                <field name="contenido_pt" widget="html"/>
+                                            </group>
+                                        </page>
+                                    </notebook>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_cancelacion" model="ir.actions.act_window">
+        <field name="name">Cancelaciones</field>
+        <field name="res_model">incas.cancelacion</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_cancelacion_search"/>
+    </record>
+
+    <record id="view_incas_pregunta_frecuente_list" model="ir.ui.view">
+        <field name="name">incas.pregunta.frecuente.list</field>
+        <field name="model">incas.pregunta.frecuente</field>
+        <field name="arch" type="xml">
+            <list string="Preguntas frecuentes">
+                <field name="titulo"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_pregunta_frecuente_search" model="ir.ui.view">
+        <field name="name">incas.pregunta.frecuente.search</field>
+        <field name="model">incas.pregunta.frecuente</field>
+        <field name="arch" type="xml">
+            <search string="Buscar preguntas frecuentes">
+                <field name="titulo"/>
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_pregunta_frecuente_form" model="ir.ui.view">
+        <field name="name">incas.pregunta.frecuente.form</field>
+        <field name="model">incas.pregunta.frecuente</field>
+        <field name="arch" type="xml">
+            <form string="Preguntas frecuentes">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="titulo"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Español">
+                            <group>
+                                <field name="titulo"/>
+                                <field name="descripcion" widget="html"/>
+                                <field name="meta_titulo"/>
+                                <field name="meta_descripcion"/>
+                            </group>
+                        </page>
+                        <page string="English">
+                            <group>
+                                <field name="titulo_en"/>
+                                <field name="descripcion_en" widget="html"/>
+                                <field name="meta_titulo_en"/>
+                                <field name="meta_descripcion_en"/>
+                            </group>
+                        </page>
+                        <page string="Português">
+                            <group>
+                                <field name="titulo_pt"/>
+                                <field name="descripcion_pt" widget="html"/>
+                                <field name="meta_titulo_pt"/>
+                                <field name="meta_descripcion_pt"/>
+                            </group>
+                        </page>
+                        <page string="Contenido">
+                            <field name="seccion_ids">
+                                <list editable="bottom" open_form_view="True">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="pregunta"/>
+                                </list>
+                                <form string="Pregunta frecuente">
+                                    <notebook>
+                                        <page string="Español">
+                                            <group>
+                                                <field name="sequence"/>
+                                                <field name="pregunta"/>
+                                                <field name="respuesta" widget="html"/>
+                                            </group>
+                                        </page>
+                                        <page string="English">
+                                            <group>
+                                                <field name="pregunta_en"/>
+                                                <field name="respuesta_en" widget="html"/>
+                                            </group>
+                                        </page>
+                                        <page string="Português">
+                                            <group>
+                                                <field name="pregunta_pt"/>
+                                                <field name="respuesta_pt" widget="html"/>
+                                            </group>
+                                        </page>
+                                    </notebook>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_pregunta_frecuente" model="ir.actions.act_window">
+        <field name="name">Preguntas frecuentes</field>
+        <field name="res_model">incas.pregunta.frecuente</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_pregunta_frecuente_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_politica"
+        name="Políticas"
+        parent="menu_incas_catalogo_catalogo_root"
+        action="action_incas_politica"
+        sequence="56"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_cancelacion"
+        name="Cancelaciones"
+        parent="menu_incas_catalogo_catalogo_root"
+        action="action_incas_cancelacion"
+        sequence="57"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+
+    <menuitem
+        id="menu_incas_pregunta_frecuente"
+        name="Preguntas frecuentes"
+        parent="menu_incas_catalogo_catalogo_root"
+        action="action_incas_pregunta_frecuente"
+        sequence="58"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+</odoo>
