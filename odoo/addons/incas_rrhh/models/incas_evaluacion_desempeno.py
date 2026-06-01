@@ -214,7 +214,13 @@ class IncasEvaluacionDesempenoMensual(models.Model):
         trabajadores = self._get_trabajadores_activos()
         for record in self:
             lineas_existentes = {
-                (semana.numero_semana, linea.trabajador_id.id): linea.calificacion
+                (semana.numero_semana, linea.trabajador_id.id): [
+                    {
+                        "name": detalle.name,
+                        "nota": detalle.nota,
+                    }
+                    for detalle in linea.detalle_ids
+                ]
                 for semana in record.semana_ids
                 for linea in semana.linea_ids
             }
@@ -222,16 +228,17 @@ class IncasEvaluacionDesempenoMensual(models.Model):
             for semana_vals in record._get_rangos_semanales():
                 lineas_commands = []
                 for trabajador in trabajadores:
+                    detalle_commands = [
+                        (0, 0, detalle_vals)
+                        for detalle_vals in lineas_existentes.get((semana_vals["numero_semana"], trabajador.id), [])
+                    ]
                     lineas_commands.append(
                         (
                             0,
                             0,
                             {
                                 "trabajador_id": trabajador.id,
-                                "calificacion": lineas_existentes.get(
-                                    (semana_vals["numero_semana"], trabajador.id),
-                                    0,
-                                ),
+                                "detalle_ids": detalle_commands,
                             },
                         )
                     )
@@ -281,10 +288,48 @@ class IncasEvaluacionDesempenoLinea(models.Model):
         ondelete="cascade",
     )
     trabajador_id = fields.Many2one("res.users", string="Trabajador", required=True, ondelete="cascade")
-    calificacion = fields.Integer(string="Calificación", required=True, default=0)
+    detalle_ids = fields.One2many(
+        "incas.evaluacion.desempeno.criterio",
+        "linea_id",
+        string="Detalle de calificaciones",
+        copy=False,
+    )
+    calificacion = fields.Float(
+        string="Calificación",
+        compute="_compute_calificacion",
+        store=True,
+        digits=(16, 2),
+    )
+
+    @api.depends("detalle_ids.nota")
+    def _compute_calificacion(self):
+        for record in self:
+            notas = record.detalle_ids.mapped("nota")
+            record.calificacion = sum(notas) / len(notas) if notas else 0.0
 
     @api.constrains("calificacion")
     def _check_calificacion(self):
         for record in self:
             if record.calificacion < 0 or record.calificacion > 5:
                 raise ValidationError("La calificación debe estar entre 0 y 5.")
+
+
+class IncasEvaluacionDesempenoCriterio(models.Model):
+    _name = "incas.evaluacion.desempeno.criterio"
+    _description = "Criterio de evaluación semanal"
+    _order = "id asc"
+
+    linea_id = fields.Many2one(
+        "incas.evaluacion.desempeno.linea",
+        string="Línea",
+        required=True,
+        ondelete="cascade",
+    )
+    name = fields.Char(string="Nombre", required=True)
+    nota = fields.Float(string="Nota", required=True, digits=(16, 2), default=0.0)
+
+    @api.constrains("nota")
+    def _check_nota(self):
+        for record in self:
+            if record.nota < 0 or record.nota > 5:
+                raise ValidationError("La nota debe estar entre 0 y 5.")

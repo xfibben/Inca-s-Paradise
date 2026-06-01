@@ -239,6 +239,25 @@ def _serialize_sostenibilidad_articulo(articulo, lang):
     }
 
 
+def _serialize_termino_condicion(termino, lang):
+    return {
+        "id": termino.id,
+        "slug": termino.slug,
+        "title": _campo_localizado(termino, "titulo", lang),
+        "description": _campo_localizado(termino, "descripcion", lang),
+        "seoTitle": _campo_localizado(termino, "seo_titulo", lang),
+        "seoDescription": _campo_localizado(termino, "seo_descripcion", lang),
+        "sections": [
+            {
+                "title": _campo_localizado(seccion, "titulo", lang),
+                "text": _campo_localizado(seccion, "texto_html", lang),
+            }
+            for seccion in termino.seccion_ids.sorted(lambda rec: (rec.sequence, rec.id))
+            if _campo_localizado(seccion, "titulo", lang) or _campo_localizado(seccion, "texto_html", lang)
+        ],
+    }
+
+
 def _serialize_tour_media_list(tour):
     imagenes = []
     payload_principal = _image_payload(tour, "imagen")
@@ -637,6 +656,16 @@ class IncasReservasApiController(http.Controller):
         if not articulo:
             return response_json({"error": {"message": "Articulo de sostenibilidad no encontrado"}}, 404)
         return response_json({"data": _serialize_sostenibilidad_articulo(articulo, lang)})
+
+    @http.route("/incas/api/web/terminos", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
+    def web_terminos(self, **kwargs):
+        if request.httprequest.method == "OPTIONS":
+            return options_response()
+        lang = request.params.get("lang") or "es"
+        termino = request.env["incas.termino.condicion"].sudo().search([("active", "=", True)], order="id asc", limit=1)
+        if not termino:
+            return response_json({"data": None})
+        return response_json({"data": _serialize_termino_condicion(termino, lang)})
 
     @http.route("/incas/api/web/tours", type="http", auth="public", methods=["GET", "OPTIONS"], csrf=False)
     def web_tours(self, **kwargs):

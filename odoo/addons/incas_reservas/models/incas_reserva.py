@@ -1,4 +1,3 @@
-from random import randint
 from uuid import uuid4
 import os
 import json
@@ -627,8 +626,17 @@ class IncasReserva(models.Model):
     @api.model
     def _generar_ticket(self):
         fecha = fields.Date.context_today(self)
-        yyyymmdd = fecha.strftime("%Y%m%d")
-        return f"TICKET-{yyyymmdd}-{randint(0, 99999):05d}"
+        yymmdd = fecha.strftime("%y%m%d")
+        prefijo = f"TICKET-{yymmdd}-"
+        ultimo = self.search([("ticket", "=like", f"{prefijo}%")], order="ticket desc, id desc", limit=1)
+        correlativo = 1
+
+        if ultimo and ultimo.ticket:
+            partes = ultimo.ticket.split("-")
+            if len(partes) == 3 and partes[2].isdigit():
+                correlativo = int(partes[2]) + 1
+
+        return f"{prefijo}{correlativo:03d}"
 
     @api.model
     def _generar_access_token(self):

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_incas_termino_condicion_list" model="ir.ui.view">
+        <field name="name">incas.termino.condicion.list</field>
+        <field name="model">incas.termino.condicion</field>
+        <field name="arch" type="xml">
+            <list string="Términos y condiciones">
+                <field name="titulo"/>
+                <field name="slug"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_incas_termino_condicion_search" model="ir.ui.view">
+        <field name="name">incas.termino.condicion.search</field>
+        <field name="model">incas.termino.condicion</field>
+        <field name="arch" type="xml">
+            <search string="Buscar términos y condiciones">
+                <field name="titulo"/>
+                <field name="slug"/>
+                <filter name="filter_active" string="Activos" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactivos" domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_incas_termino_condicion_form" model="ir.ui.view">
+        <field name="name">incas.termino.condicion.form</field>
+        <field name="model">incas.termino.condicion</field>
+        <field name="arch" type="xml">
+            <form string="Términos y condiciones">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="titulo"/>
+                            <field name="slug"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Español">
+                            <group>
+                                <field name="titulo"/>
+                                <field name="descripcion" widget="html"/>
+                                <field name="seo_titulo"/>
+                                <field name="seo_descripcion"/>
+                            </group>
+                        </page>
+                        <page string="English">
+                            <group>
+                                <field name="titulo_en"/>
+                                <field name="descripcion_en" widget="html"/>
+                                <field name="seo_titulo_en"/>
+                                <field name="seo_descripcion_en"/>
+                            </group>
+                        </page>
+                        <page string="Português">
+                            <group>
+                                <field name="titulo_pt"/>
+                                <field name="descripcion_pt" widget="html"/>
+                                <field name="seo_titulo_pt"/>
+                                <field name="seo_descripcion_pt"/>
+                            </group>
+                        </page>
+                        <page string="Contenido">
+                            <field name="seccion_ids">
+                                <list editable="bottom" open_form_view="True">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="titulo"/>
+                                    <field name="titulo_en"/>
+                                    <field name="titulo_pt"/>
+                                </list>
+                                <form string="Sección">
+                                    <notebook>
+                                        <page string="Español">
+                                            <group>
+                                                <field name="sequence"/>
+                                                <field name="titulo"/>
+                                                <field name="texto_html" widget="html"/>
+                                            </group>
+                                        </page>
+                                        <page string="English">
+                                            <group>
+                                                <field name="titulo_en"/>
+                                                <field name="texto_html_en" widget="html"/>
+                                            </group>
+                                        </page>
+                                        <page string="Português">
+                                            <group>
+                                                <field name="titulo_pt"/>
+                                                <field name="texto_html_pt" widget="html"/>
+                                            </group>
+                                        </page>
+                                    </notebook>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_incas_termino_condicion" model="ir.actions.act_window">
+        <field name="name">Términos y condiciones</field>
+        <field name="res_model">incas.termino.condicion</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_incas_termino_condicion_search"/>
+    </record>
+
+    <menuitem
+        id="menu_incas_termino_condicion"
+        name="Términos y condiciones"
+        parent="menu_incas_catalogo_catalogo_root"
+        action="action_incas_termino_condicion"
+        sequence="60"
+        groups="base.group_system,incas_core.group_incas_core_admin,incas_core.group_incas_core_gerencia"
+    />
+</odoo>

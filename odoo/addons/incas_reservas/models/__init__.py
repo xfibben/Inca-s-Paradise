@@ -30,6 +30,7 @@ from . import incas_catalogo_transporte
 from . import incas_catalogo_transporte_incluye
 from . import incas_catalogo_transporte_no_incluye
 from . import incas_catalogo_transporte_tarifa
+from . import incas_termino_condicion
 from . import mail_thread
 from . import incas_reserva_paquete_linea
 from . import incas_reserva_hotel_linea

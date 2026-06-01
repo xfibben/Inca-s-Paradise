@@ -1,41 +1,33 @@
 ﻿---
-import MarkdownIt from 'markdown-it';
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
 import { getTranslation, languages } from '../../../i18n';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import SEOHead from '../../../components/SEO/SEOHead.astro';
-import { strapiRichTextToMarkdown } from '../../../utils/strapiRichText';
+import { fetchOdooWebJson, getOdooWebLang } from '../../../utils/odooWeb';
 
 const { lang } = Astro.params;
 const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
 const t = getTranslation(currentLang);
 
-const STRAPI_URL = import.meta.env.STRAPI_URL || 'http://backend:1337';
-const STRAPI_PUBLIC_URL = import.meta.env.PUBLIC_STRAPI_URL || 'http://localhost:1337';
-const strapiLocale =
-  currentLang === 'pt' ? 'pt'
-  : currentLang === 'es' ? 'es-PE'
-  : currentLang === 'it' ? 'it'
-  : currentLang === 'fr' ? 'fr'
-  : currentLang;
-
 let data: any = null;
 try {
-  const res = await fetch(
-    `${STRAPI_URL}/api/terminos-condiciones?populate[sections]=*&locale=${strapiLocale}&status=published`
-  );
-  if (res.ok) {
-    const json = await res.json();
-    data = json.data ?? null;
-  }
+  const json = await fetchOdooWebJson(`/incas/api/web/terminos?lang=${getOdooWebLang(currentLang)}`);
+  data = json.data ?? null;
 } catch (e) {
   // no-op
 }
 
-const title = data?.title ?? (currentLang === 'es' ? 'Términos y Condiciones' : 'Terms & Conditions');
-const description = strapiRichTextToMarkdown(data?.description ?? '');
+const fallbackTitles: Record<string, string> = {
+  es: 'Términos y condiciones',
+  en: 'Terms & Conditions',
+  pt: 'Termos e condições',
+  fr: 'Términos y condiciones',
+  it: 'Términos y condiciones',
+};
+const title = data?.title ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
+const description = String(data?.description ?? '').trim();
 const seoTitle = data?.seoTitle ?? title;
 
 const fallbackDescriptions: Record<string, string> = {
@@ -46,12 +38,11 @@ const fallbackDescriptions: Record<string, string> = {
   it: "Leggi i termini e condizioni di Inca's Paradise per prenotazioni di tour e trasporto a Cusco, Puno e Machu Picchu.",
 };
 const seoDescription = data?.seoDescription || description || fallbackDescriptions[currentLang] || fallbackDescriptions.es;
-const md = new MarkdownIt({ html: true });
-const descriptionHtml = md.render(description);
+const descriptionHtml = description;
 const sections: Array<{ title: string; renderedText: string }> = Array.isArray(data?.sections)
   ? data.sections.map((s: { title: string; text: string }) => ({
       title: s.title,
-      renderedText: md.render(strapiRichTextToMarkdown(s.text)),
+      renderedText: String(s.text ?? ''),
     }))
   : [];
 
