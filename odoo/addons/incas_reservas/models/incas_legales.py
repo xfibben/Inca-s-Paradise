@@ -2,9 +2,11 @@ import html
 import json
 import os
 from urllib.parse import quote
+from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 from odoo import api, fields, models, tools
+from odoo.exceptions import ValidationError
 
 
 def _normalize_text(value):
@@ -149,7 +151,7 @@ class IncasLegalMixin(models.AbstractModel):
         return {}
 
     def _strapi_base_url(self):
-        return (os.getenv("STRAPI_URL") or os.getenv("PUBLIC_STRAPI_URL") or "http://backend:1337").rstrip("/")
+        return (os.getenv("PUBLIC_STRAPI_URL") or os.getenv("STRAPI_URL") or "http://backend:1337").rstrip("/")
 
     def _strapi_fetch_single_type(self, locale):
         endpoint = self._strapi_endpoint()
@@ -160,8 +162,15 @@ class IncasLegalMixin(models.AbstractModel):
             f"?populate[*]=*&locale={quote(locale)}&status=published"
         )
         request = Request(url, headers={"Accept": "application/json"}, method="GET")
-        with urlopen(request, timeout=30) as response:
-            payload = json.loads(response.read().decode("utf-8"))
+        try:
+            with urlopen(request, timeout=30) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        except URLError as error:
+            raise ValidationError(
+                "No se pudo conectar con Strapi.\n"
+                f"URL usada: {url}\n"
+                "Configure PUBLIC_STRAPI_URL accesible desde Odoo."
+            ) from error
         return payload.get("data") or {}
 
     def action_importar_desde_strapi(self):
