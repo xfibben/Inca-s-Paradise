@@ -1,4 +1,7 @@
 import html
+import base64
+import csv
+import io
 import json
 import os
 from urllib.parse import quote
@@ -116,9 +119,30 @@ def _strapi_richtext_to_html(value):
     return ""
 
 
+def _csv_parse_json_value(value):
+    if not isinstance(value, str):
+        return value
+    texto = value.strip()
+    if not texto:
+        return ""
+    if texto[0] not in {"[", "{", '"'}:
+        return value
+    try:
+        return json.loads(texto)
+    except json.JSONDecodeError:
+        return value
+
+
+def _csv_value_to_html(value):
+    return _strapi_richtext_to_html(_csv_parse_json_value(value))
+
+
 class IncasLegalMixin(models.AbstractModel):
     _name = "incas.legal.mixin"
     _description = "Base legal multiidioma"
+
+    archivo_importacion_csv = fields.Binary(string="Archivo CSV", attachment=False)
+    archivo_importacion_csv_nombre = fields.Char(string="Nombre archivo CSV")
 
     def _limpiar_texto_seo(self, valor):
         if not isinstance(valor, str):
@@ -149,6 +173,13 @@ class IncasLegalMixin(models.AbstractModel):
 
     def _strapi_section_field_map(self):
         return {}
+
+    def _csv_section_columns(self):
+        return (
+            "secciones_json",
+            "secciones_json_en",
+            "secciones_json_pt",
+        )
 
     def _strapi_base_url(self):
         return (os.getenv("PUBLIC_STRAPI_URL") or "https://api.incasparadise.com").rstrip("/")
@@ -240,6 +271,95 @@ class IncasLegalMixin(models.AbstractModel):
             vistos |= seccion
         (section_records - vistos).unlink()
 
+        return {
+            "type": "ir.actions.client",
+            "tag": "reload",
+        }
+
+    def action_importar_desde_csv(self):
+        self.ensure_one()
+        if not self.archivo_importacion_csv:
+            raise ValidationError("Suba un archivo CSV antes de importar.")
+
+        contenido = base64.b64decode(self.archivo_importacion_csv)
+        texto = contenido.decode("utf-8-sig")
+        lector = csv.DictReader(io.StringIO(texto))
+        fila = next((item for item in lector if any((valor or "").strip() for valor in item.values())), None)
+        if not fila:
+            raise ValidationError("El archivo CSV está vacío.")
+
+        section_model_name = self._strapi_section_model_name()
+        section_field_map = self._strapi_section_field_map()
+        section_model = self.env[section_model_name]
+        section_parent_field = False
+        for nombre, field in section_model._fields.items():
+            if getattr(field, "comodel_name", False) == self._name and field.type == "many2one":
+                section_parent_field = nombre
+                break
+        if not section_parent_field:
+            raise ValidationError("No se encontró la relación de secciones para importar.")
+
+        valores_principales = {
+            "titulo": fila.get("titulo") or False,
+            "titulo_en": fila.get("titulo_en") or False,
+            "titulo_pt": fila.get("titulo_pt") or False,
+            "descripcion": _csv_value_to_html(fila.get("descripcion")),
+            "descripcion_en": _csv_value_to_html(fila.get("descripcion_en")),
+            "descripcion_pt": _csv_value_to_html(fila.get("descripcion_pt")),
+            "meta_titulo": fila.get("meta_titulo") or False,
+            "meta_titulo_en": fila.get("meta_titulo_en") or False,
+            "meta_titulo_pt": fila.get("meta_titulo_pt") or False,
+            "meta_descripcion": fila.get("meta_descripcion") or False,
+            "meta_descripcion_en": fila.get("meta_descripcion_en") or False,
+            "meta_descripcion_pt": fila.get("meta_descripcion_pt") or False,
+        }
+        self.write(valores_principales)
+
+        columnas_secciones = {
+            "": self._csv_section_columns()[0],
+            "_en": self._csv_section_columns()[1],
+            "_pt": self._csv_section_columns()[2],
+        }
+        secciones_por_orden = {}
+        for sufijo, columna in columnas_secciones.items():
+            items = _csv_parse_json_value(fila.get(columna))
+            if not isinstance(items, list):
+                continue
+            for indice, seccion in enumerate(items, start=1):
+                if not isinstance(seccion, dict):
+                    continue
+                valores_seccion = secciones_por_orden.setdefault(
+                    indice,
+                    {
+                        "sequence": (int(seccion.get("orden") or indice) or indice) * 10,
+                        section_parent_field: self.id,
+                    },
+                )
+                for campo_csv, campo_odoo in section_field_map.items():
+                    valor = seccion.get(campo_csv)
+                    if campo_odoo.startswith("respuesta") or campo_odoo.startswith("contenido"):
+                        valores_seccion[f"{campo_odoo}{sufijo}"] = _csv_value_to_html(valor)
+                    else:
+                        valores_seccion[f"{campo_odoo}{sufijo}"] = valor or False
+
+        section_records = section_model.search([(section_parent_field, "=", self.id)])
+        existentes = {item.sequence: item for item in section_records.sorted(lambda rec: (rec.sequence, rec.id))}
+        vistos = section_model.browse()
+        for orden in sorted(secciones_por_orden):
+            valores = secciones_por_orden[orden]
+            sequence = valores["sequence"]
+            seccion = existentes.get(sequence)
+            if seccion:
+                seccion.write(valores)
+            else:
+                seccion = section_model.create(valores)
+            vistos |= seccion
+        (section_records - vistos).unlink()
+
+        self.write({
+            "archivo_importacion_csv": False,
+            "archivo_importacion_csv_nombre": False,
+        })
         return {
             "type": "ir.actions.client",
             "tag": "reload",

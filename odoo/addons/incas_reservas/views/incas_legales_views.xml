@@ -132,9 +132,9 @@
             <form string="Cancelaciones">
                 <header>
                     <button
-                        name="action_importar_desde_strapi"
+                        name="action_importar_desde_csv"
                         type="object"
-                        string="Importar desde Strapi"
+                        string="Importar CSV"
                         class="btn-primary"
                     />
                 </header>
@@ -143,6 +143,8 @@
                         <group>
                             <field name="titulo"/>
                             <field name="active"/>
+                            <field name="archivo_importacion_csv" filename="archivo_importacion_csv_nombre" widget="binary"/>
+                            <field name="archivo_importacion_csv_nombre" invisible="1"/>
                         </group>
                     </group>
                     <notebook>
@@ -243,9 +245,9 @@
             <form string="Preguntas frecuentes">
                 <header>
                     <button
-                        name="action_importar_desde_strapi"
+                        name="action_importar_desde_csv"
                         type="object"
-                        string="Importar desde Strapi"
+                        string="Importar CSV"
                         class="btn-primary"
                     />
                 </header>
@@ -254,6 +256,8 @@
                         <group>
                             <field name="titulo"/>
                             <field name="active"/>
+                            <field name="archivo_importacion_csv" filename="archivo_importacion_csv_nombre" widget="binary"/>
+                            <field name="archivo_importacion_csv_nombre" invisible="1"/>
                         </group>
                     </group>
                     <notebook>
