@@ -288,6 +288,8 @@ def _serialize_nosotros(nosotros, lang):
 def _serialize_politica(politica, lang):
     return {
         "id": politica.id,
+        "slug": _slug_localizado(politica, lang),
+        "slugs": _slugs_localizados(politica),
         "titulo": _campo_localizado(politica, "titulo", lang),
         "descripcion": _campo_localizado(politica, "descripcion", lang),
         "metaTitle": _campo_localizado(politica, "meta_titulo", lang),
@@ -306,6 +308,8 @@ def _serialize_politica(politica, lang):
 def _serialize_cancelacion(cancelacion, lang):
     return {
         "id": cancelacion.id,
+        "slug": _slug_localizado(cancelacion, lang),
+        "slugs": _slugs_localizados(cancelacion),
         "titulo": _campo_localizado(cancelacion, "titulo", lang),
         "descripcion": _campo_localizado(cancelacion, "descripcion", lang),
         "metaTitle": _campo_localizado(cancelacion, "meta_titulo", lang),
@@ -324,6 +328,8 @@ def _serialize_cancelacion(cancelacion, lang):
 def _serialize_pregunta_frecuente(pregunta_frecuente, lang):
     return {
         "id": pregunta_frecuente.id,
+        "slug": _slug_localizado(pregunta_frecuente, lang),
+        "slugs": _slugs_localizados(pregunta_frecuente),
         "titulo": _campo_localizado(pregunta_frecuente, "titulo", lang),
         "descripcion": _campo_localizado(pregunta_frecuente, "descripcion", lang),
         "metaTitle": _campo_localizado(pregunta_frecuente, "meta_titulo", lang),

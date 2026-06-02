@@ -1,97 +1,195 @@
 # Inca's Paradise
 
-Plataforma de turismo para destinos en Peru con frontend SSR, CMS headless, reservas y pasarela de pago.
+Documentación actual del proyecto enfocada en `frontend + Odoo`.
 
-## Stack
+`Strapi` queda fuera de esta guía operativa. Si aparece en compose o en docs viejas, trátalo como legado no prioritario.
 
-- Frontend: Astro 5.17.1 + Tailwind CSS 4.2.1 + Flowbite 4.0.1
-- Backend: Strapi 5.37.1 + PostgreSQL 14
-- Back office: Odoo 19 + PostgreSQL 15
-- PDF: `jspdf`
-- Contenido multidioma: i18n local en Astro + locales de Strapi
-- Infraestructura local y productiva: Docker Compose
+## 1. Qué es el sistema
 
-## Dependencias principales
+Inca's Paradise tiene dos piezas activas para el flujo principal:
 
-### Frontend
+- `frontend/`: sitio público SSR en Astro.
+- `odoo/`: back office, catálogo operativo, reservas, pagos, documentos, RRHH, operaciones y postventa.
 
-- `astro`
-- `@astrojs/node`
-- `tailwindcss`
-- `@tailwindcss/vite`
-- `@tailwindcss/typography`
-- `flowbite`
-- `@fontsource/playfair-display`
-- `markdown-it`
-- `jspdf`
+Flujo actual:
 
-### Backend
+1. El visitante entra al sitio en `/[lang]/...`.
+2. Astro consulta contenido público de Odoo por endpoints `/incas/api/web/*`.
+3. El visitante navega tours, destinos, style trips, transportes, legales y blog de sostenibilidad.
+4. El modal de reserva arma la compra y llama endpoints públicos de Odoo.
+5. Odoo crea `incas.reserva`, registra `incas.pago`, genera ticket, PDF, correos y sincronización externa.
+6. Operaciones, tesorería, postventa y RRHH continúan el ciclo desde Odoo.
 
-- `@strapi/strapi`
-- `@strapi/plugin-users-permissions`
-- `@strapi/plugin-cloud`
-- `pg`
-- `react`
-- `react-dom`
-- `react-router-dom`
-- `styled-components`
+## 2. Stack actual
 
-## Arquitectura
+- Frontend: `Astro 5`, `Tailwind CSS 4`, `Flowbite`
+- Back office: `Odoo 19`
+- Base pública principal: `Odoo + PostgreSQL 15`
+- Infra local y productiva: `Docker Compose`
+- Pago actual: `PayPal`
+- PDF: generación desde Odoo
+- Analytics: `GTM` y `GA4`
+- Validación de libro de reclamaciones: `reCAPTCHA`
+
+## 3. Estructura útil
 
 ```text
 /
-├── frontend/                  # Sitio web SSR en Astro
-│   ├── src/pages/[lang]/      # Rutas por idioma
-│   ├── src/components/        # UI por dominio
-│   ├── src/i18n/              # Traducciones locales y UBIGEO
-│   └── src/data/              # Datos estaticos de apoyo
-├── backend/                   # CMS y APIs en Strapi
-│   └── src/api/               # Content types, controllers, routes y services
-├── docker-compose.yaml        # Desarrollo
-├── docker-compose.prod.yaml   # Produccion
-└── docs/                      # Documentacion del proyecto
+├── frontend/
+│   ├── src/pages/[lang]/              # Rutas públicas por idioma
+│   ├── src/components/                # UI y bloques funcionales
+│   ├── src/utils/odooWeb.ts           # Fetch catálogo web Odoo
+│   ├── src/utils/odooTransport.ts     # Fetch transporte Odoo
+│   └── src/i18n/                      # Textos de interfaz
+├── odoo/
+│   ├── addons/incas_reservas/         # Catálogo, reservas, pagos, legales
+│   ├── addons/incas_operaciones/      # Agenda y matriz operativa
+│   ├── addons/incas_documentos/       # DMS y uploads
+│   ├── addons/incas_postventas/       # Casos, reclamos, encuestas
+│   ├── addons/incas_rrhh/             # Trabajadores, boletas, evaluación
+│   ├── addons/incas_tesoreria/        # Movimientos de tesorería
+│   └── config/odoo.conf               # Configuración Odoo
+├── docker-compose.yaml                # Desarrollo
+├── docker-compose.prod.yaml           # Producción
+└── docs/
 ```
 
-## Modulos funcionales
+## 4. Módulos funcionales en producción
 
-- Destinos y detalle de destinos
-- Tours y reservas
-- Style trips
-- Transporte, tipos de transporte y vehiculos
-- Terminos y condiciones
-- Pagos con gateway unificado
-- Sincronizacion de reservas con Google Sheets
+### Frontend
 
-## Arranque rapido
+- Home multidioma.
+- Listado y detalle de destinos.
+- Listado y detalle de tours.
+- Listado y detalle de transportes.
+- Listado y detalle de tipos de transporte.
+- Listado y detalle de style trips.
+- Blog de sostenibilidad.
+- Páginas legales y corporativas.
+- Libro de reclamaciones.
+- Sitemap dinámico.
 
-### Opcion 1: Docker Compose
+### Odoo
 
-1. Configurar variables en `.env`.
-2. Levantar servicios:
+- Catálogo de servicios.
+- Tours, destinos, estilos de viaje, transportes y vehículos.
+- Reservas y pagos.
+- PDF de voucher público y privado.
+- Agenda operativa y pase operativo.
+- Gestión documental DMS.
+- Postventa.
+- RRHH.
+- Tesorería.
+
+## 5. Endpoints públicos Odoo que usa el frontend
+
+### Catálogo web
+
+- `GET /incas/api/web/destinos`
+- `GET /incas/api/web/destinos/<slug>`
+- `GET /incas/api/web/tours`
+- `GET /incas/api/web/tours/<slug>`
+- `GET /incas/api/web/estilos-viaje`
+- `GET /incas/api/web/estilos-viaje/<slug>`
+- `GET /incas/api/web/tipo-transportes`
+- `GET /incas/api/web/tipo-transportes/<slug>`
+- `GET /incas/api/web/transportes`
+- `GET /incas/api/web/transportes/<slug>`
+- `GET /incas/api/web/sostenibilidad`
+- `GET /incas/api/web/sostenibilidad/<slug>`
+- `GET /incas/api/web/terminos`
+- `GET /incas/api/web/nosotros`
+- `GET /incas/api/web/politicas`
+- `GET /incas/api/web/cancelaciones`
+- `GET /incas/api/web/preguntas-frecuentes`
+- `GET /incas/public/image`
+
+### Reserva y pago
+
+- `GET /incas/api/pagos/tipo-cambio`
+- `POST /incas/api/pagos/iniciar`
+- `POST /incas/api/pagos/confirmar`
+- `POST /incas/api/reservas`
+- `GET /incas/public/reserva/<id>/pdf/<token>`
+
+### Operaciones
+
+- `GET /incas/operaciones/reserva/<id>/pase-pdf`
+
+## 6. Flujo real de reserva
+
+### Tours y transportes
+
+1. La página detalle carga contenido desde Odoo por slug.
+2. El detalle deja `serviceId`, slug y contexto en `window`.
+3. `BookingCard.astro` calcula precios visibles por moneda.
+4. `BookingModal.astro` arma `window.__pendingBooking`.
+5. Si es pago directo, llama `POST /incas/api/reservas`.
+6. Si es PayPal:
+   - llama `POST /incas/api/pagos/iniciar`
+   - aprueba en PayPal
+   - llama `POST /incas/api/pagos/confirmar`
+7. Odoo devuelve:
+   - `ticket`
+   - `reserva_id`
+   - `voucher_url`
+8. El frontend abre el comprobante o genera PDF local de respaldo.
+
+### Reglas relevantes
+
+- El descuento es porcentual.
+- El catálogo base está en `USD`.
+- Odoo convierte visualmente según moneda.
+- En transportes el precio depende del vehículo elegido.
+- `vehiculo_seleccionado` debe viajar desde frontend hasta la reserva.
+
+## 7. Variables de entorno importantes
+
+### Frontend
+
+- `PUBLIC_ODOO_URL`
+- `PUBLIC_ODOO_DB`
+- `PUBLIC_PAYPAL_CLIENT_ID`
+- `PUBLIC_GTM_ID`
+- `PUBLIC_GA_MEASUREMENT_ID`
+- `PUBLIC_GOOGLE_CLAIMS_FORM_URL`
+- `PUBLIC_RECAPTCHA_SITE_KEY`
+- `RECAPTCHA_SECRET_KEY`
+
+### Odoo
+
+- `ODOO_DB_NAME`
+- `ODOO_DB_USER`
+- `ODOO_DB_PASSWORD`
+- `PAYPAL_CLIENT_ID`
+- `PAYPAL_SECRET`
+- `PAYPAL_MODE`
+- `GOOGLE_APPS_SCRIPT_URL`
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+- `RESEND_FROM_NAME`
+- `RESEND_NOTIFY_EMAIL`
+
+Nota:
+
+- No existe un `.env.example` completo y confiable en raíz.
+- El siguiente programador debe reconstruir el `.env` leyendo `docker-compose.yaml` y `docker-compose.prod.yaml`.
+
+## 8. Cómo correr local
+
+### Todo el stack
 
 ```bash
 docker compose up
 ```
 
-Servicios por defecto:
+Puertos de desarrollo:
 
-- Frontend: `http://localhost:4321`
-- Backend Strapi: `http://localhost:1337`
-- PostgreSQL: `localhost:5432`
-- Odoo: `http://localhost:8069`
-- PostgreSQL Odoo: `localhost:5433`
+- Frontend: `4321`
+- Odoo: `8069`
+- PostgreSQL Odoo: `5433`
 
-### Opcion 2: Ejecucion por separado
-
-Backend:
-
-```bash
-cd backend
-npm install
-npm run develop
-```
-
-Frontend:
+### Solo frontend
 
 ```bash
 cd frontend
@@ -99,59 +197,35 @@ npm install
 npm run dev
 ```
 
-## Variables de entorno
+### Odoo
 
-El proyecto usa variables en el `.env` raiz y ejemplos parciales en:
+La forma estable del proyecto es vía Docker.
 
-- [.env.example](/Users/arturo/Documents/Inca-s-Paradise/.env.example)
-- [frontend/.env.example](/Users/arturo/Documents/Inca-s-Paradise/frontend/.env.example)
-- [backend/.env.example](/Users/arturo/Documents/Inca-s-Paradise/backend/.env.example)
+## 9. Documentos que debes leer primero
 
-Variables clave:
-
-- Base de datos: `DB_NAME`, `DB_USER`, `DB_PASSWORD`
-- Base de datos Odoo: `ODOO_DB_NAME`, `ODOO_DB_USER`, `ODOO_DB_PASSWORD`
-- Strapi: `ADMIN_JWT_SECRET`, `API_TOKEN_SALT`, `APP_KEYS`, `JWT_SECRET`
-- Frontend: `PUBLIC_STRAPI_URL`, `PUBLIC_ODOO_URL`, `PUBLIC_GTM_ID`, `PUBLIC_GA_MEASUREMENT_ID`
-- Google Sheets: `GOOGLE_APPS_SCRIPT_URL`
-- PayPal: `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `PAYPAL_MODE`, `PAYPAL_WEBHOOK_ID`
-- Cambio de moneda y documentos: `APIS_NET_PE_TOKEN`
-
-`PUBLIC_ODOO_URL` se define en el `.env` raiz del proyecto y se inyecta al frontend desde ambos archivos:
-
-- [docker-compose.yaml](/Users/arturo/Documents/Inca-s-Paradise/docker-compose.yaml)
-- [docker-compose.prod.yaml](/Users/arturo/Documents/Inca-s-Paradise/docker-compose.prod.yaml)
-
-## Flujo general
-
-1. El usuario navega el sitio en `/[lang]/...`.
-2. El frontend consume contenido y datos desde Strapi.
-3. La reserva se arma en el frontend.
-4. El backend confirma el pago y crea la reserva.
-5. La reserva se sincroniza a Google Sheets.
-
-## Documentacion
-
-- [Guia de desarrollo](./docs/desarrollo.md)
-- [Guia de multidioma](./docs/multidioma.md)
+- [Arquitectura actual](./docs/arquitectura-actual.md)
+- [Frontend](./docs/frontend.md)
+- [Odoo](./docs/odoo.md)
 - [Reservas y pagos](./docs/reservas-y-pagos.md)
-- [Operacion y contenido](./docs/operacion-y-contenido.md)
-- [Guia de uso del CMS](./docs/guia-cms.md)
-- [Guia del VPS](./docs/vps.md)
+- [Operación y contenido](./docs/operacion-y-contenido.md)
+- [Desarrollo](./docs/desarrollo.md)
+- [VPS y despliegue](./docs/vps.md)
+- [Multidioma](./docs/multidioma.md)
 
-## Estado actual
+## 10. Riesgos actuales
 
-- PayPal: implementado
-- IziPay tarjeta: pendiente
-- IziPay Yape QR: pendiente
-- Sincronizacion a Google Sheets: activa por lifecycle de `reserva`
-- Suite de tests automatizados: no encontrada en el repositorio
+- No vi suite de tests automática consolidada.
+- El proyecto depende bastante de integración real con Odoo y variables de entorno.
+- Hay mezcla de SSR, scripts inline y estado en `window` dentro del flujo de reserva.
+- Algunas traducciones de contenido en Odoo están completas en `es/en/pt`; `fr/it` muchas veces caen a fallback.
+- El home y la navbar mezclan contenido estático con fetch a Odoo.
 
-## Recomendado documentar despues
+## 11. Punto de entrada recomendado para un dev nuevo
 
-- Proceso de despliegue y rollback
-- Politica de manejo de credenciales y rotacion de secretos
-- Flujo editorial para altas y cambios de contenido
-- SEO, analytics y eventos de conversion
-- Manejo de media en Strapi
-- Respuesta operativa ante pagos fallidos o reservas incompletas
+1. Leer `docs/arquitectura-actual.md`.
+2. Levantar `docker compose up`.
+3. Revisar `frontend/src/pages/[lang]/tours/[tour].astro`.
+4. Revisar `frontend/src/components/tours/BookingModal.astro`.
+5. Revisar `odoo/addons/incas_reservas/controllers/api.py`.
+6. Revisar `odoo/addons/incas_reservas/models/incas_reserva.py`.
+7. Revisar `odoo/addons/incas_operaciones/models/incas_reserva.py`.

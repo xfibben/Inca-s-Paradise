@@ -1,301 +1,223 @@
 # Reservas y pagos
 
-## Resumen
+## 1. Resumen
 
-El proyecto usa un flujo de reserva con pago previo parcial. El usuario completa sus datos en el frontend, elige metodo de pago y el backend crea la reserva confirmada cuando el cobro se valida.
+El flujo actual de venta vive en `frontend + Odoo`.
 
-## Modelos principales
+Frontend:
 
-### Reserva
+- captura datos
+- muestra precios
+- inicia pago
 
-Archivo:
+Odoo:
 
-- [backend/src/api/reserva/content-types/reserva/schema.json](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/reserva/content-types/reserva/schema.json)
+- valida servicio
+- crea reserva
+- registra pago
+- genera ticket
+- genera voucher
+- dispara correo y sincronización
 
-Campos clave:
+## 2. Archivos críticos
 
-- datos del pasajero
-- fechas
-- cantidades de pasajeros
-- precios y montos
-- `descuento`
-- `vehiculo_seleccionado`
-- `estado`
-- `estado_pago`
-- `ticket`
-- relacion con `tour` o `transportes`
-- relacion `oneToMany` con `pago`
+### Frontend
 
-Semantica actual:
+- `frontend/src/components/tours/BookingCard.astro`
+- `frontend/src/components/tours/BookingModal.astro`
+- `frontend/src/components/tours/voucher-pdf.ts`
 
-- `descuento` en `reserva` se guarda como porcentaje
-- `vehiculo_seleccionado` se guarda cuando la reserva es de transporte
-- `precio_tour` guarda el total estimado del servicio ya con descuento aplicado
-- `precio_adulto_web` y `precio_nino_web` guardan el adelanto web por tipo de pasajero
-- `monto_web` se recalcula desde `precio_adulto_web + precio_nino_web`
-- `monto_final` se recalcula desde `monto_web + pago_restante`
+### Odoo
 
-Estados relevantes:
+- `odoo/addons/incas_reservas/controllers/api.py`
+- `odoo/addons/incas_reservas/models/incas_reserva.py`
+- `odoo/addons/incas_reservas/models/incas_pago.py`
+- `odoo/addons/incas_reservas/controllers/main.py`
 
-- `estado`: `pendiente`, `confirmada`, `cancelada`
-- `estado_pago`: `pendiente`, `pagado`, `fallido`, `pago_completo`
+## 3. Endpoints
 
-### Pago
+- `GET /incas/api/pagos/tipo-cambio`
+- `POST /incas/api/pagos/iniciar`
+- `POST /incas/api/pagos/confirmar`
+- `POST /incas/api/reservas`
+- `GET /incas/public/reserva/<id>/pdf/<token>`
 
-Archivo:
+## 4. Flujo de reserva directa
 
-- [backend/src/api/pago/content-types/pago/schema.json](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/pago/content-types/pago/schema.json)
+Caso:
 
-Registra proveedor, metodo, moneda, monto, transaccion, orden y fecha de pago.
-
-Semantica actual:
-
-- `pago` no guarda descuento
-- `pago.monto` guarda el monto efectivamente cobrado en la pasarela
-- el descuento queda persistido en `reserva`, no en `pago`
-
-## Flujo frontend
-
-Archivo principal:
-
-- [frontend/src/components/tours/BookingModal.astro](/Users/arturo/Documents/Inca-s-Paradise/frontend/src/components/tours/BookingModal.astro)
+- tarjeta/directo sin popup PayPal
 
 Secuencia:
 
-1. El usuario completa el formulario de reserva.
-2. El frontend guarda la reserva pendiente en `window.__pendingBooking`.
-3. El usuario pasa al paso de pago.
-4. Se cobra actualmente el `30%` de adelanto.
-5. Si usa PayPal:
-   - el frontend llama `POST /api/pagos/iniciar`
-   - PayPal devuelve `orderID`
-   - al aprobar, el frontend llama `POST /api/pagos/confirmar`
-6. El backend captura el pago, crea la reserva y registra el pago.
-7. El frontend muestra el ticket y permite descargar comprobante.
+1. usuario llena modal.
+2. frontend arma `window.__pendingBooking`.
+3. frontend manda `POST /incas/api/reservas`.
+4. Odoo ejecuta `crear_reserva_web`.
+5. Odoo devuelve `ticket`, `reserva_id`, `voucher_url`.
+6. frontend abre el comprobante.
 
-Detalle importante:
+## 5. Flujo PayPal
 
-- tours y transporte usan ahora `discount/descuento` como porcentaje
-- el frontend calcula el total final aplicando ese porcentaje
-- el valor porcentual tambien se persiste en `reserva.descuento`
+Secuencia:
 
-## Rutas custom de pago
+1. frontend calcula monto a cobrar.
+2. llama `POST /incas/api/pagos/iniciar`.
+3. Odoo crea orden PayPal.
+4. usuario aprueba en PayPal.
+5. frontend llama `POST /incas/api/pagos/confirmar`.
+6. Odoo captura orden.
+7. Odoo crea reserva y pago.
+8. Odoo devuelve `ticket`, `voucher_url`.
 
-Archivo:
+## 6. Payload funcional mínimo
 
-- [backend/src/api/pago/routes/pago-custom.ts](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/pago/routes/pago-custom.ts)
+### Desde frontend a Odoo
 
-Endpoints:
+Reserva:
 
-- `POST /api/pagos/iniciar`
-- `POST /api/pagos/confirmar`
-- `POST /api/pagos/webhook`
-- `GET /api/pagos/tipo-cambio`
+- `serviceId`
+- `tourSlug` o `transporteSlug`
+- `tipo_servicio`
+- `nombre`
+- `email`
+- `telefono`
+- `tipo_documento`
+- `numero_documento`
+- `nacionalidad`
+- `fecha_inicio`
+- `fecha_fin`
+- `turno`
+- `cantidad_adultos`
+- `cantidad_ninos`
+- `moneda`
+- `descuento`
+- `vehiculo_seleccionado` si aplica
 
-## Gateway unificado
+Pago:
 
-Archivo:
+- `proveedor`
+- `metodo`
+- `moneda`
+- `monto`
+- `estado`
+- `orden_id` o `transaccion_id`
 
-- [backend/src/api/pago/services/gateway.ts](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/pago/services/gateway.ts)
+## 7. Reglas de precios
 
-Proveedores:
+- precios base de catálogo en `USD`
+- descuento porcentual
+- Odoo convierte a moneda elegida
+- para transporte la tarifa depende del vehículo
+- frontend muestra conversión visual
+- Odoo define el dato persistido final
 
-- `paypal`
-- `izipay_tarjeta`
-- `izipay_yape`
+## 8. `incas.reserva`
 
-## PayPal
+### Qué guarda
 
-Archivo:
+- cliente
+- servicio
+- idioma
+- moneda
+- precios
+- descuento
+- fechas
+- turno
+- vehículo
+- pagos
+- pasajeros
+- estado comercial
+- estado de reserva
+- estado de pago
 
-- [backend/src/api/pago/services/paypal.ts](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/pago/services/paypal.ts)
+### Qué calcula
 
-Estado:
+- `precio_tour`
+- `monto_total`
+- `monto_pagado`
+- `saldo_pendiente`
+- `monto_web`
+- `monto_final`
+- `estado_pago`
 
-- Implementado
-- Usa REST API v2
-- Requiere `PAYPAL_CLIENT_ID`, `PAYPAL_SECRET`, `PAYPAL_MODE`, `PAYPAL_WEBHOOK_ID`
+## 9. `incas.pago`
 
-Punto importante:
+Registra:
 
-- PayPal no acepta `PEN` en este flujo del proyecto, por eso el backend y frontend trabajan con conversion a `USD`
+- `reserva_id`
+- `proveedor`
+- `metodo`
+- `moneda`
+- `monto`
+- `estado`
+- `transaccion_id`
+- `orden_id`
+- `fecha_pago`
 
-## IziPay
+## 10. Resultado después de reservar
 
-Archivo:
+Odoo hace:
 
-- [backend/src/api/pago/services/izipay.ts](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/pago/services/izipay.ts)
+1. crea reserva
+2. crea pago
+3. genera voucher PDF
+4. expone `voucher_url`
+5. sincroniza Sheets
+6. envía correo
+7. actualiza parte operativa
 
-Estado:
+## 11. Voucher
 
-- Pendiente
-- Solo existe skeleton
-- Faltan credenciales y logica de integracion
+### Rutas
 
-Variables previstas:
+- privada: `/incas/reserva/<id>/pdf`
+- pública: `/incas/public/reserva/<id>/pdf/<token>`
 
-- `IZIPAY_SHOP_ID`
-- `IZIPAY_SECRET_KEY`
-- `IZIPAY_MODE`
+### Uso del frontend
 
-## Tipo de cambio
+`BookingModal.astro`:
 
-Archivo:
+- abre `voucher_url` si Odoo lo devolvió
+- si no, puede generar PDF local de respaldo
 
-- [backend/src/api/pago/controllers/pago.ts](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/pago/controllers/pago.ts)
+## 12. Correo
 
-Comportamiento:
+Se dispara desde Odoo.
 
-- `GET /api/pagos/tipo-cambio` devuelve tasas respecto a USD
-- Usa cache en memoria por 1 hora
-- Consulta `apis.net.pe`
-
-## Creacion de reserva
-
-Archivo:
-
-- [backend/src/api/pago/controllers/pago.ts](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/pago/controllers/pago.ts)
-
-Puntos clave:
-
-- El ticket se genera en backend
-- Se crea la `reserva` con `publishedAt` para evitar draft
-- `estado` queda en `confirmada`
-- `estado_pago` queda en `pagado`
-- Luego se crea el registro en `pago`
-- en el flujo de pago tambien se envia `descuento` hacia `reserva`
-- en reservas de transporte tambien se persiste `vehiculo_seleccionado`
-
-## Lifecycles de reserva
-
-Archivo:
-
-- [backend/src/api/reserva/content-types/reserva/lifecycles.ts](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/reserva/content-types/reserva/lifecycles.ts)
-
-Responsabilidades:
-
-- calcular `monto_web`
-- calcular `monto_final`
-- mover `estado_pago` a `pago_completo` cuando corresponde
-- sincronizar la reserva a Google Sheets en `afterCreate` y `afterUpdate`
-- disparar envio de correos de reserva en `afterCreate`
-
-Comportamiento actual del backend:
-
-- si el frontend ya envia `precio_tour`, `precio_adulto_web`, `precio_nino_web` o `monto_estimado`, el controlador de `reserva` respeta esos valores
-- esto evita recalculos incorrectos en transporte, donde el precio real depende del vehiculo elegido
-- si esos valores no llegan, el backend usa fallback contra el modelo relacionado
-
-## Correos de reserva
-
-Archivo:
-
-- [backend/src/utils/reserva-email.ts](/Users/arturo/Documents/Inca-s-Paradise/backend/src/utils/reserva-email.ts)
-
-Comportamiento:
-
-- al crear una `reserva`, el backend envia 2 correos
-- un correo va a `RESEND_NOTIFY_EMAIL`
-- el otro va al `email` del cliente guardado en la reserva
-- ambos correos adjuntan el PDF `comprobante-{ticket}.pdf`
-- el envio corre desde el `afterCreate` de `reserva`, asi cubre reserva directa y reserva creada desde pago
-
-Contenido actual del correo:
-
-- encabezado con branding `INCA'S PARADISE`
-- logo cargado desde `frontend/public/favicon.svg`
-- secciones en tabla: datos del pasajero, datos de la reserva y resumen de pago
-- `Tipo de servicio` usa:
-  - `tourType` del `tour-detalle`: `Tour`, `Small Trip` o `Paquete`
-  - `tipos_transporte[].nombre` del `transporte` cuando la reserva es de transporte
-- el nombre del servicio es dinamico:
-  - `Nombre del tour`
-  - `Nombre del transporte`
-- si la reserva es de transporte, el correo muestra `Vehículo seleccionado`
-
-Datos usados:
-
-- pasajero: nombre, email, telefono, tipo_documento, numero_documento, nacionalidad
-- reserva: ticket, tipo de servicio, nombre del servicio, vehiculo, fechas, horario, cantidades, notas, estados
-- pago: moneda, descuento, precio total, monto estimado, monto pagado en web, precio web por adulto y niño, saldo pendiente, monto final
-
-Dependencias de datos:
-
-- para transporte el lifecycle debe popular `transportes.tipos_transporte`
-- para tours el campo usado es `tour.tourType`
-- el PDF adjunto se genera en backend con `jspdf`
-
-Variables de entorno:
+Variables:
 
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
 - `RESEND_FROM_NAME`
 - `RESEND_NOTIFY_EMAIL`
 
-Gotchas:
+Adjunta:
 
-- `RESEND_FROM_EMAIL` debe usar un dominio verificado en Resend
-- si el dominio verificado es `incasparadise.com`, usar por ejemplo `reservas@incasparadise.com`
-- no usar `onboarding@resend.dev` fuera de pruebas iniciales
-- en Docker, las variables de Resend deben estar declaradas en `docker-compose.yaml` y `docker-compose.prod.yaml`
+- `comprobante-<ticket>.pdf`
 
-## Descuentos
+## 13. Google Sheets
 
-Estado actual:
+Se dispara desde Odoo con `GOOGLE_APPS_SCRIPT_URL`.
 
-- `tour-detalle.discount` se interpreta como porcentaje
-- `transporte.precios[].descuento` se interpreta como porcentaje
-- `reserva.descuento` se interpreta como porcentaje
-- `pago` no tiene campo de descuento
+La reserva no depende de que Sheets responda bien para existir.
 
-Ejemplo:
+## 14. Riesgos
 
-- `adultUnitPrice = 10`
-- `discount = 10`
-- total unitario con descuento = `9`
+- el booking depende de estado global en `window`
+- el payload frontend y la API Odoo están muy acoplados
+- si cambia la estructura del catálogo, el booking puede romperse
+- si falta `PUBLIC_ODOO_URL`, no hay flujo transaccional
+- si falta `PUBLIC_ODOO_DB` en producción, Odoo puede no resolver la base correcta
 
-## Google Sheets
+## 15. Pruebas mínimas después de tocar este flujo
 
-La sincronizacion depende de:
-
-- `GOOGLE_APPS_SCRIPT_URL`
-
-Archivo relacionado:
-
-- [backend/src/api/reserva/controllers/reserva.ts](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/reserva/controllers/reserva.ts)
-
-Ruta auxiliar:
-
-- `POST /api/reservas/sync-sheets`
-
-Uso:
-
-- Reenvia reservas existentes a Sheets
-- Sirve para recuperacion operativa si hubo fallos de sincronizacion
-
-Ajuste importante:
-
-- la sincronizacion ya no intenta leer precios unitarios inexistentes desde `transporte`
-- ahora deriva `precio_adulto` y `precio_nino` desde los montos web guardados en la reserva
-- si la reserva es de transporte, tambien envia `vehiculo` a Google Sheets
-
-## Operacion del negocio
-
-### Si un cliente pago y no aparece en Sheets
-
-1. Buscar la reserva en Strapi.
-2. Validar `estado_pago` y `ticket`.
-3. Ejecutar la sincronizacion manual si hace falta.
-
-### Si el cliente no completo el pago
-
-- No deberia existir una reserva confirmada por el flujo normal de pago.
-- Revisar si el proveedor devolvio error o si el usuario abandono el popup.
-
-### Si el pago fue total
-
-- El lifecycle puede mover `estado_pago` a `pago_completo` cuando `monto_final >= precio_tour`.
-
-## Riesgo residual
-
-- si una reserva de transporte antigua fue creada antes de persistir `vehiculo_seleccionado`, el backend seguira usando el primer item de `transporte.precios` como fallback si necesita recomponer montos
+1. abrir un tour
+2. abrir un transporte
+3. cambiar moneda
+4. reservar tour
+5. reservar transporte con vehículo
+6. validar ticket
+7. validar `voucher_url`
+8. validar creación de `incas.reserva`
+9. validar creación de `incas.pago`

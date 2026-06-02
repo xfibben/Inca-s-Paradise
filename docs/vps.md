@@ -1,59 +1,72 @@
-# Guia del VPS
+# VPS y despliegue
 
-## Objetivo
+## 1. Estructura operativa
 
-Documentar como esta organizado el proyecto en el VPS y como se actualizan los entornos de prueba y produccion.
-
-## Estructura actual
-
-Carpetas indicadas por el equipo:
+Entornos conocidos:
 
 - `apps/Incasparadisetest`
 - `apps/IncasparadiseProduction`
 
-Relacion esperada con ramas:
+Relación esperada:
 
-- `apps/Incasparadisetest` -> rama `test`
-- `apps/IncasparadiseProduction` -> rama `main`
+- `test` -> pruebas
+- `main` -> producción
 
-## Flujo de despliegue
+## 2. Compose usado
 
-### Entorno de prueba
+### Desarrollo / test
 
-Se usa para validar cambios integrados antes de produccion.
+- `docker-compose.yaml`
 
-Secuencia:
+Servicios relevantes:
 
-1. Los cambios de ramas personales se integran a `test`.
-2. En el VPS se entra a `apps/Incasparadisetest`.
-3. Se bajan los servicios con `docker compose -f docker-compose.yaml down`.
-4. Se hace `git pull` de la rama `test`.
-5. Se levantan los servicios con `docker compose -f docker-compose.yaml up -d`.
+- `frontend`
+- `odoo`
+- `odoo_db`
 
-### Entorno de produccion
+### Producción
 
-Se usa solo para cambios aprobados.
+- `docker-compose.prod.yaml`
 
-Secuencia:
+Servicios relevantes:
 
-1. Una vez aprobado lo que esta en `test`, se sube a `main`.
-2. En el VPS se entra a `apps/IncasparadiseProduction`.
-3. Se bajan los servicios con `docker compose -f docker-compose.prod.yaml down`.
-4. Se hace `git pull` de la rama `main`.
-5. Se levantan los servicios con `docker compose -f docker-compose.prod.yaml up -d`.
+- `frontend`
+- `odoo`
+- `odoo_db`
 
-## Resumen rapido
+## 3. Puertos
 
-- ramas personales: desarrollo individual
-- `test`: integracion y validacion
-- `main`: produccion
+### Test
 
-- `apps/Incasparadisetest`: entorno asociado a `test`
-- `apps/IncasparadiseProduction`: entorno asociado a `main`
+- frontend: `4321`
+- odoo: `8069`
+- odoo db: `5433`
 
-## Secuencia exacta en el VPS
+### Producción
 
-### Pruebas
+- frontend: `4320`
+- odoo http: `8070`
+- odoo websocket: `8072`
+- odoo db: `5434`
+
+## 4. Variables críticas en servidor
+
+- `PUBLIC_ODOO_URL`
+- `PUBLIC_ODOO_DB`
+- `PAYPAL_CLIENT_ID`
+- `PAYPAL_SECRET`
+- `PAYPAL_MODE`
+- `GOOGLE_APPS_SCRIPT_URL`
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+- `RESEND_FROM_NAME`
+- `RESEND_NOTIFY_EMAIL`
+- `PUBLIC_GTM_ID`
+- `PUBLIC_GA_MEASUREMENT_ID`
+- `PUBLIC_RECAPTCHA_SITE_KEY`
+- `RECAPTCHA_SECRET_KEY`
+
+## 5. Deploy de test
 
 ```bash
 cd apps/Incasparadisetest
@@ -62,7 +75,7 @@ git pull origin test
 docker compose -f docker-compose.yaml up -d
 ```
 
-### Produccion
+## 6. Deploy de producción
 
 ```bash
 cd apps/IncasparadiseProduction
@@ -71,201 +84,52 @@ git pull origin main
 docker compose -f docker-compose.prod.yaml up -d
 ```
 
-## Validaciones despues de la actualizacion
+## 7. Validaciones post deploy
 
-- confirmar rama activa con `git branch --show-current`
-- confirmar ultimo commit con `git log -1 --oneline`
-- revisar que variables de entorno sigan presentes
-- confirmar que los contenedores hayan levantado correctamente
-- confirmar acceso a Odoo en `8069` para pruebas y `8070` para produccion
+1. `git branch --show-current`
+2. `git log -1 --oneline`
+3. `docker ps`
+4. abrir frontend
+5. abrir Odoo
+6. probar `GET /incas/api/pagos/tipo-cambio`
+7. probar una página de tour
+8. probar una página de transporte
 
-## Red Docker y proxy en produccion
+## 8. Punto crítico de producción
 
-En produccion se fijo la red Docker para evitar que Hestia o Nginx apunten a destinos variables o fallen al reiniciar contenedores.
+Odoo puede no resolver la base si no llega `X-Odoo-Database`.
 
-IPs internas usadas en `docker-compose.prod.yaml`:
+Por eso:
 
-- `postgres` -> `172.19.0.2`
-- `odoo_db` -> `172.19.0.3`
-- `backend` -> `172.19.0.10`
-- `odoo` -> `172.19.0.11`
-- `frontend` -> `172.19.0.20`
+- frontend puede usar `PUBLIC_ODOO_DB`
+- el proxy puede necesitar enviar `X-Odoo-Database`
 
-Subnet usada:
+Síntoma típico:
 
-- `172.19.0.0/16`
+- `404`
+- mensaje de Odoo indicando que no hay base seleccionada
 
-Regla operativa:
+## 9. Websocket de Odoo
 
-- no usar IP publica del VPS en `proxy_pass`
-- no depender de `127.0.0.1` si el proxy del host pierde acceso estable al publish de Docker
-- en dominios productivos de Hestia, apuntar a IP interna fija del contenedor
+Producción usa:
 
-### Proxy correcto para API
+- `8072`
 
-`api.incasparadise.com` debe apuntar a:
+Si fallan cosas en tiempo real o assets backend:
 
-- `http://172.19.0.10:1336`
+- revisar proxy a `/websocket`
+- confirmar `gevent_port`
 
-### Proxy correcto para Odoo
+## 10. DMS
 
-`odoo.incasparadise.com` debe apuntar a:
+Si manejan archivos pesados:
 
-- rutas normales -> `http://172.19.0.11:8069`
-- websocket -> `http://172.19.0.11:8072`
-- base productiva Odoo -> `incas_odoo`
+- revisar timeouts del proxy
+- revisar `client_max_body_size`
+- revisar que Odoo pueda procesar uploads grandes
 
-### Nota importante de Odoo
+## 11. Riesgos
 
-Para que Odoo funcione detras de proxy:
-
-- `proxy_mode = True`
-- `workers = 2`
-- `gevent_port = 8072`
-- `client_max_body_size 600M;` en el vhost/proxy si se suben videos por DMS
-- `proxy_read_timeout 600s;` en el vhost/proxy para descargas grandes
-- `proxy_send_timeout 600s;` en el vhost/proxy para descargas grandes
-- `proxy_buffering off;` en el location de Odoo si Nginx corta o cancela descargas pesadas
-
-Y en `docker-compose.prod.yaml` el servicio `odoo` debe publicar:
-
-- `8070:8069`
-- `8072:8072`
-
-### Seleccion de base en Odoo
-
-En produccion se detecto un problema con el endpoint:
-
-- `GET /incas/api/pagos/tipo-cambio`
-
-Sintoma observado:
-
-- el frontend mostraba error CORS con `404`
-- Odoo devolvia:
-
-```html
-No database is selected and the requested URL was not found in the server-wide controllers.
-```
-
-Causa real:
-
-- Odoo recibia la request por `odoo.incasparadise.com`
-- Nginx reenviaba bien al contenedor Odoo
-- pero Odoo no resolvia automaticamente la base para esa request
-- sin base seleccionada, las rutas del modulo no existen para esa request y responde `404`
-
-Fix aplicado en el vhost de `odoo.incasparadise.com`:
-
-- forzar la base correcta por header
-- la base productiva actual es `incas_odoo`
-
-Header agregado en `location /` y `location /websocket`:
-
-```nginx
-proxy_set_header X-Odoo-Database incas_odoo;
-```
-
-Validacion recomendada:
-
-```bash
-curl -i https://odoo.incasparadise.com/incas/api/pagos/tipo-cambio
-curl -i -H "Origin: https://incasparadise.com" https://odoo.incasparadise.com/incas/api/pagos/tipo-cambio
-```
-
-Resultado esperado:
-
-- ambos requests deben responder `200`
-- ambos deben devolver JSON con `PEN` y `EUR`
-
-Regla operativa:
-
-- si Odoo en produccion maneja mas de una base, fijar la base por `X-Odoo-Database`
-- aunque quede una sola base, conviene mantener este header para evitar regresiones futuras
-
-## DMS pesado en produccion
-
-Para el modulo documental de Odoo (`dms` + `incas_documentos`) quedaron validadas estas reglas:
-
-- subir archivos grandes funciona con:
-  - `client_max_body_size 600M;`
-  - `proxy_request_buffering off;`
-  - `proxy_buffering off;`
-  - `limit_time_cpu = 1200`
-  - `limit_time_real = 1200`
-- el limite funcional actual del DMS custom es `500 MB` por archivo
-- la barra de progreso de subida vive en JS custom de `incas_documentos`
-- despues de actualizar assets JS de Odoo conviene limpiar bundles cacheados en la BD:
-
-```bash
-docker exec incas_odoo_prod sh -lc 'PGPASSWORD="$PASSWORD" psql -h "$HOST" -U "$USER" -d incas_odoo -c "delete from ir_attachment where url like '\''/web/assets/%'\'';"'
-```
-
-- luego reiniciar Odoo y abrir:
-
-```text
-https://odoo.incasparadise.com/odoo?debug=assets
-```
-
-- y hacer `Ctrl+Shift+R`
-
-### Preview inline de archivos
-
-- no usar `download=false` como unico mecanismo para preview
-- usar la ruta custom:
-
-```text
-/incas/dms/file/<id>/preview
-```
-
-- esa ruta devuelve `Content-Disposition: inline`
-- soporta `Range requests`
-- eso permite preview real para:
-  - videos
-  - PDF
-  - imagenes
-
-### Borrado DMS
-
-- el error `Record does not exist or has been deleted` no estaba en `incas_documentos`
-- la causa real estaba en `odoo/addons/incas_reservas/models/dms_file.py`
-- al borrar, el modulo hacia `self.mapped("directory_id")` sobre registros ya eliminados
-- el fix correcto fue usar:
-
-```python
-self.exists().mapped("directory_id")
-```
-
-Si Odoo devuelve error de websocket tipo:
-
-`Couldn't bind the websocket. Is the connection opened on the evented port (8072)?`
-
-revisar que `location /websocket` del vhost no siga apuntando a `8070`.
-
-## Orden recomendado de arranque en produccion
-
-Para levantar servicios manualmente:
-
-```bash
-docker compose -f docker-compose.prod.yaml up -d postgres
-docker compose -f docker-compose.prod.yaml up -d backend
-docker compose -f docker-compose.prod.yaml up -d odoo_db
-docker compose -f docker-compose.prod.yaml up -d odoo
-docker compose -f docker-compose.prod.yaml up -d frontend
-```
-
-## Datos que conviene completar despues
-
-Este documento ya deja clara la estructura base del VPS. Conviene completar cuando el equipo lo confirme:
-
-- usuario del VPS
-- dominio o IP
-- comando exacto para reiniciar servicios
-- si se usa `docker compose`, `pm2` o `systemd`
-- ubicacion del `.env` en cada entorno
-- politica de backups y rollback
-
-## Riesgos operativos
-
-- hacer `git pull` en la carpeta equivocada puede mezclar entornos
-- subir directo a `main` sin validar en `test` aumenta el riesgo de regresiones
-- si hay cambios locales sin commitear en el VPS, el `git pull` puede fallar o dejar el repo en estado inconsistente
+- deploy con variables incompletas rompe frontend o pagos
+- base Odoo mal resuelta rompe endpoints públicos
+- cambio de proxy puede romper voucher, imágenes o websocket

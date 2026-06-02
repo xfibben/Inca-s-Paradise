@@ -109,11 +109,10 @@ Continuar monitoreando:
 - CLS (Cumulative Layout Shift)
 
 ### 8. **XML Sitemap Dinámico Mejorado**
-Agregar tours y destinos dinámicos desde Strapi:
+Agregar más fuentes dinámicas desde los endpoints públicos de Odoo:
 ```typescript
-// Fetch de Strapi
-const tours = await fetch('http://strapi/api/tours');
-const destinations = await fetch('http://strapi/api/destinos');
+const tours = await fetch(`${PUBLIC_ODOO_URL}/incas/api/web/tours?lang=es`);
+const destinations = await fetch(`${PUBLIC_ODOO_URL}/incas/api/web/destinos?lang=es`);
 ```
 
 ## 🔍 Verificación

@@ -1,158 +1,162 @@
-# Guia de desarrollo
+# Desarrollo
 
-## Objetivo
+## 1. Objetivo
 
-Este documento resume como trabajar en el proyecto sin romper los flujos principales de contenido, reservas y pagos.
+Guía corta para levantar, tocar y no romper el sistema actual `Astro + Odoo`.
 
-## Requisitos
+## 2. Requisitos
 
-- Node.js 20 o superior
+- Docker
+- Docker Compose
+- Node.js 20+
 - npm
-- Docker y Docker Compose para entorno completo
-- PostgreSQL 14 si se ejecuta fuera de Docker
 
-## Servicios
+## 3. Entorno local recomendado
 
-### Desarrollo local
+### Stack completo
 
-- PostgreSQL: `5432`
-- Strapi: `1337`
-- Astro: `4321`
-- Odoo: `8069`
-- PostgreSQL Odoo: `5433`
+```bash
+docker compose up
+```
 
-### Produccion segun compose
+Puertos:
 
-- PostgreSQL: `5431`
-- Strapi: `1336`
-- Astro SSR: `4320`
-- Odoo: `8070`
-- PostgreSQL Odoo: `5434`
+- frontend: `http://localhost:4321`
+- odoo: `http://localhost:8069`
+- odoo db: `localhost:5433`
 
-## Comandos
-
-### Frontend
+### Frontend aislado
 
 ```bash
 cd frontend
 npm install
 npm run dev
-npm run build
-npm run preview
 ```
 
-### Backend
-
-```bash
-cd backend
-npm install
-npm run develop
-npm run build
-npm run start
-```
-
-### Docker Compose
-
-```bash
-docker compose up
-docker compose -f docker-compose.prod.yaml up
-```
-
-## Flujo de ramas
-
-Ramas de trabajo actuales:
-
-- `xfibben`
-- `Arkds`
-- `test`
-- `main`
-
-Flujo acordado:
-
-1. Cada desarrollador trabaja en su propia rama.
-2. Los cambios se integran primero hacia `test`.
-3. La validacion funcional se hace sobre `test`.
-4. Una vez aprobado en `test`, se sube a `main`.
-5. El VPS de pruebas hace pull de `test`.
-6. El VPS de produccion hace pull de `main`.
-
-Uso esperado:
-
-- trabajo individual: `xfibben` o `Arkds`
-- integracion interna: `test`
-- produccion: `main`
-
-Nota:
-
-- Este flujo fue documentado segun la operacion actual compartida por el equipo. Si se crean mas ramas personales, deben seguir el mismo patron: rama personal -> `test` -> `main`.
-
-## Estructura de trabajo
+## 4. Variables que debes tener sí o sí
 
 ### Frontend
 
-- `frontend/src/pages/[lang]/`: paginas por idioma
-- `frontend/src/components/LandingPage/`: home
-- `frontend/src/components/tours/`: cards, booking y voucher
-- `frontend/src/components/transporte/`: vistas de transporte
-- `frontend/src/components/tipo-transporte/`: comparativas de vehiculos
-- `frontend/src/components/shared/`: navbar, footer, selector de idioma
-- `frontend/src/components/SEO/`: SEO e imagenes optimizadas
-- `frontend/src/i18n/`: traducciones y UBIGEO
-- `frontend/src/data/`: contenido estatico de apoyo
+- `PUBLIC_ODOO_URL`
+- `PUBLIC_ODOO_DB`
+- `PUBLIC_PAYPAL_CLIENT_ID`
+- `PUBLIC_RECAPTCHA_SITE_KEY`
+- `RECAPTCHA_SECRET_KEY`
 
-### Backend
+### Odoo
 
-- `backend/src/api/*/content-types/`: schemas
-- `backend/src/api/*/controllers/`: logica HTTP
-- `backend/src/api/*/routes/`: rutas core y custom
-- `backend/src/api/*/services/`: integraciones y logica reusable
-- `backend/src/components/`: componentes reutilizables de Strapi
+- `ODOO_DB_NAME`
+- `ODOO_DB_USER`
+- `ODOO_DB_PASSWORD`
+- `PAYPAL_CLIENT_ID`
+- `PAYPAL_SECRET`
+- `PAYPAL_MODE`
+- `GOOGLE_APPS_SCRIPT_URL`
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+- `RESEND_FROM_NAME`
+- `RESEND_NOTIFY_EMAIL`
 
-## Convenciones del proyecto
+## 5. Flujo de ramas
 
-- Idiomas de ruta: `es`, `en`, `pt`, `fr`, `it`
-- Idioma por defecto: `es`
-- El frontend usa SSR con rutas `/[lang]/...`
-- Las paginas de transporte usan verde `#1AA093`
-- `reserva` usa `draftAndPublish`, por eso desde backend debe enviarse `publishedAt`
+Ramas vistas en el proyecto:
 
-## Flujos sensibles
+- `main`
+- `test`
+- ramas personales
 
-### Reservas
+Uso práctico:
 
-- El frontend arma una reserva pendiente en memoria.
-- El backend crea la `reserva` final solo al confirmar el pago.
-- El ticket se genera en backend.
+1. rama personal
+2. merge a `test`
+3. validación
+4. merge a `main`
 
-### Pagos
+## 6. Qué revisar antes de tocar frontend
 
-- La ruta custom de pago esta en `backend/src/api/pago/routes/pago-custom.ts`
-- El gateway unificado esta en `backend/src/api/pago/services/gateway.ts`
-- PayPal funciona.
-- IziPay todavia no esta implementado.
+- si la página consume Odoo o solo i18n local
+- si el cambio impacta `Navbar.astro`
+- si toca `BookingCard.astro` o `BookingModal.astro`
+- si cambia estructura esperada del payload Odoo
+- si afecta rutas `/[lang]/...`
 
-### Google Sheets
+## 7. Qué revisar antes de tocar Odoo
 
-- La sincronizacion ocurre en los lifecycles de `reserva`.
-- Depende de `GOOGLE_APPS_SCRIPT_URL`.
-- Si falla, la reserva igual puede existir en Strapi.
+- si el campo lo usa la API pública
+- si el cambio impacta `incas.reserva`
+- si el modelo tiene `create`, `write` o `_auto_init`
+- si el campo participa en precios, moneda o descuento
+- si el cambio rompe serializadores del controlador `api.py`
 
-## Multidioma
+## 8. Checklist por tipo de cambio
 
-- El frontend tiene traducciones JSON locales.
-- Ademas consulta `/api/locales` para obtener idiomas disponibles desde Strapi.
-- Si falla el backend, usa fallback local.
+### Catálogo web
 
-## Antes de tocar codigo
+1. revisar modelo Odoo
+2. revisar serialización en `api.py`
+3. revisar página Astro que lo consume
+4. revisar sitemap si aplica
 
-- Revisar si el cambio afecta rutas por idioma.
-- Revisar si el cambio toca booking, pagos o sincronizacion.
-- Revisar si el contenido existe en Strapi, en JSON local o en ambos.
+### Reserva / pago
 
-## Riesgos actuales detectados
+1. revisar `BookingModal.astro`
+2. revisar endpoints `/incas/api/*`
+3. revisar `incas.reserva`
+4. revisar `incas.pago`
+5. revisar voucher PDF
+6. revisar correo y `voucher_url`
 
-- No se encontro suite de tests automatizados en el repo.
-- Los `README.md` de `frontend/` y `backend/` venian con boilerplate y no describian el sistema real.
-- El proyecto depende de variables sensibles en `.env` raiz.
-- El despliegue depende de disciplina de ramas y de `git pull` manual en el VPS.
-- Las reservas de transporte antiguas pueden no tener `vehiculo_seleccionado`, porque el campo se incorporo despues.
+### Operaciones
+
+1. revisar `incas_operaciones/models/incas_reserva.py`
+2. revisar agenda
+3. revisar pase PDF
+
+### RRHH
+
+1. revisar vistas XML
+2. revisar modelos RRHH
+3. revisar accesos
+
+## 9. Comandos útiles
+
+### Frontend
+
+```bash
+cd frontend
+npm run dev
+npm run build
+```
+
+### Búsqueda rápida
+
+```bash
+rg "incas/api/web" frontend/src
+rg "@http.route" odoo/addons/incas_reservas/controllers
+rg "_name = \"incas\\." odoo/addons/incas_*/models
+```
+
+### Sintaxis Python
+
+```bash
+python3 -m py_compile odoo/addons/incas_rrhh/models/incas_evaluacion_desempeno.py
+```
+
+## 10. Riesgos conocidos
+
+- no vi suite formal de tests E2E
+- `BookingModal.astro` es frágil
+- la API pública Odoo está acoplada al render SSR
+- el deploy depende de variables correctas en compose
+- `PUBLIC_ODOO_DB` puede ser obligatorio cuando Odoo no resuelve bien la base
+
+## 11. Orden recomendado para entender el proyecto
+
+1. `readme.md`
+2. `docs/arquitectura-actual.md`
+3. `docs/frontend.md`
+4. `docs/odoo.md`
+5. `frontend/src/pages/[lang]/tours/[tour].astro`
+6. `frontend/src/components/tours/BookingModal.astro`
+7. `odoo/addons/incas_reservas/controllers/api.py`
+8. `odoo/addons/incas_reservas/models/incas_reserva.py`

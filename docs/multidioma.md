@@ -1,84 +1,114 @@
-# Guia de multidioma
+# Multidioma
 
-## Idiomas soportados
+## 1. Idiomas de ruta
 
-- `es` - idioma por defecto
+- `es`
 - `en`
 - `pt`
 - `fr`
 - `it`
 
-## Como funciona
+Idioma por defecto:
 
-El sitio combina dos capas:
+- `es`
 
-1. Traducciones locales en el frontend.
-2. Locales configurados en Strapi para contenido administrable.
+## 2. Dos capas de idioma
 
-## Frontend
+### Interfaz
 
-Archivos principales:
+Vive en:
 
-- [frontend/src/i18n/index.ts](/Users/arturo/Documents/Inca-s-Paradise/frontend/src/i18n/index.ts)
-- [frontend/src/i18n/es.json](/Users/arturo/Documents/Inca-s-Paradise/frontend/src/i18n/es.json)
-- [frontend/src/i18n/en.json](/Users/arturo/Documents/Inca-s-Paradise/frontend/src/i18n/en.json)
-- [frontend/src/i18n/pt.json](/Users/arturo/Documents/Inca-s-Paradise/frontend/src/i18n/pt.json)
-- [frontend/src/i18n/fr.json](/Users/arturo/Documents/Inca-s-Paradise/frontend/src/i18n/fr.json)
-- [frontend/src/i18n/it.json](/Users/arturo/Documents/Inca-s-Paradise/frontend/src/i18n/it.json)
+- `frontend/src/i18n/es.json`
+- `frontend/src/i18n/en.json`
+- `frontend/src/i18n/pt.json`
+- `frontend/src/i18n/fr.json`
+- `frontend/src/i18n/it.json`
 
-Comportamiento:
+Responsable:
 
-- `defaultLanguage` es `es`
-- `languages` tiene fallback local
-- `fetchLanguagesFromBackend()` consulta `GET /api/locales`
-- Si falla esa consulta, el sitio sigue con el fallback local
+- labels
+- botones
+- textos UI
+- mensajes locales
 
-## Middleware de idioma
+### Contenido
+
+Vive en Odoo y se serializa por `lang`.
+
+Responsable:
+
+- nombres de tours
+- nombres de destinos
+- contenido legal
+- contenido corporativo
+- sostenibilidad
+- descripciones y SEO
+
+## 3. Cómo resuelve el frontend
+
+Helpers:
+
+- `frontend/src/utils/odooWeb.ts`
+- `frontend/src/utils/odooTransport.ts`
+
+Funciones:
+
+- normalizan `lang`
+- generan `es|en|pt|fr|it`
+- piden el payload correcto a Odoo
+
+## 4. Cómo resuelve Odoo
+
+Controlador:
+
+- `odoo/addons/incas_reservas/controllers/api.py`
+
+Usa:
+
+- `_lang_base(lang)`
+- `_campo_localizado(record, campo, lang)`
+
+Regla:
+
+- si existe campo específico para idioma, lo usa
+- si no existe, cae al base español
+
+## 5. Cobertura real
+
+Interfaz:
+
+- `es/en/pt/fr/it` completa
+
+Contenido Odoo:
+
+- fuerte en `es`
+- habitual en `en`
+- parcial en `pt`
+- `fr/it` muchas veces son fallback
+
+## 6. Middleware
 
 Archivo:
 
-- [frontend/src/middleware.ts](/Users/arturo/Documents/Inca-s-Paradise/frontend/src/middleware.ts)
+- `frontend/src/middleware.ts`
 
-Responsabilidades:
+Hace:
 
-- Validar segmentos de idioma en la URL
-- Redirigir variantes como `es-pe` a `es`
-- Redirigir rutas antiguas
-- Devolver `404` para locales invalidos con formato de idioma
-- Aplicar headers de cache
+- redirect de `es-pe`, `en-us`, `pt-br`, etc.
+- 404 a locales inválidos
+- redirects de rutas antiguas
 
-## Backend
+## 7. Qué revisar si un idioma falla
 
-Ruta custom:
+1. URL final después del middleware
+2. JSON local del frontend
+3. payload Odoo con `?lang=...`
+4. campos por idioma en el modelo Odoo
+5. fallback real en la serialización
 
-- `GET /api/locales`
+## 8. Buenas prácticas
 
-Archivos:
-
-- [backend/src/api/locales/controllers/locale-controller.ts](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/locales/controllers/locale-controller.ts)
-- [backend/src/api/locales/routes/get-locales.ts](/Users/arturo/Documents/Inca-s-Paradise/backend/src/api/locales/routes/get-locales.ts)
-
-La respuesta devuelve los locales del plugin i18n de Strapi en formato simplificado.
-
-## Cuando agregar un idioma nuevo
-
-1. Crear el JSON nuevo en `frontend/src/i18n/`.
-2. Importarlo en `frontend/src/i18n/index.ts`.
-3. Agregar el idioma al fallback local.
-4. Agregar el codigo a `VALID_LANGS` en `frontend/src/middleware.ts`.
-5. Configurar el locale en Strapi.
-6. Verificar rutas `/[lang]/...`.
-7. Confirmar que navbar, footer y selector de idioma lo exponen.
-
-## Buenas practicas
-
-- Mantener las mismas keys en todos los JSON.
-- No mezclar nombres de locale largos en rutas del frontend.
-- Usar siempre el codigo corto en el sitio: `es`, `en`, `pt`, `fr`, `it`.
-- Si una traduccion falta, revisar primero el JSON local y luego la configuracion i18n de Strapi.
-
-## Para contenido y operaciones
-
-- Textos de interfaz: frontend JSON
-- Contenido editable del negocio: Strapi
-- Si un cambio no aparece en el sitio, validar en que capa vive ese texto antes de corregirlo
+- no inventar nuevos códigos de idioma en rutas
+- mantener mismas keys en todos los JSON
+- no cambiar slugs localizados sin revisar enlaces
+- validar `fr/it` después de cualquier cambio de contenido

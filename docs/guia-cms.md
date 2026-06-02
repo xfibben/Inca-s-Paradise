@@ -1,91 +1,89 @@
-# Guia de uso del CMS
+# Guía de gestión de contenido
 
-## Objetivo
+## 1. Panel a usar
 
-Esta guia sirve para cualquier persona del equipo que use Strapi para crear, editar, publicar o revisar informacion del sitio.
+El contenido público actual se gestiona desde `Odoo`.
 
-## Que se gestiona desde el CMS
+Para el siguiente programador o editor:
 
-- destinos
-- detalle de destinos
+- no asumir otro CMS como fuente activa
+- validar siempre contra lo que sirve `/incas/api/web/*`
+
+## 2. Qué se edita en Odoo
+
 - tours
+- destinos
 - style trips
-- transporte
+- transportes
 - tipos de transporte
-- vehiculos
-- terminos y condiciones
-- reservas
-- pagos
+- vehículos
+- sostenibilidad
+- nosotros
+- términos
+- políticas
+- cancelaciones
+- preguntas frecuentes
 
-## Tareas habituales
+## 3. Antes de editar
 
-### Crear o editar contenido
+Revisar:
 
-1. Ingresar al panel de Strapi.
-2. Ir al tipo de contenido correspondiente.
-3. Crear o editar el registro.
-4. Revisar idioma, slug, imagenes y precios.
-5. Guardar y publicar si corresponde.
+1. idioma
+2. slug
+3. SEO
+4. relaciones
+5. imágenes
+6. si afecta navbar, home o sitemap
 
-## Publicacion
+## 4. Publicación práctica
 
-Puntos a revisar antes de publicar:
+Después de editar:
 
-- titulo correcto
-- slug correcto
-- idioma correcto
-- precios revisados
-- relaciones correctas
-- imagen principal cargada
+1. guardar en Odoo
+2. abrir la ruta pública del frontend
+3. verificar payload Odoo si el cambio no aparece
+4. limpiar caché del navegador si la imagen cambió
 
-## Idiomas en Strapi
+## 5. Campos sensibles
 
-- Cada contenido debe revisarse por locale.
-- El frontend usa codigos cortos de idioma.
-- Si falta una traduccion en el sitio, revisar si el contenido fue creado en el locale correcto.
+### Tours
 
-## Reservas
-
-En `reserva` se debe revisar:
-
-- ticket
 - nombre
-- servicio
-- fechas
-- estado
-- estado de pago
-- montos
+- slug
+- precio adulto
+- precio niño
+- descuento
+- destacados
+- itinerario
+- incluye/no incluye
+- horarios
 
-Interpretacion basica:
+### Transportes
 
-- `confirmada` + `pagado`: adelanto confirmado
-- `confirmada` + `pago_completo`: pago total completado
-- `fallido`: pago con problema
+- nombre
+- slug
+- tipos de transporte
+- tarifas por vehículo
+- incluye/no incluye
+- SEO
 
-## Pagos
+### Legales y corporativos
 
-En `pago` se debe revisar:
+- títulos
+- bloques rich text
+- SEO
 
-- proveedor
-- metodo
-- moneda
-- monto
-- estado
-- transaccion
-- orden
-- fecha
+## 6. Errores comunes
 
-## Buenas practicas de uso
+- cambiar slug y no revisar enlaces
+- editar un idioma y esperar cambio en otro
+- olvidar que `fr/it` pueden caer a fallback
+- cambiar tarifa de transporte sin revisar todos los vehículos
 
-- No editar datos en masa sin validar el impacto.
-- No cambiar slugs sin revisar enlaces y SEO.
-- No asumir que un texto vive en Strapi si no aparece en el CMS.
-- Si un cambio no se refleja, confirmar si el registro esta publicado.
+## 7. Cuándo escalar a desarrollo
 
-## Cuando escalar al equipo tecnico
-
-- La traduccion no existe en el CMS
-- El cambio no aparece aunque el contenido esta publicado
-- La reserva existe pero no aparece en Google Sheets
-- El pago esta en estado inconsistente
-- Hay que tocar textos de interfaz o flujo de reserva
+- el endpoint Odoo responde bien pero el frontend no renderiza
+- el rich text se ve roto
+- la reserva no persiste vehículo
+- el sitemap no incluye una nueva página
+- la navbar no refleja un cambio de catálogo

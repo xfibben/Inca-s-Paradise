@@ -38,6 +38,7 @@
                         <page string="Español">
                             <group>
                                 <field name="titulo"/>
+                                <field name="slug"/>
                                 <field name="descripcion" widget="html"/>
                                 <field name="meta_titulo"/>
                                 <field name="meta_descripcion"/>
@@ -46,6 +47,7 @@
                         <page string="English">
                             <group>
                                 <field name="titulo_en"/>
+                                <field name="slug_en"/>
                                 <field name="descripcion_en" widget="html"/>
                                 <field name="meta_titulo_en"/>
                                 <field name="meta_descripcion_en"/>
@@ -54,6 +56,7 @@
                         <page string="Português">
                             <group>
                                 <field name="titulo_pt"/>
+                                <field name="slug_pt"/>
                                 <field name="descripcion_pt" widget="html"/>
                                 <field name="meta_titulo_pt"/>
                                 <field name="meta_descripcion_pt"/>
@@ -130,27 +133,18 @@
         <field name="model">incas.cancelacion</field>
         <field name="arch" type="xml">
             <form string="Cancelaciones">
-                <header>
-                    <button
-                        name="action_importar_desde_csv"
-                        type="object"
-                        string="Importar CSV"
-                        class="btn-primary"
-                    />
-                </header>
                 <sheet>
                     <group>
                         <group>
                             <field name="titulo"/>
                             <field name="active"/>
-                            <field name="archivo_importacion_csv" filename="archivo_importacion_csv_nombre" widget="binary"/>
-                            <field name="archivo_importacion_csv_nombre" invisible="1"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Español">
                             <group>
                                 <field name="titulo"/>
+                                <field name="slug"/>
                                 <field name="descripcion" widget="html"/>
                                 <field name="meta_titulo"/>
                                 <field name="meta_descripcion"/>
@@ -159,6 +153,7 @@
                         <page string="English">
                             <group>
                                 <field name="titulo_en"/>
+                                <field name="slug_en"/>
                                 <field name="descripcion_en" widget="html"/>
                                 <field name="meta_titulo_en"/>
                                 <field name="meta_descripcion_en"/>
@@ -167,6 +162,7 @@
                         <page string="Português">
                             <group>
                                 <field name="titulo_pt"/>
+                                <field name="slug_pt"/>
                                 <field name="descripcion_pt" widget="html"/>
                                 <field name="meta_titulo_pt"/>
                                 <field name="meta_descripcion_pt"/>
@@ -243,27 +239,18 @@
         <field name="model">incas.pregunta.frecuente</field>
         <field name="arch" type="xml">
             <form string="Preguntas frecuentes">
-                <header>
-                    <button
-                        name="action_importar_desde_csv"
-                        type="object"
-                        string="Importar CSV"
-                        class="btn-primary"
-                    />
-                </header>
                 <sheet>
                     <group>
                         <group>
                             <field name="titulo"/>
                             <field name="active"/>
-                            <field name="archivo_importacion_csv" filename="archivo_importacion_csv_nombre" widget="binary"/>
-                            <field name="archivo_importacion_csv_nombre" invisible="1"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Español">
                             <group>
                                 <field name="titulo"/>
+                                <field name="slug"/>
                                 <field name="descripcion" widget="html"/>
                                 <field name="meta_titulo"/>
                                 <field name="meta_descripcion"/>
@@ -272,6 +259,7 @@
                         <page string="English">
                             <group>
                                 <field name="titulo_en"/>
+                                <field name="slug_en"/>
                                 <field name="descripcion_en" widget="html"/>
                                 <field name="meta_titulo_en"/>
                                 <field name="meta_descripcion_en"/>
@@ -280,6 +268,7 @@
                         <page string="Português">
                             <group>
                                 <field name="titulo_pt"/>
+                                <field name="slug_pt"/>
                                 <field name="descripcion_pt" widget="html"/>
                                 <field name="meta_titulo_pt"/>
                                 <field name="meta_descripcion_pt"/>

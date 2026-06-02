@@ -1,123 +1,191 @@
-# Operacion y contenido
+# Operación y contenido
 
-## Para quien es
+## 1. Dónde vive cada cosa
 
-Este documento sirve para contenido, operaciones, comercial, reservas y soporte interno.
+### En Odoo
 
-Complemento:
-
-- [Guia de uso del CMS](./guia-cms.md)
-- [Guia del VPS](./vps.md)
-
-## Que se administra desde Strapi
-
-El CMS concentra el contenido editable del negocio:
-
-- destinos
-- detalle de destinos
 - tours
+- destinos
 - style trips
-- transporte
+- transportes
 - tipos de transporte
-- vehiculos
-- terminos y condiciones
+- vehículos
+- sostenibilidad
+- nosotros
+- términos
+- políticas
+- cancelaciones
+- preguntas frecuentes
 - reservas
 - pagos
 
-## Que no se administra desde Strapi
+### En frontend
 
-Hay partes que siguen en el frontend:
+- textos de interfaz
+- estructura visual
+- i18n de botones y labels
+- libro de reclamaciones
+- analytics
 
-- textos de interfaz multidioma
-- parte de los datos estaticos en `frontend/src/data/`
-- validaciones y flujo visual de reservas
+## 2. Qué toca el equipo de contenido
 
-## Guia rapida para el equipo de contenido
+En Odoo debe poder mantener:
 
-### Antes de editar
+- slugs
+- SEO
+- títulos
+- descripciones
+- galerías
+- destacados
+- itinerarios
+- incluye/no incluye
+- horarios
+- artículos de sostenibilidad
+- páginas legales
 
-- Confirmar en que idioma se hara el cambio
-- Validar si el texto vive en Strapi o en el frontend
-- Revisar si el cambio afecta SEO, URLs o reservas
+## 3. Qué toca operaciones
 
-### Cuando editar tours o destinos
+En Odoo:
 
-- Verificar nombre, slug y consistencia entre idiomas
-- Verificar precios si el contenido impacta reservas
-- Validar imagenes y textos destacados
+- reservas
+- pagos
+- pasajeros
+- estados
+- agenda
+- línea operativa
+- pase operativo
 
-### Cuando editar transporte o vehiculos
+## 4. Qué toca RRHH
 
-- Mantener consistencia de precios por vehiculo
-- Revisar que la comparativa de `/tipo-transporte` siga coherente
-- No cambiar la logica visual verde de este modulo
+En Odoo:
 
-### Cuando editar terminos y condiciones
+- trabajadores
+- boletas
+- certificados
+- evaluación semanal y mensual
 
-- Confirmar con legal la version vigente
-- Revisar la pagina publica `/[lang]/terminos`
+## 5. Reglas para contenido público
 
-## Guia para reservas y operaciones
+- no cambiar slug sin revisar enlaces frontend y sitemap
+- no borrar registros activos sin revisar navbar o listados
+- no asumir que `fr` e `it` tienen contenido completo
+- si el texto viene en rich text, revisar render final en Astro
 
-### Datos minimos a validar en una reserva
+## 6. Checklist para editar tours
 
-- nombre
-- email
-- telefono
-- fecha de inicio y fin
-- cantidad de adultos y ninos
-- tipo y numero de documento
-- nacionalidad
-- servicio reservado
+1. nombre
+2. slug
+3. tipo de tour
+4. precio adulto USD
+5. precio niño USD
+6. descuento
+7. destacados
+8. itinerario
+9. incluye
+10. no incluye
+11. horarios
+12. SEO
+
+## 7. Checklist para editar transportes
+
+1. nombre
+2. slug
+3. tipos de transporte
+4. tarifas por vehículo
+5. descuento por vehículo
+6. imagen y wallpaper
+7. incluye
+8. no incluye
+9. SEO
+
+Regla crítica:
+
+- el precio de transporte no es único
+- cada vehículo puede cambiar adulto, niño y descuento
+
+## 8. Checklist para reservas
+
+Validar:
+
 - ticket
-- estado
-- estado de pago
+- cliente
+- servicio
+- fechas
+- horario
+- cantidades
+- moneda
+- descuento
+- vehículo si aplica
+- estado comercial
+- estado reserva
+- estado pago
+- voucher
 
-### Estados que debe revisar operaciones
+## 9. Estados que importan
 
-- `estado`
-- `estado_pago`
+### Comercial
 
-Casos comunes:
+- `borrador`
+- `cotizada`
+- `pre_reserva`
+- `confirmada`
+- `cancelada`
 
-- `confirmada` + `pagado`: adelanto cobrado correctamente
-- `confirmada` + `pago_completo`: servicio pagado completamente
-- `pendiente` o `fallido`: revisar manualmente
+### Reserva
 
-## Guia para soporte interno
+- `reservado`
+- `por_coordinar`
+- `falta_pago`
+- `pagado`
+- `completado`
+- `finalizado`
+- `cancelado`
 
-### Si el cliente reporta que no recibio confirmacion
+### Pago
 
-1. Buscar por email o ticket en Strapi.
-2. Revisar si existe pago asociado.
-3. Revisar si la reserva fue sincronizada a Sheets.
+- `pendiente`
+- `parcial`
+- `pagado`
+- `reembolsado`
+- `cancelado`
 
-### Si el cliente reporta un monto distinto
+## 10. Operación posterior a la reserva
 
-1. Revisar moneda elegida.
-2. Revisar si hubo conversion de PayPal a USD.
-3. Revisar `precio_tour`, `monto_web`, `pago_restante` y `monto_final`.
+Odoo debe dejar:
 
-### Si el cliente pide cambio de idioma
+- evento de agenda
+- línea operativa
+- documentación de pasajeros
+- correo enviado
+- voucher accesible
 
-- Confirmar si el cambio es contenido CMS o texto de interfaz.
-- Si es contenido CMS, revisar el locale en Strapi.
-- Si es interfaz, el cambio es tecnico y debe pasar al equipo de desarrollo.
+## 11. Soporte rápido
 
-## Checklist editorial recomendado
+### Si el cliente no recibió voucher
 
-- slugs correctos
-- idioma correcto
-- precios revisados
-- imagen destacada disponible
-- CTA y enlaces validos
-- terminos y condiciones vigentes
-- contenido visible en el frontend
+1. buscar reserva por ticket
+2. revisar `voucher_url`
+3. probar ruta pública del PDF
+4. revisar correo
 
-## Documentacion recomendada para la siguiente fase
+### Si el monto no cuadra
 
-- Manual de carga de imagenes y pesos recomendados
-- Manual de SEO por pagina
-- Procedimiento de alta de nuevos tours
-- Protocolo de soporte para pagos fallidos
-- Procedimiento de cierre diario entre Strapi y Google Sheets
+1. revisar moneda
+2. revisar descuento
+3. revisar vehículo en transporte
+4. revisar precios USD base
+5. revisar monto pagado
+
+### Si la página pública no muestra contenido
+
+1. revisar que el registro esté `active`
+2. revisar slug
+3. revisar endpoint Odoo
+4. revisar render SSR en la ruta Astro
+
+## 12. Riesgos operativos
+
+- navbar y home dependen de contenido Odoo
+- un slug roto puede romper rutas públicas
+- un cambio de estructura del payload puede romper SSR
+- una tarifa mal cargada en transporte impacta reserva y pago
