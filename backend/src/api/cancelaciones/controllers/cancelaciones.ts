@@ -62,7 +62,9 @@ export default factories.createCoreController(UID, ({ strapi }) => ({
         status,
         fields: ['titulo', 'descripcion', 'metaTitle', 'metaDescription', 'publishedAt'] as any,
         populate: {
-          secciones: true as any,
+          secciones: {
+            fields: ['titulo', 'contenido'] as any,
+          } as any,
         } as any,
       });
     };

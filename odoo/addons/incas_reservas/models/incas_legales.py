@@ -120,17 +120,18 @@ def _strapi_richtext_to_html(value):
 
 
 def _csv_parse_json_value(value):
-    if not isinstance(value, str):
-        return value
-    texto = value.strip()
-    if not texto:
-        return ""
-    if texto[0] not in {"[", "{", '"'}:
-        return value
-    try:
-        return json.loads(texto)
-    except json.JSONDecodeError:
-        return value
+    actual = value
+    while isinstance(actual, str):
+        texto = actual.strip()
+        if not texto:
+            return ""
+        if texto[0] not in {"[", "{", '"'}:
+            return actual
+        try:
+            actual = json.loads(texto)
+        except json.JSONDecodeError:
+            return actual
+    return actual
 
 
 def _csv_value_to_html(value):
