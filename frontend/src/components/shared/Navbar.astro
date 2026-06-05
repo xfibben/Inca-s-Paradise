@@ -615,11 +615,11 @@ try {
                   }
                 }
                 return (
-                  <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} data-dest={dest.slug} class="mobile-destination-item relative h-16 overflow-hidden rounded block">
+                  <button type="button" data-dest={dest.slug} class="mobile-destination-item relative h-16 overflow-hidden rounded block w-full text-left">
                     {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
                     <div class="absolute inset-0 bg-black/50"></div>
                     <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.title}</span>
-                  </a>
+                  </button>
                 );
               })}
             </div>
@@ -637,11 +637,11 @@ try {
                   }
                 }
                 return (
-                  <a href={`/${currentLang}/destinos/${dest.slug || toSlug(dest.title)}`} data-dest={dest.slug} class="mobile-destination-item relative h-16 overflow-hidden rounded block">
+                  <button type="button" data-dest={dest.slug} class="mobile-destination-item relative h-16 overflow-hidden rounded block w-full text-left">
                     {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
                     <div class="absolute inset-0 bg-black/50"></div>
                     <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.title}</span>
-                  </a>
+                  </button>
                 );
               })}
             </div>
@@ -671,7 +671,7 @@ try {
             {navStyleTrips.map((item: any) => {
               const imgUrl = getOdooMediaUrl(item.image) || '';
               return (
-                <a href={`/${currentLang}/style-trips/${item.slug || toSlug(item.name)}`} class="relative h-16 overflow-hidden rounded block">
+                <button type="button" data-style={item.slug || toSlug(item.name)} data-name={item.name} class="mobile-style-item relative h-16 overflow-hidden rounded block w-full text-left">
                   {imgUrl ? (
                     <img src={imgUrl} alt={item.name} class="w-full h-full object-cover" />
                   ) : (
@@ -679,7 +679,7 @@ try {
                   )}
                   <div class="absolute inset-0 bg-black/50"></div>
                   <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{item.name}</span>
-                </a>
+                </button>
               );
             })}
           </div>
@@ -702,14 +702,16 @@ try {
           {t.nav.transport} ▼
         </button>
         <div id="mobile-transport-menu" class="hidden rounded mt-1 max-h-72 overflow-y-auto">
-          <div class="grid grid-cols-2 gap-1 p-1">
+          <div id="mobile-transport-list" class="grid grid-cols-2 gap-1 p-1">
             {navTipoTransportes.map((item: any) => {
               const navImg = Array.isArray(item.image) ? item.image[0] : item.image;
               const imgUrl = resolveMediaUrl(navImg);
               return (
-                <a
-                  href={item.slug ? `/${currentLang}/tipo-transporte/${item.slug}` : `/${currentLang}/tipo-transporte/`}
-                  class="relative h-16 overflow-hidden rounded block"
+                <button
+                  type="button"
+                  data-transport-type={item.slug}
+                  data-name={item.nombre}
+                  class="mobile-transport-item relative h-16 overflow-hidden rounded block w-full text-left"
                 >
                   {imgUrl ? (
                     <img src={imgUrl} alt={item.nombre} class="w-full h-full object-cover" />
@@ -720,9 +722,18 @@ try {
                   <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">
                     {item.nombre}
                   </span>
-                </a>
+                </button>
               );
             })}
+          </div>
+          <div id="mobile-transport-details" class="hidden border-t border-gray-200 p-1">
+            <div class="flex items-center gap-2 p-2">
+              <button id="mobile-transport-back" class="text-[#1AA093] text-sm hover:text-[#0e8a7e] font-medium">← Atrás</button>
+              <h3 id="mobile-transport-name" class="font-bold text-gray-800 text-sm"></h3>
+            </div>
+            <div id="mobile-transport-subitems" class="p-0">
+              <!-- Transport items will be inserted here -->
+            </div>
           </div>
         </div>
       </div>

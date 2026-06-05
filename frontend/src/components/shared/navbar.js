@@ -92,6 +92,38 @@ function renderDestinationToursHtml(destination, currentLang) {
   return html || '<p class="text-sm text-gray-400 italic">Sin tours disponibles</p>';
 }
 
+function renderTourLinksHtml(tours, currentLang, emptyLabel = 'Sin tours disponibles') {
+  const rows = sortToursAlphabetically(normalizeRows(tours));
+  if (!rows.length) {
+    return `<p class="text-sm text-gray-400 italic">${escapeHtml(emptyLabel)}</p>`;
+  }
+
+  return rows.map(tour => {
+    const t = tour.attributes || tour;
+    return `<div class="break-inside-avoid pb-3 border-b border-gray-100 last:border-0">
+      <a href="/${currentLang}/tours/${escapeHtml(t.slug || toSlug(t.title || t.nombre || ''))}" class="block font-semibold text-gray-800 text-sm hover:text-[#1AA093] transition">
+        ${escapeHtml(t.title || t.nombre || '')}
+      </a>
+    </div>`;
+  }).join('');
+}
+
+function renderTransportLinksHtml(transportes, currentLang, emptyLabel = 'Sin transportes disponibles') {
+  const rows = sortToursAlphabetically(normalizeRows(transportes));
+  if (!rows.length) {
+    return `<p class="text-sm text-gray-400 italic">${escapeHtml(emptyLabel)}</p>`;
+  }
+
+  return rows.map(transporte => {
+    const item = transporte.attributes || transporte;
+    return `<div class="break-inside-avoid pb-3 border-b border-gray-100 last:border-0">
+      <a href="/${currentLang}/transporte/${escapeHtml(item.slug || '')}" class="block font-semibold text-gray-800 text-sm hover:text-[#1AA093] transition">
+        ${escapeHtml(item.nombre || item.title || '')}
+      </a>
+    </div>`;
+  }).join('');
+}
+
 function renderDestinationListHtml(destinations, currentLang) {
   return destinations.map(dest => `
     <a
@@ -110,6 +142,23 @@ function buildLanguageUrl(languageCode) {
   const pathMatch = currentPath.match(/^\/[a-z]{2}(.*)/);
   const relativePath = pathMatch ? pathMatch[1] : '/';
   return `/${languageCode}${relativePath}`;
+}
+
+const mobileDetailCache = new Map();
+
+async function fetchMobileDetailJson(path) {
+  if (mobileDetailCache.has(path)) {
+    return mobileDetailCache.get(path);
+  }
+
+  const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} for ${path}`);
+  }
+
+  const json = await response.json();
+  mobileDetailCache.set(path, json);
+  return json;
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -390,8 +439,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const mobileSustainabilityMenu = document.getElementById('mobile-sustainability-menu');
   const mobileSustainabilityList = document.getElementById('mobile-sustainability-list');
   const mobileSustainabilityDetails = document.getElementById('mobile-sustainability-details');
-
   const mobileTransportMenu = document.getElementById('mobile-transport-menu');
+  const mobileTransportList = document.getElementById('mobile-transport-list');
+  const mobileTransportDetails = document.getElementById('mobile-transport-details');
 
   document.getElementById('mobile-destinations-btn')?.addEventListener('click', () => {
     mobileDestinationsMenu?.classList.toggle('hidden');
@@ -433,7 +483,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Detalle destino mobile
   document.querySelectorAll('.mobile-destination-item').forEach(item => {
-    item.addEventListener('click', () => {
+    item.addEventListener('click', event => {
+      event.preventDefault();
       const destinations = window.__navbarDestinations || [];
       const destination = destinations.find(d => d.slug === item.getAttribute('data-dest'));
       if (!destination) return;
@@ -453,57 +504,32 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Detalle estilos mobile
-  document.querySelectorAll('.mobile-styles-option').forEach(option => {
-    option.addEventListener('click', () => {
-      const optionKey = option.getAttribute('data-option');
+  document.querySelectorAll('.mobile-style-item').forEach(item => {
+    item.addEventListener('click', async event => {
+      event.preventDefault();
+      const styleSlug = item.getAttribute('data-style');
+      const styleName = item.getAttribute('data-name') || '';
+      if (!styleSlug) return;
 
       mobileStylesList?.classList.add('hidden');
       mobileStylesDetails?.classList.remove('hidden');
 
       const styleNameEl = document.getElementById('mobile-style-name');
-      if (styleNameEl) styleNameEl.textContent = option.getAttribute('data-name');
+      if (styleNameEl) styleNameEl.textContent = styleName;
 
       const subitemsContainer = document.getElementById('mobile-style-subitems');
       if (!subitemsContainer) return;
 
-      // travelStyles: usar datos entregados por Odoo
-      if (optionKey === 'travelStyles' && window.__navbarStyleTrips?.length) {
+      subitemsContainer.innerHTML = '<p class="text-sm text-gray-400 italic px-2 py-3">Cargando tours...</p>';
+
+      try {
         const lang = window.__currentLang || 'es';
-        subitemsContainer.innerHTML = `<div class="flex flex-col gap-1">${window.__navbarStyleTrips.map(item => {
-          const imgSrc = item.image?.url || '';
-          const slug = item.slug || toSlug(item.name);
-          return `
-            <a href="/${lang}/style-trips/${slug}" class="relative h-16 overflow-hidden rounded block">
-              ${imgSrc ? `<img src="${imgSrc}" alt="${item.name}" class="w-full h-full object-cover" />` : `<div class="w-full h-full bg-gray-400"></div>`}
-              <div class="absolute inset-0 bg-black/50"></div>
-              <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1"
-                style="font-family: 'Playfair Display', serif; font-style: italic;">${item.name}</span>
-            </a>
-          `;
-        }).join('')}</div>`;
-        return;
-      }
-
-      const menuItem = t.stylesMenu[optionKey];
-      if (!menuItem) return;
-
-      const subitems = menuItem.subitems || {};
-      if (Object.keys(subitems).length === 0) {
-        subitemsContainer.innerHTML = `<p class="text-gray-600 text-sm italic">${menuItem.description || 'Coming Soon...'}</p>`;
-      } else {
-        subitemsContainer.innerHTML = `<div class="flex flex-col gap-1">${Object.entries(subitems).map(([key, sub]) => {
-          const imgSrc = sub.image
-            ? (sub.image.startsWith('landing page images') ? '/' + sub.image : sub.image)
-            : '';
-          return `
-            <button class="relative h-16 overflow-hidden rounded" data-subitem="${key}">
-              ${imgSrc ? `<img src="${imgSrc}" alt="${sub.name}" class="w-full h-full object-cover" />` : `<div class="w-full h-full bg-gray-400"></div>`}
-              <div class="absolute inset-0 bg-black/50"></div>
-              <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1"
-                style="font-family: 'Playfair Display', serif; font-style: italic;">${sub.name}</span>
-            </button>
-          `;
-        }).join('')}</div>`;
+        const json = await fetchMobileDetailJson(`/incas/api/web/estilos-viaje/${encodeURIComponent(styleSlug)}?lang=${lang}`);
+        const tours = json?.data?.tours ?? [];
+        subitemsContainer.innerHTML = renderTourLinksHtml(tours, lang);
+      } catch (error) {
+        console.error('[Navbar] Error loading style trips:', error);
+        subitemsContainer.innerHTML = '<p class="text-sm text-gray-400 italic px-2 py-3">No se pudieron cargar los tours.</p>';
       }
     });
   });
@@ -511,6 +537,42 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('mobile-styles-back')?.addEventListener('click', () => {
     mobileStylesList?.classList.remove('hidden');
     mobileStylesDetails?.classList.add('hidden');
+  });
+
+  // Detalle transporte mobile
+  document.querySelectorAll('.mobile-transport-item').forEach(item => {
+    item.addEventListener('click', async event => {
+      event.preventDefault();
+      const transportSlug = item.getAttribute('data-transport-type');
+      const transportName = item.getAttribute('data-name') || '';
+      if (!transportSlug) return;
+
+      mobileTransportList?.classList.add('hidden');
+      mobileTransportDetails?.classList.remove('hidden');
+
+      const transportNameEl = document.getElementById('mobile-transport-name');
+      if (transportNameEl) transportNameEl.textContent = transportName;
+
+      const subitemsContainer = document.getElementById('mobile-transport-subitems');
+      if (!subitemsContainer) return;
+
+      subitemsContainer.innerHTML = '<p class="text-sm text-gray-400 italic px-2 py-3">Cargando transportes...</p>';
+
+      try {
+        const lang = window.__currentLang || 'es';
+        const json = await fetchMobileDetailJson(`/incas/api/web/tipo-transportes/${encodeURIComponent(transportSlug)}?lang=${lang}`);
+        const transportes = json?.data?.transportes ?? [];
+        subitemsContainer.innerHTML = renderTransportLinksHtml(transportes, lang);
+      } catch (error) {
+        console.error('[Navbar] Error loading transport types:', error);
+        subitemsContainer.innerHTML = '<p class="text-sm text-gray-400 italic px-2 py-3">No se pudieron cargar los transportes.</p>';
+      }
+    });
+  });
+
+  document.getElementById('mobile-transport-back')?.addEventListener('click', () => {
+    mobileTransportList?.classList.remove('hidden');
+    mobileTransportDetails?.classList.add('hidden');
   });
 
   // Detalle sostenibilidad mobile
