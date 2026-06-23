@@ -240,7 +240,6 @@ def render_pase_operativo_html(reserva):
                 <tr><td class="label">Fecha inicio</td><td>{escape(_fecha_corta(reserva.fecha_inicio or reserva.fecha_viaje))}</td></tr>
                 <tr><td class="label">Fecha fin</td><td>{escape(_fecha_corta(reserva.fecha_fin or reserva.fecha_viaje))}</td></tr>
                 <tr><td class="label">Lugar de recojo</td><td>{escape(_texto(reserva.lugar_recojo))}</td></tr>
-                <tr><td class="label">Horario general</td><td>{escape(_texto(reserva.turno))}</td></tr>
                 <tr><td class="label">Observaciones</td><td>{escape(_texto(reserva.observaciones))}</td></tr>
             </table>
 
