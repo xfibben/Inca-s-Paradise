@@ -319,6 +319,7 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
 
             {featuredImages.length > 0 ? (
               <section class="pb-14 md:pb-20">
+                <div id="mobile-booking-gallery-anchor" class="mb-6 lg:hidden"></div>
                 <h2 class="mb-6 text-2xl font-bold italic text-gray-900 md:text-3xl" style="font-family: 'Playfair Display', serif;">{galleryTitle}</h2>
                 <div class="grid grid-cols-2 gap-px md:grid-cols-4">
                   {featuredImages.map((item: any, index: number) => {
@@ -385,6 +386,7 @@ const tourDetailCtaLabel = lang === "en" ? "View tour" : "Ver tour";
               calendarStart={calendarStart}
               calendarMonth={calendarMonth}
               weekdays={weekdays}
+              mobileInlineTargetId="mobile-booking-gallery-anchor"
             />
           </aside>
         </div>

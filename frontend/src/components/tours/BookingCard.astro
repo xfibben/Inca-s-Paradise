@@ -15,6 +15,7 @@ interface Props {
   calendarStart: string;
   calendarMonth: string;
   weekdays: string[];
+  mobileInlineTargetId?: string;
 }
 
 const {
@@ -31,6 +32,7 @@ const {
   calendarStart,
   calendarMonth,
   weekdays,
+  mobileInlineTargetId,
 } = Astro.props;
 
 const t: Record<SupportedLang, Record<string, string>> = {
@@ -105,11 +107,13 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
 ---
 
 <aside class="mt-6 lg:mt-0" data-booking-card>
+  <div data-mobile-booking-trigger-home></div>
 
   <!-- Botón trigger fijo abajo a la derecha (solo móvil) -->
   <button
     type="button"
     id="mobile-booking-open"
+    data-mobile-inline-target={mobileInlineTargetId ?? ""}
     class="lg:hidden fixed bottom-5 right-5 z-50 rounded-full px-5 py-3 text-sm font-semibold text-white bg-[#1AA093] hover:bg-[#0e8a7e] shadow-lg transition text-center leading-snug"
   >
     {c.bookNow}<br />
@@ -633,6 +637,25 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
     const closeBtn = document.getElementById("mobile-booking-close");
     const content = document.getElementById("booking-card-content");
     const backdrop = document.getElementById("mobile-booking-backdrop");
+    const home = document.querySelector("[data-mobile-booking-trigger-home]");
+
+    const syncMobileTriggerPosition = () => {
+      if (!(openBtn instanceof HTMLElement) || !(home instanceof HTMLElement)) return;
+
+      const targetId = openBtn.dataset.mobileInlineTarget?.trim();
+      const inlineTarget = targetId ? document.getElementById(targetId) : null;
+      const shouldInline = window.innerWidth < 1024 && inlineTarget instanceof HTMLElement;
+
+      if (shouldInline) {
+        inlineTarget.appendChild(openBtn);
+        openBtn.classList.remove("fixed", "bottom-5", "right-5", "rounded-full", "px-5", "py-3", "text-sm", "shadow-lg");
+        openBtn.classList.add("relative", "bottom-auto", "right-auto", "z-10", "mt-2", "inline-flex", "w-full", "items-center", "justify-center", "rounded-2xl", "px-6", "py-4", "text-base", "shadow-[0_16px_32px_rgba(15,23,42,0.12)]");
+      } else {
+        home.after(openBtn);
+        openBtn.classList.remove("relative", "bottom-auto", "right-auto", "z-10", "mt-2", "inline-flex", "w-full", "items-center", "justify-center", "rounded-2xl", "px-6", "py-4", "text-base", "shadow-[0_16px_32px_rgba(15,23,42,0.12)]");
+        openBtn.classList.add("fixed", "bottom-5", "right-5", "z-50", "rounded-full", "px-5", "py-3", "text-sm", "shadow-lg");
+      }
+    };
 
     const openCard = () => {
       content?.classList.remove("hidden");
@@ -649,5 +672,7 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
     openBtn?.addEventListener("click", openCard);
     closeBtn?.addEventListener("click", closeCard);
     backdrop?.addEventListener("click", closeCard);
+    window.addEventListener("resize", syncMobileTriggerPosition, { passive: true });
+    syncMobileTriggerPosition();
   })();
 </script>
