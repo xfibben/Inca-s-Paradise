@@ -51,7 +51,7 @@ const whatsappMessageByLang: Record<string, string> = {
 const whatsappText =
   whatsappMessageByLang[currentLang] ?? whatsappMessageByLang.en;
 
-const desktopWhatsappHref = `https://wa.me/51953556680?text=${encodeURIComponent(
+const desktopWhatsappHref = `https://wa.me/51984434547?text=${encodeURIComponent(
   whatsappText
 )}`;
 const mobileWhatsappHref = `https://wa.me/51984434547?text=${encodeURIComponent(
@@ -377,7 +377,7 @@ try {
         <!-- Trip Styles with Megamenu -->
         <div class="relative h-full flex items-center" id="styles-container">
           <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.tripStyles}</a>
-          
+
           <!-- Styles Megamenu - Sidebar + Grid Layout -->
           <div id="styles-dropdown" class="fixed left-0 right-0 top-24 pt-0 hidden z-50 w-full">
             <div class="bg-white shadow-2xl overflow-hidden" style="height: 58vh;">
@@ -456,7 +456,7 @@ try {
         <!-- Sustainability with Megamenu -->
         <div class="relative h-full flex items-center" id="sustainability-container">
           <a href="#" class="text-white text-sm lg:text-base hover:text-gray-300 transition py-8">{t.nav.sustainability}</a>
-          
+
           <!-- Sustainability Megamenu -->
           <div id="sustainability-dropdown" class="fixed left-0 right-0 top-24 pt-0 hidden z-50 w-full">
             <div class="bg-white shadow-2xl overflow-hidden" style="height: 50vh;">
@@ -470,7 +470,7 @@ try {
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
                     </svg>
                   </button>
-                  
+
                   <!-- Sustainability scroll container -->
                   <div id="sustainability-scroll" class="flex-1 overflow-y-auto overflow-x-hidden scroll-smooth">
                     {navSustainabilityItems.map((item: any, index: number) => {
@@ -488,7 +488,7 @@ try {
                       );
                     })}
                   </div>
-                  
+
                   <!-- Scroll Down Button -->
                   <button id="scroll-down-sustainability" class="bg-white/90 hover:bg-white p-2 border-t border-gray-200 transition">
                     <svg class="w-4 h-4 text-gray-700 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -737,7 +737,7 @@ try {
           </div>
         </div>
       </div>
-      
+
       <!-- Sustainability Mobile -->
       <div class="relative">
         <button id="mobile-sustainability-btn" class="block w-full text-left px-4 py-2 text-white text-sm hover:text-gray-300 transition bg-white/10 rounded">
@@ -759,9 +759,9 @@ try {
           </div>
         </div>
       </div>
-      
+
       <a href="http://blog.incasparadise.com/" target="_blank" rel="noopener noreferrer" class="block text-white text-sm hover:text-gray-300 transition px-4 py-2">{t.nav.blog}</a>
-      
+
       <div class="py-2 px-4">
         <LanguageSwitcher currentLang={currentLang} />
       </div>
@@ -868,16 +868,16 @@ try {
     // Detect current language from URL
     const pathMatch = window.location.pathname.match(/^\/([a-z]{2})\//);
     const currentLangCode = pathMatch ? pathMatch[1] : 'es';
-    
+
     // Update ALL lang-switcher instances
     const langSwitchers = document.querySelectorAll('#lang-switcher');
 
     langSwitchers.forEach((switcher, switcherIndex) => {
-      
+
       const button = switcher.querySelector('#lang-button');
       const dropdown = switcher.querySelector('#lang-dropdown');
       const langArrow = switcher.querySelector('#lang-arrow');
-      
+
       if (!button || !dropdown) {
         return;
       }
@@ -919,12 +919,12 @@ try {
         link.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
-          
+
           const url = buildLanguageUrl(code);
-          
+
           dropdown.classList.add('hidden');
           langArrow?.classList.remove('rotate-180');
-          
+
           window.location.href = url;
         });
 

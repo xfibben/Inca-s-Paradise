@@ -652,7 +652,7 @@ def render_reserva_html(reserva, idioma=None):
               <td class="agency">
                 INCA'S PARADISE<br/>TRAVEL AGENCY
                 <span class="address">Jirón Grau Nro. 460 Puno- Perú</span>
-                <span class="phone">{escape(t["phone"])} +51-953556680</span>
+                <span class="phone">{escape(t["phone"])} +51-984434547</span>
               </td>
               <td class="voucher-title">
                 RUC No: 20601022207
