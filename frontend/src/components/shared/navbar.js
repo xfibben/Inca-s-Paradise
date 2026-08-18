@@ -367,11 +367,16 @@ document.addEventListener('DOMContentLoaded', function () {
   function updateStylesMenuFooter(menu) {
     const menuItem = t.stylesMenu[menu];
     if (!menuItem) return;
-    document.getElementById('styles-menu-footer').textContent = menuItem.description || '';
+    const footerElement = document.getElementById('styles-menu-footer');
+    if (footerElement) {
+      footerElement.textContent = menuItem.description || '';
+    }
     const img = document.getElementById('styles-footer-image');
-    img.src = menuItem.image
-      ? (menuItem.image.startsWith('landing page images') ? '/' + menuItem.image : menuItem.image)
-      : '';
+    if (img) {
+      img.src = menuItem.image
+        ? (menuItem.image.startsWith('landing page images') ? '/' + menuItem.image : menuItem.image)
+        : '';
+    }
   }
 
   document.querySelectorAll('.styles-menu-btn').forEach(btn => {
