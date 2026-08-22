@@ -151,6 +151,7 @@ class IncasTour(models.Model):
         "tour_id",
         string="Imagenes destacadas",
     )
+    orden_en_estilo = fields.Integer(string="Orden en estilo", default=999999)
     active = fields.Boolean(default=True)
 
     _sql_constraints = [
@@ -182,6 +183,13 @@ class IncasTour(models.Model):
             UPDATE incas_tour
                SET ip = 'ip3'
              WHERE ip IS NULL
+            """
+        )
+        self.env.cr.execute(
+            """
+            UPDATE incas_tour
+               SET orden_en_estilo = 999999
+             WHERE orden_en_estilo IS NULL OR orden_en_estilo = 0
             """
         )
         return res

@@ -475,7 +475,7 @@ def _serialize_destino(destino, lang, incluir_tours=False):
 
 
 def _serialize_estilo_viaje(estilo, lang, incluir_tours=False):
-    tours = request.env["incas.tour"].sudo().search([("estilo_ids", "in", estilo.id), ("active", "=", True)], order="nombre, id")
+    tours = request.env["incas.tour"].sudo().search([("estilo_ids", "in", estilo.id), ("active", "=", True)], order="orden_en_estilo asc, write_date desc, id desc")
     data = {
         "id": estilo.id,
         "documentId": None,
