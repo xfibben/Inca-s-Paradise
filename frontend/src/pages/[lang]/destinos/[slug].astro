@@ -61,6 +61,11 @@ const priceFromLabel =
   : "Desde";
 const getDiscountedPrice = (price: number, discountPercent: number) =>
   Math.max(0, price - (price * Math.max(0, discountPercent)) / 100);
+
+Astro.response.headers.set(
+  "Cache-Control",
+  "public, max-age=120, s-maxage=600, stale-while-revalidate=86400"
+);
 ---
 
 <html lang={lang}>
@@ -149,7 +154,7 @@ const getDiscountedPrice = (price: number, discountPercent: number) =>
               const imageUrl = getOdooMediaUrl(tour.heroSlideImages?.[0]);
               return (
                 <a href={`/${lang}/tours/${tour.slug}`} class="group block bg-white shadow-sm hover:shadow-lg transition overflow-hidden">
-                  {imageUrl ? <img src={imageUrl} alt={tour.title} class="w-full h-64 object-cover group-hover:scale-[1.02] transition-transform duration-500" /> : <div class="w-full h-64 bg-stone-300" />}
+                  {imageUrl ? <img src={imageUrl} alt={tour.title} loading="lazy" decoding="async" class="w-full h-64 object-cover group-hover:scale-[1.02] transition-transform duration-500" /> : <div class="w-full h-64 bg-stone-300" />}
                   <div class="p-5">
                     <h3 class="text-2xl text-stone-900" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</h3>
                     {tour.metaDescription ? <div class="mt-2 text-sm text-stone-600 line-clamp-3" set:html={richContentToHtml(tour.metaDescription)} /> : null}
@@ -172,7 +177,7 @@ const getDiscountedPrice = (price: number, discountPercent: number) =>
               const imageUrl = getOdooMediaUrl(tour.heroSlideImages?.[0]);
               return (
                 <a href={`/${lang}/tours/${tour.slug}`} class="relative overflow-hidden group min-h-[320px]">
-                  {imageUrl ? <img src={imageUrl} alt={tour.title} class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" /> : <div class="absolute inset-0 bg-stone-300" />}
+                  {imageUrl ? <img src={imageUrl} alt={tour.title} loading="lazy" decoding="async" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" /> : <div class="absolute inset-0 bg-stone-300" />}
                   <span class="absolute inset-0 bg-gradient-to-b from-black/10 to-black/70 flex flex-col justify-end p-6 text-white">
                     {tour.discount > 0 ? <span class="absolute top-4 left-4 bg-[#1AA093] px-3 py-1 text-xs font-bold text-white rounded-full shadow">-{tour.discount.toFixed(0)}%</span> : null}
                     <div class="text-2xl font-bold leading-tight" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</div>

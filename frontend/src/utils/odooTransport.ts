@@ -25,12 +25,23 @@ export function buildLocalizedSlugs(slug: string): Record<OdooTransportLang, str
   };
 }
 
-export async function fetchOdooTransportJson(path: string) {
+const odooTransportJsonCache = new Map<string, { data: any; expiresAt: number }>();
+const CACHE_TTL_MS = 60 * 1000; // 60 segundos de cache en memoria
+
+export async function fetchOdooTransportJson(path: string, options?: { ttlMs?: number }) {
   const baseUrl = getOdooTransportBaseUrl();
   if (!baseUrl) {
     throw new Error("ODOO_URL no esta configurada");
   }
   const databaseName = getOdooDatabaseName();
+  const cacheKey = `${baseUrl}|${databaseName}|${path}`;
+  const now = Date.now();
+  const cached = odooTransportJsonCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > now) {
+    return cached.data;
+  }
+
   const headers: Record<string, string> = {};
   if (databaseName) {
     headers["X-Odoo-Database"] = databaseName;
@@ -39,5 +50,10 @@ export async function fetchOdooTransportJson(path: string) {
   if (!response.ok) {
     throw new Error(`Error Odoo ${response.status}`);
   }
-  return response.json();
+  const data = await response.json();
+  const ttl = options?.ttlMs ?? CACHE_TTL_MS;
+  if (ttl > 0) {
+    odooTransportJsonCache.set(cacheKey, { data, expiresAt: now + ttl });
+  }
+  return data;
 }

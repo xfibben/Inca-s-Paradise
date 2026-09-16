@@ -1,4 +1,4 @@
-﻿---
+---
 import { getTranslation, languages, defaultLanguage, type Language } from '../../../i18n';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
@@ -129,6 +129,11 @@ const excludedItems = Array.isArray(transporte.excludedItems)
   : [];
 const hasIncludedBlock = Boolean(includedItems.length);
 const hasExcludedBlock = Boolean(excludedItems.length);
+
+Astro.response.headers.set(
+  "Cache-Control",
+  "public, max-age=120, s-maxage=600, stale-while-revalidate=86400"
+);
 ---
 
 <html lang={currentLang}>
