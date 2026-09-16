@@ -617,7 +617,7 @@ def _serialize_web_tour(tour, lang, incluir_relaciones=True, incluir_relacionado
             related_domain += [("estilo_ids", "in", estilo_ids)]
         else:
             related_domain += [("tipo_tour", "=", tour.tipo_tour or "tour")]
-        related_tours = request.env["incas.tour"].sudo().search(related_domain, order="nombre, id", limit=12)
+        related_tours = request.env["incas.tour"].sudo().search(related_domain, order="nombre, id", limit=6)
         data["relatedTours"] = [_serialize_tour_card(item, lang) for item in related_tours]
     return data
 
