@@ -193,6 +193,7 @@ Astro.response.headers.set(
                   <div>
                     {destinationNames.length > 0 ? <p class="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#1AA093]">{destinationNames.join(" · ")}</p> : null}
                     {highlightsTitle ? <h1 class="text-3xl leading-tight text-[#1f2937] md:text-4xl" style="font-family: 'Playfair Display', serif; font-style: italic;">{highlightsTitle}</h1> : null}
+                    <div id="mobile-booking-header-anchor" class="mt-4 mb-2 lg:hidden"></div>
                     {highlightsLead ? <div class="mt-3 text-sm leading-relaxed text-[#1f2937] text-justify md:text-base [&_p]:mb-3 [&_p:last-child]:mb-0" set:html={highlightsLead} /> : null}
                     <div class="mt-4 space-y-4">
                       {highlightItems.map((item: any, index: number) => (
@@ -324,7 +325,6 @@ Astro.response.headers.set(
 
             {featuredImages.length > 0 ? (
               <section class="pb-14 md:pb-20">
-                <div id="mobile-booking-gallery-anchor" class="mb-6 lg:hidden"></div>
                 <h2 class="mb-6 text-2xl font-bold italic text-gray-900 md:text-3xl" style="font-family: 'Playfair Display', serif;">{galleryTitle}</h2>
                 <div class="grid grid-cols-2 gap-px md:grid-cols-4">
                   {featuredImages.map((item: any, index: number) => {
@@ -391,7 +391,7 @@ Astro.response.headers.set(
               calendarStart={calendarStart}
               calendarMonth={calendarMonth}
               weekdays={weekdays}
-              mobileInlineTargetId="mobile-booking-gallery-anchor"
+              mobileInlineTargetId="mobile-booking-header-anchor"
             />
           </aside>
         </div>
