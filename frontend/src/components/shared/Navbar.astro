@@ -219,6 +219,23 @@ try {
     background-color: #e5e7eb !important;
   }
 
+  /* Portada móvil: el header queda fuera de la imagen y siempre es sólido. */
+  @media (max-width: 767px) {
+    body[data-navbar-mobile-solid] #navbar {
+      background-color: white;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    body[data-navbar-mobile-solid] #navbar a:not(#lang-dropdown a),
+    body[data-navbar-mobile-solid] #navbar button:not(#lang-dropdown button) {
+      color: #111827 !important;
+    }
+
+    body[data-navbar-mobile-solid] #mobile-menu-btn {
+      color: #111827 !important;
+    }
+  }
+
   /* Cuando el menú móvil está abierto, navbar siempre blanco */
   #navbar.menu-open {
     background-color: white !important;
@@ -326,9 +343,9 @@ try {
 <!-- Navbar -->
 <nav id="navbar" class="fixed top-0 w-full bg-transparent transition-all duration-300 z-50">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center h-24">
+    <div class="relative flex justify-between items-center h-24">
       <!-- Logo -->
-      <div class="flex-shrink-0">
+      <div class="absolute left-1/2 flex-shrink-0 -translate-x-1/2 md:static md:translate-x-0">
         <a href={`/${currentLang}/`}>
           <img src="/landing page images/incasparadiselogo.webp" alt="Inca's Paradise Logo" class="h-20 w-auto" />
         </a>
@@ -573,7 +590,7 @@ try {
       </div>
 
       <!-- Mobile Menu Button -->
-      <div class="md:hidden">
+      <div class="ml-auto md:hidden">
         <button id="mobile-menu-btn" class="text-white" aria-label="Abrir menú de navegación">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>

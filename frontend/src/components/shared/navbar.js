@@ -176,17 +176,10 @@ document.addEventListener('DOMContentLoaded', function () {
   // contactBtn debe declararse ANTES del bloque navbarSolid para evitar ReferenceError
   const contactBtn = document.getElementById('contact-btn');
 
-  // Si la página no tiene hero, el navbar arranca sólido
+  // Si la página no tiene hero, el navbar siempre permanece sólido.
   const navbarSolid = document.body.hasAttribute('data-navbar-solid');
-  if (navbarSolid) {
-    navbar.classList.remove('bg-transparent');
-    navbar.classList.add('bg-white', 'shadow-md');
-    document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
-      el.classList.remove('text-white', 'hover:text-gray-300');
-      el.classList.add('text-gray-900', 'hover:text-gray-600');
-    });
-    setContactBtn(true);
-  }
+  const navbarMobileSolid = document.body.hasAttribute('data-navbar-mobile-solid');
+  const desktopMedia = window.matchMedia('(min-width: 768px)');
 
   function setContactBtn(scrolled) {
     if (!contactBtn) return;
@@ -199,14 +192,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  function updateNavbarStyle() {
-    if (!navbar) return;
-    // No actualizar si hay un dropdown o el menú móvil abierto
-    if (isAnyDropdownOpen() || navbar.classList.contains('menu-open')) return;
-    // En páginas sin hero siempre sólido
-    if (navbarSolid) return;
-
-    if (window.scrollY > 50) {
+  function setNavbarAppearance(solid) {
+    if (solid) {
       navbar.classList.remove('bg-transparent');
       navbar.classList.add('bg-white', 'shadow-md');
       document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
@@ -225,40 +212,49 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  window.addEventListener('scroll', updateNavbarStyle);
+  function updateNavbarStyle() {
+    // Mientras un menú está abierto, el encabezado debe seguir siendo sólido.
+    if (isAnyDropdownOpen() || navbar.classList.contains('menu-open')) return;
+
+    const mobileSolid = navbarMobileSolid && !desktopMedia.matches;
+    setNavbarAppearance(navbarSolid || mobileSolid || window.scrollY > 50);
+  }
+
+  window.addEventListener('scroll', updateNavbarStyle, { passive: true });
+  updateNavbarStyle();
 
   // ── Mobile menu toggle ────────────────────────────────────────────────────
   mobileMenuBtn?.addEventListener('click', () => {
     mobileMenu?.classList.toggle('hidden');
     mobileBackdrop?.classList.toggle('hidden');
     if (!mobileMenu?.classList.contains('hidden')) {
-      navbar?.classList.add('bg-white', 'shadow-md', 'menu-open');
-      navbar?.classList.remove('bg-transparent');
-      document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
-        el.classList.remove('text-white', 'hover:text-gray-300');
-        el.classList.add('text-gray-900', 'hover:text-gray-600');
-      });
-      setContactBtn(true);
-    } else if (window.scrollY <= 50) {
-      if (!navbarSolid) {
-        navbar?.classList.remove('bg-white', 'shadow-md', 'menu-open');
-        navbar?.classList.add('bg-transparent');
-        document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
-          el.classList.remove('text-gray-900', 'hover:text-gray-600');
-          el.classList.add('text-white', 'hover:text-gray-300');
-        });
-        setContactBtn(false);
-      } else {
-        // En páginas de fondo sólido solo quitar menu-open, mantener estilos oscuros
-        navbar?.classList.remove('menu-open');
-      }
+      mobileMenuBtn.setAttribute('aria-expanded', 'true');
+      navbar.classList.add('menu-open');
+      setNavbarAppearance(true);
+    } else {
+      mobileMenuBtn.setAttribute('aria-expanded', 'false');
+      navbar.classList.remove('menu-open');
+      updateNavbarStyle();
     }
   });
 
   mobileBackdrop?.addEventListener('click', () => {
     mobileMenu?.classList.add('hidden');
     mobileBackdrop?.classList.add('hidden');
-    navbar?.classList.remove('menu-open');
+    mobileMenuBtn?.setAttribute('aria-expanded', 'false');
+    navbar.classList.remove('menu-open');
+    updateNavbarStyle();
+  });
+
+  // Al pasar de móvil a escritorio, descartar cualquier estado móvil abierto.
+  desktopMedia.addEventListener('change', event => {
+    if (!event.matches) return;
+
+    mobileMenu?.classList.add('hidden');
+    mobileBackdrop?.classList.add('hidden');
+    mobileMenuBtn?.setAttribute('aria-expanded', 'false');
+    navbar.classList.remove('menu-open');
+    updateNavbarStyle();
   });
 
   // ── Helper: hover dropdown con timeout ───────────────────────────────────
@@ -286,28 +282,15 @@ document.addEventListener('DOMContentLoaded', function () {
       activeDropdown = dropdownId;
       dropdown.classList.remove('hidden');
       dropdown.style.display = 'block';
-      navbar.classList.add('bg-white', 'shadow-md');
-      navbar.classList.remove('bg-transparent');
-      document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
-        el.classList.remove('text-white', 'hover:text-gray-300');
-        el.classList.add('text-gray-900', 'hover:text-gray-600');
-      });
+      setNavbarAppearance(true);
     };
 
     const close = () => {
       timeout = setTimeout(() => {
         dropdown.classList.add('hidden');
         dropdown.style.display = 'none';
-        // Only revert navbar if NO dropdowns are open
-        if (!isAnyDropdownOpen() && window.scrollY <= 50) {
-          navbar.classList.remove('bg-white', 'shadow-md');
-          navbar.classList.add('bg-transparent');
-          document.querySelectorAll('#navbar a:not(#lang-dropdown a), #navbar button:not(#lang-dropdown button)').forEach(el => {
-            el.classList.remove('text-gray-900', 'hover:text-gray-600');
-            el.classList.add('text-white', 'hover:text-gray-300');
-          });
-        }
         activeDropdown = null;
+        updateNavbarStyle();
       }, 200);
     };
 

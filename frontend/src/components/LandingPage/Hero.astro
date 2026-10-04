@@ -6,15 +6,15 @@ interface Props {
 const { t } = Astro.props;
 ---
 
-<!-- Hero Section with Image Carousel Background -->
-<section class="relative w-full h-screen overflow-hidden">
+<!-- Hero: dividido en móviles y superpuesto desde tablet -->
+<section class="relative mt-24 w-full min-h-[calc(100dvh-6rem)] overflow-hidden bg-[#f8f4ee] md:mt-0 md:h-screen md:min-h-0 md:bg-transparent">
   <!-- Image Carousel Background -->
-  <div id="hero-carousel" class="absolute top-0 left-0 w-full h-full">
+  <div id="hero-carousel" class="relative aspect-[16/9] w-full overflow-hidden bg-black md:absolute md:inset-0 md:h-full md:aspect-auto">
     <!-- First image: loaded immediately -->
     <img
       src="/landing page images/wallpaper1.webp"
       alt="Aventuras personalizadas en Perú - Machu Picchu y Los Andes"
-      class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-3000 opacity-100"
+      class="hero-image absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 opacity-100"
       data-index="0"
       width="1280"
       height="720"
@@ -26,7 +26,7 @@ const { t } = Astro.props;
     <img
       data-src="/landing page images/ubicacion-choquequirao-full.webp"
       alt="Choquequirao - Ciudadela inca perdida en Cusco"
-      class="hero-image absolute inset-0 w-full h-full object-cover transition-opacity duration-3000 opacity-0"
+      class="hero-image absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-1000 opacity-0"
       data-index="1"
       width="1280"
       height="853"
@@ -34,32 +34,31 @@ const { t } = Astro.props;
       fetchpriority="low"
       decoding="async"
     />
-  </div>
+    <!-- Overlay limitado a la imagen en móviles -->
+    <div class="absolute inset-0 bg-black/25 md:bg-black/40"></div>
 
-  <!-- Overlay -->
-  <div class="absolute top-0 left-0 w-full h-full bg-black/40"></div>
-
-  <!-- Carousel Indicators -->
-  <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3">
-    <button class="hero-dot h-3 w-3 rounded-full bg-white/70 hover:bg-white transition-all duration-300" data-index="0" aria-label="Ir a imagen 1"></button>
-    <button class="hero-dot h-3 w-3 rounded-full bg-white/40 hover:bg-white/70 transition-all duration-300" data-index="1" aria-label="Ir a imagen 3"></button>
+    <!-- Carousel Indicators -->
+    <div class="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-3 md:bottom-8">
+      <button class="hero-dot h-3 w-3 rounded-full bg-white/70 hover:bg-white transition-all duration-300" data-index="0" aria-label="Ir a imagen 1"></button>
+      <button class="hero-dot h-3 w-3 rounded-full bg-white/40 hover:bg-white/70 transition-all duration-300" data-index="1" aria-label="Ir a imagen 2"></button>
+    </div>
   </div>
 
   <!-- Content -->
-  <div class="relative h-full flex flex-col justify-start items-center text-center px-4 pt-20 md:pt-30">
+  <div class="relative z-10 flex flex-col items-center justify-start px-5 py-8 text-center md:absolute md:inset-0 md:h-full md:px-4 md:py-0 md:pt-30">
 
     <!-- Main Heading -->
-    <h1 class="text-4xl md:text-3xl lg:text-4xl text-white leading-tight mb-12 md:mb-16 max-w-4xl font-serif" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
+    <h1 class="mb-4 max-w-4xl font-serif text-3xl leading-tight text-[#178f86] md:mb-16 md:text-3xl md:text-white lg:text-4xl" style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500;">
       {t.hero.mainTitle}
     </h1>
 
     <!-- Subheading -->
-    <p class="text-base md:text-lg lg:text-xl text-white/90 leading-relaxed max-w-3xl mb-12 md:mb-16 md:pt- -20">
+    <p class="mb-6 max-w-3xl text-sm leading-relaxed text-gray-700 sm:text-base md:mb-16 md:text-lg md:text-white/90 lg:text-xl">
       {t.hero.subtitle}
     </p>
 
     <!-- CTA Button -->
-    <button id="hero-cta" class="px-8 md:px-10 py-3 md:py-4 border-2 border-white text-white font-semibold text-base md:text-lg hover:bg-white hover:text-gray-900 transition-all duration-300">
+    <button id="hero-cta" class="border-2 border-[#178f86] px-8 py-3 text-base font-semibold text-[#178f86] transition-all duration-300 hover:bg-[#178f86] hover:text-white md:border-white md:px-10 md:py-4 md:text-lg md:text-white md:hover:bg-white md:hover:text-gray-900">
       {t.hero.cta}
     </button>
   </div>
@@ -69,7 +68,7 @@ const { t } = Astro.props;
   // Hero Image Carousel
   let currentImageIndex = 0;
   const totalImages = 2;
-  const carouselInterval = 2500; // 2.5 seconds
+  const carouselInterval = 5000; // 5 segundos para dejar cada imagen estable y nítida
   let imageCarouselTimer;
   let secondaryImageLoaded = false;
 
@@ -129,6 +128,7 @@ const { t } = Astro.props;
   });
 
   // Start carousel on load
+  showHeroImage(currentImageIndex);
   startImageCarousel();
 
   if ('requestIdleCallback' in window) {
