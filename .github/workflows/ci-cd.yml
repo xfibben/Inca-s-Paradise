@@ -21,8 +21,9 @@ jobs:
       odoo: ${{ steps.filtro.outputs.odoo }}
       backend: ${{ steps.filtro.outputs.backend }}
       compose: ${{ steps.filtro.outputs.compose }}
+      workflow: ${{ steps.filtro.outputs.workflow }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -42,31 +43,31 @@ jobs:
           archivos="$(git diff --name-only "$base" "$GITHUB_SHA")"
           printf '%s\n' "$archivos"
 
-          todos=false
-          if grep -qE '^\.github/workflows/' <<< "$archivos"; then todos=true; fi
-
           frontend=false
           odoo=false
           backend=false
           compose=false
-          if $todos || grep -qE '^frontend/' <<< "$archivos"; then frontend=true; fi
-          if $todos || grep -qE '^odoo/' <<< "$archivos"; then odoo=true; fi
-          if $todos || grep -qE '^backend/' <<< "$archivos"; then backend=true; fi
+          workflow=false
+          if grep -qE '^frontend/' <<< "$archivos"; then frontend=true; fi
+          if grep -qE '^odoo/' <<< "$archivos"; then odoo=true; fi
+          if grep -qE '^backend/' <<< "$archivos"; then backend=true; fi
           if grep -qE '^docker-compose\.prod\.yaml$' <<< "$archivos"; then compose=true; fi
+          if grep -qE '^(\.github/workflows/|ops/cicd/)' <<< "$archivos"; then workflow=true; fi
 
           echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
           echo "odoo=$odoo" >> "$GITHUB_OUTPUT"
           echo "backend=$backend" >> "$GITHUB_OUTPUT"
           echo "compose=$compose" >> "$GITHUB_OUTPUT"
+          echo "workflow=$workflow" >> "$GITHUB_OUTPUT"
 
   validar:
     needs: cambios
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
-        if: needs.cambios.outputs.frontend == 'true' || needs.cambios.outputs.backend == 'true'
+      - uses: actions/setup-node@v7
+        if: needs.cambios.outputs.frontend == 'true' || needs.cambios.outputs.backend == 'true' || needs.cambios.outputs.workflow == 'true'
         with:
           node-version: 24
           cache: npm
@@ -75,7 +76,7 @@ jobs:
             backend/package-lock.json
 
       - name: Validar frontend Astro
-        if: needs.cambios.outputs.frontend == 'true'
+        if: needs.cambios.outputs.frontend == 'true' || needs.cambios.outputs.workflow == 'true'
         working-directory: frontend
         env:
           PUBLIC_ODOO_URL: http://127.0.0.1:8070
@@ -85,7 +86,7 @@ jobs:
           npm run build
 
       - name: Validar backend Strapi
-        if: needs.cambios.outputs.backend == 'true'
+        if: needs.cambios.outputs.backend == 'true' || needs.cambios.outputs.workflow == 'true'
         working-directory: backend
         env:
           NODE_ENV: production
@@ -105,7 +106,7 @@ jobs:
           npm run build
 
       - name: Validar Python y XML de Odoo
-        if: needs.cambios.outputs.odoo == 'true'
+        if: needs.cambios.outputs.odoo == 'true' || needs.cambios.outputs.workflow == 'true'
         shell: bash
         run: |
           python -m compileall -q odoo/addons/incas_*
