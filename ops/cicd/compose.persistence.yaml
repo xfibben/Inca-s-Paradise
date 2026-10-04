@@ -1,0 +1,4 @@
+services:
+  backend:
+    volumes:
+      - /root/apps/IncasParadiseProduction/backend/public/uploads:/srv/app/public/uploads

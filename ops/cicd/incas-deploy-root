@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+servicio="${1:-}"
+commit="${2:-}"
+repo=/root/apps/IncasParadiseProduction
+base=/opt/incas-cicd
+release="$base/releases/$commit"
+env_file="$repo/.env"
+override="$base/compose.persistence.yaml"
+estado="$base/state/$servicio"
+log=/var/log/incas-cicd.log
+
+exec 9>"$base/deploy.lock"
+flock -w 900 9
+exec >>"$log" 2>&1
+
+printf '[%s] Inicio %s %s\n' "$(date -Is)" "$servicio" "$commit"
+
+case "$servicio" in
+  frontend|odoo|backend) ;;
+  *) exit 64 ;;
+esac
+
+[[ "$commit" =~ ^[0-9a-f]{40}$ ]] || exit 64
+[[ -f "$env_file" ]] || exit 66
+
+git -C "$repo" fetch --prune origin main
+git -C "$repo" cat-file -e "$commit^{commit}"
+git -C "$repo" merge-base --is-ancestor "$commit" origin/main
+
+if [[ ! -e "$release/.git" ]]; then
+  [[ ! -e "$release" ]] || exit 73
+  git -C "$repo" worktree add --detach "$release" "$commit"
+fi
+
+compose=(
+  docker compose
+  --project-name incasparadiseproduction
+  --env-file "$env_file"
+  -f "$release/docker-compose.prod.yaml"
+  -f "$override"
+)
+
+mkdir -p "$base/backups/$servicio"
+
+if [[ "$servicio" == "odoo" ]]; then
+  docker exec incas_odoo_db_prod sh -c 'exec pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
+    | gzip -9 > "$base/backups/$servicio/${commit}-$(date +%Y%m%d%H%M%S).sql.gz"
+elif [[ "$servicio" == "backend" ]]; then
+  docker exec incas_db_prod sh -c 'exec pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
+    | gzip -9 > "$base/backups/$servicio/${commit}-$(date +%Y%m%d%H%M%S).sql.gz"
+fi
+
+anterior="$repo"
+if [[ -s "$estado" ]]; then anterior="$(cat "$estado")"; fi
+
+"${compose[@]}" up -d --no-deps --force-recreate "$servicio"
+
+case "$servicio" in
+  frontend) url=http://127.0.0.1:4320/es/ ;;
+  odoo) url=http://127.0.0.1:8070/web/login ;;
+  backend) url=http://127.0.0.1:1336/admin ;;
+esac
+
+correcto=false
+for _ in $(seq 1 120); do
+  codigo="$(curl --silent --output /dev/null --write-out '%{http_code}' --max-time 10 "$url" || true)"
+  if [[ "$codigo" =~ ^(2|3)[0-9][0-9]$ ]]; then
+    correcto=true
+    break
+  fi
+  sleep 5
+done
+
+if ! $correcto; then
+  printf '[%s] Falló %s, restaurando %s\n' "$(date -Is)" "$servicio" "$anterior"
+  rollback=(
+    docker compose
+    --project-name incasparadiseproduction
+    --env-file "$env_file"
+    -f "$anterior/docker-compose.prod.yaml"
+    -f "$override"
+  )
+  "${rollback[@]}" up -d --no-deps --force-recreate "$servicio"
+  exit 1
+fi
+
+printf '%s\n' "$release" > "$estado"
+printf '[%s] Correcto %s %s\n' "$(date -Is)" "$servicio" "$commit"

@@ -1,0 +1,198 @@
+name: CI y despliegue selectivo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: incas-production-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  cambios:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filtro.outputs.frontend }}
+      odoo: ${{ steps.filtro.outputs.odoo }}
+      backend: ${{ steps.filtro.outputs.backend }}
+      compose: ${{ steps.filtro.outputs.compose }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: filtro
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base="${{ github.event.before }}"
+          fi
+
+          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+            base="$(git rev-list --max-parents=0 HEAD)"
+          fi
+
+          archivos="$(git diff --name-only "$base" "$GITHUB_SHA")"
+          printf '%s\n' "$archivos"
+
+          todos=false
+          if grep -qE '^\.github/workflows/' <<< "$archivos"; then todos=true; fi
+
+          frontend=false
+          odoo=false
+          backend=false
+          compose=false
+          if $todos || grep -qE '^frontend/' <<< "$archivos"; then frontend=true; fi
+          if $todos || grep -qE '^odoo/' <<< "$archivos"; then odoo=true; fi
+          if $todos || grep -qE '^backend/' <<< "$archivos"; then backend=true; fi
+          if grep -qE '^docker-compose\.prod\.yaml$' <<< "$archivos"; then compose=true; fi
+
+          echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
+          echo "odoo=$odoo" >> "$GITHUB_OUTPUT"
+          echo "backend=$backend" >> "$GITHUB_OUTPUT"
+          echo "compose=$compose" >> "$GITHUB_OUTPUT"
+
+  validar:
+    needs: cambios
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        if: needs.cambios.outputs.frontend == 'true' || needs.cambios.outputs.backend == 'true'
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      - name: Validar frontend Astro
+        if: needs.cambios.outputs.frontend == 'true'
+        working-directory: frontend
+        env:
+          PUBLIC_ODOO_URL: http://127.0.0.1:8070
+          PUBLIC_STRAPI_URL: http://127.0.0.1:1336
+        run: |
+          npm ci --legacy-peer-deps
+          npm run build
+
+      - name: Validar backend Strapi
+        if: needs.cambios.outputs.backend == 'true'
+        working-directory: backend
+        env:
+          NODE_ENV: production
+          DATABASE_CLIENT: postgres
+          DATABASE_HOST: 127.0.0.1
+          DATABASE_PORT: 5432
+          DATABASE_NAME: ci
+          DATABASE_USERNAME: ci
+          DATABASE_PASSWORD: ci
+          APP_KEYS: ci-key-1,ci-key-2
+          API_TOKEN_SALT: ci-token-salt
+          ADMIN_JWT_SECRET: ci-admin-jwt
+          JWT_SECRET: ci-jwt
+        run: |
+          npm ci
+          npm run strapi -- ts:generate-types
+          npm run build
+
+      - name: Validar Python y XML de Odoo
+        if: needs.cambios.outputs.odoo == 'true'
+        shell: bash
+        run: |
+          python -m compileall -q odoo/addons/incas_*
+          python - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree
+
+          for archivo in Path("odoo/addons").glob("incas_*/**/*.xml"):
+              ElementTree.parse(archivo)
+          PY
+
+      - name: Validar Docker Compose de producción
+        env:
+          DB_USER: ci
+          DB_PASSWORD: ci
+          DB_NAME: ci
+          ODOO_DB_NAME: ci
+          ODOO_DB_USER: ci
+          ODOO_DB_PASSWORD: ci
+          PUBLIC_URL: https://example.invalid
+          PUBLIC_STRAPI_URL: https://example.invalid
+          PUBLIC_ODOO_URL: https://example.invalid
+          PUBLIC_ODOO_DB: ci
+          APP_KEYS: ci-key-1,ci-key-2
+          API_TOKEN_SALT: ci
+          ADMIN_JWT_SECRET: ci
+          JWT_SECRET: ci
+          PAYPAL_CLIENT_ID: ci
+          PAYPAL_SECRET: ci
+          PAYPAL_MODE: sandbox
+          PAYPAL_WEBHOOK_ID: ci
+          APIS_NET_PE_TOKEN: ci
+          GOOGLE_APPS_SCRIPT_URL: https://example.invalid
+          RESEND_API_KEY: ci
+          RESEND_FROM_EMAIL: ci@example.invalid
+          RESEND_FROM_NAME: ci
+          RESEND_NOTIFY_EMAIL: ci@example.invalid
+          PUBLIC_GTM_ID: ci
+          PUBLIC_GA_MEASUREMENT_ID: ci
+          PUBLIC_GOOGLE_CLAIMS_FORM_URL: https://example.invalid
+          PUBLIC_RECAPTCHA_SITE_KEY: ci
+          RECAPTCHA_SECRET_KEY: ci
+          ODOO_STRAPI_CONECTION_URL: https://example.invalid
+        run: docker compose -f docker-compose.prod.yaml config --quiet
+
+  desplegar:
+    needs: [cambios, validar]
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.cambios.outputs.compose != 'true' &&
+      (needs.cambios.outputs.frontend == 'true' ||
+       needs.cambios.outputs.odoo == 'true' ||
+       needs.cambios.outputs.backend == 'true')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Preparar acceso restringido al VPS
+        shell: bash
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_DEPLOY_KEY }}" > ~/.ssh/ip-git
+          chmod 600 ~/.ssh/ip-git
+          printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Desplegar servicios modificados
+        shell: bash
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_DEPLOY_USER }}
+          SHA: ${{ github.sha }}
+          FRONTEND: ${{ needs.cambios.outputs.frontend }}
+          ODOO: ${{ needs.cambios.outputs.odoo }}
+          BACKEND: ${{ needs.cambios.outputs.backend }}
+        run: |
+          ssh_deploy() {
+            ssh -i ~/.ssh/ip-git -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -T "$USER@$HOST" "deploy $1 $SHA"
+          }
+
+          if [[ "$FRONTEND" == "true" ]]; then ssh_deploy frontend; fi
+          if [[ "$ODOO" == "true" ]]; then ssh_deploy odoo; fi
+          if [[ "$BACKEND" == "true" ]]; then ssh_deploy backend; fi
+
+  compose_manual:
+    needs: [cambios, validar]
+    if: github.event_name == 'push' && needs.cambios.outputs.compose == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "docker-compose.prod.yaml cambió. El despliegue requiere ejecutar el workflow manual de producción."

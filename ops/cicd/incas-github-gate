@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+read -r accion servicio commit extra <<< "${SSH_ORIGINAL_COMMAND:-}"
+
+if [[ "$accion" != "deploy" || -n "${extra:-}" ]]; then
+  echo "Comando no permitido" >&2
+  exit 64
+fi
+
+case "$servicio" in
+  frontend|odoo|backend) ;;
+  *)
+    echo "Servicio no permitido" >&2
+    exit 64
+    ;;
+esac
+
+if [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "Commit inválido" >&2
+  exit 64
+fi
+
+exec sudo -n /usr/local/sbin/incas-deploy-root "$servicio" "$commit"

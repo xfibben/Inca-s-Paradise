@@ -1,0 +1,60 @@
+name: Despliegue manual de producción
+
+on:
+  workflow_dispatch:
+    inputs:
+      servicio:
+        description: Servicio que se desplegará
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - frontend
+          - odoo
+          - backend
+
+permissions:
+  contents: read
+
+concurrency:
+  group: incas-production-main
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Confirmar que el commit pertenece a main
+        shell: bash
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Preparar acceso restringido al VPS
+        shell: bash
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_DEPLOY_KEY }}" > ~/.ssh/ip-git
+          chmod 600 ~/.ssh/ip-git
+          printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Desplegar
+        shell: bash
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          USER: ${{ secrets.VPS_DEPLOY_USER }}
+          SHA: ${{ github.sha }}
+          SERVICIO: ${{ inputs.servicio }}
+        run: |
+          ssh_deploy() {
+            ssh -i ~/.ssh/ip-git -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -T "$USER@$HOST" "deploy $1 $SHA"
+          }
+
+          if [[ "$SERVICIO" == "all" || "$SERVICIO" == "frontend" ]]; then ssh_deploy frontend; fi
+          if [[ "$SERVICIO" == "all" || "$SERVICIO" == "odoo" ]]; then ssh_deploy odoo; fi
+          if [[ "$SERVICIO" == "all" || "$SERVICIO" == "backend" ]]; then ssh_deploy backend; fi
