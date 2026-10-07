@@ -292,28 +292,28 @@ Astro.response.headers.set(
 
             {(includedItems.length > 0 || excludedItems.length > 0) ? (
               <section class="pb-16 md:pb-20">
-                <div class="grid grid-cols-2 gap-3 lg:gap-6">
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
                   {includedItems.length > 0 ? (
-                    <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
-                      <h3 class="mb-4 text-base font-bold italic text-[#111827] md:text-2xl lg:text-3xl" style="font-family: 'Playfair Display', serif;"><span class="mr-2 text-green-700">✓</span>{includedTitle}</h3>
+                    <article class="border border-[#e2e8f0] bg-white p-5 md:p-8">
+                      <h3 class="mb-4 text-xl font-bold italic text-[#111827] md:text-2xl lg:text-3xl" style="font-family: 'Playfair Display', serif;"><span class="mr-2 text-green-700">✓</span>{includedTitle}</h3>
                       <div class="divide-y divide-[#e5e7eb]">
                         {includedItems.map((item: any) => (
-                          <div class="flex items-start gap-2 py-1.5 md:py-2.5">
-                            <span class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-green-700 text-xs text-green-700 md:h-5 md:w-5">{item.icon || "✓"}</span>
-                            <p class="text-xs leading-snug text-[#374151] md:text-sm" set:html={richContentToHtml(item.text)} />
+                          <div class="flex items-start gap-3 py-3">
+                            <span class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-green-700 text-xs text-green-700">{item.icon || "✓"}</span>
+                            <p class="text-sm leading-relaxed text-[#374151] md:text-base" set:html={richContentToHtml(item.text)} />
                           </div>
                         ))}
                       </div>
                     </article>
                   ) : null}
                   {excludedItems.length > 0 ? (
-                    <article class="border border-[#e2e8f0] bg-white p-3 md:p-8">
-                      <h3 class="mb-4 text-base font-bold italic text-[#111827] md:text-2xl lg:text-3xl" style="font-family: 'Playfair Display', serif;"><span class="mr-2 text-[#6b7280]">✕</span>{excludedTitle}</h3>
+                    <article class="border border-[#e2e8f0] bg-white p-5 md:p-8">
+                      <h3 class="mb-4 text-xl font-bold italic text-[#111827] md:text-2xl lg:text-3xl" style="font-family: 'Playfair Display', serif;"><span class="mr-2 text-[#6b7280]">✕</span>{excludedTitle}</h3>
                       <div class="divide-y divide-[#e5e7eb]">
                         {excludedItems.map((item: any) => (
-                          <div class="flex items-start gap-2 py-1.5 md:py-2.5">
-                            <span class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[#9ca3af] text-xs text-[#6b7280] md:h-5 md:w-5">{item.icon || "✕"}</span>
-                            <p class="text-xs leading-snug text-[#374151] md:text-sm" set:html={richContentToHtml(item.text)} />
+                          <div class="flex items-start gap-3 py-3">
+                            <span class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#9ca3af] text-xs text-[#6b7280]">{item.icon || "✕"}</span>
+                            <p class="text-sm leading-relaxed text-[#374151] md:text-base" set:html={richContentToHtml(item.text)} />
                           </div>
                         ))}
                       </div>
