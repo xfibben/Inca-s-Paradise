@@ -48,7 +48,7 @@ jobs:
           backend=false
           compose=false
           workflow=false
-          if grep -qE '^frontend/' <<< "$archivos"; then frontend=true; fi
+          if grep -qE '^(frontend/|ops/cicd/frontend-updating\.html$)' <<< "$archivos"; then frontend=true; fi
           if grep -qE '^odoo/' <<< "$archivos"; then odoo=true; fi
           if grep -qE '^backend/' <<< "$archivos"; then backend=true; fi
           if grep -qE '^docker-compose\.prod\.yaml$' <<< "$archivos"; then compose=true; fi

@@ -12,6 +12,8 @@ env_file="$repo/.env"
 override="$base/compose.persistence.yaml"
 estado="$base/state/$servicio"
 log=/var/log/incas-cicd.log
+maintenance_flag=/home/adminip/conf/web/incasparadise.com/.frontend-deploying
+maintenance_page=/home/adminip/web/incasparadise.com/public_html/frontend-updating.html
 
 exec 9>"$base/deploy.lock"
 flock -w 900 9
@@ -34,6 +36,12 @@ git -C "$repo" merge-base --is-ancestor "$commit" origin/main
 if [[ ! -e "$release/.git" ]]; then
   [[ ! -e "$release" ]] || exit 73
   git -C "$repo" worktree add --detach "$release" "$commit"
+fi
+
+if [[ "$servicio" == "frontend" ]]; then
+  install -D -m 644 "$release/ops/cicd/frontend-updating.html" "$maintenance_page"
+  touch "$maintenance_flag"
+  trap 'rm -f "$maintenance_flag"' EXIT
 fi
 
 compose=(
