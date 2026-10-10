@@ -26,7 +26,8 @@ export function buildLocalizedSlugs(slug: string): Record<OdooTransportLang, str
 }
 
 const odooTransportJsonCache = new Map<string, { data: any; expiresAt: number }>();
-const CACHE_TTL_MS = 60 * 1000; // 60 segundos de cache en memoria
+// En desarrollo 10s para navegacion rapida y refresco agil; en produccion 30s
+const CACHE_TTL_MS = import.meta.env.DEV ? 10 * 1000 : 30 * 1000;
 
 export async function fetchOdooTransportJson(path: string, options?: { ttlMs?: number }) {
   const baseUrl = getOdooTransportBaseUrl();

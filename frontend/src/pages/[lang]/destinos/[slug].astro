@@ -85,6 +85,7 @@ Astro.response.headers.set(
     <meta name="twitter:title" content={seoTitle} />
     <meta name="twitter:description" content={seoDescription} />
     {heroImage ? <meta name="twitter:image" content={heroImage} /> : null}
+    {heroImage && <link rel="preload" as="image" href={heroImage} fetchpriority="high" />}
     <script is:inline type="application/ld+json" set:html={JSON.stringify({
       "@context": "https://schema.org",
       "@type": "TouristDestination",
@@ -103,7 +104,7 @@ Astro.response.headers.set(
     </script>
     <main>
       <section class="relative min-h-[60vh] overflow-hidden">
-        {heroImage ? <img src={heroImage} alt={pageTitle} class="absolute inset-0 w-full h-full object-cover" /> : <div class="absolute inset-0 bg-stone-300" />}
+        {heroImage ? <img src={heroImage} alt={pageTitle} class="absolute inset-0 w-full h-full object-cover" fetchpriority="high" loading="eager" decoding="async" /> : <div class="absolute inset-0 bg-stone-300" />}
         <div class="absolute inset-0 bg-black/45" />
         <div class="relative z-10 max-w-6xl mx-auto px-6 py-28 md:py-36 text-white">
           <h1 class="text-4xl md:text-6xl italic leading-tight" style="font-family: 'Playfair Display', serif;">
@@ -128,7 +129,7 @@ Astro.response.headers.set(
                   const iconDescription = stripHtml(normalizeOdooHtml(item.description || ""));
                   return (
                     <article class="p-2 text-center">
-                      {iconUrl ? <img src={iconUrl} alt={item.iconAlt || iconLabel} class="mx-auto mb-3 h-14 w-14 object-contain" /> : null}
+                      {iconUrl ? <img src={iconUrl} alt={item.iconAlt || iconLabel} class="mx-auto mb-3 h-14 w-14 object-contain" loading="lazy" decoding="async" /> : null}
                       {iconLabel ? <p class="text-xs font-medium leading-snug text-stone-700">{iconLabel}</p> : null}
                       {iconDescription ? <p class="mt-1 text-xs leading-snug text-stone-500">{iconDescription}</p> : null}
                     </article>

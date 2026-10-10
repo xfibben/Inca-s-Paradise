@@ -58,29 +58,11 @@ const mobileWhatsappHref = `https://wa.me/51984434547?text=${encodeURIComponent(
   whatsappText
 )}`;
 
-const NAV_CACHE_TTL_MS = 5 * 60 * 1000;
-const NAV_CACHE_KEY = '__incas_nav_cache_v1__';
-type NavCacheEntry = { expiresAt: number; value: any };
-const navCache: Map<string, NavCacheEntry> =
-  ((globalThis as any)[NAV_CACHE_KEY] as Map<string, NavCacheEntry> | undefined) ?? new Map();
-(globalThis as any)[NAV_CACHE_KEY] = navCache;
-
-async function fetchJsonCached(url: string) {
-  const now = Date.now();
-  const cached = navCache.get(url);
-  if (cached && cached.expiresAt > now) return cached.value;
-
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`[Navbar] HTTP ${response.status} for ${url}`);
-  const json = await response.json();
-  navCache.set(url, { value: json, expiresAt: now + NAV_CACHE_TTL_MS });
-  return json;
+// Soporte para portugués en destinos
+function getDestTitle(dest: any) {
+  return dest.title || dest.name || dest.titulo || dest.titulo_pt || dest.titulo_en || dest.titulo_es || '';
 }
 
-  // Soporte para portugués en destinos
-  function getDestTitle(dest: any) {
-    return dest.title || dest.name || dest.titulo || dest.titulo_pt || dest.titulo_en || dest.titulo_es || '';
-  }
 function toSlug(name: string): string {
   return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
 }
@@ -125,16 +107,6 @@ function localImagePath(value: string) {
   return value.startsWith('landing page images') ? `/${value}` : value;
 }
 
-function toSlug(value: string) {
-  return value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-');
-}
-
 function buildFallbackSustainabilityItems() {
   return [
     {
@@ -162,37 +134,35 @@ let navStyleTrips: any[] = [];
 let navDestinations: any[] = [];
 let navTipoTransportes: any[] = [];
 let navSustainabilityItems: any[] = buildFallbackSustainabilityItems();
+const transportUrl = `/incas/api/web/tipo-transportes?lang=${getOdooTransportLang(currentLang)}`;
+const styleUrl = `/incas/api/web/estilos-viaje?lang=${getOdooWebLang(currentLang)}`;
+const destUrl = `/incas/api/web/destinos?lang=${getOdooWebLang(currentLang)}`;
+const sostUrl = `/incas/api/web/sostenibilidad?lang=${getOdooWebLang(currentLang)}`;
+
 try {
-  const json = await fetchOdooTransportJson(`/incas/api/web/tipo-transportes?lang=${getOdooTransportLang(currentLang)}`);
-  navTipoTransportes = json.data ?? [];
-} catch (e) {
-  console.error('[Navbar] Error tipo-transportes:', e);
-}
-try {
-  const styleUrl = `/incas/api/web/estilos-viaje?lang=${getOdooWebLang(currentLang)}`;
-  const destUrl = `/incas/api/web/destinos?lang=${getOdooWebLang(currentLang)}`;
-  const [styleJson, destJson] = await Promise.all([
+  const [transRes, styleRes, destRes, sostRes] = await Promise.allSettled([
+    fetchOdooTransportJson(transportUrl),
     fetchOdooWebJson(styleUrl),
-    fetchOdooWebJson(destUrl)
+    fetchOdooWebJson(destUrl),
+    fetchOdooWebJson(sostUrl),
   ]);
-  navStyleTrips = styleJson.data ?? [];
-  navDestinations = destJson.data ?? [];
-} catch (e) {
-  console.error('[Navbar] Fetch error:', e);
-}
-try {
-  const json = await fetchOdooWebJson(`/incas/api/web/sostenibilidad?lang=${getOdooWebLang(currentLang)}`);
-  const rows = Array.isArray(json?.data) ? json.data : [];
-  if (rows.length) {
-    navSustainabilityItems = rows.map((item: any) => ({
-      title: item.title || '',
-      slug: item.slug || toSlug(item.title || ''),
-      description: stripHtml(item.contentHtml || ''),
-      imageUrl: getOdooMediaUrl(item.image) || '',
-    }));
+
+  if (transRes.status === "fulfilled") navTipoTransportes = transRes.value?.data ?? [];
+  if (styleRes.status === "fulfilled") navStyleTrips = styleRes.value?.data ?? [];
+  if (destRes.status === "fulfilled") navDestinations = destRes.value?.data ?? [];
+  if (sostRes.status === "fulfilled") {
+    const rows = Array.isArray(sostRes.value?.data) ? sostRes.value.data : [];
+    if (rows.length) {
+      navSustainabilityItems = rows.map((item: any) => ({
+        title: item.title || '',
+        slug: item.slug || toSlug(item.title || ''),
+        description: stripHtml(item.contentHtml || ''),
+        imageUrl: getOdooMediaUrl(item.image) || '',
+      }));
+    }
   }
 } catch (e) {
-  console.error('[Navbar] Error sostenibilidad:', e);
+  console.error('[Navbar] Fetch error:', e);
 }
 ---
 
@@ -426,7 +396,7 @@ try {
                             class="style-item-grid group relative overflow-hidden cursor-pointer transition-all duration-300 hover:z-20"
                           >
                             {imgUrl && (
-                              <img src={imgUrl} alt={item.name} class="w-full h-full object-cover" />
+                              <img src={imgUrl} alt={item.name} class="w-full h-full object-cover" loading="lazy" decoding="async" />
                             )}
                             <div class="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300"></div>
                             <div class="absolute inset-0 flex flex-col justify-center items-center text-center p-4 text-white border-b-2 border-transparent group-hover:border-white">
@@ -517,6 +487,8 @@ try {
                     src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop"
                     alt="Sustainability"
                     class="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div class="absolute inset-0 bg-black/30"></div>
                   <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
@@ -545,7 +517,7 @@ try {
                       class="transport-item-grid group relative overflow-hidden cursor-pointer transition-all duration-300 hover:z-20"
                     >
                       {imgUrl ? (
-                        <img src={imgUrl} alt={item.nombre} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <img src={imgUrl} alt={item.nombre} class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async" />
                       ) : (
                         <div class="w-full h-full bg-stone-400" />
                       )}
@@ -622,7 +594,7 @@ try {
                 }
                 return (
                   <button type="button" data-dest={dest.slug} class="mobile-destination-item relative h-16 overflow-hidden rounded block w-full text-left">
-                    {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
+                    {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" loading="lazy" decoding="async" />}
                     <div class="absolute inset-0 bg-black/50"></div>
                     <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.title}</span>
                   </button>
@@ -644,7 +616,7 @@ try {
                 }
                 return (
                   <button type="button" data-dest={dest.slug} class="mobile-destination-item relative h-16 overflow-hidden rounded block w-full text-left">
-                    {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" />}
+                    {imgUrl && <img src={imgUrl} alt={dest.title} class="w-full h-full object-cover" loading="lazy" decoding="async" />}
                     <div class="absolute inset-0 bg-black/50"></div>
                     <span class="absolute inset-0 flex items-center justify-center text-white text-xs font-bold text-center px-1" style="font-family: 'Playfair Display', serif; font-style: italic;">{dest.title}</span>
                   </button>
@@ -679,7 +651,7 @@ try {
               return (
                 <button type="button" data-style={item.slug || toSlug(item.name)} data-name={item.name} class="mobile-style-item relative h-16 overflow-hidden rounded block w-full text-left">
                   {imgUrl ? (
-                    <img src={imgUrl} alt={item.name} class="w-full h-full object-cover" />
+                    <img src={imgUrl} alt={item.name} class="w-full h-full object-cover" loading="lazy" decoding="async" />
                   ) : (
                     <div class="w-full h-full bg-gray-400"></div>
                   )}
@@ -720,7 +692,7 @@ try {
                   class="mobile-transport-item relative h-16 overflow-hidden rounded block w-full text-left"
                 >
                   {imgUrl ? (
-                    <img src={imgUrl} alt={item.nombre} class="w-full h-full object-cover" />
+                    <img src={imgUrl} alt={item.nombre} class="w-full h-full object-cover" loading="lazy" decoding="async" />
                   ) : (
                     <div class="w-full h-full bg-stone-400" />
                   )}

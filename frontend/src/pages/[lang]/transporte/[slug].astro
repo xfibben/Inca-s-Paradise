@@ -167,6 +167,7 @@ Astro.response.headers.set(
       };
       return schema;
     })())} />
+    {displayImageUrl && <link rel="preload" as="image" href={displayImageUrl} fetchpriority="high" />}
     <GoogleAnalytics />
   </head>
 
@@ -287,7 +288,9 @@ Astro.response.headers.set(
                     src={displayImageUrl}
                     alt={selectedVehiculoNombre ?? transporte.nombre}
                     class="w-full h-72 sm:h-96 object-cover"
-                    loading="lazy"
+                    fetchpriority="high"
+                    loading="eager"
+                    decoding="async"
                   />
                 </div>
               )}

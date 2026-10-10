@@ -60,6 +60,7 @@ function getCardImage(media: any): { src: string; srcset: string } {
                 alt={tipo.nombre}
                 class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
+                decoding="async"
               />
             ) : (
               <div class="absolute inset-0 bg-linear-to-br from-stone-300 to-stone-500" />
