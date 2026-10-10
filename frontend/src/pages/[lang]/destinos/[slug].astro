@@ -57,6 +57,23 @@ const priceFromLabel =
   : lang === "fr" ? "Des"
   : lang === "it" ? "Da"
   : "Desde";
+
+const designedExperiencesLabel: Record<SupportedLang, string> = {
+  es: "Experiencias Diseñadas",
+  en: "Designed Experiences",
+  pt: "Experiências Planejadas",
+  fr: "Expériences Sur Mesure",
+  it: "Esperienze Su Misura",
+};
+
+const essentialToursLabel: Record<SupportedLang, string> = {
+  es: "Tours Esenciales",
+  en: "Essential Tours",
+  pt: "Tours Essenciais",
+  fr: "Tours Essentiels",
+  it: "Tour Essenziali",
+};
+
 const getDiscountedPrice = (price: number, discountPercent: number) =>
   Math.max(0, price - (price * Math.max(0, discountPercent)) / 100);
 
@@ -144,7 +161,7 @@ Astro.response.headers.set(
       {packageItems.length > 0 && (
         <section class="max-w-6xl mx-auto px-6 pb-10">
           <h2 class="text-3xl md:text-4xl italic text-stone-900 mb-8" style="font-family: 'Playfair Display', serif;">
-            {lang === "en" ? "Packages" : "Paquetes"}
+            {designedExperiencesLabel[lang] ?? "Experiencias Diseñadas"}
           </h2>
           <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {packageItems.map((tour: any) => {
@@ -167,7 +184,7 @@ Astro.response.headers.set(
       {smallTripItems.length > 0 && (
         <section class="max-w-6xl mx-auto px-6 pb-20">
           <h2 class="text-3xl md:text-4xl italic text-stone-900 mb-8" style="font-family: 'Playfair Display', serif;">
-            Small Trips
+            {essentialToursLabel[lang] ?? "Essential Tours"}
           </h2>
           <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {smallTripItems.map((tour: any) => {
