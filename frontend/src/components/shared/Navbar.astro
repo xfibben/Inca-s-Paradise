@@ -189,9 +189,17 @@ try {
     background-color: #e5e7eb !important;
   }
 
-  /* Sobre una imagen, el logo pasa a blanco puro; sobre fondo blanco conserva su color. */
-  body:not([data-navbar-solid]) #navbar.bg-transparent .navbar-logo {
-    filter: brightness(0) invert(1);
+  /* Sobre una imagen se usa la versión blanca original; sobre fondo blanco, la versión a color. */
+  .navbar-logo-white {
+    display: none;
+  }
+
+  body:not([data-navbar-solid]) #navbar.bg-transparent .navbar-logo-color {
+    display: none;
+  }
+
+  body:not([data-navbar-solid]) #navbar.bg-transparent .navbar-logo-white {
+    display: block;
   }
 
   /* Portada móvil: el header queda fuera de la imagen y siempre es sólido. */
@@ -322,7 +330,8 @@ try {
       <!-- Logo -->
       <div class="absolute left-1/2 flex-shrink-0 -translate-x-1/2 md:static md:translate-x-0">
         <a href={`/${currentLang}/`}>
-          <img src="/landing page images/incasparadiselogo.png" alt="Inca's Paradise Travel Agency" class="navbar-logo h-20 w-auto object-contain transition-[filter] duration-300" />
+          <img src="/landing page images/incasparadiselogo.png" alt="Inca's Paradise Travel Agency" class="navbar-logo-color h-20 w-auto object-contain" />
+          <img src="/landing page images/incasparadiselogo-white.png" alt="Inca's Paradise Travel Agency" class="navbar-logo-white h-[60px] w-auto object-contain" />
         </a>
       </div>
 
