@@ -134,7 +134,7 @@ Astro.response.headers.set(
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{seoTitle}</title>
     <meta name="description" content={seoDescription} />
     <link rel="canonical" href={canonical} />
@@ -181,20 +181,20 @@ Astro.response.headers.set(
     <main>
       <section class="bg-[#f5f0e9]">
         <div class="grid w-full gap-10 px-4 pb-16 pt-24 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-6 lg:px-12 lg:pt-28">
-          <div class="min-w-0">
+          <div class="min-w-0 max-w-full">
             {hasHighlightsSection ? (
               <section class="pb-12 md:pb-14">
-                <div class="grid gap-6 border border-[#e2e8f0] bg-white p-4 shadow-sm md:grid-cols-[240px_1fr] md:gap-8 md:p-6">
+                <div class="grid min-w-0 max-w-full overflow-hidden gap-6 border border-[#e2e8f0] bg-white p-4 shadow-sm md:grid-cols-[240px_1fr] md:gap-8 md:p-6">
                   {heroImage ? (
                     <div class="overflow-hidden">
                       <img src={heroImage} alt={sourceTour.title} class="h-full min-h-[280px] w-full object-cover" fetchpriority="high" loading="eager" decoding="async" />
                     </div>
                   ) : null}
-                  <div>
+                  <div class="min-w-0 max-w-full">
                     {destinationNames.length > 0 ? <p class="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-[#1AA093]">{destinationNames.join(" · ")}</p> : null}
-                    {highlightsTitle ? <h1 class="text-3xl leading-tight text-[#1f2937] md:text-4xl" style="font-family: 'Playfair Display', serif; font-style: italic;">{highlightsTitle}</h1> : null}
-                    <div id="mobile-booking-header-anchor" class="mt-4 mb-2 lg:hidden"></div>
-                    {highlightsLead ? <div class="mt-3 text-sm leading-relaxed text-[#1f2937] text-justify md:text-base [&_p]:mb-3 [&_p:last-child]:mb-0" set:html={highlightsLead} /> : null}
+                    {highlightsTitle ? <h1 class="text-3xl leading-tight text-[#1f2937] md:text-4xl break-words" style="font-family: 'Playfair Display', serif; font-style: italic;">{highlightsTitle}</h1> : null}
+                    <div id="mobile-booking-header-anchor" class="mt-4 mb-2 lg:hidden w-full min-w-0"></div>
+                    {highlightsLead ? <div class="mt-3 text-sm leading-relaxed text-[#1f2937] text-justify md:text-base break-words [&_p]:mb-3 [&_p:last-child]:mb-0 [&_img]:max-w-full [&_table]:max-w-full" set:html={highlightsLead} /> : null}
                     <div class="mt-4 space-y-4">
                       {highlightItems.map((item: any, index: number) => (
                         <article class="flex items-start gap-3">
