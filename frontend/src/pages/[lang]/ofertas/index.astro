@@ -1,4 +1,4 @@
-﻿---
+---
 import { getTranslation, languages, defaultLanguage, type Language } from '../../../i18n';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
@@ -247,7 +247,7 @@ const ofertasSchema = {
                             {t.ofertas.adulto}: {formatPrice(tour.adultUnitPrice, currentLang)}
                           </p>
                           <p class="text-lg font-bold text-[#1AA093]">
-                            {t.ofertas.desde} {formatPrice(precioConDescuento, currentLang)}
+                            {formatPrice(precioConDescuento, currentLang)}
                           </p>
                         </div>
                         <span class="text-xs bg-[#e0f7f5] text-[#1AA093] font-semibold px-3 py-1 rounded-full">
@@ -314,7 +314,7 @@ const ofertasSchema = {
                             {t.ofertas.adulto}: {formatPrice(tr.precioAdulto, currentLang)}
                           </p>
                           <p class="text-lg font-bold text-[#1AA093]">
-                            {t.ofertas.desde} {formatPrice(precioConDescuento, currentLang)}
+                            {formatPrice(precioConDescuento, currentLang)}
                           </p>
                         </div>
                         <span class="text-xs bg-[#e0f7f5] text-[#1AA093] font-semibold px-3 py-1 rounded-full">

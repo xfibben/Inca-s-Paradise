@@ -40,7 +40,7 @@ const discountedPrice = Math.max(0, adultUnitPrice - (adultUnitPrice * Math.max(
                         <span class="text-xs text-white/60 line-through">{formatPrice(adultUnitPrice, currentLang)}</span>
                     ) : null}
                     <span class="text-sm font-semibold text-white">
-                        {priceFromLabel} {formatPrice(discountedPrice, currentLang)}
+                        {formatPrice(discountedPrice, currentLang)}
                     </span>
                 </div>
             ) : (

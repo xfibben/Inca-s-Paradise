@@ -86,12 +86,12 @@ const highlightItems = toObjectList(sourceTour.highlightsItems).map((item: any) 
 }));
 const tourSlugs = sourceTour.slugs ?? buildLocalizedSlugs(sourceTour.slug || tourSlug);
 const destinationNames = toObjectList(sourceTour.destinos).map((item: any) => item.title).filter(Boolean);
-const priceFromLabel =
-  lang === "en" ? "From"
-  : lang === "pt" ? "Desde"
-  : lang === "fr" ? "Des"
-  : lang === "it" ? "Da"
-  : "Desde";
+
+
+
+
+
+
 const bookingLang = (["es", "en", "pt", "fr", "it"].includes(lang) ? lang : "es") as "es" | "en" | "pt" | "fr" | "it";
 const getDiscountedPrice = (price: number, discountPercent: number) =>
   Math.max(0, price - (price * Math.max(0, discountPercent)) / 100);
@@ -363,7 +363,7 @@ Astro.response.headers.set(
                             </a>
                             <div class="flex flex-1 flex-col p-4 md:p-5">
                               {tour.title ? <h3 class="text-lg font-semibold text-gray-900">{tour.title}</h3> : null}
-                              {tour.adultUnitPrice > 0 ? <p class="mt-2 text-sm leading-relaxed text-gray-600">{priceFromLabel} {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), lang)}</p> : null}
+                              {tour.adultUnitPrice > 0 ? <p class="mt-2 text-sm leading-relaxed text-gray-600">{formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), lang)}</p> : null}
                               <a href={`/${lang}/tours/${tour.slug}`} class="mt-auto inline-flex w-fit self-start items-center justify-center border border-green-700 px-4 py-2 text-sm font-semibold text-green-700 transition hover:bg-green-700 hover:text-white">{tourDetailCtaLabel}</a>
                             </div>
                           </article>

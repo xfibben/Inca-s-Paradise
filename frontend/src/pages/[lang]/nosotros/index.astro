@@ -1,95 +1,85 @@
 ---
 import Navbar from '../../../components/shared/Navbar.astro';
 import Footer from '../../../components/shared/Footer.astro';
-import { getTranslation, languages } from '../../../i18n';
+import { getTranslation, languages, type SupportedLang } from '../../../i18n';
 import '../../../styles/global.css';
 import GoogleAnalytics from '../../../components/shared/GoogleAnalytics.astro';
 import SEOHead from '../../../components/SEO/SEOHead.astro';
-import { fetchOdooWebJson, getOdooMediaUrl, getOdooWebLang } from '../../../utils/odooWeb';
 
 const { lang } = Astro.params;
-const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : 'es';
+const currentLang = (Object.keys(languages).includes(lang as string) ? lang : 'es') as SupportedLang;
 const t = getTranslation(currentLang);
 
-const plainText = (value: string) => value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-
-let data: any = null;
-try {
-  const json = await fetchOdooWebJson(`/incas/api/web/nosotros?lang=${getOdooWebLang(currentLang)}`);
-  data = json.data ?? null;
-} catch (e) {
+interface AboutContent {
+  title: string;
+  subtitle: string;
+  paragraphs: string[];
 }
 
-const fallbackTitles: Record<string, string> = {
-  es: 'Nosotros',
-  en: 'About Us',
-  pt: 'Sobre Nós',
-  fr: 'À Propos',
-  it: 'Chi Siamo',
+const aboutData: Record<SupportedLang, AboutContent> = {
+  es: {
+    title: "INCA’S PARADISE",
+    subtitle: "Más allá del destino, el arte de descubrir el mundo de otra manera.",
+    paragraphs: [
+      "Hay viajes que nos llevan a lugares extraordinarios y experiencias que nos acercan a la esencia de una cultura, transformando nuestra manera de ver el mundo.",
+      "En INCA’S PARADISE, concebimos cada viaje como una experiencia profundamente personal, donde la exclusividad se expresa en los detalles, la autenticidad cobra vida en cada encuentro y el verdadero lujo reside en descubrir cada destino de una manera única y significativa.",
+      "Especialistas en viajes a medida por Perú y Bolivia, diseñamos experiencias que revelan la riqueza de sus paisajes, culturas y tradiciones: desde la majestuosidad de los Andes y el legado de antiguas civilizaciones hasta la exuberancia de la Amazonía y las tradiciones vivas de sus comunidades.",
+      "Combinamos conocimiento local, sensibilidad cultural y una cuidada selección de experiencias, alojamientos y servicios para crear itinerarios únicos, adaptados a los intereses de cada viajero y concebidos para armonizar confort, descubrimiento y una conexión auténtica e inmersiva con el entorno y sus comunidades.",
+      "Creemos que el lujo más memorable consiste en descubrir un lugar a través de quienes lo habitan, compartir encuentros auténticos y vivir momentos que trascienden el viaje y permanecen en la memoria.",
+      "En INCA’S PARADISE, cada viaje se diseña con dedicación, se distingue por una atención excepcional a los detalles y se convierte en una experiencia verdaderamente personal.",
+    ],
+  },
+  en: {
+    title: "INCA’S PARADISE",
+    subtitle: "Beyond the destination, a different way to discover the world.",
+    paragraphs: [
+      "Some journeys take us to extraordinary places. Others bring us closer to the essence of a culture, transforming the way we see the world.",
+      "At INCA’S PARADISE, we believe every journey should be deeply personal. Exclusivity lies in the details, authenticity comes to life through meaningful encounters, and true luxury lies in discovering each destination in a unique and meaningful way.",
+      "Specialists in tailor-made journeys across Peru and Bolivia, we create experiences that reveal the richness of their landscapes, cultures, and traditions—from the grandeur of the Andes and the legacy of ancient civilizations to the lush Amazon rainforest and the living traditions of local communities.",
+      "We combine local expertise, cultural sensitivity, and a carefully curated selection of experiences, accommodations, and services to craft distinctive itineraries shaped around each traveller’s interests. Every journey is designed to balance comfort and discovery while fostering genuine, immersive connections with the surrounding landscapes and local communities.",
+      "We believe the most memorable form of luxury lies in discovering a place through the people who call it home, sharing authentic encounters, and experiencing moments that stay with us long after the journey ends.",
+      "At INCA’S PARADISE, every journey is thoughtfully designed, distinguished by exceptional attention to detail, and shaped into an experience that is entirely your own.",
+    ],
+  },
+  pt: {
+    title: "INCA’S PARADISE",
+    subtitle: "Além do destino, a arte de descobrir o mundo de uma forma diferente.",
+    paragraphs: [
+      "Há viagens que nos levam a lugares extraordinários e experiências que nos aproximam da essência de uma cultura, transformando a nossa maneira de ver o mundo.",
+      "Na INCA’S PARADISE, concebimos cada viagem como uma experiência profundamente pessoal, em que a exclusividade se revela nos detalles, a autenticidade ganha vida em cada encontro e o verdadeiro luxo está em descobrir cada destino de uma forma única e significativa.",
+      "Especialistas em viagens personalizadas pelo Peru e pela Bolívia, criamos experiências que revelam a riqueza das paisagens, culturas e tradições desses territórios: da imponência dos Andes e do legado de antigas civilizações à exuberância da Amazónia e às tradições vivas das comunidades locais.",
+      "Combinamos conhecimento local, sensibilidade cultural e uma seleção criteriosa de experiências, alojamentos e serviços para criar itinerários únicos, adaptados aos interesses de cada viajante. Cada viagem é pensada para equilibrar conforto e descoberta, promovendo uma ligação genuína e imersiva com a natureza, os lugares e as comunidades.",
+      "Acreditamos que o luxo mais memorável está em conhecer um lugar através de quem nele vive, partilhar encontros autênticos e viver momentos que vão além da viagem e permanecem na memória.",
+      "Na INCA’S PARADISE, cada viagem é cuidadosamente concebida, distingue-se pela atenção excecional aos detalhes e transforma-se numa experiência verdadeiramente pessoal.",
+    ],
+  },
+  fr: {
+    title: "INCA’S PARADISE",
+    subtitle: "Au-delà de la destination, l’art de découvrir le monde autrement.",
+    paragraphs: [
+      "Il y a des voyages qui nous mènent vers des lieux extraordinaires et des expériences qui nous rapprochent de l'essence d'une culture, transformant notre manière de voir le monde.",
+      "Chez INCA’S PARADISE, nous concevons chaque voyage comme une expérience profondément personnelle, où l'exclusivité s'exprime dans les détails, l'authenticité prend vie à chaque rencontre et le véritable luxe réside dans la découverte de chaque destination de manière unique et significative.",
+      "Spécialistes des voyages sur mesure au Pérou et en Bolivie, nous concevons des expériences qui révèlent la richesse de leurs paysages, cultures et traditions : de la majesté des Andes et de l'héritage des civilisations anciennes à l'exubérance de l'Amazonie et aux traditions vivantes de leurs communautés.",
+      "Nous allions expertise locale, sensibilité culturelle et une sélection soignée d'expériences, d'hébergements et de services pour créer des itinéraires uniques, adaptés aux intérêts de chaque voyageur et conçus pour harmoniser confort, découverte et connexion authentique et immersive avec l'environnement et ses communautés.",
+      "Nous croyons que le luxe le plus mémorable consiste à découvrir un lieu à travers ceux qui l'habitent, à partager des rencontres authentiques et à vivre des moments qui transcendent le voyage et restent gravés dans la mémoire.",
+      "Chez INCA’S PARADISE, chaque voyage est pensé avec dévouement, se distingue par une attention exceptionnelle portée aux détails et devient une expérience véritablement personnelle.",
+    ],
+  },
+  it: {
+    title: "INCA’S PARADISE",
+    subtitle: "Oltre la destinazione, l’arte di scoprire il mondo in modo diverso.",
+    paragraphs: [
+      "Ci sono viaggi che ci portano in luoghi straordinari ed esperienze che ci avvicinano all'essenza di una cultura, transformando il nostro modo di vedere il mondo.",
+      "In INCA’S PARADISE, concepiamo ogni viaggio come un'esperienza profondamente personale, dove l'esclusività si esprime nei dettagli, l'autenticità prende vita in ogni incontro e il vero lusso risiede nello scoprire ogni destinazione in modo unico e significativo.",
+      "Specialisti in viaggi su misura in Perù e Bolivia, creiamo esperienze che rivelano la ricchezza dei loro paesaggi, culture e tradizioni: dalla maestosità delle Ande e dall'eredità delle antiche civiltà fino all'esuberanza dell'Amazzonia e alle tradizioni vive delle loro comunità.",
+      "Combiniamo conoscenza locale, sensibilità culturale e un'accurata selezione di esperienze, alloggi e servizi per creare itinerari unici, modellati sugli interessi di ogni viaggiatore e concepiti per armonizzare comfort, scoperta e una connessione autentica e immersiva con l'ambiente e le sue comunità.",
+      "Crediamo che il lusso più memorabile consista nello scoprire un luogo attraverso chi lo abita, condividere incontri autentici e vivere momenti che trascendono il viaggio e rimangono impressi nella memoria.",
+      "In INCA’S PARADISE, ogni viaggio viene disegnato con dedizione, si distingue per un'eccezionale attenzione ai dettagli e si trasforma in un'esperienza davvero personale.",
+    ],
+  },
 };
 
-const fallbackDescriptions: Record<string, string> = {
-  es: 'Conoce más sobre Inca\'s Paradise, nuestra propuesta de viaje y la forma en que acompañamos cada experiencia en Perú.',
-  en: 'Learn more about Inca\'s Paradise, our travel approach, and how we support every experience in Peru.',
-  pt: 'Conheça mais sobre a Inca\'s Paradise, nossa proposta de viagem e como acompanhamos cada experiência no Peru.',
-  fr: 'Découvrez Inca\'s Paradise, notre approche du voyage et la manière dont nous accompagnons chaque expérience au Pérou.',
-  it: 'Scopri di più su Inca\'s Paradise, il nostro modo di viaggiare e come accompagniamo ogni esperienza in Perù.',
-};
-
-const title = typeof data?.title === 'string' ? data.title.trim() : '';
-const description = typeof data?.description === 'string' ? data.description : '';
-const seoTitle = data?.metaTitle ?? title ?? fallbackTitles[currentLang] ?? fallbackTitles.es;
-const seoDescription = data?.metaDescription || plainText(description) || fallbackDescriptions[currentLang] || fallbackDescriptions.es;
-const descriptionHtml = description;
-
-const fallbackSections: Record<string, Array<{ title: string; text: string; imageUrl?: string }>> = {
-  es: [
-    {
-      title: 'Bienvenidos a Incas Paradise Comfort',
-      text: 'Somos especialistas en organizar viajes de todo tipo: tours y paquetes en Perú y Bolivia, porque estamos convencidos de que la calidad de servicio que ofrecemos es nuestra herramienta más competitiva. Estamos aquí para asegurarnos de que cada uno de sus viajes sea una experiencia apasionante e inolvidable.'
-    },
-    {
-      title: 'Innovación y creatividad',
-      text: 'Nuestro principal objetivo es ofrecer experiencias auténticas y únicas. En nuestro sitio web siempre encontrarás nuevos tours y paquetes de lugares menos visitados de Perú, pensados para cumplir el viaje de tus sueños y las expectativas de nuestros clientes.',
-      imageUrl: '/landing page images/nosotros/innovacion-luxury.svg'
-    },
-    {
-      title: 'Respeto',
-      text: 'Trabajamos en equipo con nuestros socios y proveedores con respeto e integridad para desarrollar y mantener relaciones de trabajo duraderas y mutuamente beneficiosas.',
-      imageUrl: '/landing page images/nosotros/respeto-luxury.svg'
-    },
-    {
-      title: 'Honestidad',
-      text: 'Estamos comprometidos íntegramente con nuestros clientes, colaboradores, proveedores y la comunidad, ofreciendo sinceridad y transparencia en cada trato.',
-      imageUrl: '/landing page images/nosotros/honestidad-luxury.svg'
-    },
-    {
-      title: 'Excelencia',
-      text: 'Ofrecemos excelencia a nuestros clientes y socios de viaje a través del desarrollo de sistemas de calidad. Somos una organización enfocada en la satisfacción total de nuestros clientes.',
-      imageUrl: '/landing page images/nosotros/excelencia-luxury.svg'
-    },
-    {
-      title: 'Simplicidad',
-      text: 'Contamos con sistemas web integrados que brindan una manera simple de realizar pagos online asociados con empresas bancarias y financieras, además de reservas y comentarios para que nuestros clientes interactúen con nosotros desde la comodidad de su hogar.',
-      imageUrl: '/landing page images/nosotros/simplicidad-luxury.svg'
-    }
-  ]
-};
-
-const sections = Array.isArray(data?.sections) && data.sections.length > 0
-  ? data.sections.map((section: any) => {
-      const imageUrl = getOdooMediaUrl(section?.image) || null;
-      return {
-        title: section?.title ?? '',
-        imageUrl,
-        renderedText: String(section?.text ?? '')
-      };
-    })
-  : (fallbackSections[currentLang] ?? fallbackSections.es).map((section) => ({
-      title: section.title,
-      imageUrl: section.imageUrl ?? null,
-      renderedText: `<p>${section.text}</p>`
-    }));
+const content = aboutData[currentLang] ?? aboutData.es;
 
 const siteOrigin = (Astro.site?.origin ?? 'https://incasparadise.com').replace(/\/$/, '');
 const canonical = `${siteOrigin}/${currentLang}/nosotros`;
@@ -101,11 +91,14 @@ const alternateLanguages = [
   { lang: 'it', url: `${siteOrigin}/it/nosotros` },
 ];
 
+const seoTitle = `${content.title} | ${currentLang === 'es' ? 'Nosotros' : currentLang === 'en' ? 'About Us' : currentLang === 'pt' ? 'Sobre Nós' : currentLang === 'fr' ? 'À Propos' : 'Chi Siamo'}`;
+const seoDescription = content.subtitle;
+
 const pageSchema = {
   "@context": "https://schema.org",
-  "@type": "WebPage",
-  "name": seoTitle,
-  "description": seoDescription,
+  "@type": "AboutPage",
+  "name": content.title,
+  "description": content.subtitle,
   "url": canonical,
   "inLanguage": currentLang === 'es' ? 'es-PE' : currentLang,
   "isPartOf": {
@@ -113,12 +106,6 @@ const pageSchema = {
     "name": "Inca's Paradise",
     "url": siteOrigin,
   },
-  ...(sections.length > 0 && {
-    "hasPart": sections.map((section, index) => ({
-      "@type": "WebPageElement",
-      "name": `${index + 1}. ${section.title}`,
-    })),
-  }),
 };
 ---
 
@@ -139,66 +126,61 @@ const pageSchema = {
       structuredData={pageSchema}
     />
     <GoogleAnalytics />
-    <style>
-      h1, h2 {
-        font-family: 'Playfair Display', serif;
-        font-weight: 500;
-        font-style: italic;
-      }
-    </style>
   </head>
-  <body class="min-h-screen flex flex-col text-gray-900" data-navbar-solid>
+  <body class="min-h-screen flex flex-col bg-[#fafaf9] text-gray-900" data-navbar-solid>
     <Navbar {t} currentLang={currentLang} />
-    <main class="flex-1 pt-24 pb-16 bg-white">
-      <div class="mx-auto max-w-5xl px-4">
-        <div class="mb-6">
-          {title && <h1 class="mb-4 text-3xl text-[#1AA093] md:text-4xl">{title}</h1>}
-          {description && (
-            <div
-              class="prose prose-gray max-w-none text-black leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline prose-img:mx-auto hover:prose-a:text-[#0e8a7e]"
-              set:html={descriptionHtml}
-            />
-          )}
-        </div>
 
-        {sections.length > 0 ? (
-          <div class="grid border-t border-gray-200 md:grid-cols-2 md:gap-x-12">
-            {sections.map((section, index) => {
-              const isLastOddItem = sections.length % 2 !== 0 && index === sections.length - 1;
-
-              return (
-              <section class:list={[
-                'border-b border-gray-200 py-7 md:py-8',
-                isLastOddItem && 'md:col-span-2'
-              ]}>
-                <div>
-                  {section.title && (
-                    <div class="mb-3 flex items-center gap-3 md:gap-4">
-                      {section.imageUrl ? (
-                        <img src={section.imageUrl} alt={section.title} class="h-10 w-10 shrink-0 object-contain md:h-12 md:w-12" loading="lazy" />
-                      ) : (
-                        <span class="block shrink-0 text-sm tracking-[0.28em] text-gray-400">
-                          {String(index + 1).padStart(2, '0')}
-                        </span>
-                      )}
-                      <h2 class="text-xl text-[#1AA093] md:text-2xl">{section.title}</h2>
-                    </div>
-                  )}
-                  <div
-                    class="prose prose-gray max-w-none text-black leading-7 text-justify prose-p:my-0 prose-p:leading-7 prose-headings:mt-0 prose-headings:mb-0 prose-headings:text-black prose-strong:text-black prose-li:text-black prose-blockquote:text-black prose-a:text-[#1AA093] prose-a:no-underline prose-img:mx-auto hover:prose-a:text-[#0e8a7e]"
-                    set:html={section.renderedText}
-                  />
-                </div>
-              </section>
-            )})}
-          </div>
-        ) : (
-          <p class="text-gray-400 italic">
-            {currentLang === 'es' ? 'Contenido próximamente.' : 'Content coming soon.'}
+    <main class="flex-1 pt-28 pb-20 md:pt-32 md:pb-24">
+      <div class="mx-auto max-w-4xl px-6 sm:px-8">
+        <!-- Encabezado Principal -->
+        <header class="text-center mb-10 md:mb-12">
+          <h1
+            class="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-wider text-[#132c3f]"
+            style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;"
+          >
+            {content.title}
+          </h1>
+          <p
+            class="mt-3 md:mt-4 text-lg sm:text-xl md:text-2xl text-stone-600 italic font-serif"
+            style="font-family: 'Playfair Display', Georgia, serif;"
+          >
+            {content.subtitle}
           </p>
-        )}
+        </header>
+
+        <!-- Galería de 2 Fotografías -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 my-8 md:my-12">
+          <div class="relative overflow-hidden rounded-2xl shadow-md group aspect-[4/3] bg-stone-200">
+            <img
+              src="/images/nosotros/nosotros-comunidad.jpg"
+              alt="Tradición y cultura local con Inca's Paradise"
+              loading="lazy"
+              decoding="async"
+              class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            />
+          </div>
+          <div class="relative overflow-hidden rounded-2xl shadow-md group aspect-[4/3] bg-stone-200">
+            <img
+              src="/images/nosotros/nosotros-experiencia.jpg"
+              alt="Experiencias y rutas de aventura con Inca's Paradise"
+              loading="lazy"
+              decoding="async"
+              class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            />
+          </div>
+        </section>
+
+        <!-- Bloque de Texto -->
+        <article class="space-y-6 md:space-y-7 text-[#2b2f33] text-base sm:text-lg leading-relaxed sm:leading-8 font-normal">
+          {content.paragraphs.map((paragraph) => (
+            <p class="text-justify sm:text-left">
+              {paragraph}
+            </p>
+          ))}
+        </article>
       </div>
     </main>
+
     <Footer {t} currentLang={currentLang} />
   </body>
 </html>

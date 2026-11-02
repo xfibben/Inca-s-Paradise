@@ -16,12 +16,12 @@ const { lang, slug } = Astro.params;
 const currentLang = Object.keys(languages).includes(lang as string) ? (lang as string) : "es";
 const t = getTranslation(currentLang);
 
-const priceFromLabel =
-  currentLang === "en" ? "From"
-  : currentLang === "pt" ? "Desde"
-  : currentLang === "fr" ? "Des"
-  : currentLang === "it" ? "Da"
-  : "Desde";
+
+
+
+
+
+
 
 const getDiscountedPrice = (price: number, discountPercent: number) =>
   Math.max(0, price - (price * Math.max(0, discountPercent)) / 100);
@@ -139,7 +139,7 @@ Astro.response.headers.set(
                       <div class="mt-3">
                         {tour.discount > 0 ? <p class="text-xs text-white/60 line-through">{formatPrice(tour.adultUnitPrice, currentLang)}</p> : null}
                         <p class="text-sm font-bold text-white">
-                          {priceFromLabel} {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), currentLang)}
+                          {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), currentLang)}
                         </p>
                       </div>
                     ) : null}
@@ -168,7 +168,7 @@ Astro.response.headers.set(
                     <h3 class="text-2xl text-stone-900" style="font-family: 'Playfair Display', serif; font-style: italic;">{tour.title}</h3>
                     {tour.adultUnitPrice > 0 ? (
                       <p class="mt-3 text-sm text-[#1AA093] font-semibold">
-                        {priceFromLabel} {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), currentLang)}
+                        {formatPrice(getDiscountedPrice(tour.adultUnitPrice, tour.discount), currentLang)}
                       </p>
                     ) : null}
                   </div>
