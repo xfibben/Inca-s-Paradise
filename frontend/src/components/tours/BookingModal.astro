@@ -1329,7 +1329,13 @@ const t = translations[lang] ?? translations.es;
       const totalEl = form?.querySelector("[data-modal-total]");
       if (precioAdultoEl) precioAdultoEl.textContent = precioAdultoLabel || `$${precioAdultoUsd.toFixed(0)}`;
       if (precioNinoEl) precioNinoEl.textContent = precioNinoLabel || `$${precioNinoUsd.toFixed(0)}`;
-      if (totalEl) totalEl.textContent = totalFormateado;
+      if (totalEl) {
+        totalEl.textContent = totalFormateado;
+        // Precio total de oferta en verde cuando hay descuento
+        const hayDescuento = descuentoConvertido > 0;
+        totalEl.classList.toggle("text-green-700", hayDescuento);
+        totalEl.classList.toggle("text-[#1AA093]", !hayDescuento);
+      }
 
       // Actualizar botón del paso 1 con el 30% del total
       const monto30 = totalConvertido * 0.3;

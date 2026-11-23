@@ -105,15 +105,17 @@ const t: Record<SupportedLang, Record<string, string>> = {
 
 const c = t[lang] ?? t.es;
 
-// Moneda por defecto según idioma
-const defaultCurrency: Record<SupportedLang, string> = {
-  es: 'PEN',
-  en: 'USD',
-  pt: 'USD',
-  fr: 'EUR',
-  it: 'EUR',
-};
-const langCurrency = defaultCurrency[lang] ?? 'USD';
+// Moneda por defecto: siempre USD (el usuario puede cambiarla en el selector)
+const langCurrency = 'USD';
+
+// Precio por adulto con descuento aplicado (para mostrarlo debajo del precio tachado)
+const hasDiscount = descuentoUsd > 0;
+const precioAdultoFinalUsd = Math.max(
+  0,
+  discountMode === "percent"
+    ? precioAdultoUsd * (1 - descuentoUsd / 100)
+    : precioAdultoUsd - descuentoUsd,
+);
 ---
 
 <aside class="mt-6 lg:mt-0" data-booking-card>
@@ -133,10 +135,19 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
 
         <div class="flex items-baseline flex-wrap gap-x-1 sm:gap-x-1.5 gap-y-0.5 mt-0.5">
           <span
-            data-mobile-price-adult
-            class="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#111827]"
+            data-mobile-price-adult-original
+            class:list={["text-sm font-medium text-[#94a3b8] line-through", !hasDiscount && "hidden"]}
           >
             ${precioAdultoUsd.toFixed(0)}
+          </span>
+          <span
+            data-mobile-price-adult
+            class:list={[
+              "text-2xl sm:text-3xl font-extrabold tracking-tight",
+              hasDiscount ? "text-green-700" : "text-[#111827]",
+            ]}
+          >
+            ${(hasDiscount ? precioAdultoFinalUsd : precioAdultoUsd).toFixed(0)}
           </span>
           <span class="text-xs text-[#64748b] whitespace-nowrap">/ {c.perAdult}</span>
           {descuentoUsd > 0 && (
@@ -223,16 +234,23 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
 
       <!-- Precios por persona -->
       <div class="space-y-1">
-        <div class="flex items-center justify-between text-sm text-[#374151]">
+        <div class="flex items-start justify-between text-sm text-[#374151]">
           <span>{c.adult}</span>
-          <span class="font-semibold text-[#111827]" data-price-adult-display>
-            ${precioAdultoUsd.toFixed(0)}
-          </span>
-        </div>
-        <div class="flex items-center justify-between text-sm text-[#374151]">
-          <span>{c.child}</span>
-          <span class="font-semibold text-[#111827]" data-price-child-display>
-            ${precioNinoUsd.toFixed(0)}
+          <span class="flex flex-col items-end leading-tight">
+            <span
+              class:list={[
+                hasDiscount ? "text-xs font-medium text-[#94a3b8] line-through" : "font-semibold text-[#111827]",
+              ]}
+              data-price-adult-display
+            >
+              ${precioAdultoUsd.toFixed(0)}
+            </span>
+            <span
+              class:list={["text-base font-bold text-green-700", !hasDiscount && "hidden"]}
+              data-price-adult-final-display
+            >
+              ${precioAdultoFinalUsd.toFixed(0)}
+            </span>
           </span>
         </div>
         {descuentoUsd > 0 && (
@@ -505,7 +523,8 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
     let discountUsdBase = parseFloat(priceSection?.getAttribute("data-discount-usd") || "0");
     const discountMode = (priceSection?.getAttribute("data-discount-mode") || "amount") as "amount" | "percent";
     const adultDisplayEl = document.querySelector("[data-price-adult-display]");
-    const childDisplayEl = document.querySelector("[data-price-child-display]");
+    const adultFinalDisplayEl = document.querySelector("[data-price-adult-final-display]");
+    const mobilePriceAdultOriginalEl = document.querySelector("[data-mobile-price-adult-original]");
     const discountDisplayEl = document.querySelector("[data-discount-display]");
     const currencySelect = document.querySelector("[data-currency-select]") as HTMLSelectElement | null;
 
@@ -542,15 +561,35 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
 
     const updatePrices = (currency: CurrencyKey) => {
       const rate = rates[currency];
-      if (adultDisplayEl) adultDisplayEl.textContent = formatPrice(adultUsdBase * rate, currency);
-      if (childDisplayEl) childDisplayEl.textContent = formatPrice(childUsdBase * rate, currency);
+      const hasDiscount = discountUsdBase > 0;
+      const adultFinalUsd = Math.max(0, adultUsdBase - getDiscountUsd(adultUsdBase));
+      const originalLabel = formatPrice(adultUsdBase * rate, currency);
+      const finalLabel = formatPrice(adultFinalUsd * rate, currency);
+
+      // Desktop: precio adulto tachado + precio con descuento en verde debajo
+      if (adultDisplayEl) {
+        adultDisplayEl.textContent = originalLabel;
+        adultDisplayEl.className = hasDiscount
+          ? "text-xs font-medium text-[#94a3b8] line-through"
+          : "font-semibold text-[#111827]";
+      }
+      if (adultFinalDisplayEl) {
+        adultFinalDisplayEl.textContent = finalLabel;
+        adultFinalDisplayEl.classList.toggle("hidden", !hasDiscount);
+      }
       if (discountDisplayEl && discountUsdBase > 0) {
         discountDisplayEl.textContent = discountMode === "percent"
           ? `-${discountUsdBase.toFixed(0)}%`
           : `-${formatPrice(discountUsdBase * rate, currency)}`;
       }
+      if (mobilePriceAdultOriginalEl) {
+        mobilePriceAdultOriginalEl.textContent = originalLabel;
+        mobilePriceAdultOriginalEl.classList.toggle("hidden", !hasDiscount);
+      }
       if (mobilePriceAdultEl) {
-        mobilePriceAdultEl.textContent = formatPrice(adultUsdBase * rate, currency);
+        mobilePriceAdultEl.textContent = hasDiscount ? finalLabel : originalLabel;
+        mobilePriceAdultEl.classList.toggle("text-green-700", hasDiscount);
+        mobilePriceAdultEl.classList.toggle("text-[#111827]", !hasDiscount);
       }
       if (mobileDiscountBadgeEl && discountUsdBase > 0) {
         mobileDiscountBadgeEl.textContent = discountMode === "percent"
@@ -653,7 +692,7 @@ const langCurrency = defaultCurrency[lang] ?? 'USD';
         precioAdultoUsd: adultUsdBase,
         precioNinoUsd: childUsdBase,
         precioAdultoLabel: adultDisplayEl?.textContent || `$${adultUsdBase.toFixed(0)}`,
-        precioNinoLabel: childDisplayEl?.textContent || `$${childUsdBase.toFixed(0)}`,
+        precioNinoLabel: formatPrice(childUsdBase * rate, currency),
         tasaCambio: rate,
         simboloMoneda: sym,
         decimalesMoneda: dec,
